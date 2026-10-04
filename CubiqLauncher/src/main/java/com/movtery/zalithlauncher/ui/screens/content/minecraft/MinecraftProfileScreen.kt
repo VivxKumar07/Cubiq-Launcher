@@ -74,6 +74,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import com.movtery.zalithlauncher.game.account.microsoftLogin
 import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
+import com.movtery.zalithlauncher.ui.toAndroidString
 import com.movtery.zalithlauncher.utils.platform.getMaxMemoryForSettings
 import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
 import kotlinx.coroutines.Dispatchers
@@ -295,7 +296,7 @@ fun MinecraftProfileScreen(
                                     checkIfInWebScreen = { true },
                                     updateOperation = {},
                                     showToast = { text, _ ->
-                                        val str = text.getString(context)
+                                        val str = text.toAndroidString(context)
                                         if (str.contains("code", ignoreCase = true) || str.contains("代码", ignoreCase = true)) {
                                             // Extract code if possible
                                             val parts = str.split(" ")
