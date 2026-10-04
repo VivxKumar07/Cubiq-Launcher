@@ -44,7 +44,7 @@ object MinecraftOfficialContentManager {
     private val _latestReleaseVersion = MutableStateFlow("26.3")
     val latestReleaseVersion = _latestReleaseVersion.asStateFlow()
 
-    private val _latestHeroImageUrl = MutableStateFlow<String?>("https://launchercontent.mojang.com/v2/images/dappledcamp540x540.jpg")
+    private val _latestHeroImageUrl = MutableStateFlow<String?>("https://launchercontent.mojang.com/v2/images/1-21-patchnotes.jpg")
     val latestHeroImageUrl = _latestHeroImageUrl.asStateFlow()
 
     private val _news = MutableStateFlow<List<OfficialNewsItem>>(emptyList())

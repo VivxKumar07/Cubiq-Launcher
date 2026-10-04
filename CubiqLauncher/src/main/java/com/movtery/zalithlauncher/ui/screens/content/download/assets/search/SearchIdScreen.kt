@@ -275,7 +275,7 @@ private fun Content(
             onView = onView,
             openLink = openLink,
             defaultClasses = defaultClasses,
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 48.dp)
         )
     }
 }
@@ -543,47 +543,37 @@ private fun ContentFilter(
                 )
             }
 
-            // Platform Switcher Row: [ MODRINTH ] [ CURSEFORGE ]
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            // Platform Indicator: [ CURSEFORGE ]
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(30.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color(0xFF263820))
+                    .border(
+                        BorderStroke(1.dp, Color(0xFF55FF55)),
+                        RoundedCornerShape(2.dp)
+                    )
+                    .clickable { onPlatformChange(Platform.CURSEFORGE) },
+                contentAlignment = Alignment.Center
             ) {
-                Platform.entries.forEach { p ->
-                    val isSel = searchPlatform == p
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(28.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(if (isSel) Color(0xFF3C8527) else Color(0xFF262628))
-                            .border(
-                                BorderStroke(1.dp, if (isSel) Color(0xFF55FF55) else Color(0xFF383838)),
-                                RoundedCornerShape(2.dp)
-                            )
-                            .clickable {
-                                onPlatformChange(p)
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                modifier = Modifier.size(13.dp),
-                                painter = painterResource(p.getDrawable()),
-                                contentDescription = p.displayName,
-                                tint = if (isSel) Color(0xFF55FF55) else Color(0xFFAAAAAA)
-                            )
-                            Text(
-                                text = p.displayName.uppercase(),
-                                color = Color.White,
-                                fontFamily = MinecraftFontFamily,
-                                fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 10.5.sp
-                            )
-                        }
-                    }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        modifier = Modifier.size(14.dp),
+                        painter = painterResource(Platform.CURSEFORGE.getDrawable()),
+                        contentDescription = Platform.CURSEFORGE.displayName,
+                        tint = Color(0xFF55FF55)
+                    )
+                    Text(
+                        text = "PLATFORM: CURSEFORGE",
+                        color = Color.White,
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
+                    )
                 }
             }
         }

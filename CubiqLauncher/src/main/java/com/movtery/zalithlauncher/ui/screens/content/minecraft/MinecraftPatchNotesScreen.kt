@@ -68,7 +68,7 @@ fun MinecraftPatchNotesScreen(
                         "• Resin blocks and brick crafting recipes\n" +
                         "• Full rendering and rendering pipeline optimizations\n" +
                         "• Bug fixes, memory optimizations, and security patches for Java Edition.",
-                imageUrl = "https://launchercontent.mojang.com/v2/images/dappledcamp540x540.jpg"
+                imageUrl = "https://launchercontent.mojang.com/v2/images/1-21-patchnotes.jpg"
             ),
             OfficialPatchNote(
                 title = "Minecraft: Java Edition 26.2",

@@ -85,6 +85,7 @@ import com.movtery.zalithlauncher.ui.screens.NestedNavKey
 import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.elements.CommonVersionInfoLayout
 import com.movtery.zalithlauncher.ui.screens.content.elements.PlayerFace
+import com.movtery.zalithlauncher.game.versioninfo.MinecraftArtworkManager
 import com.movtery.zalithlauncher.ui.screens.content.minecraft.MinecraftInstallationsScreen
 import com.movtery.zalithlauncher.ui.screens.content.minecraft.MinecraftModsScreen
 import com.movtery.zalithlauncher.ui.screens.content.minecraft.MinecraftNewsScreen
@@ -137,6 +138,7 @@ fun LauncherScreen(
         currentKey = backStackViewModel.mainScreen.currentKey
     ) { _ ->
         val account by AccountsManager.currentAccountFlow.collectAsStateWithLifecycle()
+        val accountsList by AccountsManager.accountsFlow.collectAsStateWithLifecycle()
         val currentVersion by VersionsManager.currentVersion.collectAsStateWithLifecycle()
         val allVersions by VersionsManager.versions.collectAsStateWithLifecycle()
         val isRefreshingVersions by VersionsManager.isRefreshing.collectAsStateWithLifecycle()
@@ -172,10 +174,15 @@ fun LauncherScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Top Account Header
+                // Top Account Header with Interactive Account Switcher Dropdown
                 TopAccountHeader(
                     account = account,
-                    onClick = toAccountManageScreen
+                    accountsList = accountsList,
+                    onSelectAccount = { selectedAcc ->
+                        AccountsManager.setCurrentAccount(selectedAcc)
+                        Toast.makeText(context, "Switched to ${selectedAcc.username}", Toast.LENGTH_SHORT).show()
+                    },
+                    onManageAccounts = toAccountManageScreen
                 )
 
                 // Sub-navigation Tabs: Installations | Skins | Patch Notes
@@ -488,77 +495,184 @@ private fun MinecraftLaunchLoadingOverlay() {
  * Top Account Header Bar:
  * Displays Player Head with cyan/blue border, Player Name with chevron arrow, and (Microsoft Account)
  */
+/**
+ * Top Account Header Bar:
+ * Displays Player Head with cyan/blue border, Player Name with interactive dropdown menu for instant account switching,
+ * and navigation to the full Profile / Manage Account screen.
+ */
 @Composable
 private fun TopAccountHeader(
     account: Account?,
-    onClick: () -> Unit
+    accountsList: List<Account>,
+    onSelectAccount: (Account) -> Unit,
+    onManageAccounts: () -> Unit
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF161616))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Player Head Avatar with vibrant blue rounded square border
-        Box(
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        Row(
             modifier = Modifier
-                .size(42.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .border(BorderStroke(2.dp, Color(0xFF1E88E5)), RoundedCornerShape(6.dp))
-                .background(Color(0xFF222222)),
-            contentAlignment = Alignment.Center
+                .fillMaxWidth()
+                .background(Color(0xFF161616))
+                .clickable { expanded = true }
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val skinFile = account?.getSkinFile()
-            if (account != null && skinFile != null && skinFile.exists()) {
-                PlayerFace(
-                    account = account,
-                    avatarSize = 36.dp
-                )
-            } else {
-                Image(
-                    painter = painterResource(R.drawable.ic_mc_pc_profile),
-                    contentDescription = "Steve Face",
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(RoundedCornerShape(4.dp)),
-                    contentScale = ContentScale.Fit
+            // Player Head Avatar with vibrant blue rounded square border
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .border(BorderStroke(2.dp, Color(0xFF1E88E5)), RoundedCornerShape(6.dp))
+                    .background(Color(0xFF222222)),
+                contentAlignment = Alignment.Center
+            ) {
+                val skinFile = account?.getSkinFile()
+                if (account != null && skinFile != null && skinFile.exists()) {
+                    PlayerFace(
+                        account = account,
+                        avatarSize = 36.dp
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(R.drawable.ic_mc_pc_profile),
+                        contentDescription = "Steve Face",
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(4.dp)),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = account?.username ?: "Player",
+                        color = Color.White,
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_keyboard_arrow_down),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+                Text(
+                    text = account?.let { "(${getAccountTypeName(it)})" } ?: "(No Active Account)",
+                    color = Color(0xFF9E9E9E),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 11.5.sp,
+                    maxLines = 1
                 )
             }
         }
 
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(
-            verticalArrangement = Arrangement.Center
+        // Account Dropdown Selector
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .width(280.dp)
+                .background(Color(0xFF1C1C1E))
+                .border(BorderStroke(1.5.dp, Color(0xFF383838)), RoundedCornerShape(3.dp))
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = account?.username ?: "Player",
-                    color = Color.White,
-                    fontFamily = MinecraftFontFamily,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    painter = painterResource(R.drawable.ic_keyboard_arrow_down),
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
-                )
-            }
             Text(
-                text = account?.let { "(${getAccountTypeName(it)})" } ?: "(Microsoft Account)",
-                color = Color(0xFF9E9E9E),
+                text = "SWITCH ACCOUNT",
+                color = Color(0xFFAAAAAA),
                 fontFamily = MinecraftFontFamily,
-                fontSize = 11.5.sp,
-                maxLines = 1
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+            )
+
+            if (accountsList.isEmpty()) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = "No saved accounts",
+                            color = Color(0xFF888888),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 12.sp
+                        )
+                    },
+                    onClick = {
+                        expanded = false
+                        onManageAccounts()
+                    }
+                )
+            } else {
+                accountsList.forEach { acc ->
+                    val isCurrent = account?.uniqueUUID == acc.uniqueUUID
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                PlayerFace(account = acc, avatarSize = 22.dp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = acc.username,
+                                        color = if (isCurrent) Color(0xFF55FF55) else Color.White,
+                                        fontFamily = MinecraftFontFamily,
+                                        fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                                        fontSize = 13.sp,
+                                        maxLines = 1
+                                    )
+                                    Text(
+                                        text = getAccountTypeName(acc),
+                                        color = Color(0xFF888888),
+                                        fontFamily = MinecraftFontFamily,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                                if (isCurrent) {
+                                    Text(
+                                        text = "ACTIVE",
+                                        color = Color(0xFF55FF55),
+                                        fontFamily = MinecraftFontFamily,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 9.sp
+                                    )
+                                }
+                            }
+                        },
+                        onClick = {
+                            expanded = false
+                            onSelectAccount(acc)
+                        }
+                    )
+                }
+            }
+
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = "+ Manage Accounts & Settings",
+                        color = Color(0xFF55FF55),
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                },
+                onClick = {
+                    expanded = false
+                    onManageAccounts()
+                }
             )
         }
     }
@@ -623,21 +737,21 @@ private fun HeroMinecraftCard(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             // Background Artwork (Dynamic based on selected version or latest Mojang official art)
-            if (version == null && !latestHeroUrl.isNullOrBlank()) {
-                AsyncImage(
-                    model = latestHeroUrl,
-                    contentDescription = "Minecraft Version Key Art",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Image(
-                    painter = painterResource(heroArtRes),
-                    contentDescription = "Minecraft Version Key Art",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
+            val artModel = remember(version, latestHeroUrl) {
+                if (version != null) {
+                    MinecraftArtworkManager.getArtworkModel(version)
+                } else if (!latestHeroUrl.isNullOrBlank()) {
+                    latestHeroUrl
+                } else {
+                    MinecraftArtworkManager.getArtworkModel(null)
+                }
             }
+            AsyncImage(
+                model = artModel,
+                contentDescription = "Minecraft Version Key Art",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
 
             // Scrim gradient for contrast
             Box(

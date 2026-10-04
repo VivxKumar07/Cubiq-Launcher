@@ -123,7 +123,7 @@ private enum class FavoriteSortBy {
  * 收藏过滤器可用的模组加载器，两平台按显示名合并
  */
 private val favoriteModLoaderFilters: List<PlatformDisplayLabel> =
-    (modrinthModLoaderFilters + curseForgeModLoaderFilters).distinctBy { it.getDisplayName() }
+    curseForgeModLoaderFilters.distinctBy { it.getDisplayName() }
 
 private class FavoritesScreenViewModel : ViewModel() {
     /** 分类过滤器，null 表示全部 */
@@ -310,7 +310,7 @@ private fun FavoritesContent(
                 contentPadding = PaddingValues(
                     start = 12.dp,
                     end = 12.dp,
-                    bottom = 12.dp,
+                    bottom = 60.dp,
                     top = with(density) {
                         (headerHeightPx + topAppBarState.heightOffset).coerceAtLeast(0f).toDp()
                     }
@@ -481,8 +481,8 @@ private fun FavoritesFilter(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                // Platform Buttons: [ ALL ] [ MODRINTH ] [ CURSEFORGE ]
-                val platforms = listOf<Platform?>(null) + Platform.entries
+                // Platform Buttons: [ ALL ] [ CURSEFORGE ]
+                val platforms = listOf<Platform?>(null, Platform.CURSEFORGE)
                 platforms.forEach { p ->
                     val isSel = viewModel.platformFilter == p
                     Box(

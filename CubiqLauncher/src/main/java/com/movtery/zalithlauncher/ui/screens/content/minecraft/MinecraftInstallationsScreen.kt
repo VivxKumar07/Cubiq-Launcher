@@ -64,6 +64,12 @@ import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.navigateToDownload
 import com.movtery.zalithlauncher.ui.screens.navigateTo
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.runtime.mutableIntStateOf
+import coil3.compose.AsyncImage
+import java.io.File
+import com.movtery.zalithlauncher.BuildKeys
+import com.movtery.zalithlauncher.game.path.getVersionsHome
 import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
 import org.apache.commons.io.FileUtils
 
@@ -84,6 +90,7 @@ fun MinecraftInstallationsScreen(
     var filterModded by remember { mutableStateOf(true) }
 
     var showNewInstallationDialog by remember { mutableStateOf(false) }
+    var createdInstallationName by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -250,14 +257,16 @@ fun MinecraftInstallationsScreen(
                 items(filtered) { ver ->
                     val isSelected = currentVersion?.getVersionName() == ver.getVersionName()
                     val isModded = ver.getVersionInfo()?.loaderInfo?.loader?.isLoader == true
+                    val customIconFile = ver.getVersionIconFile()
                     val blockIcon = when {
                         isModded -> R.drawable.img_diamond_block
                         ver.getVersionName().contains("snapshot", ignoreCase = true) -> R.drawable.img_command_block
-                        else -> R.drawable.img_minecraft
+                        else -> R.drawable.img_old_grass_block
                     }
 
                     InstallationCardItem(
                         iconRes = blockIcon,
+                        iconFile = if (customIconFile.exists()) customIconFile else null,
                         name = ver.getVersionName(),
                         versionTag = if (isModded) "${ver.getVersionName()} • Modded" else "${ver.getVersionName()} • Official Release",
                         isCurrent = isSelected,
@@ -286,21 +295,57 @@ fun MinecraftInstallationsScreen(
             NewInstallationDialog(
                 latestVersion = latestReleaseVersion,
                 onDismiss = { showNewInstallationDialog = false },
-                onCreate = { name, version, loader ->
+                onCreate = { name, version, loader, iconRes ->
                     showNewInstallationDialog = false
+                    saveIconToVersion(context, name, iconRes)
+                    saveIconToVersion(context, version, iconRes)
+                    createdInstallationName = name
+
                     // Look for existing installed version
                     val existing = allVersions.find { it.getVersionName().equals(name, ignoreCase = true) || it.getVersionName().equals(version, ignoreCase = true) }
                     if (existing != null) {
                         VersionsManager.saveVersion(existing)
-                        Toast.makeText(context, "Selected installation: ${existing.getVersionName()}", Toast.LENGTH_SHORT).show()
                     } else {
                         // Launch downloader directly for this version
                         backStackViewModel.downloadGameScreen.navigateTo(
                             NormalNavKey.DownloadGame.Addons(version)
                         )
                         backStackViewModel.navigateToDownload(backStackViewModel.downloadGameScreen)
-                        Toast.makeText(context, "Opening installer for $version ($loader)", Toast.LENGTH_SHORT).show()
                     }
+                }
+            )
+        }
+
+        // Cubiq Installation Success Dialog
+        createdInstallationName?.let { installedName ->
+            AlertDialog(
+                onDismissRequest = { createdInstallationName = null },
+                containerColor = Color(0xFF1E1E20),
+                title = {
+                    Text(
+                        text = "INSTALLATION READY",
+                        color = Color(0xFF55FF55),
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Installation '$installedName' is configured and ready to play or download!",
+                        color = Color.White,
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 12.sp
+                    )
+                },
+                confirmButton = {
+                    MinecraftButton(
+                        onClick = { createdInstallationName = null },
+                        style = MinecraftButtonStyle.GREEN,
+                        text = "OK",
+                        fontSize = 12.sp,
+                        modifier = Modifier.width(80.dp).height(36.dp)
+                    )
                 }
             )
         }
@@ -340,6 +385,7 @@ private fun InstallationFilterCheckbox(
 @Composable
 private fun InstallationCardItem(
     iconRes: Int,
+    iconFile: File? = null,
     name: String,
     versionTag: String,
     isCurrent: Boolean,
@@ -366,11 +412,19 @@ private fun InstallationCardItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Block Icon
-        Image(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            modifier = Modifier.size(36.dp)
-        )
+        if (iconFile != null && iconFile.exists()) {
+            AsyncImage(
+                model = iconFile,
+                contentDescription = null,
+                modifier = Modifier.size(36.dp)
+            )
+        } else {
+            Image(
+                painter = painterResource(iconRes),
+                contentDescription = null,
+                modifier = Modifier.size(36.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.width(12.dp))
 
@@ -494,14 +548,29 @@ private fun InstallationCardItem(
 private fun NewInstallationDialog(
     latestVersion: String,
     onDismiss: () -> Unit,
-    onCreate: (name: String, version: String, loader: String) -> Unit
+    onCreate: (name: String, version: String, loader: String, iconRes: Int) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var selectedVersion by remember { mutableStateOf(if (latestVersion.isNotBlank()) latestVersion else "1.21.4") }
     var selectedLoader by remember { mutableStateOf("Vanilla") }
+    var selectedIconRes by remember { mutableIntStateOf(R.drawable.img_old_grass_block) }
     var showVersionPicker by remember { mutableStateOf(false) }
     var versionSearchQuery by remember { mutableStateOf("") }
     var filterOnlyReleases by remember { mutableStateOf(true) }
+
+    val blockIcons = remember {
+        listOf(
+            Pair("Grass", R.drawable.img_old_grass_block),
+            Pair("Crafting", R.drawable.img_crafting_table),
+            Pair("Furnace", R.drawable.img_furnace),
+            Pair("Chest", R.drawable.img_chest),
+            Pair("Diamond", R.drawable.img_diamond_block),
+            Pair("Obsidian", R.drawable.img_obsidian),
+            Pair("TNT", R.drawable.img_tnt),
+            Pair("Pickaxe", R.drawable.img_diamond_pickaxe),
+            Pair("Sword", R.drawable.img_diamond_sword)
+        )
+    }
 
     var allManifestVersions by remember {
         mutableStateOf<List<com.movtery.zalithlauncher.game.versioninfo.models.VersionManifest.Version>>(emptyList())
@@ -558,7 +627,46 @@ private fun NewInstallationDialog(
                     .verticalScroll(androidx.compose.foundation.rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Name
+                // 1. Icon Selection Grid
+                Text(
+                    text = "INSTALLATION ICON",
+                    color = Color(0xFFAAAAAA),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 11.sp
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    blockIcons.forEach { (iconName, resId) ->
+                        val isSelected = selectedIconRes == resId
+                        Box(
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(if (isSelected) Color(0xFF2E4C22) else Color(0xFF262628))
+                                .border(
+                                    BorderStroke(
+                                        if (isSelected) 2.dp else 1.dp,
+                                        if (isSelected) Color(0xFF55FF55) else Color(0xFF383838)
+                                    ),
+                                    RoundedCornerShape(3.dp)
+                                )
+                                .clickable { selectedIconRes = resId },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(resId),
+                                contentDescription = iconName,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                }
+
+                // 2. Name
                 Text(
                     text = "INSTALLATION NAME",
                     color = Color(0xFFAAAAAA),
@@ -588,7 +696,7 @@ private fun NewInstallationDialog(
                     )
                 )
 
-                // Version Picker Selector
+                // 3. Version Picker Selector
                 Text(
                     text = "MINECRAFT VERSION",
                     color = Color(0xFFAAAAAA),
@@ -731,7 +839,7 @@ private fun NewInstallationDialog(
                     }
                 }
 
-                // Mod Loader
+                // 4. Mod Loader
                 Text(
                     text = "MOD LOADER",
                     color = Color(0xFFAAAAAA),
@@ -777,7 +885,7 @@ private fun NewInstallationDialog(
             MinecraftButton(
                 onClick = {
                     val finalName = if (name.isBlank()) "$selectedVersion $selectedLoader" else name
-                    onCreate(finalName, selectedVersion, selectedLoader)
+                    onCreate(finalName, selectedVersion, selectedLoader, selectedIconRes)
                 },
                 style = MinecraftButtonStyle.GREEN,
                 text = "INSTALL",
@@ -800,3 +908,26 @@ private fun NewInstallationDialog(
         }
     )
 }
+
+/**
+ * Saves a chosen Minecraft block icon directly into the version's launcher folder as VersionIcon.png.
+ */
+fun saveIconToVersion(context: android.content.Context, versionName: String, iconRes: Int) {
+    runCatching {
+        val versionFolder = File(getVersionsHome(), versionName)
+        val iconFolder = File(versionFolder, BuildKeys.LAUNCHER_IDENTIFIER)
+        if (!iconFolder.exists()) iconFolder.mkdirs()
+        val iconFile = File(iconFolder, "VersionIcon.png")
+        val bitmap = android.graphics.BitmapFactory.decodeResource(context.resources, iconRes)
+        if (bitmap != null) {
+            val out = java.io.FileOutputStream(iconFile)
+            try {
+                bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
+                out.flush()
+            } finally {
+                out.close()
+            }
+        }
+    }
+}
+

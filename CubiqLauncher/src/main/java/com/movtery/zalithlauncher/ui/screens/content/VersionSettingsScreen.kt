@@ -37,6 +37,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.foundation.background
+import androidx.compose.material3.NavigationRailItemDefaults
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRailItem
@@ -237,7 +243,11 @@ fun VersionSettingsScreen(
         screenKey = key,
         currentKey = backScreenViewModel.mainScreen.currentKey
     ) { isVisible ->
-        Row(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFF141414))
+        ) {
             val loaderInfo = remember(key) {
                 key.version.getVersionInfo()?.loaderInfo
             }
@@ -248,7 +258,9 @@ fun VersionSettingsScreen(
                 versionsScreenKey = key.currentKey,
                 canUpdateLoader = loaderInfo == null || loaderInfo.loader.autoDownloadable,
                 isUpdateLoader = loaderInfo != null && loaderInfo.loader.autoDownloadable,
-                modifier = Modifier.fillMaxHeight()
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .background(Color(0xFF18181A))
             )
 
             NavigationUI(
@@ -324,8 +336,9 @@ private fun TabMenu(
                 )
             }
 
+            val isSelected = versionsScreenKey === item.key
             NavigationRailItem(
-                selected = versionsScreenKey === item.key,
+                selected = isSelected,
                 onClick = {
                     if (item.key == NormalNavKey.Versions.UpdateLoader) {
                         if (isUpdateLoader) {
@@ -339,6 +352,13 @@ private fun TabMenu(
                 icon = {
                     item.icon()
                 },
+                colors = NavigationRailItemDefaults.colors(
+                    selectedIconColor = Color.White,
+                    selectedTextColor = Color(0xFF55FF55),
+                    indicatorColor = Color(0xFF3C8527),
+                    unselectedIconColor = Color(0xFFAAAAAA),
+                    unselectedTextColor = Color(0xFF888888)
+                ),
                 label = {
                     val text = if (item.key == NormalNavKey.Versions.UpdateLoader) {
                         if (isUpdateLoader) {
@@ -355,7 +375,9 @@ private fun TabMenu(
                         modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
                         text = text,
                         maxLines = 1,
-                        style = MaterialTheme.typography.labelMedium
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 10.5.sp,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                     )
                 }
             )

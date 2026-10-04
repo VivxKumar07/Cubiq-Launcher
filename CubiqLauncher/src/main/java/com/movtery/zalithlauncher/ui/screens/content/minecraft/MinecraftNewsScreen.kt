@@ -58,7 +58,7 @@ fun MinecraftNewsScreen(
             OfficialNewsItem(
                 title = "Minecraft Java Edition Latest Updates & Features",
                 category = "MINECRAFT JAVA EDITION",
-                imageUrl = "https://launchercontent.mojang.com/v2/images/dappledcamp540x540.jpg",
+                imageUrl = "https://launchercontent.mojang.com/v2/images/1-21-patchnotes.jpg",
                 readMoreUrl = "https://www.minecraft.net/en-us/article"
             ),
             OfficialNewsItem(

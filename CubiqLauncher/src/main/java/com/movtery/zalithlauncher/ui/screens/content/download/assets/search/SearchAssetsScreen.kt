@@ -432,44 +432,14 @@ fun SearchAssetsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        val isModrinth = viewModel.searchPlatform == Platform.MODRINTH
                         Box(
                             modifier = Modifier
-                                .weight(1f)
+                                .fillMaxWidth()
                                 .height(28.dp)
                                 .clip(RoundedCornerShape(2.dp))
-                                .background(if (isModrinth) Color(0xFF3C8527) else Color(0xFF262628))
+                                .background(Color(0xFF3C8527))
                                 .border(
-                                    BorderStroke(1.dp, if (isModrinth) Color(0xFF55FF55) else Color(0xFF383838)),
-                                    RoundedCornerShape(2.dp)
-                                )
-                                .clickable {
-                                    viewModel.searchPlatform = Platform.MODRINTH
-                                    viewModel.researchWithFilter(
-                                        viewModel.searchFilter.copy(categories = emptyList(), modloader = null)
-                                    )
-                                    onPlatformChange(Platform.MODRINTH)
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "MODRINTH",
-                                color = Color.White,
-                                fontFamily = MinecraftFontFamily,
-                                fontWeight = if (isModrinth) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 10.5.sp
-                            )
-                        }
-
-                        val isCurse = viewModel.searchPlatform == Platform.CURSEFORGE
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(28.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(if (isCurse) Color(0xFF3C8527) else Color(0xFF262628))
-                                .border(
-                                    BorderStroke(1.dp, if (isCurse) Color(0xFF55FF55) else Color(0xFF383838)),
+                                    BorderStroke(1.dp, Color(0xFF55FF55)),
                                     RoundedCornerShape(2.dp)
                                 )
                                 .clickable {
@@ -485,7 +455,7 @@ fun SearchAssetsScreen(
                                 text = "CURSEFORGE",
                                 color = Color.White,
                                 fontFamily = MinecraftFontFamily,
-                                fontWeight = if (isCurse) FontWeight.Bold else FontWeight.Normal,
+                                fontWeight = FontWeight.Bold,
                                 fontSize = 10.5.sp
                             )
                         }

@@ -14,13 +14,8 @@
             ]
         },
         "author": {
-            "default": "MovTery",
-            "matchQueue": [
-                {
-                    "language_tag": "zh",
-                    "value": "墨北MovTery"
-                }
-            ]
+            "default": "Cubiq Team",
+            "matchQueue": []
         },
         "description": {
             "default": "",
@@ -120,7 +115,7 @@
                 },
                 {
                     "text": {
-                        "default": "E",
+                        "default": "INV",
                         "matchQueue": []
                     },
                     "uuid": "9743e67ed3be4b8bbd",
@@ -275,17 +270,8 @@
                 },
                 {
                     "text": {
-                        "default": "IME",
-                        "matchQueue": [
-                            {
-                                "language_tag": "zh",
-                                "value": "輸入法"
-                            },
-                            {
-                                "language_tag": "zh-CN",
-                                "value": "输入法"
-                            }
-                        ]
+                        "default": "KEY",
+                        "matchQueue": []
                     },
                     "uuid": "bd02bca5cd894f0da5",
                     "position": {
@@ -323,7 +309,7 @@
             "normalButtons": [
                 {
                     "text": {
-                        "default": "Ctrl",
+                        "default": "SPRINT",
                         "matchQueue": []
                     },
                     "uuid": "7cbfd1caa467471fb4",
@@ -393,17 +379,8 @@
             "normalButtons": [
                 {
                     "text": {
-                        "default": "PRI",
-                        "matchQueue": [
-                            {
-                                "language_tag": "zh",
-                                "value": "左鍵"
-                            },
-                            {
-                                "language_tag": "zh-CN",
-                                "value": "左键"
-                            }
-                        ]
+                        "default": "ATTACK",
+                        "matchQueue": []
                     },
                     "uuid": "90dd63546ff14a92be",
                     "position": {
@@ -433,17 +410,8 @@
                 },
                 {
                     "text": {
-                        "default": "SEC",
-                        "matchQueue": [
-                            {
-                                "language_tag": "zh",
-                                "value": "右鍵"
-                            },
-                            {
-                                "language_tag": "zh-CN",
-                                "value": "右键"
-                            }
-                        ]
+                        "default": "USE",
+                        "matchQueue": []
                     },
                     "uuid": "96e156843d754adda4",
                     "position": {
@@ -473,7 +441,7 @@
                 },
                 {
                     "text": {
-                        "default": "□",
+                        "default": "SNEAK",
                         "matchQueue": []
                     },
                     "uuid": "53bea7b9f6974f6b9a",
@@ -504,7 +472,7 @@
                 },
                 {
                     "text": {
-                        "default": "■",
+                        "default": "JUMP",
                         "matchQueue": []
                     },
                     "uuid": "ece30bbe48204713ae",
