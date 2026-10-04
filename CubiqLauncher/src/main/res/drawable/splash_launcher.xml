@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Cubiq Launcher
+  ~ Splash Screen Icon Drawable
+  ~ The Android SplashScreen API crops the animated icon to a circle.
+  ~ The inner ~2/3 of the icon bounds are visible, so keep the logo smaller.
+  -->
+
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/ic_launcher_background" />
+    <item
+        android:drawable="@drawable/img_cubiq_emblem"
+        android:width="88dp"
+        android:height="88dp"
+        android:gravity="center"/>
+</layer-list>

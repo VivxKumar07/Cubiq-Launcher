@@ -1,0 +1,13 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Microchip for JNA and native libraries -->
+    <path
+        android:fillColor="#FFAA00"
+        android:pathData="M9,3 L7,3 L7,5 L5,5 C3.9,5 3,5.9 3,7 L3,9 L1,9 L1,11 L3,11 L3,13 L1,13 L1,15 L3,15 L3,17 C3,18.1 3.9,19 5,19 L7,19 L7,21 L9,21 L9,19 L11,19 L11,21 L13,21 L13,19 L15,19 L15,21 L17,21 L17,19 L19,19 C20.1,19 21,18.1 21,17 L21,15 L23,15 L23,13 L21,13 L21,11 L23,11 L23,9 L21,9 L21,7 C21,5.9 20.1,5 19,5 L17,5 L17,3 L15,3 L15,5 L13,5 L13,3 L11,3 L11,5 L9,5 L9,3 Z M19,17 L5,17 L5,7 L19,7 L19,17 Z" />
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M7,9 L17,9 L17,15 L7,15 Z" />
+</vector>

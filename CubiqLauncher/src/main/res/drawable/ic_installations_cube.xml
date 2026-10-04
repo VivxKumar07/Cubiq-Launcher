@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Isometric Cube Top -->
+    <path
+        android:fillColor="#72B555"
+        android:pathData="M12,2 L21,7 L12,12 L3,7 Z"/>
+    <!-- Isometric Cube Left Side -->
+    <path
+        android:fillColor="#4D8C35"
+        android:pathData="M3,7 L12,12 L12,21 L3,16 Z"/>
+    <!-- Isometric Cube Right Side -->
+    <path
+        android:fillColor="#3A6E26"
+        android:pathData="M12,12 L21,7 L21,16 L12,21 Z"/>
+    <!-- Arrow pointing down on top/front -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M11,4 L13,4 L13,8 L15,8 L12,11 L9,8 L11,8 Z"/>
+</vector>

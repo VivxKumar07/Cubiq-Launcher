@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Pickaxe handle -->
+    <path
+        android:fillColor="#8D5524"
+        android:pathData="M5,19 L13,11 L14,12 L6,20 Z" />
+    <path
+        android:fillColor="#5A3414"
+        android:pathData="M4,20 L5,19 L6,20 L5,21 Z" />
+    <!-- Diamond Pickaxe Head -->
+    <path
+        android:fillColor="#49E2D6"
+        android:pathData="M13,6 L17,2 L21,6 L17,10 L16,9 L18,7 L16,5 L14,7 Z" />
+    <path
+        android:fillColor="#2EB5D6"
+        android:pathData="M10,9 L13,6 L14,7 L11,10 Z" />
+    <path
+        android:fillColor="#2EB5D6"
+        android:pathData="M14,13 L17,10 L18,11 L15,14 Z" />
+</vector>

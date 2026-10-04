@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Paper background -->
+    <path
+        android:fillColor="#EDEDED"
+        android:pathData="M5,3 L19,3 L19,21 L5,21 Z" />
+    <!-- Paper outline -->
+    <path
+        android:fillColor="#222222"
+        android:pathData="M4,2 L20,2 L20,22 L4,22 Z M6,4 L18,4 L18,20 L6,20 Z" />
+    <!-- Green Accent / Dot -->
+    <path
+        android:fillColor="#4ADE28"
+        android:pathData="M8,6 L11,6 L11,9 L8,9 Z" />
+    <!-- News lines -->
+    <path
+        android:fillColor="#555555"
+        android:pathData="M13,6 L16,6 L16,7 L13,7 Z M13,8 L16,8 L16,9 L13,9 Z M8,11 L16,11 L16,12 L8,12 Z M8,14 L16,14 L16,15 L8,15 Z M8,17 L14,17 L14,18 L8,18 Z" />
+</vector>

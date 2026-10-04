@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="8"
+    android:viewportHeight="8">
+    <!-- Hair -->
+    <path android:fillColor="#452718" android:pathData="M0,0 h8 v2 h-8 Z M0,2 h1 v1 h-1 Z M7,2 h1 v1 h-1 Z M2,2 h4 v1 h-4 Z" />
+    <!-- Skin -->
+    <path android:fillColor="#B77E57" android:pathData="M1,2 h1 v1 h-1 Z M6,2 h1 v1 h-1 Z M0,3 h8 v2 h-8 Z M1,5 h6 v1 h-6 Z M0,6 h1 v1 h-1 Z M7,6 h1 v1 h-1 Z M0,7 h2 v1 h-2 Z M6,7 h2 v1 h-2 Z" />
+    <!-- Eyes White -->
+    <path android:fillColor="#FFFFFF" android:pathData="M1,3 h2 v1 h-2 Z M5,3 h2 v1 h-2 Z" />
+    <!-- Pupils Blue -->
+    <path android:fillColor="#2C3599" android:pathData="M2,3 h1 v1 h-1 Z M5,3 h1 v1 h-1 Z" />
+    <!-- Nose -->
+    <path android:fillColor="#8C5C38" android:pathData="M3,4 h2 v1 h-2 Z" />
+    <!-- Mouth / Beard -->
+    <path android:fillColor="#452718" android:pathData="M2,5 h4 v1 h-4 Z M2,6 h1 v1 h-1 Z M5,6 h1 v1 h-1 Z M2,7 h4 v1 h-4 Z" />
+</vector>

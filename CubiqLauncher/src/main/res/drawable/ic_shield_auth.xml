@@ -1,0 +1,17 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Security Shield for authlib -->
+    <path
+        android:fillColor="#3C8527"
+        android:pathData="M12,2 L4,5 L4,11 C4,16.5 7.4,21.6 12,23 C16.6,21.6 20,16.5 20,11 L20,5 L12,2 Z" />
+    <path
+        android:fillColor="#55FF55"
+        android:pathData="M12,4 L18,6.3 L18,11 C18,15.2 15.5,19.2 12,20.6 C8.5,19.2 6,15.2 6,11 L6,6.3 L12,4 Z" />
+    <!-- Center Keyhole -->
+    <path
+        android:fillColor="#1B4D12"
+        android:pathData="M12,8 C10.9,8 10,8.9 10,10 C10,10.8 10.5,11.4 11.2,11.8 L11,15 L13,15 L12.8,11.8 C13.5,11.4 14,10.8 14,10 C14,8.9 13.1,8 12,8 Z" />
+</vector>
