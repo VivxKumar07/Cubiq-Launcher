@@ -94,7 +94,7 @@ fun Account.accountTypePriority(): Int {
     }
 }
 
-private const val MICROSOFT_LOGGING_TASK = "microsoft_logging_task"
+const val MICROSOFT_LOGGING_TASK = "microsoft_logging_task"
 
 /**
  * 检查当前微软账号登陆是否正在进行中
@@ -109,8 +109,14 @@ fun microsoftLogin(
     updateOperation: (MicrosoftLoginOperation) -> Unit,
     showToast: (AndroidStringText, duration: Int) -> Unit,
     submitError: (ErrorViewModel.ThrowableMessage) -> Unit,
-    onSuccess: () -> Unit = {}
+    onSuccess: () -> Unit = {},
+    onDeviceCode: ((com.movtery.zalithlauncher.game.account.microsoft.models.DeviceCodeResponse) -> Unit)? = null
 ) {
+    val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    fun runOnMain(block: () -> Unit) {
+        mainHandler.post(block)
+    }
+
     val task = Task.runTask(
         id = MICROSOFT_LOGGING_TASK,
         dispatcher = Dispatchers.IO,
@@ -120,28 +126,32 @@ fun microsoftLogin(
             task.updateMessage(androidText(R.string.account_microsoft_fetch_device_code))
             val deviceCode = fetchDeviceCodeResponse(coroutineContext)
             Logger.debug(TAG, "Device code received, verification url: ${deviceCode.verificationUrl}, expires in ${deviceCode.expiresIn}s")
-            copyText(COPY_LABEL_DEVICE_CODE, deviceCode.userCode, context, false)
-            showToast(
-                androidText(R.string.account_microsoft_coped_device_code, deviceCode.userCode),
-                Toast.LENGTH_SHORT
-            )
-            toWeb(deviceCode.verificationUrl)
+            runOnMain {
+                copyText(COPY_LABEL_DEVICE_CODE, deviceCode.userCode, context, false)
+                onDeviceCode?.invoke(deviceCode)
+                showToast(
+                    androidText(R.string.account_microsoft_coped_device_code, deviceCode.userCode),
+                    Toast.LENGTH_SHORT
+                )
+                toWeb(deviceCode.verificationUrl)
+            }
             task.updateProgress(-1f)
             task.updateMessage(androidText(R.string.account_microsoft_get_token, deviceCode.userCode))
             val tokenResponse = getTokenResponse(deviceCode, coroutineContext) { time ->
                 (!checkIfInWebScreen()).also { exit ->
                     if (exit && time > 0) {
                         //如果已退出网页，则视为用户想要退出登录
-                        //弹出提示
                         Logger.debug(TAG, "User left the web page during device code polling")
-                        showToast(
-                            androidText(R.string.account_microsoft_exit_by_user),
-                            Toast.LENGTH_LONG
-                        )
+                        runOnMain {
+                            showToast(
+                                androidText(R.string.account_microsoft_exit_by_user),
+                                Toast.LENGTH_LONG
+                            )
+                        }
                     }
                 }
             }
-            backToMain()
+            runOnMain { backToMain() }
             val account = microsoftAuth(
                 AuthType.Access,
                 tokenResponse.refreshToken,
@@ -155,13 +165,13 @@ fun microsoftLogin(
             AccountsManager.saveAccount(account)
             AccountsManager.markSessionValidated(account)
             Logger.info(TAG, "Microsoft account login successful: ${account.username}")
-            onSuccess()
+            runOnMain { onSuccess() }
         },
         onError = { th ->
             if (th !is CancellationException) {
                 Logger.error(TAG, "Microsoft account login failed", th)
             }
-            when (th) {
+            val errMessage = when (th) {
                 is HttpRequestTimeoutException -> androidText(R.string.account_logging_time_out)
                 is NotPurchasedMinecraftException -> toLocal()
                 is MinecraftProfileException -> th.toLocal()
@@ -175,17 +185,22 @@ fun microsoftLogin(
                         th.localizedMessage ?: th.message ?: th::class.qualifiedName ?: "Unknown error"
                     )
                 }
-            }?.let { message ->
-                submitError(
-                    ErrorViewModel.ThrowableMessage(
-                        title = androidText(R.string.account_logging_in_failed),
-                        message = message
+            }
+            if (errMessage != null) {
+                runOnMain {
+                    submitError(
+                        ErrorViewModel.ThrowableMessage(
+                            title = androidText(R.string.account_logging_in_failed),
+                            message = errMessage
+                        )
                     )
-                )
+                }
             }
         },
         onFinally = {
-            updateOperation(MicrosoftLoginOperation.None)
+            runOnMain {
+                updateOperation(MicrosoftLoginOperation.None)
+            }
         }
     )
 

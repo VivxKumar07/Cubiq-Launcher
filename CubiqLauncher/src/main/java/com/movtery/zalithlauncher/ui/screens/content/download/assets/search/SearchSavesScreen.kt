@@ -41,7 +41,7 @@ fun SearchSavesScreen(
         currentKey = downloadSavesScreenCurrentKey,
         platformClasses = PlatformClasses.SAVES,
         initialPlatform = Platform.CURSEFORGE,
-        enablePlatform = true,
+        enablePlatform = false,
         getCategories = { platform ->
             when (platform) {
                 Platform.CURSEFORGE -> CurseForgeSavesCategory.entries

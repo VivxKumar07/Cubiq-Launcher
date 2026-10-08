@@ -911,51 +911,51 @@
             "animateSwap": false,
             "commonStyle": false,
             "lightStyle": {
-                "alpha": 1.0,
-                "pressedAlpha": 1.0,
-                "backgroundColor": 2147483648,
-                "pressedBackgroundColor": 3012069512,
+                "alpha": 0.85,
+                "pressedAlpha": 0.95,
+                "backgroundColor": 1879048192,
+                "pressedBackgroundColor": 2684354560,
                 "contentColor": 4294967295,
                 "pressedContentColor": 4294967295,
-                "borderWidth": 0,
-                "pressedBorderWidth": 0,
-                "borderColor": 4294967295,
-                "pressedBorderColor": 4294967295,
+                "borderWidth": 1,
+                "pressedBorderWidth": 1,
+                "borderColor": 1073741824,
+                "pressedBorderColor": 2147483648,
                 "borderRadius": {
-                    "topStart": 0.0,
-                    "topEnd": 0.0,
-                    "bottomEnd": 0.0,
-                    "bottomStart": 0.0
+                    "topStart": 16.0,
+                    "topEnd": 16.0,
+                    "bottomEnd": 16.0,
+                    "bottomStart": 16.0
                 },
                 "pressedBorderRadius": {
-                    "topStart": 0.0,
-                    "topEnd": 0.0,
-                    "bottomEnd": 0.0,
-                    "bottomStart": 0.0
+                    "topStart": 16.0,
+                    "topEnd": 16.0,
+                    "bottomEnd": 16.0,
+                    "bottomStart": 16.0
                 }
             },
             "darkStyle": {
-                "alpha": 1.0,
-                "pressedAlpha": 1.0,
-                "backgroundColor": 2147483648,
-                "pressedBackgroundColor": 3012069512,
+                "alpha": 0.85,
+                "pressedAlpha": 0.95,
+                "backgroundColor": 1879048192,
+                "pressedBackgroundColor": 2684354560,
                 "contentColor": 4294967295,
                 "pressedContentColor": 4294967295,
-                "borderWidth": 0,
-                "pressedBorderWidth": 0,
-                "borderColor": 4294967295,
-                "pressedBorderColor": 4294967295,
+                "borderWidth": 1,
+                "pressedBorderWidth": 1,
+                "borderColor": 1073741824,
+                "pressedBorderColor": 2147483648,
                 "borderRadius": {
-                    "topStart": 0.0,
-                    "topEnd": 0.0,
-                    "bottomEnd": 0.0,
-                    "bottomStart": 0.0
+                    "topStart": 16.0,
+                    "topEnd": 16.0,
+                    "bottomEnd": 16.0,
+                    "bottomStart": 16.0
                 },
                 "pressedBorderRadius": {
-                    "topStart": 0.0,
-                    "topEnd": 0.0,
-                    "bottomEnd": 0.0,
-                    "bottomStart": 0.0
+                    "topStart": 16.0,
+                    "topEnd": 16.0,
+                    "bottomEnd": 16.0,
+                    "bottomStart": 16.0
                 }
             }
         }

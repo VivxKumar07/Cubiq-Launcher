@@ -1,78 +1,58 @@
-name: BUG Report / BUG 反馈
-description: 'Report a bug / 反馈一个 Bug'
+name: Bug Report
+description: 'Report an issue or crash with Cubiq Launcher'
 labels: [Bug]
 body:
   - type: dropdown
     id: issue-type
     attributes:
-      label: Issue Type / 问题类型
+      label: Issue Type
       description: |
-        The type of the current crash will be displayed at the top of the action bar on the right side of the crash page.  
-        崩溃页面右侧操作栏顶部会显示本次的崩溃类型。
+        Select whether this crash or issue is in the Launcher UI or during Minecraft gameplay.
       options:
-        - 'Game Problem / 游戏问题'
-        - 'Launcher Problem / 启动器问题'
+        - 'Game Problem / Gameplay Crash'
+        - 'Launcher Problem / UI Crash'
     validations:
       required: true
 
   - type: textarea
     id: description
     attributes:
-      label: Issue Description / 问题描述
+      label: Issue Description
       description: |
-        Clearly and in detail describe the issue you encountered.  
-        清晰，详细地描述出您所遇到的问题。
+        Clearly and in detail describe the issue you encountered.
     validations:
       required: true
 
   - type: textarea
     id: log
     attributes:
-      label: Log File / 日志文件
+      label: Log File
       description: |
-        The crash page of the launcher will have a "Share Logs" button. Please upload the log provided by the launcher here.  
-        If your issue is related to a "Launcher Crash", you can find the "Share Launcher Logs" option in the launcher settings. Please upload the log archive provided by the launcher here.  
-        If your issue is related to a "Game Crash":  
-        < 2.4.3  
-        You can use a file manager to navigate to ZL2's public directory and locate the "latest_game.log" file.  
-        \>= 2.4.3  
-        You can find the "Running Log" button in the version overview page, click it to open the log menu, and then share it.  
-        **Please do not upload the game's own logs here, as the information they record is not comprehensive!**  
-        
-        ---
-        
-        启动器的崩溃页面会有“分享日志”按钮，请将启动器给出的日志上传在这里；  
-        如果您的问题属于“启动器崩溃”，您可以在启动器设置内找到“分享启动器日志”选项，请将启动器给出的日志压缩包上传在这里；  
-        如果您的问题属于“游戏运行崩溃”：  
-        < 2.4.3  
-        您可以在文件管理器软件内进入 ZL2 的公有目录，找到 “latest_game.log” 文件。  
-        \>= 2.4.3  
-        您可以在版本概览中，找到“运行日志”按钮，点击打开日志菜单，即可分享。  
-        **请不要在此处上传游戏自己的日志，它记录的信息并不全面！**
+        Please paste or upload the log file:
+        - For Launcher Crashes: Go to Launcher Settings -> Share Launcher Logs.
+        - For Game Crashes: Check the version overview Running Log or latest_game.log.
     validations:
       required: true
 
   - type: textarea
     id: screenshots
     attributes:
-      label: Screenshots or Videos / 截图或视频
+      label: Screenshots or Videos
       description: |
-        Upload screenshots or videos from the most recent occurrence of the issue. This may help me identify the problem faster.  
-        上传最近一次遇到此问题的截图或者视频，可能会帮助我更快的确定问题。
+        Upload screenshots or screen recordings showing the issue.
     validations:
       required: false
 
   - type: textarea
     id: repetition
     attributes:
-      label: Reproduction Steps / 复现步骤
+      label: Reproduction Steps
       description: |
-        Steps to reproduce the issue. Please be as detailed as possible to help me quickly locate the problem.  
-        复现问题的步骤，请尽量详细一些，方便我快速定位问题。
+        Step-by-step instructions to reproduce the problem.
       placeholder: |
-        1. xxx
-        2. xxx
-        ... *(steps to reproduce the issue / 复现问题的一些操作)*
+        1. Open Cubiq Launcher
+        2. Select installation X
+        3. Click Play / Settings
       render: markdown
     validations:
       required: false
@@ -80,10 +60,9 @@ body:
   - type: dropdown
     id: android-version
     attributes:
-      label: Android Version / Android 版本
+      label: Android Version
       description: |
-        ZL2 does not support running on devices with Android 7 or lower!  
-        ZL2 不支持运行在 Android 7 或更低版本的设备上！
+        Cubiq Launcher supports Android 8.0 (API 26) and above.
       options:
         - '16'
         - '15'
@@ -100,23 +79,19 @@ body:
   - type: input
     id: launcher-info
     attributes:
-      label: Launcher Version / 启动器版本
+      label: Launcher Version
       description: |
-        Provide the version number of the launcher. This can be found on the launcher’s About page. If you are using a test build from Actions, please indicate this.  
-        提供启动器的版本号，可以在启动器的关于页面找到，如果使用的是来自 Actions 的测试构建版本，请说明。  
-        **Please provide the specific version number instead of vague terms like "latest version."**  
-        **请提供具体的版本号，而不是“最新版”之类的模糊说辞。**
-      placeholder: 2.3.3
+        Provide the version number of Cubiq Launcher (e.g. 2.6.1).
+      placeholder: 2.6.1
     validations:
       required: true
 
   - type: input
     id: device-info
     attributes:
-      label: Device Information / 设备信息
+      label: Device Information
       description: |
-        Providing detailed information about the device will help me troubleshoot the issue.  
-        提供设备的详细信息，有助于我排查问题。
-      placeholder: Android 11, arm64
+        Provide your device model, SoC, GPU, and architecture (e.g. Samsung S23, Snapdragon 8 Gen 2, 12GB RAM, arm64-v8a).
+      placeholder: Samsung Galaxy S23, Snapdragon 8 Gen 2, arm64
     validations:
       required: true

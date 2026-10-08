@@ -1,39 +1,36 @@
-name: Feature Request / 功能请求
-description: 'Submit a Feature Request / 提交一个功能请求'
+name: Feature Request
+description: 'Suggest an idea or enhancement for Cubiq Launcher'
 labels: [enhancement]
 body:
   - type: dropdown
     id: feature-type
     attributes:
-      label: Feature Type / 功能类型
+      label: Feature Category
       description: |
-        Which type does this feature belong to? This helps developers plan and categorize it.  
-        该功能属于以下哪种类型，便于开发者计划分类。
+        Which area of the launcher does this feature apply to?
       options:
-        - 'In-Game / 游戏内'
-        - 'Launcher Appearance / 启动器外观'
-        - 'Launcher Settings / 启动器设置'
-        - 'New Feature / 新功能'
-        - 'Feature Enhancement / 功能补充'
+        - 'In-Game / Gameplay & Controls'
+        - 'Launcher UI & Visual Aesthetics'
+        - 'Launcher Settings & JVM/Renderer'
+        - 'Version & Mod Management'
+        - 'New Feature / Capability'
     validations:
       required: true
 
   - type: textarea
     id: description
     attributes:
-      label: Detailed Description / 详细描述
+      label: Feature Description
       description: |
-        Clearly and thoroughly describe your feature request.  
-        清晰，详细地描述出您的功能请求。
+        Clearly and thoroughly describe your proposed feature or enhancement.
     validations:
       required: true
 
   - type: textarea
     id: screenshots
     attributes:
-      label: Screenshots or Videos / 截图或视频
+      label: Mockups, Screenshots, or References
       description: |
-        If necessary, you can upload screenshots or videos.  
-        必要的话，您可以上传截图、视频。
+        If applicable, attach mockups, sketches, or video references.
     validations:
       required: false

@@ -123,9 +123,10 @@ fun MinecraftSkinsScreen(
         }
     }
 
-    val displaySkinUrl = remember(selectedPreset, account, activeSkinFile) {
+    val displaySkinModel: Any = remember(selectedPreset, account, activeSkinFile, refreshWardrobe) {
         when {
             selectedPreset != "Current" -> "https://mc-heads.net/body/$selectedPreset/400.png"
+            activeSkinFile != null && activeSkinFile.exists() -> activeSkinFile
             account != null && account.username.isNotBlank() -> "https://mc-heads.net/body/${account.username}/400.png"
             else -> "https://mc-heads.net/body/Steve/400.png"
         }
@@ -190,7 +191,7 @@ fun MinecraftSkinsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         AsyncImage(
-                            model = displaySkinUrl,
+                            model = displaySkinModel,
                             contentDescription = "Minecraft Player Skin",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Fit
@@ -200,7 +201,7 @@ fun MinecraftSkinsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = if (selectedPreset == "Current") (account?.username ?: "Player") else selectedPreset,
+                        text = if (selectedPreset == "Current") (account?.username ?: "Player (Active)") else selectedPreset,
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -322,15 +323,22 @@ fun MinecraftSkinsScreen(
             ) {
                 items(presetCharacters) { (label, username) ->
                     val isSelected = selectedPreset == label
+                    val isCurrentSkin = label == "Current"
                     Box(
                         modifier = Modifier
-                            .width(80.dp)
+                            .width(84.dp)
                             .clip(RoundedCornerShape(3.dp))
-                            .background(if (isSelected) Color(0xFF2A3A2A) else Color(0xFF1E1E20))
+                            .background(
+                                if (isSelected) Color(0xFF2A3A2A)
+                                else if (isCurrentSkin) Color(0xFF222822)
+                                else Color(0xFF1E1E20)
+                            )
                             .border(
                                 BorderStroke(
                                     1.dp,
-                                    if (isSelected) Color(0xFF55FF55) else Color(0xFF383838)
+                                    if (isSelected) Color(0xFF55FF55)
+                                    else if (isCurrentSkin) Color(0xFF3C8527)
+                                    else Color(0xFF383838)
                                 ),
                                 RoundedCornerShape(3.dp)
                             )
@@ -351,20 +359,34 @@ fun MinecraftSkinsScreen(
                                     .background(Color(0xFF28282A)),
                                 contentAlignment = Alignment.Center
                             ) {
+                                val avatarModel: Any = if (isCurrentSkin && activeSkinFile != null && activeSkinFile.exists()) {
+                                    activeSkinFile
+                                } else {
+                                    "https://mc-heads.net/avatar/$username/64.png"
+                                }
                                 AsyncImage(
-                                    model = "https://mc-heads.net/avatar/$username/64.png",
+                                    model = avatarModel,
                                     contentDescription = label,
                                     modifier = Modifier.size(36.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = label,
-                                color = if (isSelected) Color(0xFF55FF55) else Color.White,
+                                text = if (isCurrentSkin) "CURRENT" else label,
+                                color = if (isSelected) Color(0xFF55FF55) else if (isCurrentSkin) Color(0xFFAAFF88) else Color.White,
                                 fontFamily = MinecraftFontFamily,
-                                fontSize = 11.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                fontSize = 10.5.sp,
+                                fontWeight = if (isSelected || isCurrentSkin) FontWeight.Bold else FontWeight.Normal
                             )
+                            if (isCurrentSkin) {
+                                Text(
+                                    text = "ACTIVE",
+                                    color = Color(0xFF55FF55),
+                                    fontFamily = MinecraftFontFamily,
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }

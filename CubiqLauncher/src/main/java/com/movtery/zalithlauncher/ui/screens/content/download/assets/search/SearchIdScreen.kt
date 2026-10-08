@@ -511,7 +511,9 @@ private fun ContentFilter(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 OwnOutlinedTextField(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(42.dp),
                     value = projectId,
                     onValueChange = onProjectIdChange,
                     singleLine = true,
@@ -539,41 +541,49 @@ private fun ContentFilter(
                     fontSize = 11.sp,
                     modifier = Modifier
                         .width(84.dp)
-                        .height(38.dp)
+                        .height(42.dp)
                 )
             }
 
-            // Platform Indicator: [ CURSEFORGE ]
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(30.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0xFF263820))
-                    .border(
-                        BorderStroke(1.dp, Color(0xFF55FF55)),
-                        RoundedCornerShape(2.dp)
-                    )
-                    .clickable { onPlatformChange(Platform.CURSEFORGE) },
-                contentAlignment = Alignment.Center
+            // Platform Selector: [ CURSEFORGE ] | [ MODRINTH ]
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        modifier = Modifier.size(14.dp),
-                        painter = painterResource(Platform.CURSEFORGE.getDrawable()),
-                        contentDescription = Platform.CURSEFORGE.displayName,
-                        tint = Color(0xFF55FF55)
-                    )
-                    Text(
-                        text = "PLATFORM: CURSEFORGE",
-                        color = Color.White,
-                        fontFamily = MinecraftFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
-                    )
+                listOf(Platform.CURSEFORGE, Platform.MODRINTH).forEach { plat ->
+                    val isSelected = searchPlatform == plat
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(32.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(if (isSelected) Color(0xFF263820) else Color(0xFF222224))
+                            .border(
+                                BorderStroke(1.dp, if (isSelected) Color(0xFF55FF55) else Color(0xFF383838)),
+                                RoundedCornerShape(2.dp)
+                            )
+                            .clickable { onPlatformChange(plat) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                modifier = Modifier.size(14.dp),
+                                painter = painterResource(plat.getDrawable()),
+                                contentDescription = plat.displayName,
+                                tint = if (isSelected) Color(0xFF55FF55) else Color(0xFFAAAAAA)
+                            )
+                            Text(
+                                text = plat.displayName.uppercase(),
+                                color = if (isSelected) Color.White else Color(0xFFAAAAAA),
+                                fontFamily = MinecraftFontFamily,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                fontSize = 10.5.sp
+                            )
+                        }
+                    }
                 }
             }
         }

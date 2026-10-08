@@ -732,52 +732,37 @@ private fun HeroMinecraftCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 14.dp, vertical = 6.dp)
-            .height(350.dp),
+            .height(290.dp),
         borderColor = Color(0xFF3C8527)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Background Artwork (Dynamic based on selected version or latest Mojang official art)
-            val artModel = remember(version, latestHeroUrl) {
-                if (version != null) {
-                    MinecraftArtworkManager.getArtworkModel(version)
-                } else if (!latestHeroUrl.isNullOrBlank()) {
-                    latestHeroUrl
-                } else {
-                    MinecraftArtworkManager.getArtworkModel(null)
-                }
+            // Background Artwork (Dynamic based on selected version or latest release)
+            val artModel = remember(version) {
+                MinecraftArtworkManager.getArtworkModel(version)
             }
             AsyncImage(
                 model = artModel,
+                placeholder = painterResource(heroArtRes),
+                error = painterResource(heroArtRes),
+                fallback = painterResource(heroArtRes),
                 contentDescription = "Minecraft Version Key Art",
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.Center
             )
 
-            // Scrim gradient for contrast
+            // Scrim gradient for contrast at the bottom where version selector sits
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0x33000000),
-                                Color.Transparent,
-                                Color(0x88000000),
-                                Color(0xEE0D0D0D)
-                            )
+                            0.0f to Color.Transparent,
+                            0.60f to Color.Transparent,
+                            0.82f to Color(0x66000000),
+                            1.0f to Color(0xDD0D0D0D)
                         )
                     )
-            )
-
-            // Top Official Minecraft Java Edition Logo
-            Image(
-                painter = painterResource(R.drawable.img_mc_java_logo),
-                contentDescription = "Minecraft Java Edition",
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
-                    .fillMaxWidth(0.72f),
-                contentScale = ContentScale.Fit
             )
 
             // Bottom controls inside Hero Card

@@ -310,7 +310,7 @@ private fun FavoritesContent(
                 contentPadding = PaddingValues(
                     start = 12.dp,
                     end = 12.dp,
-                    bottom = 60.dp,
+                    bottom = 100.dp,
                     top = with(density) {
                         (headerHeightPx + topAppBarState.heightOffset).coerceAtLeast(0f).toDp()
                     }

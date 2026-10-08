@@ -11,6 +11,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,8 +25,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -33,12 +35,11 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,14 +47,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
+import com.movtery.zalithlauncher.BuildKeys
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.game.path.getVersionsHome
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.game.versioninfo.MinecraftOfficialContentManager
@@ -64,14 +70,9 @@ import com.movtery.zalithlauncher.ui.screens.NormalNavKey
 import com.movtery.zalithlauncher.ui.screens.content.navigateToDownload
 import com.movtery.zalithlauncher.ui.screens.navigateTo
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.runtime.mutableIntStateOf
-import coil3.compose.AsyncImage
-import java.io.File
-import com.movtery.zalithlauncher.BuildKeys
-import com.movtery.zalithlauncher.game.path.getVersionsHome
 import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
 import org.apache.commons.io.FileUtils
+import java.io.File
 
 @Composable
 fun MinecraftInstallationsScreen(
@@ -137,36 +138,63 @@ fun MinecraftInstallationsScreen(
                     )
                 }
 
-                // Search Bar
+                // Unclipped, Pixel-Aligned Search Bar
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .padding(start = 10.dp)
+                        .height(38.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(Color(0xFF1E1E20))
+                        .border(
+                            BorderStroke(
+                                1.dp,
+                                if (searchQuery.isNotEmpty()) Color(0xFF55FF55) else Color(0xFF383838)
+                            ),
+                            RoundedCornerShape(3.dp)
+                        )
+                        .padding(horizontal = 10.dp),
+                    contentAlignment = Alignment.CenterStart
                 ) {
-                    OutlinedTextField(
-                        value = searchQuery,
-                        onValueChange = { searchQuery = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp),
-                        placeholder = {
-                            Text(
-                                text = "Search installations...",
-                                color = Color(0xFF888888),
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BasicTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                color = Color.White,
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 12.sp
-                            )
-                        },
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF1E1E20),
-                            unfocusedContainerColor = Color(0xFF1E1E20),
-                            focusedBorderColor = Color(0xFF55FF55),
-                            unfocusedBorderColor = Color(0xFF383838),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
+                            ),
+                            cursorBrush = SolidColor(Color(0xFF55FF55)),
+                            decorationBox = { innerTextField ->
+                                if (searchQuery.isEmpty()) {
+                                    Text(
+                                        text = "Search installations...",
+                                        color = Color(0xFF777777),
+                                        fontFamily = MinecraftFontFamily,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                innerTextField()
+                            }
                         )
-                    )
+
+                        if (searchQuery.isNotEmpty()) {
+                            Text(
+                                text = "✕",
+                                color = Color(0xFF888888),
+                                fontSize = 12.sp,
+                                modifier = Modifier
+                                    .clickable { searchQuery = "" }
+                                    .padding(start = 6.dp)
+                            )
+                        }
+                    }
                 }
             }
 
@@ -218,9 +246,19 @@ fun MinecraftInstallationsScreen(
                     .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Installed custom/modded versions
                 val filtered = allVersions.filter { ver ->
-                    searchQuery.isBlank() || ver.getVersionName().contains(searchQuery, ignoreCase = true)
+                    val name = ver.getVersionName()
+                    val isModded = ver.getVersionInfo()?.loaderInfo?.loader?.isLoader == true
+                    val isSnapshot = name.contains("snapshot", ignoreCase = true) || name.contains("w", ignoreCase = true)
+                    val isRelease = !isModded && !isSnapshot
+
+                    val matchesFilter = (filterModded && isModded) ||
+                            (filterSnapshots && isSnapshot) ||
+                            (filterReleases && isRelease) ||
+                            (!filterModded && !filterSnapshots && !filterReleases)
+
+                    val matchesQuery = searchQuery.isBlank() || name.contains(searchQuery.trim(), ignoreCase = true)
+                    matchesFilter && matchesQuery
                 }
 
                 if (filtered.isEmpty()) {
@@ -264,11 +302,18 @@ fun MinecraftInstallationsScreen(
                         else -> R.drawable.img_old_grass_block
                     }
 
+                    val loaderName = ver.getVersionInfo()?.loaderInfo?.loader?.displayName
+                    val versionSubtitle = if (loaderName != null) {
+                        "${ver.getVersionName()} • $loaderName"
+                    } else {
+                        "${ver.getVersionName()} • Official Release"
+                    }
+
                     InstallationCardItem(
                         iconRes = blockIcon,
                         iconFile = if (customIconFile.exists()) customIconFile else null,
                         name = ver.getVersionName(),
-                        versionTag = if (isModded) "${ver.getVersionName()} • Modded" else "${ver.getVersionName()} • Official Release",
+                        versionTag = versionSubtitle,
                         isCurrent = isSelected,
                         onPlayClick = {
                             VersionsManager.saveVersion(ver)
@@ -301,12 +346,12 @@ fun MinecraftInstallationsScreen(
                     saveIconToVersion(context, version, iconRes)
                     createdInstallationName = name
 
-                    // Look for existing installed version
-                    val existing = allVersions.find { it.getVersionName().equals(name, ignoreCase = true) || it.getVersionName().equals(version, ignoreCase = true) }
+                    val existing = allVersions.find {
+                        it.getVersionName().equals(name, ignoreCase = true) || it.getVersionName().equals(version, ignoreCase = true)
+                    }
                     if (existing != null) {
                         VersionsManager.saveVersion(existing)
                     } else {
-                        // Launch downloader directly for this version
                         backStackViewModel.downloadGameScreen.navigateTo(
                             NormalNavKey.DownloadGame.Addons(version)
                         )
@@ -399,7 +444,7 @@ private fun InstallationCardItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(3.dp))
-            .background(if (isCurrent) Color(0xFF222426) else Color(0xFF1A1A1C))
+            .background(if (isCurrent) Color(0xFF222822) else Color(0xFF1A1A1C))
             .border(
                 BorderStroke(
                     1.dp,
@@ -516,7 +561,7 @@ private fun InstallationCardItem(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = "Select as Default",
+                            text = "Select as Active",
                             color = Color(0xFF55FF55),
                             fontFamily = MinecraftFontFamily
                         )
@@ -568,7 +613,10 @@ private fun NewInstallationDialog(
             Pair("Obsidian", R.drawable.img_obsidian),
             Pair("TNT", R.drawable.img_tnt),
             Pair("Pickaxe", R.drawable.img_diamond_pickaxe),
-            Pair("Sword", R.drawable.img_diamond_sword)
+            Pair("Sword", R.drawable.img_diamond_sword),
+            Pair("Anvil", R.drawable.img_anvil),
+            Pair("Command", R.drawable.img_command_block),
+            Pair("Cobblestone", R.drawable.img_old_cobblestone)
         )
     }
 
@@ -585,7 +633,7 @@ private fun NewInstallationDialog(
             allManifestVersions = listOf(
                 "1.21.4", "1.21.3", "1.21.2", "1.21.1", "1.21",
                 "1.20.6", "1.20.4", "1.20.2", "1.20.1", "1.20",
-                "1.19.4", "1.19.2", "1.18.2", "1.16.5", "1.12.2", "1.8.9", "1.7.10"
+                "1.19.4", "1.19.2", "1.18.2", "1.16.5", "1.12.2", "1.10", "1.8.9", "1.7.10"
             ).map { id ->
                 com.movtery.zalithlauncher.game.versioninfo.models.VersionManifest.Version(
                     id = id,
@@ -624,7 +672,7 @@ private fun NewInstallationDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .verticalScroll(androidx.compose.foundation.rememberScrollState()),
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // 1. Icon Selection Grid
@@ -673,28 +721,40 @@ private fun NewInstallationDialog(
                     fontFamily = MinecraftFontFamily,
                     fontSize = 11.sp
                 )
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    placeholder = {
-                        Text(
-                            text = "$selectedVersion $selectedLoader",
-                            color = Color(0xFF666666),
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(Color(0xFF28282A))
+                        .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(3.dp))
+                        .padding(horizontal = 10.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    BasicTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontSize = 12.sp
-                        )
-                    },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF28282A),
-                        unfocusedContainerColor = Color(0xFF28282A),
-                        focusedBorderColor = Color(0xFF55FF55),
-                        unfocusedBorderColor = Color(0xFF383838),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                        ),
+                        cursorBrush = SolidColor(Color(0xFF55FF55)),
+                        decorationBox = { innerTextField ->
+                            if (name.isEmpty()) {
+                                Text(
+                                    text = "$selectedVersion $selectedLoader",
+                                    color = Color(0xFF666666),
+                                    fontFamily = MinecraftFontFamily,
+                                    fontSize = 12.sp
+                                )
+                            }
+                            innerTextField()
+                        }
                     )
-                )
+                }
 
                 // 3. Version Picker Selector
                 Text(
@@ -741,25 +801,40 @@ private fun NewInstallationDialog(
                             .padding(8.dp)
                     ) {
                         // Version Search Input
-                        OutlinedTextField(
-                            value = versionSearchQuery,
-                            onValueChange = { versionSearchQuery = it },
-                            placeholder = {
-                                Text("Search version (1.20, 1.16...)", color = Color(0xFF777777), fontSize = 11.sp)
-                            },
-                            singleLine = true,
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(42.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = Color(0xFF222224),
-                                unfocusedContainerColor = Color(0xFF222224),
-                                focusedBorderColor = Color(0xFF55FF55),
-                                unfocusedBorderColor = Color(0xFF333333),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
+                                .height(36.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color(0xFF222224))
+                                .border(BorderStroke(1.dp, Color(0xFF333333)), RoundedCornerShape(2.dp))
+                                .padding(horizontal = 8.dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            BasicTextField(
+                                value = versionSearchQuery,
+                                onValueChange = { versionSearchQuery = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                textStyle = TextStyle(
+                                    color = Color.White,
+                                    fontFamily = MinecraftFontFamily,
+                                    fontSize = 11.sp
+                                ),
+                                cursorBrush = SolidColor(Color(0xFF55FF55)),
+                                decorationBox = { innerTextField ->
+                                    if (versionSearchQuery.isEmpty()) {
+                                        Text(
+                                            text = "Search version (1.20, 1.16, 1.10...)",
+                                            color = Color(0xFF777777),
+                                            fontFamily = MinecraftFontFamily,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                    innerTextField()
+                                }
                             )
-                        )
+                        }
 
                         Spacer(modifier = Modifier.height(6.dp))
 
@@ -930,4 +1005,3 @@ fun saveIconToVersion(context: android.content.Context, versionName: String, ico
         }
     }
 }
-

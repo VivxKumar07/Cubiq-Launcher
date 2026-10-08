@@ -78,6 +78,8 @@ import kotlin.time.Duration.Companion.milliseconds
 private const val TAG = "MicrosoftAuth"
 
 private val SCOPES = listOf("XboxLive.signin", "offline_access", "openid", "profile", "email")
+private val OAUTH_CLIENT_ID: String
+    get() = BuildKeys.OAUTH_CLIENT_ID.ifBlank { "c36a9fb6-4f2a-41ff-90bd-ae7cc92031eb" }
 private const val TENANT = "/consumers"
 
 /**
@@ -101,7 +103,7 @@ suspend fun fetchDeviceCodeResponse(context: CoroutineContext): DeviceCodeRespon
         submitForm(
             url = "$MICROSOFT_AUTH_URL$TENANT/oauth2/v2.0/devicecode",
             parameters = Parameters.build {
-                append("client_id", BuildKeys.OAUTH_CLIENT_ID)
+                append("client_id", OAUTH_CLIENT_ID)
                 append("scope", SCOPES.joinToString(" "))
             },
             context = context
@@ -141,7 +143,7 @@ suspend fun getTokenResponse(
                 parameters = Parameters.build {
                     append("grant_type", "urn:ietf:params:oauth:grant-type:device_code")
                     append("device_code", codeResponse.deviceCode)
-                    append("client_id", BuildKeys.OAUTH_CLIENT_ID)
+                    append("client_id", OAUTH_CLIENT_ID)
                     append("tenant", TENANT)
                 },
                 context = context
@@ -271,7 +273,7 @@ private suspend fun refreshAccessToken(
             val response = submitForm<JsonObject>(
                 url = "$LIVE_AUTH_URL/oauth20_token.srf",
                 parameters = Parameters.build {
-                    append("client_id", BuildKeys.OAUTH_CLIENT_ID)
+                    append("client_id", OAUTH_CLIENT_ID)
                     append("refresh_token", refreshToken)
                     append("grant_type", "refresh_token")
                 },

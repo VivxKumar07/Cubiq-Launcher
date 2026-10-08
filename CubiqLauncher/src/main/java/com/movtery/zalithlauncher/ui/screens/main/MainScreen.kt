@@ -229,16 +229,19 @@ fun MainScreen(
                     submitError = submitError
                 )
 
-                TaskMenu(
-                    tasks = tasks,
-                    isExpanded = isTaskMenuExpanded,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(0.3f)
-                        .align(Alignment.CenterStart)
-                        .padding(all = 6.dp)
-                ) {
-                    changeTasksExpandedState()
+                val nonAuthTasks = tasks.filter { it.id != com.movtery.zalithlauncher.game.account.MICROSOFT_LOGGING_TASK }
+                if (nonAuthTasks.isNotEmpty()) {
+                    TaskMenu(
+                        tasks = nonAuthTasks,
+                        isExpanded = isTaskMenuExpanded,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(0.3f)
+                            .align(Alignment.CenterStart)
+                            .padding(all = 6.dp)
+                    ) {
+                        changeTasksExpandedState()
+                    }
                 }
             }
         }

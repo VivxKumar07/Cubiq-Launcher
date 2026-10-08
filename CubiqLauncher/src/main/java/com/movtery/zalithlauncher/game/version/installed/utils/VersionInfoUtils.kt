@@ -30,7 +30,7 @@ import java.io.File
 
 private const val TAG = "VersionInfoUtils"
 
-private const val VERSION_PATTERN = """(\d+\.\d+\.\d+|\d{2}w\d{2}[a-z])"""
+private const val VERSION_PATTERN = """(\d+\.\d+(?:\.\d+)?|\d{2}w\d{2}[a-z]|\d+\.\d+-(?:pre|rc|alpha|beta)[\d.]*)"""
 
 // "1.20.4-OptiFine_HD_U_I7_pre3"       -> 1.20.4
 // "1.21.3-OptiFine_HD_U_J2_pre6"       -> 1.21.3
@@ -47,6 +47,8 @@ private val FABRIC_REGEX = """fabric-loader-[\w.-]+-$VERSION_PATTERN""".toRegex(
 // "quilt-loader-0.23.1-1.20.4"         -> 1.20.4
 // "quilt-loader-0.27.1-beta.1-1.21.3"  -> 1.21.3
 private val QUILT_REGEX = """quilt-loader-[\w.-]+-$VERSION_PATTERN""".toRegex()
+
+private val EXTRACT_MC_VERSION_REGEX = """(\d+\.\d+(?:\.\d+)?|\d{2}w\d{2}[a-z])""".toRegex()
 
 private val LOADER_DETECTORS = listOf<(String) -> String?>(
     { id ->
@@ -72,7 +74,12 @@ private val LOADER_DETECTORS = listOf<(String) -> String?>(
  */
 fun parseJsonToVersionInfo(jsonFile: File): VersionInfo? {
     return runCatching {
-        val jsonObject = JsonParser.parseString(jsonFile.readText()).asJsonObject
+        val rawJson = jsonFile.readText().trim()
+        if (rawJson.isEmpty()) return null
+        val jsonElement = JsonParser.parseString(rawJson)
+        if (!jsonElement.isJsonObject) return null
+        val jsonObject = jsonElement.asJsonObject
+
         val quickPlay = runCatching {
             ensureQuickPlay(jsonObject)
         }.getOrElse { e ->
@@ -83,11 +90,17 @@ fun parseJsonToVersionInfo(jsonFile: File): VersionInfo? {
                 isQuickPlayMultiplayer = false
             )
         }
-        val (versionId, loaderInfo) = detectMinecraftAndLoader(jsonObject)
+        val (versionId, loaderInfo) = detectMinecraftAndLoader(jsonObject, jsonFile.parentFile?.name)
         VersionInfo(versionId, quickPlay, loaderInfo)
     }.getOrElse {
-        Logger.error(TAG, "Error parsing version json", it)
-        null
+        Logger.error(TAG, "Error parsing version json: ${jsonFile.name}", it)
+        // Fallback version info so valid files are never falsely marked as invalid
+        val fallbackId = jsonFile.parentFile?.name ?: jsonFile.nameWithoutExtension
+        VersionInfo(
+            minecraftVersion = EXTRACT_MC_VERSION_REGEX.find(fallbackId)?.value ?: fallbackId,
+            quickPlay = VersionInfo.QuickPlay(false, false, false),
+            loaderInfo = null
+        )
     }
 }
 
@@ -128,26 +141,25 @@ private fun ensureQuickPlay(versionJson: JsonObject): VersionInfo.QuickPlay {
     )
 }
 
-private fun detectMinecraftAndLoader(versionJson: JsonObject): Pair<String, VersionInfo.LoaderInfo?> {
-    val mcVersion = extractMinecraftVersion(versionJson)
+private fun detectMinecraftAndLoader(versionJson: JsonObject, folderName: String? = null): Pair<String, VersionInfo.LoaderInfo?> {
+    val mcVersion = extractMinecraftVersion(versionJson, folderName)
     val loaderInfo = detectModLoader(versionJson)
     return mcVersion to loaderInfo
 }
 
-private fun extractMinecraftVersion(json: JsonObject): String {
+private fun extractMinecraftVersion(json: JsonObject, folderName: String? = null): String {
     //尝试识别HMCL版本
     if (json.has("patches") && json.get("patches").isJsonArray) {
         val patches = json.getAsJsonArray("patches")
-        if (patches.size() > 0) {
+        if (patches.size() > 0 && patches[0].isJsonObject) {
             val minecraft = patches[0].asJsonObject
-            if (minecraft.has("version")) {
+            if (minecraft.has("version") && minecraft.get("version").isJsonPrimitive) {
                 return minecraft.get("version").asString
             }
         }
     }
 
     //尝试识别PCL导出的整合包给的版本
-    //PCL顺手加的 [按住 W 开始思索]
     if (json.has("clientVersion") && json.get("clientVersion").isJsonPrimitive) {
         val clientVersion = json.get("clientVersion").asString
         if (clientVersion.isNotEmptyOrBlank()) return clientVersion
@@ -156,7 +168,7 @@ private fun extractMinecraftVersion(json: JsonObject): String {
     //尝试从 LaunchFor (ZL安装的版本) 获取信息
     json.getAsJsonObject("launchFor")
         ?.getAsJsonArray("infos")
-        ?.firstOrNull { it.asJsonObject["name"]?.asString == "Minecraft" }
+        ?.firstOrNull { it.isJsonObject && it.asJsonObject["name"]?.asString == "Minecraft" }
         ?.asJsonObject
         ?.getAsJsonPrimitive("version")
         ?.asString
@@ -165,19 +177,44 @@ private fun extractMinecraftVersion(json: JsonObject): String {
         }
 
     //从minecraft库中获取
-    json.getAsJsonArray("libraries")?.forEach { lib ->
-        val (group, artifact, version) = lib.asJsonObject["name"].asString.split(":").let {
-            Triple(it[0], it[1], it.getOrNull(2) ?: "")
-        }
-        if (group == "net.minecraft" && (artifact == "client" || artifact == "server")) {
-            return version
+    json.getAsJsonArray("libraries")?.forEach { libElement ->
+        if (!libElement.isJsonObject) return@forEach
+        val lib = libElement.asJsonObject
+        val nameElement = lib.get("name") ?: return@forEach
+        if (!nameElement.isJsonPrimitive) return@forEach
+        val parts = nameElement.asString.split(":")
+        if (parts.size >= 3) {
+            val group = parts[0]
+            val artifact = parts[1]
+            val version = parts[2]
+            if (group == "net.minecraft" && (artifact == "client" || artifact == "server")) {
+                return version
+            }
         }
     }
 
-    val id = json["id"].asString
-    return if (json.has("inheritsFrom")) json["inheritsFrom"].asString
+    if (json.has("inheritsFrom") && json.get("inheritsFrom").isJsonPrimitive) {
+        val inherits = json.get("inheritsFrom").asString
+        val extracted = EXTRACT_MC_VERSION_REGEX.find(inherits)?.value
+        if (extracted != null) return extracted
+        return inherits
+    }
+
+    val id = if (json.has("id") && json.get("id").isJsonPrimitive) json.get("id").asString else (folderName ?: "Unknown")
+
     //尝试从ID中解析MC版本
-    else LOADER_DETECTORS.firstNotNullOfOrNull { it(id) } ?: id
+    val loaderDetected = LOADER_DETECTORS.firstNotNullOfOrNull { it(id) }
+    if (loaderDetected != null) return loaderDetected
+
+    val extractedFromId = EXTRACT_MC_VERSION_REGEX.find(id)?.value
+    if (extractedFromId != null) return extractedFromId
+
+    if (folderName != null) {
+        val extractedFromFolder = EXTRACT_MC_VERSION_REGEX.find(folderName)?.value
+        if (extractedFromFolder != null) return extractedFromFolder
+    }
+
+    return id
 }
 
 /**
@@ -191,10 +228,15 @@ private fun detectModLoader(versionJson: JsonObject): VersionInfo.LoaderInfo? {
     var fabricLoaderVer: String? = null
 
     versionJson.getAsJsonArray("libraries")?.forEach { libElement ->
+        if (!libElement.isJsonObject) return@forEach
         val lib = libElement.asJsonObject
-        val (group, artifact, version) = lib.get("name").asString.split(":").let {
-            Triple(it[0], it[1], it.getOrNull(2) ?: "")
-        }
+        val nameElement = lib.get("name") ?: return@forEach
+        if (!nameElement.isJsonPrimitive) return@forEach
+        val parts = nameElement.asString.split(":")
+        if (parts.size < 2) return@forEach
+        val group = parts[0]
+        val artifact = parts[1]
+        val version = if (parts.size > 2) parts[2] else ""
 
         when {
             //Fabric Loader
@@ -216,14 +258,11 @@ private fun detectModLoader(versionJson: JsonObject): VersionInfo.LoaderInfo? {
             //Forge
             group == "net.minecraftforge" && (artifact == "forge" || artifact == "fmlloader") -> {
                 val forgeVersion = when {
-                    //新版：1.21.4-54.0.26                 -> 54.0.26
                     version.count { it == '-' } == 1 -> version.substringAfterLast('-')
-                    //旧版：1.7.10-10.13.4.1614-1.7.10     -> 10.13.4.1614
-                    //旧版：1.7.2-10.12.2.1161-mc172       -> 10.12.2.1161
-                    version.count { it == '-' } >= 2 -> version.split("-").let { parts ->
+                    version.count { it == '-' } >= 2 -> version.split("-").let { p ->
                         when {
-                            parts.size >= 3 && parts.last().startsWith("mc") -> parts[1]
-                            parts.size >= 3 && parts[0] == parts.last() -> parts[1]
+                            p.size >= 3 && p.last().startsWith("mc") -> p[1]
+                            p.size >= 3 && p[0] == p.last() -> p[1]
                             else -> version
                         }
                     }
@@ -261,7 +300,6 @@ private fun detectModLoader(versionJson: JsonObject): VersionInfo.LoaderInfo? {
 
     //Fabric 全家桶
     if (hasFabric && fabricLoaderVer != null) {
-        //包含Fabric加载器
         val loader = if (hasLegacyFabric) {
             ModLoader.LEGACY_FABRIC
         } else if (hasBabric) {

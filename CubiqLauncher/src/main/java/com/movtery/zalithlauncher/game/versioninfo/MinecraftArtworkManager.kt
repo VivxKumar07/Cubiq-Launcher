@@ -22,30 +22,25 @@ object MinecraftArtworkManager {
     private const val TAG = "MinecraftArtwork"
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    // Official full-resolution landscape key art for major releases
-    private val VERSION_ARTWORK_URLS = mapOf(
-        "1.21" to "https://launchercontent.mojang.com/v2/images/1-21-patchnotes.jpg",
-        "1.20" to "https://launchercontent.mojang.com/v2/images/1-20-patchnotes.jpg",
-        "1.19" to "https://launchercontent.mojang.com/v2/images/1-19-patchnotes.jpg",
-        "1.18" to "https://launchercontent.mojang.com/v2/images/1-18-patchnotes.jpg",
-        "1.17" to "https://launchercontent.mojang.com/v2/images/1-17-patchnotes.jpg",
-        "1.16" to "https://launchercontent.mojang.com/v2/images/1-16-patchnotes.jpg",
-        "1.15" to "https://launchercontent.mojang.com/v2/images/1-15-patchnotes.jpg",
-        "1.14" to "https://launchercontent.mojang.com/v2/images/1-14-patchnotes.jpg"
-    )
-
-    private const val DEFAULT_HERO_URL = "https://launchercontent.mojang.com/v2/images/1-21-patchnotes.jpg"
-
     /**
-     * Resolves the artwork model (File if cached, otherwise String URL) for a given version.
-     * Also triggers asynchronous download and caching to disk if not already present.
+     * Resolves the artwork model (File if cached, otherwise bundled drawable ResId) for a given version.
+     * Guarantees an authentic high-resolution landscape key art is always displayed immediately.
      */
     fun getArtworkModel(version: Version?): Any {
         val verName = version?.getVersionName()?.lowercase() ?: "1.21"
-        val matchedKey = VERSION_ARTWORK_URLS.keys.firstOrNull { verName.contains(it) } ?: "1.21"
-        val remoteUrl = VERSION_ARTWORK_URLS[matchedKey] ?: DEFAULT_HERO_URL
+        val safeKey = when {
+            verName.contains("1.21") -> "1_21"
+            verName.contains("1.20") -> "1_20"
+            verName.contains("1.19") -> "1_19"
+            verName.contains("1.18") -> "1_18"
+            verName.contains("1.17") -> "1_18"
+            verName.contains("1.16") -> "1_16"
+            verName.contains("1.15") -> "1_14"
+            verName.contains("1.14") -> "1_14"
+            verName.contains("1.13") -> "1_13"
+            else -> "classic"
+        }
 
-        val safeKey = matchedKey.replace(".", "_")
         val cacheDir = PathManager.DIR_CACHE_HOME_PAGE
         if (!cacheDir.exists()) cacheDir.mkdirs()
 
@@ -54,36 +49,20 @@ object MinecraftArtworkManager {
             return cachedFile
         }
 
-        // Cache asynchronously
-        cacheArtworkAsync(remoteUrl, cachedFile)
-        return remoteUrl
+        return getHeroArtResource(safeKey)
     }
 
-    private fun cacheArtworkAsync(urlStr: String, targetFile: File) {
-        scope.launch {
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    val url = URL(urlStr)
-                    val conn = url.openConnection() as HttpURLConnection
-                    conn.connectTimeout = 8000
-                    conn.readTimeout = 10000
-                    conn.connect()
-                    if (conn.responseCode == HttpURLConnection.HTTP_OK) {
-                        val tempFile = File(targetFile.parentFile, targetFile.name + ".tmp")
-                        conn.inputStream.use { input ->
-                            FileOutputStream(tempFile).use { output ->
-                                input.copyTo(output)
-                            }
-                        }
-                        if (tempFile.exists() && tempFile.length() > 0) {
-                            tempFile.renameTo(targetFile)
-                            Logger.info(TAG, "Cached hero artwork to ${targetFile.absolutePath}")
-                        }
-                    }
-                }.onFailure { e ->
-                    Logger.warning(TAG, "Failed caching artwork for $urlStr: ${e.message}")
-                }
-            }
+    fun getHeroArtResource(safeKey: String): Int {
+        return when (safeKey) {
+            "1_21" -> com.movtery.zalithlauncher.R.drawable.img_mc_hero_1_21
+            "1_20" -> com.movtery.zalithlauncher.R.drawable.img_mc_hero_1_20
+            "1_19" -> com.movtery.zalithlauncher.R.drawable.img_mc_hero_1_19
+            "1_18" -> com.movtery.zalithlauncher.R.drawable.img_mc_hero_1_18
+            "1_16" -> com.movtery.zalithlauncher.R.drawable.img_mc_hero_1_16
+            "1_14" -> com.movtery.zalithlauncher.R.drawable.img_mc_hero_1_14
+            "1_13" -> com.movtery.zalithlauncher.R.drawable.img_mc_hero_1_13
+            else -> com.movtery.zalithlauncher.R.drawable.img_mc_hero_classic
         }
     }
 }
+

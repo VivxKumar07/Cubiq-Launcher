@@ -18,28 +18,36 @@
 
 package com.movtery.zalithlauncher.ui.screens.content.versions.layouts
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
-import com.movtery.zalithlauncher.ui.components.BackgroundCard
 
 @Composable
 fun VersionChunkBackground(
     modifier: Modifier = Modifier,
-    paddingValues: PaddingValues = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-    shape: Shape = MaterialTheme.shapes.extraLarge,
+    paddingValues: PaddingValues = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
+    shape: Shape = RoundedCornerShape(3.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
-    BackgroundCard(
+    Card(
         modifier = modifier.fillMaxWidth(),
-        shape = shape
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF1E1E20),
+            contentColor = Color.White
+        ),
+        border = BorderStroke(1.dp, Color(0xFF333333))
     ) {
         Column(
             modifier = Modifier.padding(paddingValues),

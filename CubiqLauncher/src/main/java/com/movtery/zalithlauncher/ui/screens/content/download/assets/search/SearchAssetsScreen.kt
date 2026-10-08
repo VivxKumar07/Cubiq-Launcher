@@ -432,32 +432,37 @@ fun SearchAssetsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(28.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(Color(0xFF3C8527))
-                                .border(
-                                    BorderStroke(1.dp, Color(0xFF55FF55)),
-                                    RoundedCornerShape(2.dp)
-                                )
-                                .clickable {
-                                    viewModel.searchPlatform = Platform.CURSEFORGE
-                                    viewModel.researchWithFilter(
-                                        viewModel.searchFilter.copy(categories = emptyList(), modloader = null)
+                        Platform.entries.forEach { p ->
+                            val isSelected = viewModel.searchPlatform == p
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(28.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(if (isSelected) Color(0xFF3C8527) else Color(0xFF262628))
+                                    .border(
+                                        BorderStroke(1.dp, if (isSelected) Color(0xFF55FF55) else Color(0xFF383838)),
+                                        RoundedCornerShape(2.dp)
                                     )
-                                    onPlatformChange(Platform.CURSEFORGE)
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "CURSEFORGE",
-                                color = Color.White,
-                                fontFamily = MinecraftFontFamily,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 10.5.sp
-                            )
+                                    .clickable {
+                                        if (viewModel.searchPlatform != p) {
+                                            viewModel.searchPlatform = p
+                                            viewModel.researchWithFilter(
+                                                viewModel.searchFilter.copy(categories = emptyList(), modloader = null)
+                                            )
+                                            onPlatformChange(p)
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = p.displayName.uppercase(),
+                                    color = Color.White,
+                                    fontFamily = MinecraftFontFamily,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    fontSize = 10.5.sp
+                                )
+                            }
                         }
                     }
 

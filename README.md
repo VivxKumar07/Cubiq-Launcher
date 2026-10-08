@@ -3,62 +3,93 @@
 ![Edition](https://img.shields.io/badge/Minecraft-Java%20Edition-3C8527)
 ![UI](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4)
 ![License](https://img.shields.io/badge/License-GPL--3.0-blue)
+![Author](https://img.shields.io/badge/Author-Vivek%20Kumar-55FF55)
 
-[English](README.md) | [Chinese](README_ZH_TW.md)
+**Cubiq Launcher** is a premier, high-performance **Minecraft: Java Edition launcher for Android**, featuring an authentic, pixel-accurate PC Minecraft Launcher interface design built natively with **Jetpack Compose**.
 
-**Cubiq Launcher** is a specialized, high-performance **Minecraft: Java Edition launcher for Android**, featuring an authentic, pixel-accurate PC Minecraft Launcher interface design.
-
-Built entirely with **Modern Jetpack Compose**, Cubiq Launcher delivers a faithful 1:1 recreation of the official Minecraft Java Edition desktop client on touch and mobile devices.
+Cubiq delivers a seamless desktop-grade Minecraft experience on mobile and touch devices with fine-grained performance controls, deep gamepad remapping, a drag-and-drop on-screen touch control editor, and multi-loader modding support.
 
 ---
 
 ## 🌟 Key Features
 
-* **Authentic Minecraft Desktop Launcher UI**: 
-  - Beveled pixel buttons, 3D raise effects, and stone border styling.
-  - Authentic button click audio with zero touch-scroll interference.
-  - Minecraft font typography and clean dark theme.
-* **Full Java Edition Support**:
-  - Run Minecraft Java Edition versions with Forge, Fabric, Quilt, and NeoForge mod loaders.
-  - Multi-runtime Java management (Java 8, 17, 21, and beyond).
-* **Direct Microsoft & Offline Account Support**:
-  - Quick, native Microsoft OAuth device authorization.
-  - Fast offline player profiles with custom 3D avatar & skin rendering.
-* **Complete In-App Configuration**:
-  - Fine-grained memory/RAM allocation.
-  - Custom mobile touch controller layouts and full gamepad support.
-  - High-performance renderer engines (Vulkan Zink, VirGL, Holy, ANGLE, GL4ES).
+### 🖥️ Authentic Minecraft Desktop UI
+* **Pixel-Accurate Interface**: Crafted to replicate the modern Minecraft PC Launcher with beveled pixel buttons, 3D raised surfaces, and subtle borders.
+* **Audio Feedback**: Authentic button click sound effects with zero interference during scrolling or gestures.
+* **Pixel Typography**: Integrated Minecraft typeface alongside crisp, responsive layout scaling across phones, foldables, and tablets.
+
+### 🎮 Comprehensive Controls & Gamepad Remapping
+* **Full Controller Support**: Direct SDL passthrough or customizable mapped input with physical gamepad support (Xbox, PlayStation, DualShock, Generic Bluetooth/USB).
+* **Per-Button Remapping**: Individually bind D-pad, Analog sticks, face buttons (A/B/X/Y), triggers (L1/R1, L2/R2), stick buttons (L3/R3), Start, Select, and Guide.
+* **Stick Deadzone & Sensitivity**: Calibrate analog stick deadzone (50%–200%) and independent cursor/camera speeds.
+* **On-Screen Touch Control Editor**: Create, move, resize, and configure the opacity and visibility of custom touch buttons and control layers.
+* **Virtual Mouse & Gyroscope**: Smooth virtual touchpad mouse with configurable tap/long-press actions and gyroscope aiming.
+
+### ⚡ Complete Game & Version Management
+* **Universal Version Support**: Play any Minecraft: Java Edition release from classic versions up to the latest releases (1.10, 1.16.5, 1.20, 1.21+).
+* **Mod Loaders**: One-click installation and management for **Fabric**, **Forge**, **NeoForge**, and **Quilt**.
+* **Integrated Download Hub**: Search, filter, and download **Mods**, **Modpacks**, **Resource Packs**, and **Shaders** directly via CurseForge and Modrinth APIs.
+* **Isolation & JVM Customization**: Per-instance game directories, custom JVM arguments, and automated Java runtime detection.
+
+### 🚀 High-Performance Rendering & Java Runtimes
+* **Modern Graphics Engines**: Select from Vulkan (Zink), Freedreno, VirGL, Panfrost, and GL4ES renderers for optimal GPU acceleration.
+* **Multi-Runtime Java**: Bundled and custom Java runtimes (Java 8, 17, 21, and beyond).
+* **Memory Allocation**: Dynamic RAM allocation slider automatically bounded by device hardware limits.
+
+### 👤 Account & Skin Management
+* **Microsoft OAuth Login**: Fast, secure device-code authentication via official Microsoft services.
+* **Offline Accounts**: Quick local player profile creation.
+* **Skins & Capes**: 2D and 3D avatar rendering, local skin importing, and Slim (Alex) / Classic (Steve) model customization.
 
 ---
 
-## 📦 Build Instructions (For Developers)
+## 📱 System Requirements
 
-### Requirements
+* **Operating System**: Android 8.0 (Oreo / API 26) or newer (Android 11–16 recommended)
+* **Architecture**: `arm64-v8a` (recommended), `armeabi-v7a`, `x86_64`, `x86`
+* **RAM**: 4 GB+ recommended for modern Minecraft releases & modpacks
+* **Storage**: 2 GB+ free storage space
 
-* Android Studio Ladybug or newer
-* Android SDK:
-  * **Minimum API level**: 26 (Android 8.0)
-  * **Target API level**: 34+
+---
+
+## 📦 Building from Source
+
+### Prerequisites
+* Android Studio (Ladybug or newer)
+* Android SDK (Compile SDK 34+)
 * JDK 17 or JDK 21
 
-### Building the APK
+### Compilation
 
 ```bash
 # Clone the repository
-git clone https://github.com/CubiqLauncher/Cubiq.git
+git clone https://github.com/VivxKumar07/Cubiq-Launcher.git
+cd Cubiq-Launcher
 
-# Build debug APK
-./gradlew assembleDebug
+# Build Debug APK
+./gradlew CubiqLauncher:assembleDebug
 
-# Install directly to a connected device
-./gradlew installDebug
+# Build Release APK
+./gradlew CubiqLauncher:assembleRelease
+
+# Install directly to connected device / emulator
+./gradlew CubiqLauncher:installDebug
 ```
+
+Compiled APKs will be located at:
+`CubiqLauncher/build/outputs/apk/debug/` and `CubiqLauncher/build/outputs/apk/release/`
 
 ---
 
-## 📜 License
+## 👥 Contributors & Maintainers
 
-This project is licensed under the **[GPL-3.0 license](LICENSE)**.
+* **Vivek Kumar** ([@VivxKumar07](https://github.com/VivxKumar07)) — Lead Developer & Maintainer
 
-### Open Source Attribution
-Cubiq Launcher is based upon the open-source launcher foundation of Zalith Launcher 2 and PojavLauncher, customized with an original Minecraft PC Launcher design and enhanced feature set. All upstream copyright notices and open-source licenses are preserved in accordance with GPLv3.
+---
+
+## 📜 License & Open Source Attribution
+
+This project is licensed under the **[GNU General Public License v3.0 (GPL-3.0)](LICENSE)**.
+
+### Upstream Attribution
+Cubiq Launcher is built upon the open-source foundations of **Zalith Launcher 2** and **PojavLauncher**, redesigned with an authentic Minecraft PC launcher interface, modernized Compose UI architecture, and restored modular settings. All upstream copyright notices, contributions, and license obligations are preserved in full compliance with the GNU GPLv3 license.
