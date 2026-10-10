@@ -31,3 +31,8 @@ LWJGL/*/build/
 .ampersand/
 
 .vscode/
+
+# Binaries and release outputs
+*.apk
+release_binaries/
+
