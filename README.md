@@ -19,14 +19,20 @@ Cubiq delivers a seamless desktop-grade Minecraft experience on mobile and touch
 * **Pixel Typography**: Integrated Minecraft typeface alongside crisp, responsive layout scaling across phones, foldables, and tablets.
 
 ### 🎮 Comprehensive Controls & Gamepad Remapping
-* **Full Controller Support**: Direct SDL passthrough or customizable mapped input with physical gamepad support (Xbox, PlayStation, DualShock, Generic Bluetooth/USB).
+* **Bedrock Pocket Edition Touch Controls**: Native Bedrock Edition styled on-screen control layout (`bedrock_touch_layout.json`) with official action buttons (jump, sneak, sprint, attack, interact, d-pad, joystick, F3, F5, chat, inventory, menu).
+* **On-Screen Touch Control Editor**: Open the built-in control editor directly to create, reposition, resize, change textures, and configure opacity and button mappings.
+* **Full Controller Support**: Direct SDL passthrough or customizable mapped input with physical gamepad support (Xbox, PlayStation DualShock/DualSense, Generic Bluetooth/USB).
 * **Per-Button Remapping**: Individually bind D-pad, Analog sticks, face buttons (A/B/X/Y), triggers (L1/R1, L2/R2), stick buttons (L3/R3), Start, Select, and Guide.
 * **Stick Deadzone & Sensitivity**: Calibrate analog stick deadzone (50%–200%) and independent cursor/camera speeds.
-* **On-Screen Touch Control Editor**: Create, move, resize, and configure the opacity and visibility of custom touch buttons and control layers.
 * **Virtual Mouse & Gyroscope**: Smooth virtual touchpad mouse with configurable tap/long-press actions and gyroscope aiming.
+
+### 🌐 Multiplayer & LAN Sharing
+* **Peer-to-Peer LAN Multiplayer**: Integrated Terracotta LAN proxy allowing you to host or join local LAN Minecraft worlds directly over Wi-Fi without configuring external dedicated servers.
+* **Public Server Browser**: Add, bookmark, and track server status with ping indicators.
 
 ### ⚡ Complete Game & Version Management
 * **Universal Version Support**: Play any Minecraft: Java Edition release from classic versions up to the latest releases (1.10, 1.16.5, 1.20, 1.21+).
+* **Two-Bar Download Progress**: Real-time status displaying overall task progress, current active downloading file, and live network transfer speed.
 * **Mod Loaders**: One-click installation and management for **Fabric**, **Forge**, **NeoForge**, and **Quilt**.
 * **Integrated Download Hub**: Search, filter, and download **Mods**, **Modpacks**, **Resource Packs**, and **Shaders** directly via CurseForge and Modrinth APIs.
 * **Isolation & JVM Customization**: Per-instance game directories, custom JVM arguments, and automated Java runtime detection.
@@ -34,11 +40,11 @@ Cubiq delivers a seamless desktop-grade Minecraft experience on mobile and touch
 ### 🚀 High-Performance Rendering & Java Runtimes
 * **Modern Graphics Engines**: Select from Vulkan (Zink), Freedreno, VirGL, Panfrost, and GL4ES renderers for optimal GPU acceleration.
 * **Multi-Runtime Java**: Bundled and custom Java runtimes (Java 8, 17, 21, and beyond).
-* **Memory Allocation**: Dynamic RAM allocation slider automatically bounded by device hardware limits.
+* **Dynamic Memory Slider**: Custom RAM allocation slider dynamically capped by your device's physical memory.
 
 ### 👤 Account & Skin Management
 * **Microsoft OAuth Login**: Fast, secure device-code authentication via official Microsoft services.
-* **Offline Accounts**: Quick local player profile creation.
+* **Instant Offline Accounts**: Quick local player profile creation accessible right from the top bar dropdown or settings.
 * **Skins & Capes**: 2D and 3D avatar rendering, local skin importing, and Slim (Alex) / Classic (Steve) model customization.
 
 ---
