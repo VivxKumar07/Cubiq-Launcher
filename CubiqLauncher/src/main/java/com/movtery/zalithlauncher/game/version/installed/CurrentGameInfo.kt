@@ -55,7 +55,14 @@ data class CurrentGameInfo(
     }
 }
 
-private fun getInfoFile(gameHome: String) = File(gameHome, "zalith-game.cfg")
+private fun getInfoFile(gameHome: String): File {
+    val cubiqFile = File(gameHome, "cubiq-game.cfg")
+    val legacyFile = File(gameHome, "zalith-game.cfg")
+    if (!cubiqFile.exists() && legacyFile.exists()) {
+        legacyFile.renameTo(cubiqFile)
+    }
+    return cubiqFile
+}
 
 /**
  * 刷新并返回最新的游戏信息（自动处理旧配置迁移）

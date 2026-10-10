@@ -1,0 +1,596 @@
+{
+    "info": {
+        "name": {
+            "default": "Bedrock Touch",
+            "matchQueue": [
+                {
+                    "language_tag": "zh",
+                    "value": "基岩版触控"
+                },
+                {
+                    "language_tag": "zh-CN",
+                    "value": "基岩触控"
+                }
+            ]
+        },
+        "author": {
+            "default": "Cubiq Bedrock Controls",
+            "matchQueue": []
+        },
+        "description": {
+            "default": "Authentic Minecraft Bedrock & Pocket Edition translucent touch controls preset with D-pad, jump/sneak diamonds, and Java Edition action bindings.",
+            "matchQueue": []
+        },
+        "versionCode": 1,
+        "versionName": "1.0.0"
+    },
+    "layers": [
+        {
+            "name": "gui",
+            "uuid": "bedrock_gui_layer",
+            "hide": false,
+            "visibilityType": "always",
+            "normalButtons": [
+                {
+                    "text": {
+                        "default": "PAUSE ||",
+                        "matchQueue": []
+                    },
+                    "uuid": "btn_bedrock_pause",
+                    "position": {
+                        "x": 5000,
+                        "y": 0
+                    },
+                    "buttonSize": {
+                        "type": "percentage",
+                        "widthDp": 50.0,
+                        "heightDp": 50.0,
+                        "widthPercentage": 1800,
+                        "heightPercentage": 1000,
+                        "widthReference": "screen_height",
+                        "heightReference": "screen_height"
+                    },
+                    "buttonStyle": "style_bedrock_pill",
+                    "visibilityType": "always",
+                    "clickEvents": [
+                        {
+                            "type": "key",
+                            "key": "GLFW_KEY_ESCAPE"
+                        }
+                    ],
+                    "isSwipple": false,
+                    "isPenetrable": false,
+                    "isToggleable": false
+                },
+                {
+                    "text": {
+                        "default": "CHAT",
+                        "matchQueue": []
+                    },
+                    "uuid": "btn_bedrock_chat",
+                    "position": {
+                        "x": 6200,
+                        "y": 0
+                    },
+                    "buttonSize": {
+                        "type": "percentage",
+                        "widthDp": 50.0,
+                        "heightDp": 50.0,
+                        "widthPercentage": 1500,
+                        "heightPercentage": 1000,
+                        "widthReference": "screen_height",
+                        "heightReference": "screen_height"
+                    },
+                    "buttonStyle": "style_bedrock_pill",
+                    "visibilityType": "always",
+                    "clickEvents": [
+                        {
+                            "type": "key",
+                            "key": "GLFW_KEY_T"
+                        }
+                    ],
+                    "isSwipple": false,
+                    "isPenetrable": false,
+                    "isToggleable": false
+                },
+                {
+                    "text": {
+                        "default": "F5 👁",
+                        "matchQueue": []
+                    },
+                    "uuid": "btn_bedrock_f5",
+                    "position": {
+                        "x": 3800,
+                        "y": 0
+                    },
+                    "buttonSize": {
+                        "type": "percentage",
+                        "widthDp": 50.0,
+                        "heightDp": 50.0,
+                        "widthPercentage": 1500,
+                        "heightPercentage": 1000,
+                        "widthReference": "screen_height",
+                        "heightReference": "screen_height"
+                    },
+                    "buttonStyle": "style_bedrock_pill",
+                    "visibilityType": "always",
+                    "clickEvents": [
+                        {
+                            "type": "key",
+                            "key": "GLFW_KEY_F5"
+                        }
+                    ],
+                    "isSwipple": false,
+                    "isPenetrable": false,
+                    "isToggleable": false
+                }
+            ]
+        },
+        {
+            "name": "actions",
+            "uuid": "bedrock_action_layer",
+            "hide": false,
+            "visibilityType": "in_game",
+            "normalButtons": [
+                {
+                    "text": {
+                        "default": "INV",
+                        "matchQueue": []
+                    },
+                    "uuid": "btn_bedrock_inv",
+                    "position": {
+                        "x": 7500,
+                        "y": 9800
+                    },
+                    "buttonSize": {
+                        "type": "percentage",
+                        "widthDp": 50.0,
+                        "heightDp": 50.0,
+                        "widthPercentage": 1250,
+                        "heightPercentage": 1250,
+                        "widthReference": "screen_height",
+                        "heightReference": "screen_height"
+                    },
+                    "buttonStyle": "style_bedrock_circle",
+                    "visibilityType": "always",
+                    "clickEvents": [
+                        {
+                            "type": "key",
+                            "key": "GLFW_KEY_E"
+                        }
+                    ],
+                    "isSwipple": false,
+                    "isPenetrable": false,
+                    "isToggleable": false
+                },
+                {
+                    "text": {
+                        "default": "MINE (PRI)",
+                        "matchQueue": []
+                    },
+                    "uuid": "btn_bedrock_atk",
+                    "position": {
+                        "x": 8600,
+                        "y": 4200
+                    },
+                    "buttonSize": {
+                        "type": "percentage",
+                        "widthDp": 50.0,
+                        "heightDp": 50.0,
+                        "widthPercentage": 2200,
+                        "heightPercentage": 1400,
+                        "widthReference": "screen_height",
+                        "heightReference": "screen_height"
+                    },
+                    "buttonStyle": "style_bedrock_beveled",
+                    "visibilityType": "always",
+                    "clickEvents": [
+                        {
+                            "type": "mouse",
+                            "key": "GLFW_MOUSE_BUTTON_LEFT"
+                        }
+                    ],
+                    "isSwipple": false,
+                    "isPenetrable": false,
+                    "isToggleable": false
+                },
+                {
+                    "text": {
+                        "default": "USE (SEC)",
+                        "matchQueue": []
+                    },
+                    "uuid": "btn_bedrock_use",
+                    "position": {
+                        "x": 8600,
+                        "y": 2600
+                    },
+                    "buttonSize": {
+                        "type": "percentage",
+                        "widthDp": 50.0,
+                        "heightDp": 50.0,
+                        "widthPercentage": 2200,
+                        "heightPercentage": 1400,
+                        "widthReference": "screen_height",
+                        "heightReference": "screen_height"
+                    },
+                    "buttonStyle": "style_bedrock_beveled",
+                    "visibilityType": "always",
+                    "clickEvents": [
+                        {
+                            "type": "mouse",
+                            "key": "GLFW_MOUSE_BUTTON_RIGHT"
+                        }
+                    ],
+                    "isSwipple": false,
+                    "isPenetrable": false,
+                    "isToggleable": false
+                },
+                {
+                    "text": {
+                        "default": "JUMP ▲",
+                        "matchQueue": []
+                    },
+                    "uuid": "btn_bedrock_jump",
+                    "position": {
+                        "x": 8600,
+                        "y": 7400
+                    },
+                    "buttonSize": {
+                        "type": "percentage",
+                        "widthDp": 50.0,
+                        "heightDp": 50.0,
+                        "widthPercentage": 2200,
+                        "heightPercentage": 1500,
+                        "widthReference": "screen_height",
+                        "heightReference": "screen_height"
+                    },
+                    "buttonStyle": "style_bedrock_diamond",
+                    "visibilityType": "always",
+                    "clickEvents": [
+                        {
+                            "type": "key",
+                            "key": "GLFW_KEY_SPACE"
+                        }
+                    ],
+                    "isSwipple": false,
+                    "isPenetrable": false,
+                    "isToggleable": false
+                },
+                {
+                    "text": {
+                        "default": "SNEAK ◆",
+                        "matchQueue": []
+                    },
+                    "uuid": "btn_bedrock_sneak",
+                    "position": {
+                        "x": 8600,
+                        "y": 5800
+                    },
+                    "buttonSize": {
+                        "type": "percentage",
+                        "widthDp": 50.0,
+                        "heightDp": 50.0,
+                        "widthPercentage": 2200,
+                        "heightPercentage": 1400,
+                        "widthReference": "screen_height",
+                        "heightReference": "screen_height"
+                    },
+                    "buttonStyle": "style_bedrock_beveled",
+                    "visibilityType": "always",
+                    "clickEvents": [
+                        {
+                            "type": "key",
+                            "key": "GLFW_KEY_LEFT_SHIFT"
+                        }
+                    ],
+                    "isSwipple": false,
+                    "isPenetrable": false,
+                    "isToggleable": true
+                },
+                {
+                    "text": {
+                        "default": "SWAP (F)",
+                        "matchQueue": []
+                    },
+                    "uuid": "btn_bedrock_swap",
+                    "position": {
+                        "x": 100,
+                        "y": 4200
+                    },
+                    "buttonSize": {
+                        "type": "percentage",
+                        "widthDp": 50.0,
+                        "heightDp": 50.0,
+                        "widthPercentage": 1800,
+                        "heightPercentage": 1200,
+                        "widthReference": "screen_height",
+                        "heightReference": "screen_height"
+                    },
+                    "buttonStyle": "style_bedrock_beveled",
+                    "visibilityType": "always",
+                    "clickEvents": [
+                        {
+                            "type": "key",
+                            "key": "GLFW_KEY_F"
+                        }
+                    ],
+                    "isSwipple": false,
+                    "isPenetrable": false,
+                    "isToggleable": false
+                },
+                {
+                    "text": {
+                        "default": "DROP (Q)",
+                        "matchQueue": []
+                    },
+                    "uuid": "btn_bedrock_drop",
+                    "position": {
+                        "x": 100,
+                        "y": 2800
+                    },
+                    "buttonSize": {
+                        "type": "percentage",
+                        "widthDp": 50.0,
+                        "heightDp": 50.0,
+                        "widthPercentage": 1800,
+                        "heightPercentage": 1200,
+                        "widthReference": "screen_height",
+                        "heightReference": "screen_height"
+                    },
+                    "buttonStyle": "style_bedrock_beveled",
+                    "visibilityType": "always",
+                    "clickEvents": [
+                        {
+                            "type": "key",
+                            "key": "GLFW_KEY_Q"
+                        }
+                    ],
+                    "isSwipple": false,
+                    "isPenetrable": false,
+                    "isToggleable": false
+                }
+            ]
+        },
+        {
+            "name": "dpad_move",
+            "uuid": "bedrock_move_layer",
+            "hide": false,
+            "visibilityType": "in_game",
+            "joystickButtons": [
+                {
+                    "uuid": "joystick_bedrock_dpad",
+                    "position": {
+                        "x": 1200,
+                        "y": 7800
+                    },
+                    "sizePercentage": 3600,
+                    "lockEvents": [
+                        {
+                            "type": "key",
+                            "key": "GLFW_KEY_LEFT_CONTROL"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "styles": [
+        {
+            "name": "bedrock_beveled",
+            "uuid": "style_bedrock_beveled",
+            "animateSwap": true,
+            "commonStyle": true,
+            "lightStyle": {
+                "alpha": 0.55,
+                "pressedAlpha": 0.85,
+                "backgroundColor": 1882191950,
+                "pressedBackgroundColor": 2688029580,
+                "contentColor": 4294967295,
+                "pressedContentColor": 4294967295,
+                "borderWidth": 1,
+                "pressedBorderWidth": 2,
+                "borderColor": 1895825407,
+                "pressedBorderColor": 4294967295,
+                "borderRadius": {
+                    "topStart": 12.0,
+                    "topEnd": 12.0,
+                    "bottomEnd": 12.0,
+                    "bottomStart": 12.0
+                },
+                "pressedBorderRadius": {
+                    "topStart": 12.0,
+                    "topEnd": 12.0,
+                    "bottomEnd": 12.0,
+                    "bottomStart": 12.0
+                }
+            },
+            "darkStyle": {
+                "alpha": 0.55,
+                "pressedAlpha": 0.85,
+                "backgroundColor": 1882191950,
+                "pressedBackgroundColor": 2688029580,
+                "contentColor": 4294967295,
+                "pressedContentColor": 4294967295,
+                "borderWidth": 1,
+                "pressedBorderWidth": 2,
+                "borderColor": 1895825407,
+                "pressedBorderColor": 4294967295,
+                "borderRadius": {
+                    "topStart": 12.0,
+                    "topEnd": 12.0,
+                    "bottomEnd": 12.0,
+                    "bottomStart": 12.0
+                },
+                "pressedBorderRadius": {
+                    "topStart": 12.0,
+                    "topEnd": 12.0,
+                    "bottomEnd": 12.0,
+                    "bottomStart": 12.0
+                }
+            }
+        },
+        {
+            "name": "bedrock_diamond",
+            "uuid": "style_bedrock_diamond",
+            "animateSwap": true,
+            "commonStyle": true,
+            "lightStyle": {
+                "alpha": 0.65,
+                "pressedAlpha": 0.90,
+                "backgroundColor": 1882191950,
+                "pressedBackgroundColor": 2688029580,
+                "contentColor": 4294967295,
+                "pressedContentColor": 4294967295,
+                "borderWidth": 2,
+                "pressedBorderWidth": 2,
+                "borderColor": 1895825407,
+                "pressedBorderColor": 4294967295,
+                "borderRadius": {
+                    "topStart": 24.0,
+                    "topEnd": 24.0,
+                    "bottomEnd": 24.0,
+                    "bottomStart": 24.0
+                },
+                "pressedBorderRadius": {
+                    "topStart": 24.0,
+                    "topEnd": 24.0,
+                    "bottomEnd": 24.0,
+                    "bottomStart": 24.0
+                }
+            },
+            "darkStyle": {
+                "alpha": 0.65,
+                "pressedAlpha": 0.90,
+                "backgroundColor": 1882191950,
+                "pressedBackgroundColor": 2688029580,
+                "contentColor": 4294967295,
+                "pressedContentColor": 4294967295,
+                "borderWidth": 2,
+                "pressedBorderWidth": 2,
+                "borderColor": 1895825407,
+                "pressedBorderColor": 4294967295,
+                "borderRadius": {
+                    "topStart": 24.0,
+                    "topEnd": 24.0,
+                    "bottomEnd": 24.0,
+                    "bottomStart": 24.0
+                },
+                "pressedBorderRadius": {
+                    "topStart": 24.0,
+                    "topEnd": 24.0,
+                    "bottomEnd": 24.0,
+                    "bottomStart": 24.0
+                }
+            }
+        },
+        {
+            "name": "bedrock_circle",
+            "uuid": "style_bedrock_circle",
+            "animateSwap": true,
+            "commonStyle": true,
+            "lightStyle": {
+                "alpha": 0.60,
+                "pressedAlpha": 0.85,
+                "backgroundColor": 1882191950,
+                "pressedBackgroundColor": 2688029580,
+                "contentColor": 4294967295,
+                "pressedContentColor": 4294967295,
+                "borderWidth": 1,
+                "pressedBorderWidth": 2,
+                "borderColor": 1895825407,
+                "pressedBorderColor": 4294967295,
+                "borderRadius": {
+                    "topStart": 50.0,
+                    "topEnd": 50.0,
+                    "bottomEnd": 50.0,
+                    "bottomStart": 50.0
+                },
+                "pressedBorderRadius": {
+                    "topStart": 50.0,
+                    "topEnd": 50.0,
+                    "bottomEnd": 50.0,
+                    "bottomStart": 50.0
+                }
+            },
+            "darkStyle": {
+                "alpha": 0.60,
+                "pressedAlpha": 0.85,
+                "backgroundColor": 1882191950,
+                "pressedBackgroundColor": 2688029580,
+                "contentColor": 4294967295,
+                "pressedContentColor": 4294967295,
+                "borderWidth": 1,
+                "pressedBorderWidth": 2,
+                "borderColor": 1895825407,
+                "pressedBorderColor": 4294967295,
+                "borderRadius": {
+                    "topStart": 50.0,
+                    "topEnd": 50.0,
+                    "bottomEnd": 50.0,
+                    "bottomStart": 50.0
+                },
+                "pressedBorderRadius": {
+                    "topStart": 50.0,
+                    "topEnd": 50.0,
+                    "bottomEnd": 50.0,
+                    "bottomStart": 50.0
+                }
+            }
+        },
+        {
+            "name": "bedrock_pill",
+            "uuid": "style_bedrock_pill",
+            "animateSwap": true,
+            "commonStyle": true,
+            "lightStyle": {
+                "alpha": 0.50,
+                "pressedAlpha": 0.80,
+                "backgroundColor": 1882191950,
+                "pressedBackgroundColor": 2688029580,
+                "contentColor": 4294967295,
+                "pressedContentColor": 4294967295,
+                "borderWidth": 1,
+                "pressedBorderWidth": 2,
+                "borderColor": 1895825407,
+                "pressedBorderColor": 4294967295,
+                "borderRadius": {
+                    "topStart": 8.0,
+                    "topEnd": 8.0,
+                    "bottomEnd": 8.0,
+                    "bottomStart": 8.0
+                },
+                "pressedBorderRadius": {
+                    "topStart": 8.0,
+                    "topEnd": 8.0,
+                    "bottomEnd": 8.0,
+                    "bottomStart": 8.0
+                }
+            },
+            "darkStyle": {
+                "alpha": 0.50,
+                "pressedAlpha": 0.80,
+                "backgroundColor": 1882191950,
+                "pressedBackgroundColor": 2688029580,
+                "contentColor": 4294967295,
+                "pressedContentColor": 4294967295,
+                "borderWidth": 1,
+                "pressedBorderWidth": 2,
+                "borderColor": 1895825407,
+                "pressedBorderColor": 4294967295,
+                "borderRadius": {
+                    "topStart": 8.0,
+                    "topEnd": 8.0,
+                    "bottomEnd": 8.0,
+                    "bottomStart": 8.0
+                },
+                "pressedBorderRadius": {
+                    "topStart": 8.0,
+                    "topEnd": 8.0,
+                    "bottomEnd": 8.0,
+                    "bottomStart": 8.0
+                }
+            }
+        }
+    ],
+    "editorVersion": 12
+}

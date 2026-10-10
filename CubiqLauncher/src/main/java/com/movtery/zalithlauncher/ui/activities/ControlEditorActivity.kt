@@ -29,10 +29,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.movtery.guide.GuideHost
 import com.movtery.layer_controller.layout.ControlLayout
 import com.movtery.layer_controller.layout.loadLayoutFromFile
+import com.movtery.layer_controller.layout.loadLayoutFromFileUncheck
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.path.PathManager
+import com.movtery.zalithlauncher.context.copyAssetFile
+import com.movtery.zalithlauncher.utils.logging.Logger
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.ui.base.BaseAppCompatActivity
 import com.movtery.zalithlauncher.ui.guide.GuideKeys
@@ -52,7 +59,7 @@ private const val BUNDLE_CONTROL = "BUNDLE_CONTROL"
 
 @AndroidEntryPoint
 class ControlEditorActivity : BaseAppCompatActivity() {
-    override fun isIgnoreNotch(): Boolean = AllSettings.gameFullScreen.getValue()
+    override fun isIgnoreNotch(): Boolean = true
 
     override fun getTaskDescriptionTitle(): String = getString(R.string.control_manage_info_edit)
 
@@ -64,16 +71,55 @@ class ControlEditorActivity : BaseAppCompatActivity() {
      */
     private val backgroundViewModel: BackgroundViewModel by viewModels()
 
+    private fun setImmersiveFullscreen() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.hide(WindowInsetsCompat.Type.systemBars())
+        controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            setImmersiveFullscreen()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        /** 控制布局绝对路径 */
-        val controlPath: String = intent.extras?.getString(BUNDLE_CONTROL) ?: return runFinish()
-        /** 控制布局文件 */
-        val controlFile: File = File(controlPath).takeIf { it.isFile && it.exists() } ?: return runFinish()
-        /** 控制布局 */
+        setImmersiveFullscreen()
+
+        val controlPath: String? = intent.extras?.getString(BUNDLE_CONTROL)
+        var controlFile: File? = controlPath?.let { File(it) }?.takeIf { it.isFile && it.exists() }
+
+        if (controlFile == null) {
+            val bedrockFile = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
+            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+            if (!bedrockFile.exists()) {
+                runCatching {
+                    copyAssetFile(fileName = "bedrock_touch_layout.json", output = bedrockFile, overwrite = false)
+                }
+            }
+            if (!defaultFile.exists()) {
+                runCatching {
+                    copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = false)
+                }
+            }
+            controlFile = if (bedrockFile.exists()) bedrockFile else defaultFile
+        }
+
         val layout: ControlLayout = runCatching {
             loadLayoutFromFile(controlFile)
-        }.getOrNull() ?: return runFinish()
+        }.recoverCatching {
+            loadLayoutFromFileUncheck(controlFile)
+        }.getOrElse { e ->
+            Logger.warning("ControlEditorActivity", "Failed to load layout from $controlFile", e)
+            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+            runCatching {
+                copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = true)
+                loadLayoutFromFile(defaultFile)
+            }.getOrNull() ?: return runFinish()
+        }
 
         //初始化控制布局
         editorViewModel.initLayout(layout)
@@ -92,47 +138,37 @@ class ControlEditorActivity : BaseAppCompatActivity() {
             ZalithLauncherTheme(
                 backgroundViewModel = backgroundViewModel
             ) {
-                val guides = rememberAppGuides()
-                GuideHost(
-                    guides.editorScreen,
-                    nextTip = { NextTipLabel(it) }
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = backgroundColor(),
+                    contentColor = onBackgroundColor()
                 ) {
-                    LaunchedEffect(Unit) {
-                        guides.startOnce(GuideKeys.Editor)
-                    }
-
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = backgroundColor(),
-                        contentColor = onBackgroundColor()
+                    BoxWithConstraints(
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        BoxWithConstraints(
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Background(
-                                modifier = Modifier.fillMaxSize(),
-                                viewModel = backgroundViewModel,
-                                allowVideo = false
-                            )
+                        Background(
+                            modifier = Modifier.fillMaxSize(),
+                            viewModel = backgroundViewModel,
+                            allowVideo = false
+                        )
 
-                            ControlEditor(
-                                viewModel = editorViewModel,
-                                targetFile = controlFile,
-                                exit = {
-                                    //已保存控制布局后进行的退出
-                                    finish()
-                                },
-                                menuExit = {
-                                    //菜单要求的直接退出，使用对话框让用户确认
-                                    editorViewModel.showExitEditorDialog(
-                                        context = this@ControlEditorActivity,
-                                        onExit = {
-                                            this@ControlEditorActivity.finish()
-                                        }
-                                    )
-                                }
-                            )
-                        }
+                        ControlEditor(
+                            viewModel = editorViewModel,
+                            targetFile = controlFile,
+                            exit = {
+                                //已保存控制布局后进行的退出
+                                finish()
+                            },
+                            menuExit = {
+                                //菜单要求的直接退出，使用对话框让用户确认
+                                editorViewModel.showExitEditorDialog(
+                                    context = this@ControlEditorActivity,
+                                    onExit = {
+                                        this@ControlEditorActivity.finish()
+                                    }
+                                )
+                            }
+                        )
                     }
                 }
             }

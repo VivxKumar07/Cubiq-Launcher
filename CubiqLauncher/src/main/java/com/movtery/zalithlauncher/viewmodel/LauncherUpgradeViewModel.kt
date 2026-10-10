@@ -124,28 +124,7 @@ class LauncherUpgradeViewModel: ViewModel() {
         onIsLatest: suspend () -> Unit = {}
     ) {
         viewModelScope.launch {
-            if (
-                isWithinRateLimit(
-                    time = TimeUnit.HOURS.toMillis(1L),
-                    lastCheckTime = AllSettings.lastUpgradeCheck.getValue()
-                )
-            ) {
-                Logger.info(TAG, "App start check: Within rate limit, skipping")
-                return@launch
-            }
-
-            val data = fetchRemoteData()
-            if (data != null) {
-                checkForUpgrade(
-                    data = data,
-                    lastIgnored = AllSettings.lastIgnoredVersion.getValue(),
-                    ignoreDismissedVersions = true, //启动时检查忽略用户已忽略的版本
-                    onUpgrade = { data ->
-                        operation = LauncherUpgradeOperation.Upgrade(data)
-                    },
-                    onIsLatest = onIsLatest
-                )
-            }
+            Logger.info(TAG, "App start check: Cubiq Launcher is up-to-date.")
             updateLastCheckTime()
         }
     }

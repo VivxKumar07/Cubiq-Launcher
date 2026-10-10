@@ -127,12 +127,31 @@ class PathManager {
         }
 
         /**
-         * 处理历史遗留的旧文件
+         * 处理历史遗留的旧文件并自动迁移旧的 Zalith 目录至 Cubiq Launcher
          */
         private fun handleLegacy() {
             //不再支持的共用游戏运行日志
             File(DIR_FILES_EXTERNAL, LogName.GAME.fileName).takeIf { it.exists() }?.let {
                 FileUtils.deleteQuietly(it)
+            }
+
+            // 自动重命名/迁移可能遗留的旧 Zalith 文件夹为 Cubiq Launcher
+            val legacyNames = listOf("Zalith Launcher", "zalith launcher", "ZalithLauncher", "zalith-launcher", "zalith", "Zalith")
+            legacyNames.forEach { legacyName ->
+                val legacyDir = File(DIR_FILES_EXTERNAL, legacyName)
+                if (legacyDir.exists()) {
+                    val targetDir = File(DIR_FILES_EXTERNAL, "Cubiq Launcher")
+                    if (!targetDir.exists()) {
+                        legacyDir.renameTo(targetDir)
+                    } else if (legacyDir.isDirectory) {
+                        runCatching {
+                            FileUtils.copyDirectory(legacyDir, targetDir)
+                            FileUtils.deleteQuietly(legacyDir)
+                        }
+                    } else {
+                        FileUtils.deleteQuietly(legacyDir)
+                    }
+                }
             }
         }
     }

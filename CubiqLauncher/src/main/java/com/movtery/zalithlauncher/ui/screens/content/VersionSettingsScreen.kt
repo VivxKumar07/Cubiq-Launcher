@@ -35,9 +35,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.foundation.background
 import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -243,7 +257,7 @@ fun VersionSettingsScreen(
         screenKey = key,
         currentKey = backScreenViewModel.mainScreen.currentKey
     ) { isVisible ->
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFF141414))
@@ -252,31 +266,91 @@ fun VersionSettingsScreen(
                 key.version.getVersionInfo()?.loaderInfo
             }
 
-            TabMenu(
-                isVisible = isVisible,
+            // Top Header Bar with Back Button, Version Name, and Export
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF1E1E20))
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                com.movtery.zalithlauncher.ui.components.MinecraftButton(
+                    onClick = {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        backToMainScreen()
+                    },
+                    style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.STONE,
+                    text = "< BACK",
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .width(76.dp)
+                        .height(32.dp)
+                )
+
+                Text(
+                    text = "MANAGE: ${key.version.getVersionName()}",
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.5.sp,
+                    maxLines = 1,
+                    modifier = Modifier.padding(horizontal = 6.dp)
+                )
+
+                com.movtery.zalithlauncher.ui.components.MinecraftButton(
+                    onClick = {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        onExportModpack()
+                    },
+                    style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.GREEN,
+                    text = "EXPORT",
+                    fontSize = 11.sp,
+                    modifier = Modifier
+                        .width(76.dp)
+                        .height(32.dp)
+                )
+            }
+
+            // Top Horizontal Scrollable Tabs Menu
+            VersionSettingsHorizontalTabMenu(
                 backStack = key.backStack,
                 versionsScreenKey = key.currentKey,
                 canUpdateLoader = loaderInfo == null || loaderInfo.loader.autoDownloadable,
-                isUpdateLoader = loaderInfo != null && loaderInfo.loader.autoDownloadable,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .background(Color(0xFF18181A))
+                isUpdateLoader = loaderInfo != null && loaderInfo.loader.autoDownloadable
             )
 
-            NavigationUI(
-                modifier = Modifier.fillMaxHeight(),
-                key = key,
-                viewModel = viewModel,
-                backScreenViewModel = backScreenViewModel,
-                versionsScreenKey = key.currentKey,
-                onCurrentKeyChange = { newKey ->
-                    key.currentKey = newKey
-                },
-                backToMainScreen = backToMainScreen,
-                onExport = onExportModpack,
-                version = key.version,
-                eventViewModel = eventViewModel,
-                submitError = submitError
+            // Content Area
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                NavigationUI(
+                    modifier = Modifier.fillMaxSize(),
+                    key = key,
+                    viewModel = viewModel,
+                    backScreenViewModel = backScreenViewModel,
+                    versionsScreenKey = key.currentKey,
+                    onCurrentKeyChange = { newKey ->
+                        key.currentKey = newKey
+                    },
+                    backToMainScreen = backToMainScreen,
+                    onExport = onExportModpack,
+                    version = key.version,
+                    eventViewModel = eventViewModel,
+                    submitError = submitError
+                )
+            }
+
+            // Bottom Nav Bar
+            com.movtery.zalithlauncher.ui.components.MinecraftPCBottomNavBar(
+                selectedItem = 2,
+                onItemSelected = { index ->
+                    com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                    com.movtery.zalithlauncher.ui.screens.content.LauncherNavState.selectedBottomNav = index
+                    backToMainScreen()
+                }
             )
         }
     }
@@ -295,94 +369,120 @@ private val settingItems = listOf(
 )
 
 @Composable
-private fun TabMenu(
-    isVisible: Boolean,
+private fun VersionSettingsHorizontalTabMenu(
     backStack: NavBackStack<TitledNavKey>,
     versionsScreenKey: TitledNavKey?,
     canUpdateLoader: Boolean,
-    isUpdateLoader: Boolean,
-    modifier: Modifier = Modifier
+    isUpdateLoader: Boolean
 ) {
-    val xOffset by swapAnimateDpAsState(
-        targetValue = (-40).dp,
-        swapIn = isVisible,
-        isHorizontal = true
-    )
-
     val scrollState = rememberScrollState()
-    Column(
-        modifier = modifier
-            .fadeEdge(scrollState)
-            .width(IntrinsicSize.Min)
-            .padding(start = 8.dp)
-            .offset { IntOffset(x = xOffset.roundToPx(), y = 0) }
-            .verticalScroll(scrollState),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF18181A))
+            .horizontalScroll(scrollState)
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Spacer(modifier = Modifier.height(12.dp))
         settingItems.forEach { item ->
             if (item.key == NormalNavKey.Versions.UpdateLoader && !canUpdateLoader) {
-                //不支持自动更新安装，不放置“更新加载器/安装加载器”入口
                 return@forEach
             }
-
-            if (item.division) {
-                HorizontalDivider(
-                    modifier = Modifier
-                        .padding(vertical = 12.dp)
-                        .fillMaxWidth(0.4f)
-                        .alpha(0.4f),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+            val isSelected = versionsScreenKey === item.key
+            val labelText = if (item.key == NormalNavKey.Versions.UpdateLoader) {
+                if (isUpdateLoader) stringResource(item.textRes) else stringResource(R.string.versions_install_loader)
+            } else {
+                stringResource(item.textRes)
             }
 
-            val isSelected = versionsScreenKey === item.key
-            NavigationRailItem(
-                selected = isSelected,
-                onClick = {
-                    if (item.key == NormalNavKey.Versions.UpdateLoader) {
-                        if (isUpdateLoader) {
-                            NormalNavKey.Versions.UpdateLoader.title = androidText(R.string.versions_update_loader)
-                        } else {
-                            NormalNavKey.Versions.UpdateLoader.title = androidText(R.string.versions_install_loader)
-                        }
+            val interactionSource = remember { MutableInteractionSource() }
+            val isPressed by interactionSource.collectIsPressedAsState()
+
+            val outerBorder = if (isSelected) Color(0xFF1B4E12) else Color(0xFF38383C)
+            val topHighlight = if (isSelected) {
+                if (isPressed) Color(0xFF194411) else Color(0xFF5AC636)
+            } else {
+                if (isPressed) Color(0xFF1E1E22) else Color(0xFF3E3E44)
+            }
+            val bottomShadow = if (isSelected) {
+                if (isPressed) Color(0xFF5AC636) else Color(0xFF194411)
+            } else {
+                if (isPressed) Color(0xFF3E3E44) else Color(0xFF141416)
+            }
+            val bgGradient = if (isSelected) {
+                if (isPressed) listOf(Color(0xFF286D19), Color(0xFF205814))
+                else listOf(Color(0xFF388E23), Color(0xFF2C741B))
+            } else {
+                if (isPressed) listOf(Color(0xFF1A1A1E), Color(0xFF161618))
+                else listOf(Color(0xFF2A2A2E), Color(0xFF202024))
+            }
+
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(0, if (isPressed) 2 else 0) }
+                    .clip(RoundedCornerShape(4.dp))
+                    .border(
+                        BorderStroke(1.dp, outerBorder),
+                        RoundedCornerShape(4.dp)
+                    )
+                    .background(Brush.verticalGradient(bgGradient))
+                    .drawWithContent {
+                        drawContent()
+                        val highlightThick = 2.dp.toPx()
+                        val shadowThick = 2.5.dp.toPx()
+                        // Top highlight
+                        drawRect(
+                            color = topHighlight,
+                            topLeft = Offset(0.5f, 0.5f),
+                            size = Size(size.width - 1f, highlightThick)
+                        )
+                        // Bottom shadow
+                        drawRect(
+                            color = bottomShadow,
+                            topLeft = Offset(0.5f, size.height - shadowThick),
+                            size = Size(size.width - 1f, shadowThick)
+                        )
                     }
-                    backStack.navigateOnce(item.key)
-                },
-                icon = {
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            if (item.key == NormalNavKey.Versions.UpdateLoader) {
+                                if (isUpdateLoader) {
+                                    NormalNavKey.Versions.UpdateLoader.title = androidText(R.string.versions_update_loader)
+                                } else {
+                                    NormalNavKey.Versions.UpdateLoader.title = androidText(R.string.versions_install_loader)
+                                }
+                            }
+                            backStack.navigateOnce(item.key)
+                        }
+                    )
+                    .padding(horizontal = 11.dp, vertical = 7.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     item.icon()
-                },
-                colors = NavigationRailItemDefaults.colors(
-                    selectedIconColor = Color.White,
-                    selectedTextColor = Color(0xFF55FF55),
-                    indicatorColor = Color(0xFF3C8527),
-                    unselectedIconColor = Color(0xFFAAAAAA),
-                    unselectedTextColor = Color(0xFF888888)
-                ),
-                label = {
-                    val text = if (item.key == NormalNavKey.Versions.UpdateLoader) {
-                        if (isUpdateLoader) {
-                            NormalNavKey.Versions.UpdateLoader.title = androidText(R.string.versions_update_loader)
-                            stringResource(item.textRes)
-                        } else {
-                            NormalNavKey.Versions.UpdateLoader.title = androidText(R.string.versions_install_loader)
-                            stringResource(R.string.versions_install_loader)
-                        }
-                    } else {
-                        stringResource(item.textRes)
-                    }
                     Text(
-                        modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
-                        text = text,
-                        maxLines = 1,
+                        text = labelText,
+                        color = if (isSelected) Color.White else Color(0xFFCCCCCC),
                         fontFamily = MinecraftFontFamily,
-                        fontSize = 10.5.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                        fontSize = 11.5.sp,
+                        style = TextStyle(
+                            shadow = Shadow(
+                                color = if (isSelected) Color(0xFF0F2B0A) else Color.Black,
+                                offset = Offset(1.5f, 1.5f),
+                                blurRadius = 0f
+                            )
+                        )
                     )
                 }
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
 }

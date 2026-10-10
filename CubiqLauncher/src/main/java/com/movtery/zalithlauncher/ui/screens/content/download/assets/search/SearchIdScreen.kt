@@ -50,6 +50,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.movtery.zalithlauncher.ui.components.MinecraftButton
@@ -359,15 +360,26 @@ private fun IconTip(
     text: String,
 ) {
     Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Icon(
-            modifier = Modifier.size(68.dp),
+            modifier = Modifier.size(56.dp),
             painter = icon,
-            contentDescription = null
+            contentDescription = null,
+            tint = Color(0xFF666666)
         )
-        Text(text = text)
+        Text(
+            text = text,
+            color = Color(0xFFAAAAAA),
+            fontFamily = MinecraftFontFamily,
+            fontSize = 12.sp,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -510,29 +522,48 @@ private fun ContentFilter(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OwnOutlinedTextField(
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(42.dp),
-                    value = projectId,
-                    onValueChange = onProjectIdChange,
-                    singleLine = true,
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.download_assets_id_holder),
-                            fontFamily = MinecraftFontFamily,
-                            fontSize = 11.sp,
-                            color = Color(0xFF888888)
+                        .height(44.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(Color(0xFF28282A))
+                        .border(
+                            BorderStroke(
+                                1.dp,
+                                if (projectId.isNotEmpty()) Color(0xFF55FF55) else Color(0xFF444444)
+                            ),
+                            RoundedCornerShape(3.dp)
                         )
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        imeAction = ImeAction.Search
-                    ),
-                    keyboardActions = KeyboardActions(
-                        onSearch = { onSearch() }
-                    ),
-                    shape = RoundedCornerShape(3.dp)
-                )
+                        .padding(horizontal = 10.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    androidx.compose.foundation.text.BasicTextField(
+                        value = projectId,
+                        onValueChange = onProjectIdChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        textStyle = TextStyle(
+                            color = Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 12.sp
+                        ),
+                        cursorBrush = androidx.compose.ui.graphics.SolidColor(Color(0xFF55FF55)),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+                        decorationBox = { innerTextField ->
+                            if (projectId.isEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.download_assets_id_holder),
+                                    fontFamily = MinecraftFontFamily,
+                                    fontSize = 11.5.sp,
+                                    color = Color(0xFF777777)
+                                )
+                            }
+                            innerTextField()
+                        }
+                    )
+                }
 
                 MinecraftButton(
                     onClick = onSearch,
@@ -541,7 +572,7 @@ private fun ContentFilter(
                     fontSize = 11.sp,
                     modifier = Modifier
                         .width(84.dp)
-                        .height(42.dp)
+                        .height(44.dp)
                 )
             }
 

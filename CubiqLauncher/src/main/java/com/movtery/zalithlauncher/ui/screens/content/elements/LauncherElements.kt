@@ -339,6 +339,29 @@ fun LaunchGameOperation(
                     return@LaunchedEffect
                 }
 
+                // 检查版本文件是否已经下载完成
+                val clientJar = version.getClientJar()
+                val targetMcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
+                val inheritedJar = version.getInheritedClientJar(targetMcVer)
+                val isDownloaded = (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
+                if (!isDownloaded) {
+                    android.widget.Toast.makeText(activity, "Version is not downloaded yet! Starting download...", android.widget.Toast.LENGTH_LONG).show()
+                    runCatching {
+                        val downloadTask = com.movtery.zalithlauncher.game.version.download.MinecraftDownloader(
+                            context = activity,
+                            version = targetMcVer,
+                            customName = version.getVersionName(),
+                            gameHome = version.getGameHome(),
+                            mode = com.movtery.zalithlauncher.game.version.download.DownloadMode.VERIFY_AND_REPAIR,
+                            onError = { }
+                        ).getDownloadTask()
+                        com.movtery.zalithlauncher.coroutine.TaskSystem.submitTask(downloadTask)
+                        com.movtery.zalithlauncher.setting.AllSettings.launcherTaskMenuExpanded.save(true)
+                    }
+                    launchGameViewModel.updateOperation(LaunchGameOperation.None)
+                    return@LaunchedEffect
+                }
+
                 //正式启动游戏
                 launchGameViewModel.updateOperation(LaunchGameOperation.RealLaunch(version, quickPlay))
             }

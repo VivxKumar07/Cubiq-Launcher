@@ -53,11 +53,35 @@ class Task private constructor(
     /** 当前速率 Bytes */
     val rateBytesPerSec = _rateBytesPerSec.asStateFlow()
 
+    private val _currentFileProgress = MutableStateFlow(-1f)
+    /** 当前单文件进度状态 */
+    val currentFileProgress = _currentFileProgress.asStateFlow()
+
+    private val _executingAction = MutableStateFlow<String?>(null)
+    /** 当前正在执行的具体流程/文件名称 */
+    val executingAction = _executingAction.asStateFlow()
+
     /**
      * 更新任务阶段
      */
     fun updateStage(state: TaskStage) {
         this._stage.update { state }
+    }
+
+    /**
+     * 更新当前单文件进度
+     */
+    fun updateCurrentFileProgress(percentage: Float) {
+        this._currentFileProgress.update {
+            (percentage.takeIf { it.isFinite() } ?: 0f).coerceIn(-1f, 1f)
+        }
+    }
+
+    /**
+     * 更新当前正在执行的具体操作
+     */
+    fun updateExecutingAction(action: String?) {
+        this._executingAction.update { action }
     }
 
     /**

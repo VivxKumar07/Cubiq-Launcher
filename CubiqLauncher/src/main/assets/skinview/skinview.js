@@ -136,6 +136,7 @@ function updateDefaultCameraPosition() {
 
 function setAzimuthAndPitch(azimuthDeg, pitchDeg, distance = 60) {
     const controls = skinViewer.controls;
+    controls.target.set(0, -3.5, 0);
     const target = controls.target;
 
     const azimuth = azimuthDeg * Math.PI / 180;
@@ -155,9 +156,10 @@ setAzimuthAndPitch(0, 10);
 
 // 确保 OrbitControls 也有相同的目标点，覆盖默认的 lookAt
 if (skinViewer.controls) {
+    skinViewer.controls.target.set(0, -3.5, 0);
     skinViewer.controls.update();
 } else if (skinViewer.camera.lookAt) {
-    skinViewer.camera.lookAt(0, 16, 0);
+    skinViewer.camera.lookAt(0, 12.5, 0);
 }
 
 let resetAnimationId = null;

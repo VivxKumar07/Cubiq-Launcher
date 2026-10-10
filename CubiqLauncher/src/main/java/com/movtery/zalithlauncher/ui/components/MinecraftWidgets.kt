@@ -71,12 +71,13 @@ import kotlinx.coroutines.delay
 enum class MinecraftButtonStyle {
     GREEN,
     STONE,
+    DARK,
     RED
 }
 
 /**
  * Authentic 3D Textured Minecraft Java Edition Button
- * Exact 1:1 replica of the official Minecraft Java Edition "PLAY" button
+ * Exact 1:1 replica of the official Minecraft Java Edition "PLAY" and "New installation" buttons
  */
 @Composable
 fun MinecraftButton(
@@ -86,7 +87,7 @@ fun MinecraftButton(
     enabled: Boolean = true,
     isLoading: Boolean = false,
     text: String? = null,
-    fontSize: TextUnit = 17.sp,
+    fontSize: TextUnit = 15.sp,
     content: (@Composable BoxScope.() -> Unit)? = null
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -98,7 +99,7 @@ fun MinecraftButton(
         MinecraftButtonStyle.GREEN -> {
             if (!enabled) {
                 Tuple6(
-                    Color(0xFF0F1E12),
+                    Color(0xFF4A4A4A),
                     Color(0xFF26522B),
                     Color(0xFF142B17),
                     listOf(Color(0xFF1E3F23), Color(0xFF17311B)),
@@ -107,51 +108,82 @@ fun MinecraftButton(
                 )
             } else if (actuallyPressed) {
                 Tuple6(
-                    Color(0xFF082C13),
-                    Color(0xFF0E4A1F), // Inverted shadow on top
-                    Color(0xFF38A026), // Inverted highlight on bottom
-                    listOf(Color(0xFF125C24), Color(0xFF0E481D)),
-                    Color(0xFFE2E2E2),
-                    Color(0xFF082C13)
+                    Color(0xFFCCCCCC),
+                    Color(0xFF103F1B), // Inverted shadow on top
+                    Color(0xFF42A62C), // Inverted highlight on bottom
+                    listOf(Color(0xFF205F1C), Color(0xFF184E15)),
+                    Color(0xFFDCDCDC),
+                    Color(0xFF081F0E)
                 )
             } else {
                 Tuple6(
-                    Color(0xFF082C13), // 1px dark edge
-                    Color(0xFF55C832), // Top bright highlight line
-                    Color(0xFF07441B), // Bottom shadow edge
-                    listOf(Color(0xFF1E8D38), Color(0xFF13732D)), // Textured green gradient
+                    Color(0xFF1B3D14), // Dark authentic Minecraft green border
+                    Color(0xFF7AE842), // Top bright highlight line
+                    Color(0xFF1E520F), // Bottom 3D bevel shadow
+                    listOf(Color(0xFF58B62F), Color(0xFF3E8E22)), // Vivid Minecraft green
                     Color.White,
-                    Color(0xFF073315)
+                    Color(0xFF0F2B09) // Dark green text shadow
                 )
             }
         }
         MinecraftButtonStyle.STONE -> {
+            // Light stone 3D button matching Image 3 (Official PC Launcher "New installation" button)
             if (!enabled) {
                 Tuple6(
-                    Color(0xFF181818),
-                    Color(0xFF383838),
-                    Color(0xFF202020),
-                    listOf(Color(0xFF303030), Color(0xFF262626)),
-                    Color(0xFF6E6E6E),
-                    Color(0xFF121212)
+                    Color(0xFF3A3A38),
+                    Color(0xFFB5B4AE),
+                    Color(0xFF7A7973),
+                    listOf(Color(0xFF9E9D97), Color(0xFF8E8D87)),
+                    Color(0xFF686762),
+                    Color.Transparent
                 )
             } else if (actuallyPressed) {
                 Tuple6(
-                    Color(0xFF141414),
-                    Color(0xFF222222),
-                    Color(0xFF666666),
-                    listOf(Color(0xFF323232), Color(0xFF282828)),
-                    Color(0xFFD0D0D0),
-                    Color(0xFF141414)
+                    Color(0xFF22211F),
+                    Color(0xFF78766E), // Pressed top shadow
+                    Color(0xFFDEDDD8), // Pressed bottom highlight
+                    listOf(Color(0xFFABA9A2), Color(0xFF9E9C95)),
+                    Color(0xFF1B2B3A),
+                    Color.Transparent
                 )
             } else {
                 Tuple6(
-                    Color(0xFF141414),
-                    Color(0xFF8C8C8C), // Top highlight
-                    Color(0xFF1C1C1C), // Bottom shadow
-                    listOf(Color(0xFF4E4E4E), Color(0xFF3C3C3C)),
+                    Color(0xFF22211F), // Dark border
+                    Color(0xFFF0EFEA), // Bright top edge highlight
+                    Color(0xFF7E7C74), // Deep 3D bottom bevel shelf
+                    listOf(Color(0xFFD6D5CF), Color(0xFFC7C6BF)), // Light stone face
+                    Color(0xFF1B2B3A), // Dark navy launcher text
+                    Color.Transparent
+                )
+            }
+        }
+        MinecraftButtonStyle.DARK -> {
+            if (!enabled) {
+                Tuple6(
+                    Color(0xFF161618),
+                    Color(0xFF2A2A2E),
+                    Color(0xFF1A1A1C),
+                    listOf(Color(0xFF222226), Color(0xFF1A1A1E)),
+                    Color(0xFF666666),
+                    Color(0xFF101012)
+                )
+            } else if (actuallyPressed) {
+                Tuple6(
+                    Color(0xFF111113),
+                    Color(0xFF1C1C20),
+                    Color(0xFF4A4A52),
+                    listOf(Color(0xFF26262B), Color(0xFF1F1F23)),
+                    Color(0xFFD0D0D0),
+                    Color(0xFF111113)
+                )
+            } else {
+                Tuple6(
+                    Color(0xFF111113),
+                    Color(0xFF4A4A52), // Top highlight
+                    Color(0xFF18181A), // Bottom shadow
+                    listOf(Color(0xFF2E2E34), Color(0xFF232328)),
                     Color.White,
-                    Color(0xFF151515)
+                    Color(0xFF101012)
                 )
             }
         }
@@ -192,27 +224,27 @@ fun MinecraftButton(
                 // Top highlight bar
                 drawRect(
                     color = highlightBar,
-                    topLeft = Offset(1f, 1f),
-                    size = Size(size.width - 2f, highlightThickness)
+                    topLeft = Offset(1.5f, 1.5f),
+                    size = Size(size.width - 3f, highlightThickness)
                 )
                 // Left subtle highlight
                 drawLine(
                     color = highlightBar.copy(alpha = 0.6f),
-                    start = Offset(1.5f, 1f),
+                    start = Offset(1.5f, 1.5f),
                     end = Offset(1.5f, size.height - shadowThickness),
                     strokeWidth = 2f
                 )
                 // Bottom shadow bar
                 drawRect(
                     color = shadowBar,
-                    topLeft = Offset(1f, size.height - shadowThickness),
-                    size = Size(size.width - 2f, shadowThickness)
+                    topLeft = Offset(1.5f, size.height - shadowThickness),
+                    size = Size(size.width - 3f, shadowThickness)
                 )
                 // Right subtle shadow
                 drawLine(
                     color = shadowBar.copy(alpha = 0.6f),
                     start = Offset(size.width - 1.5f, highlightThickness),
-                    end = Offset(size.width - 1.5f, size.height - 1f),
+                    end = Offset(size.width - 1.5f, size.height - 1.5f),
                     strokeWidth = 2f
                 )
             }
@@ -241,7 +273,9 @@ fun MinecraftButton(
                 fontSize = fontSize,
                 fontWeight = FontWeight.Bold,
                 fontFamily = MinecraftFontFamily,
-                letterSpacing = 0.8.sp,
+                letterSpacing = 0.5.sp,
+                maxLines = 1,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                 style = TextStyle(
                     shadow = Shadow(
                         color = textShadow,
@@ -252,6 +286,31 @@ fun MinecraftButton(
             )
         }
     }
+}
+
+/**
+ * Authentic Pixel-Bordered Minecraft Button (1:1 Replica of Image 2)
+ */
+@Composable
+fun MinecraftPixelButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    isLoading: Boolean = false,
+    text: String? = null,
+    fontSize: TextUnit = 16.sp,
+    content: (@Composable BoxScope.() -> Unit)? = null
+) {
+    MinecraftButton(
+        onClick = onClick,
+        modifier = modifier,
+        style = MinecraftButtonStyle.GREEN,
+        enabled = enabled,
+        isLoading = isLoading,
+        text = text,
+        fontSize = fontSize,
+        content = content
+    )
 }
 
 /**
@@ -310,6 +369,7 @@ fun MinecraftBlockCard(
 /**
  * 1:1 Replica of the Minecraft PC Mobile Launcher Bottom Navigation Bar
  * Options: News | Versions | Mods | Profile
+ * Matches Image 1: Light Grey PC Launcher tabs with 3D bottom bevels and Green active tab
  */
 @Composable
 fun MinecraftPCBottomNavBar(
@@ -321,27 +381,30 @@ fun MinecraftPCBottomNavBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color(0xFF141416))
-            .border(BorderStroke(1.dp, Color(0xFF26262A)), RoundedCornerShape(18.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(Color(0xFF1B1B1E))
+            .border(BorderStroke(1.5.dp, Color(0xFF2C2C32)), RoundedCornerShape(6.dp))
+            .padding(3.dp),
         contentAlignment = Alignment.Center
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(60.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(58.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceAround
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             // 0: News
             MinecraftPCNavItem(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 icon = { isSel ->
                     Image(
                         painter = painterResource(R.drawable.ic_mc_pc_news),
                         contentDescription = "News",
-                        modifier = Modifier
-                            .size(30.dp)
-                            .alpha(if (isSel) 1.0f else 0.55f)
+                        modifier = Modifier.size(26.dp)
                     )
                 },
                 label = "News",
@@ -351,13 +414,14 @@ fun MinecraftPCBottomNavBar(
 
             // 1: Versions
             MinecraftPCNavItem(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 icon = { isSel ->
                     Image(
                         painter = painterResource(R.drawable.ic_mc_pc_versions),
                         contentDescription = "Versions",
-                        modifier = Modifier
-                            .size(30.dp)
-                            .alpha(if (isSel) 1.0f else 0.55f)
+                        modifier = Modifier.size(26.dp)
                     )
                 },
                 label = "Versions",
@@ -367,13 +431,14 @@ fun MinecraftPCBottomNavBar(
 
             // 2: Mods
             MinecraftPCNavItem(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 icon = { isSel ->
                     Image(
                         painter = painterResource(R.drawable.ic_mc_pc_mods),
                         contentDescription = "Mods",
-                        modifier = Modifier
-                            .size(30.dp)
-                            .alpha(if (isSel) 1.0f else 0.55f)
+                        modifier = Modifier.size(26.dp)
                     )
                 },
                 label = "Mods",
@@ -383,14 +448,16 @@ fun MinecraftPCBottomNavBar(
 
             // 3: Profile
             MinecraftPCNavItem(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
                 icon = { isSel ->
                     Image(
                         painter = painterResource(R.drawable.ic_mc_pc_profile),
                         contentDescription = "Profile",
                         modifier = Modifier
-                            .size(30.dp)
-                            .clip(RoundedCornerShape(3.dp))
-                            .alpha(if (isSel) 1.0f else 0.55f)
+                            .size(26.dp)
+                            .clip(RoundedCornerShape(2.dp))
                     )
                 },
                 label = "Profile",
@@ -403,6 +470,7 @@ fun MinecraftPCBottomNavBar(
 
 @Composable
 private fun MinecraftPCNavItem(
+    modifier: Modifier = Modifier,
     icon: @Composable (isSelected: Boolean) -> Unit,
     label: String,
     isSelected: Boolean,
@@ -411,17 +479,85 @@ private fun MinecraftPCNavItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    val bgModifier = if (isPressed) {
-        Modifier.background(Color(0xFF28282B), RoundedCornerShape(10.dp))
+    // Selected = Minecraft Green Tab, Unselected = Dark Stone PC Tab
+    val outerBorder = if (isSelected) {
+        if (isPressed) Color(0xFF143D0F) else Color(0xFF1B4E12)
     } else {
-        Modifier
+        if (isPressed) Color(0xFF18181B) else Color(0xFF24242A)
     }
 
+    val topHighlight = if (isSelected) {
+        if (isPressed) Color(0xFF194411) else Color(0xFF5AC636)
+    } else {
+        if (isPressed) Color(0xFF1E1E22) else Color(0xFF383842)
+    }
+
+    val bottomShadow = if (isSelected) {
+        if (isPressed) Color(0xFF5AC636) else Color(0xFF194411)
+    } else {
+        if (isPressed) Color(0xFF383842) else Color(0xFF121215)
+    }
+
+    val bgGradient = if (isSelected) {
+        if (isPressed) listOf(Color(0xFF286D19), Color(0xFF205814))
+        else listOf(Color(0xFF388E23), Color(0xFF2C741B))
+    } else {
+        if (isPressed) listOf(Color(0xFF222226), Color(0xFF1B1B1F))
+        else listOf(Color(0xFF2C2C34), Color(0xFF222228))
+    }
+
+    val textColor = if (isSelected) Color.White else Color(0xFFCCCCCC)
+    val textShadow = if (isSelected) Color(0xFF0F2B0A) else Color(0xFF101012)
+
     Column(
-        modifier = Modifier
-            .width(72.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .then(bgModifier)
+        modifier = modifier
+            .offset { IntOffset(0, if (isPressed) 2 else 0) }
+            .clip(RoundedCornerShape(4.dp))
+            .border(BorderStroke(1.dp, outerBorder), RoundedCornerShape(4.dp))
+            .background(Brush.verticalGradient(bgGradient))
+            .drawWithContent {
+                drawContent()
+                val highlightThickness = 2.dp.toPx()
+                val shadowThickness = 3.dp.toPx()
+
+                // Top highlight line (or pressed shadow)
+                drawRect(
+                    color = topHighlight,
+                    topLeft = Offset(0.5f, 0.5f),
+                    size = Size(size.width - 1f, highlightThickness)
+                )
+                // Left border highlight
+                drawLine(
+                    color = topHighlight.copy(alpha = 0.7f),
+                    start = Offset(1f, 0.5f),
+                    end = Offset(1f, size.height - shadowThickness),
+                    strokeWidth = 1.5f
+                )
+                // Bottom shadow shelf (gives 3D physical height)
+                drawRect(
+                    color = bottomShadow,
+                    topLeft = Offset(0.5f, size.height - shadowThickness),
+                    size = Size(size.width - 1f, shadowThickness)
+                )
+                // Right border shadow
+                drawLine(
+                    color = bottomShadow.copy(alpha = 0.7f),
+                    start = Offset(size.width - 1f, highlightThickness),
+                    end = Offset(size.width - 1f, size.height - 0.5f),
+                    strokeWidth = 1.5f
+                )
+
+                // White accent underline if selected (matching Image 1)
+                if (isSelected && !isPressed) {
+                    val accentWidth = size.width * 0.55f
+                    val accentLeft = (size.width - accentWidth) / 2f
+                    drawRect(
+                        color = Color.White,
+                        topLeft = Offset(accentLeft, size.height - shadowThickness - 2.dp.toPx()),
+                        size = Size(accentWidth, 2.dp.toPx())
+                    )
+                }
+            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -430,7 +566,7 @@ private fun MinecraftPCNavItem(
                     onClick()
                 }
             )
-            .padding(horizontal = 4.dp, vertical = 4.dp),
+            .padding(horizontal = 2.dp, vertical = 3.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -438,25 +574,19 @@ private fun MinecraftPCNavItem(
         Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
-            color = if (isSelected) Color.White else Color(0xFF7A7A7E),
+            color = textColor,
             fontFamily = MinecraftFontFamily,
             fontSize = 11.5.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(3.dp))
-        // Active indicator line directly beneath label matching media_1791004464013.png
-        if (isSelected) {
-            Box(
-                modifier = Modifier
-                    .width(42.dp)
-                    .height(3.dp)
-                    .clip(RoundedCornerShape(1.5.dp))
-                    .background(Color(0xFF38D122))
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            style = TextStyle(
+                shadow = Shadow(
+                    color = textShadow,
+                    offset = Offset(1.5f, 1.5f),
+                    blurRadius = 0f
+                )
             )
-        } else {
-            Spacer(modifier = Modifier.height(3.dp))
-        }
+        )
     }
 }
 

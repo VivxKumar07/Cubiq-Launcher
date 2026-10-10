@@ -25,8 +25,15 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -215,12 +222,6 @@ private fun VersionInfoLayout(
     onIconPicked: () -> Unit = {},
     resetIcon: () -> Unit = {}
 ) {
-    val context = LocalContext.current
-    val errorImportImageText = stringResource(R.string.error_import_image)
-    val iconFile = remember {
-        version.getVersionIconFile()
-    }
-
     VersionChunkBackground(
         modifier = modifier,
         paddingValues = PaddingValues(all = 8.dp)
@@ -228,86 +229,18 @@ private fun VersionInfoLayout(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(all = 8.dp),
+                .padding(all = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             VersionOverviewItem(
                 modifier = Modifier
                     .padding(start = 4.dp)
-                    .weight(1f),
+                    .fillMaxWidth(),
                 version = version,
                 versionSummary = versionSummary,
                 refreshKey = refreshKey
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                //添加卡片到主界面
-                val cardExists by remember(version) {
-                    VersionCardManager.cards.map { states ->
-                        states.any {
-                            it.record.versionName == version.getVersionName() &&
-                                    it.record.dir == VersionCardDir.fromGameHome(version.getGameHome())
-                        }
-                    }
-                }.collectAsStateWithLifecycle(
-                    VersionCardManager.hasCard(version.getVersionName(), version.getGameHome())
-                )
-                IconTextButton(
-                    onClick = { VersionCardManager.addCard(version) },
-                    painter = painterResource(R.drawable.ic_add_box_outlined),
-                    contentDescription = stringResource(R.string.home_add_version_card),
-                    text = stringResource(R.string.home_add_version_card),
-                    enabled = !cardExists
-                )
-
-                ImportFileButton(
-                    contract = MediaPickerContract(
-                        allowImages = true,
-                        allowVideos = false,
-                        allowMultiple = false
-                    ),
-                    onLaunch = { launcher ->
-                        launcher.launch(Unit)
-                    },
-                    progressOutput = { uri ->
-                        uri?.get(0)?.let { result ->
-                            TaskSystem.submitTask(
-                                Task.runTask(
-                                    dispatcher = Dispatchers.IO,
-                                    task = {
-                                        context.copyLocalFile(result, iconFile)
-                                        if (!iconFile.isImageFile()) error("The selected file is not an image!")
-                                    },
-                                    onError = { e ->
-                                        Logger.error(TAG, "Failed to import icon!", e)
-                                        FileUtils.deleteQuietly(iconFile)
-                                        submitError(
-                                            ErrorViewModel.ThrowableMessage(
-                                                title = androidText(errorImportImageText),
-                                                message = androidText(e.getMessageOrToString())
-                                            )
-                                        )
-                                    },
-                                    onFinally = onIconPicked
-                                )
-                            )
-                        }
-                    },
-                    painter = painterResource(R.drawable.ic_image_outlined),
-                    text = stringResource(R.string.versions_overview_custom_version_icon)
-                )
-                if (iconFileExists) {
-                    IconTextButton(
-                        onClick = resetIcon,
-                        painter = painterResource(R.drawable.ic_restart_alt),
-                        contentDescription = stringResource(R.string.versions_overview_reset_version_icon),
-                        text = stringResource(R.string.versions_overview_reset_version_icon)
-                    )
-                }
-            }
         }
     }
 }
@@ -348,51 +281,28 @@ private fun VersionManagementLayout(
             )
 
             FlowRow {
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_overview_edit_version_summary),
                     onClick = onEditSummary
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_overview_edit_version_summary)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                )
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_manage_rename_version),
                     onClick = onRename
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_manage_rename_version)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                )
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_export),
                     onClick = onExport
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_export)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                )
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_overview_log),
                     enabled = logExists,
-                    onClick = {
-                        onShareLog(logFile)
-                    }
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_overview_log)
-                    )
-                }
-                OutlinedButton(
+                    onClick = { onShareLog(logFile) }
+                )
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_manage_delete_version),
                     onClick = onDelete,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_manage_delete_version)
-                    )
-                }
+                    isDestructive = true
+                )
             }
         }
     }
@@ -417,77 +327,101 @@ private fun VersionQuickActions(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .padding(top = 4.dp, bottom = 8.dp),
-                text = stringResource(R.string.versions_settings_overview_quick_actions),
+                text = "GAME FILES & DIRECTORIES",
                 style = MaterialTheme.typography.labelLarge
             )
 
+            // Direct Primary Action: OPEN GAME FILES (.minecraft)
+            com.movtery.zalithlauncher.ui.components.MinecraftButton(
+                onClick = {
+                    com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                    accessFolder("")
+                },
+                style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.GREEN,
+                text = "📁 OPEN GAME FILES (.MINECRAFT)",
+                fontSize = 12.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(38.dp)
+                    .padding(bottom = 8.dp)
+            )
+
             FlowRow {
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
-                    onClick = { accessFolder("") }
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_overview_version_folder)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_overview_saves_folder),
                     onClick = { accessFolder(VersionFolders.SAVES.folderName) }
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_overview_saves_folder)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                )
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_overview_resource_pack_folder),
                     onClick = { accessFolder(VersionFolders.RESOURCE_PACK.folderName) }
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_overview_resource_pack_folder)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                )
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_overview_shaders_pack_folder),
                     onClick = { accessFolder(VersionFolders.SHADERS.folderName) }
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_overview_shaders_pack_folder)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                )
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_overview_mod_folder),
                     onClick = { accessFolder(VersionFolders.MOD.folderName) }
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_overview_mod_folder)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                )
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_overview_screenshot_folder),
                     onClick = { accessFolder("screenshots") }
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_overview_screenshot_folder)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                )
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_overview_logs_folder),
                     onClick = { accessFolder("logs") }
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_overview_logs_folder)
-                    )
-                }
-                OutlinedButton(
-                    modifier = Modifier.padding(end = 12.dp),
+                )
+                CubiqActionButton(
+                    text = stringResource(R.string.versions_overview_crash_report_folder),
                     onClick = { accessFolder("crash-reports") }
-                ) {
-                    Text(
-                        text = stringResource(R.string.versions_overview_crash_report_folder)
-                    )
-                }
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun CubiqActionButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isDestructive: Boolean = false,
+    enabled: Boolean = true
+) {
+    androidx.compose.foundation.layout.Box(
+        modifier = modifier
+            .padding(end = 8.dp, bottom = 8.dp)
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
+            .background(
+                if (!enabled) androidx.compose.ui.graphics.Color(0xFF1C1D1F)
+                else if (isDestructive) androidx.compose.ui.graphics.Color(0xFF2A1B1D)
+                else androidx.compose.ui.graphics.Color(0xFF24262A)
+            )
+            .border(
+                androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    if (!enabled) androidx.compose.ui.graphics.Color(0xFF2C2C2E)
+                    else if (isDestructive) androidx.compose.ui.graphics.Color(0xFF882222)
+                    else androidx.compose.ui.graphics.Color(0xFF383838)
+                ),
+                androidx.compose.foundation.shape.RoundedCornerShape(3.dp)
+            )
+            .clickable(enabled = enabled) {
+                com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                onClick()
+            }
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = if (!enabled) androidx.compose.ui.graphics.Color(0xFF666666)
+            else if (isDestructive) androidx.compose.ui.graphics.Color(0xFFFF6666)
+            else androidx.compose.ui.graphics.Color.White,
+            fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+            fontSize = 11.5.sp
+        )
     }
 }
 

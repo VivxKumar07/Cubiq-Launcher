@@ -19,16 +19,23 @@
 package com.movtery.zalithlauncher.ui.screens.content
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -83,41 +90,102 @@ fun MultiplayerScreen(
     eventViewModel: EventViewModel
 ) {
     val context = LocalContext.current
+    var activeSubTab by remember { mutableIntStateOf(0) } // 0: Settings, 1: Tutorial
 
     BaseScreen(
         screenKey = NormalNavKey.Multiplayer,
         currentKey = backScreenViewModel.mainScreen.currentKey
     ) { isVisible ->
-        AnimatedRow(
-            modifier = Modifier.fillMaxSize(),
-            isVisible = isVisible,
-            delayIncrement = 0 //同时进行
-        ) { scope ->
-            AnimatedItem(scope) { xOffset ->
-                TutorialMenu(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(androidx.compose.ui.graphics.Color(0xFF141416))
+        ) {
+            // Top Bar with 3D Beveled Back Button and Minecraft Typography
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(androidx.compose.ui.graphics.Color(0xFF1E1E20))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                com.movtery.zalithlauncher.ui.components.MinecraftButton(
+                    onClick = {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        backScreenViewModel.mainScreen.clearWith(NormalNavKey.LauncherMain)
+                    },
+                    style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.STONE,
+                    text = "< BACK",
+                    fontSize = 12.sp,
                     modifier = Modifier
-                        .weight(0.5f)
-                        .offset { IntOffset(x = -xOffset.roundToPx(), y = 0) }
-                        .padding(start = 12.dp)
+                        .width(76.dp)
+                        .height(34.dp)
                 )
+
+                Text(
+                    text = "MULTIPLAYER (TERRACOTTA LAN)",
+                    color = androidx.compose.ui.graphics.Color.White,
+                    fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+
+                Spacer(modifier = Modifier.width(76.dp))
             }
 
-            AnimatedItem(scope) { xOffset ->
-                MainMenu(
-                    modifier = Modifier
-                        .weight(0.5f)
-                        .offset { IntOffset(x = xOffset.roundToPx(), y = 0) }
-                        .padding(end = 12.dp),
-                    eventViewModel = eventViewModel,
-                    onShareLogs = {
-                        val logFile = PathManager.FILE_TERRACOTTA_LOG
-                        if (logFile.exists()) {
-                            shareFile(context, logFile)
-                        } else {
-                            eventViewModel.sendToast(androidText(R.string.terracotta_export_log_share_null))
+            // Sub Tab Row: SETTINGS | TUTORIAL
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(androidx.compose.ui.graphics.Color(0xFF18181A))
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val tabs = listOf("TERRACOTTA SETTINGS", "HOW TO PLAY (TUTORIAL)")
+                tabs.forEachIndexed { index, title ->
+                    val isSelected = activeSubTab == index
+                    com.movtery.zalithlauncher.ui.components.MinecraftButton(
+                        onClick = {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            activeSubTab = index
+                        },
+                        style = if (isSelected) com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.GREEN
+                               else com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.STONE,
+                        text = title,
+                        fontSize = 11.sp,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
+                    )
+                }
+            }
+
+            // Tab Content
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+            ) {
+                if (activeSubTab == 0) {
+                    MainMenu(
+                        modifier = Modifier.fillMaxSize(),
+                        eventViewModel = eventViewModel,
+                        onShareLogs = {
+                            val logFile = PathManager.FILE_TERRACOTTA_LOG
+                            if (logFile.exists()) {
+                                shareFile(context, logFile)
+                            } else {
+                                eventViewModel.sendToast(androidText(R.string.terracotta_export_log_share_null))
+                            }
                         }
-                    }
-                )
+                    )
+                } else {
+                    TutorialMenu(
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }

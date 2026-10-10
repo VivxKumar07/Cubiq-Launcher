@@ -105,30 +105,17 @@ fun AboutInfoScreen(
                         ButtonIconItem(
                             icon = painterResource(R.drawable.img_launcher),
                             title = BuildKeys.LAUNCHER_NAME,
-                            text = stringResource(R.string.about_launcher_version, BuildConfig.VERSION_NAME),
+                            text = "v1.0.0 (Release)",
                             button = {
-                                Button(
-                                    onClick = checkUpdate
-                                ) {
-                                    Text(text = stringResource(R.string.upgrade_title))
-                                }
                                 Button(
                                     onClick = { openLink(URL_PROJECT) }
                                 ) {
-                                    Text(text = stringResource(R.string.about_launcher_project_link))
+                                    Text(text = "GitHub")
                                 }
-                            }
-                        )
-
-                        ButtonIconItem(
-                            icon = painterResource(R.drawable.img_avatar_movtery),
-                            title = stringResource(R.string.about_launcher_author_movtery_title),
-                            text = stringResource(R.string.about_launcher_author_movtery_text, BuildKeys.LAUNCHER_NAME),
-                            button = {
                                 Button(
-                                    onClick = { openLink(URL_SUPPORT) }
+                                    onClick = { openLink(com.movtery.zalithlauncher.path.URL_DISCORD) }
                                 ) {
-                                    Text(text = stringResource(R.string.about_sponsor))
+                                    Text(text = "Discord")
                                 }
                             }
                         )

@@ -64,6 +64,7 @@ import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.game.versioninfo.MinecraftOfficialContentManager
 import com.movtery.zalithlauncher.game.versioninfo.MinecraftVersions
+import com.movtery.zalithlauncher.ui.components.IsometricBlockIcons
 import com.movtery.zalithlauncher.ui.components.MinecraftButton
 import com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle
 import com.movtery.zalithlauncher.ui.screens.NormalNavKey
@@ -103,7 +104,7 @@ fun MinecraftInstallationsScreen(
                 .fillMaxSize()
                 .padding(horizontal = 14.dp, vertical = 8.dp)
         ) {
-            // Header Action Bar: + New Installation | Search
+            // Header Action Bar: Stone 3D New Installation Button | Search
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -111,31 +112,39 @@ fun MinecraftInstallationsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // + New... Button
-                Row(
+                // Compact Rectangular "+ New..." Button (Exact 1:1 replica of Image 1)
+                Box(
                     modifier = Modifier
+                        .height(38.dp)
                         .clip(RoundedCornerShape(3.dp))
-                        .background(Color(0xFF28282A))
-                        .border(BorderStroke(1.5.dp, Color(0xFF444444)), RoundedCornerShape(3.dp))
-                        .clickable { showNewInstallationDialog = true }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .background(Color(0xFF222428))
+                        .border(BorderStroke(1.dp, Color(0xFF3A3A3E)), RoundedCornerShape(3.dp))
+                        .clickable {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            showNewInstallationDialog = true
+                        }
+                        .padding(horizontal = 14.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "+",
-                        color = Color(0xFF55FF55),
-                        fontFamily = MinecraftFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "New...",
-                        color = Color.White,
-                        fontFamily = MinecraftFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Text(
+                            text = "+",
+                            color = Color(0xFF4ADE80),
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp
+                        )
+                        Text(
+                            text = "New...",
+                            color = Color(0xFFE2E2E2),
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
 
                 // Unclipped, Pixel-Aligned Search Bar
@@ -340,22 +349,49 @@ fun MinecraftInstallationsScreen(
             NewInstallationDialog(
                 latestVersion = latestReleaseVersion,
                 onDismiss = { showNewInstallationDialog = false },
-                onCreate = { name, version, loader, iconRes ->
+                onCreate = { name, version, loader, iconRes, iconId ->
                     showNewInstallationDialog = false
-                    saveIconToVersion(context, name, iconRes)
-                    saveIconToVersion(context, version, iconRes)
-                    createdInstallationName = name
+                    runCatching {
+                        val finalVersionName = if (name.isBlank()) "$version $loader" else name
+                        val versionFolder = File(getVersionsHome(), finalVersionName)
+                        if (!versionFolder.exists()) versionFolder.mkdirs()
 
-                    val existing = allVersions.find {
-                        it.getVersionName().equals(name, ignoreCase = true) || it.getVersionName().equals(version, ignoreCase = true)
-                    }
-                    if (existing != null) {
-                        VersionsManager.saveVersion(existing)
-                    } else {
-                        backStackViewModel.downloadGameScreen.navigateTo(
-                            NormalNavKey.DownloadGame.Addons(version)
-                        )
-                        backStackViewModel.navigateToDownload(backStackViewModel.downloadGameScreen)
+                        // 1. Save chosen isometric block icon
+                        saveIconToVersion(context, finalVersionName, iconRes)
+
+                        // 2. Ensure version json exists
+                        val jsonFile = File(versionFolder, "$finalVersionName.json")
+                        if (!jsonFile.exists()) {
+                            val jsonContent = """
+                            {
+                                "id": "$version",
+                                "inheritsFrom": "$version",
+                                "type": "release",
+                                "time": "2024-01-01T00:00:00+00:00",
+                                "releaseTime": "2024-01-01T00:00:00+00:00"
+                            }
+                            """.trimIndent()
+                            jsonFile.writeText(jsonContent)
+                        }
+
+                        // 3. Refresh and select
+                        VersionsManager.refresh("NewInstallationCreated", trySetVersion = finalVersionName)
+                        createdInstallationName = finalVersionName
+
+                        // 4. Auto-schedule background download task so user doesn't need to go to download hub
+                        runCatching {
+                            val downloadTask = com.movtery.zalithlauncher.game.version.download.MinecraftDownloader(
+                                context = context,
+                                version = version,
+                                customName = finalVersionName,
+                                gameHome = com.movtery.zalithlauncher.game.path.getGameHome(),
+                                mode = com.movtery.zalithlauncher.game.version.download.DownloadMode.VERIFY_AND_REPAIR,
+                                onError = { }
+                            ).getDownloadTask()
+                            com.movtery.zalithlauncher.coroutine.TaskSystem.submitTask(downloadTask)
+                        }
+                    }.onFailure { err ->
+                        Toast.makeText(context, "Error creating installation: ${err.message}", Toast.LENGTH_LONG).show()
                     }
                 }
             )
@@ -444,11 +480,11 @@ private fun InstallationCardItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(3.dp))
-            .background(if (isCurrent) Color(0xFF222822) else Color(0xFF1A1A1C))
+            .background(if (isCurrent) Color(0xFF222428) else Color(0xFF1B1C1E))
             .border(
                 BorderStroke(
                     1.dp,
-                    if (isCurrent) Color(0xFF55FF55) else Color(0xFF2A2A2C)
+                    if (isCurrent) Color(0xFF3C8527) else Color(0xFF2E3033)
                 ),
                 RoundedCornerShape(3.dp)
             )
@@ -593,32 +629,17 @@ private fun InstallationCardItem(
 private fun NewInstallationDialog(
     latestVersion: String,
     onDismiss: () -> Unit,
-    onCreate: (name: String, version: String, loader: String, iconRes: Int) -> Unit
+    onCreate: (name: String, version: String, loader: String, iconRes: Int, iconId: String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var selectedVersion by remember { mutableStateOf(if (latestVersion.isNotBlank()) latestVersion else "1.21.4") }
     var selectedLoader by remember { mutableStateOf("Vanilla") }
-    var selectedIconRes by remember { mutableIntStateOf(R.drawable.img_old_grass_block) }
+    var selectedIconId by remember { mutableStateOf("grass") }
+    val blockIcons = IsometricBlockIcons.ICONS
+    val selectedIconRes = IsometricBlockIcons.getDrawableById(selectedIconId)
     var showVersionPicker by remember { mutableStateOf(false) }
     var versionSearchQuery by remember { mutableStateOf("") }
     var filterOnlyReleases by remember { mutableStateOf(true) }
-
-    val blockIcons = remember {
-        listOf(
-            Pair("Grass", R.drawable.img_old_grass_block),
-            Pair("Crafting", R.drawable.img_crafting_table),
-            Pair("Furnace", R.drawable.img_furnace),
-            Pair("Chest", R.drawable.img_chest),
-            Pair("Diamond", R.drawable.img_diamond_block),
-            Pair("Obsidian", R.drawable.img_obsidian),
-            Pair("TNT", R.drawable.img_tnt),
-            Pair("Pickaxe", R.drawable.img_diamond_pickaxe),
-            Pair("Sword", R.drawable.img_diamond_sword),
-            Pair("Anvil", R.drawable.img_anvil),
-            Pair("Command", R.drawable.img_command_block),
-            Pair("Cobblestone", R.drawable.img_old_cobblestone)
-        )
-    }
 
     var allManifestVersions by remember {
         mutableStateOf<List<com.movtery.zalithlauncher.game.versioninfo.models.VersionManifest.Version>>(emptyList())
@@ -688,27 +709,27 @@ private fun NewInstallationDialog(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    blockIcons.forEach { (iconName, resId) ->
-                        val isSelected = selectedIconRes == resId
+                    blockIcons.forEach { iconItem ->
+                        val isSelected = selectedIconId == iconItem.id
                         Box(
                             modifier = Modifier
-                                .size(46.dp)
-                                .clip(RoundedCornerShape(3.dp))
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(4.dp))
                                 .background(if (isSelected) Color(0xFF2E4C22) else Color(0xFF262628))
                                 .border(
                                     BorderStroke(
                                         if (isSelected) 2.dp else 1.dp,
                                         if (isSelected) Color(0xFF55FF55) else Color(0xFF383838)
                                     ),
-                                    RoundedCornerShape(3.dp)
+                                    RoundedCornerShape(4.dp)
                                 )
-                                .clickable { selectedIconRes = resId },
+                                .clickable { selectedIconId = iconItem.id },
                             contentAlignment = Alignment.Center
                         ) {
                             Image(
-                                painter = painterResource(resId),
-                                contentDescription = iconName,
-                                modifier = Modifier.size(32.dp)
+                                painter = painterResource(iconItem.drawableRes),
+                                contentDescription = iconItem.name,
+                                modifier = Modifier.size(36.dp)
                             )
                         }
                     }
@@ -960,10 +981,10 @@ private fun NewInstallationDialog(
             MinecraftButton(
                 onClick = {
                     val finalName = if (name.isBlank()) "$selectedVersion $selectedLoader" else name
-                    onCreate(finalName, selectedVersion, selectedLoader, selectedIconRes)
+                    onCreate(finalName, selectedVersion, selectedLoader, selectedIconRes, selectedIconId)
                 },
                 style = MinecraftButtonStyle.GREEN,
-                text = "INSTALL",
+                text = "CREATE",
                 fontSize = 13.sp,
                 modifier = Modifier
                     .width(100.dp)

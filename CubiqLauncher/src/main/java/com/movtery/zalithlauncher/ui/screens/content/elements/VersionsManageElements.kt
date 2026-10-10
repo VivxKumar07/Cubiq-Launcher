@@ -1038,7 +1038,7 @@ fun ModLoaderIcon(
     )
 }
 
-private fun getLoaderIconRes(
+fun getLoaderIconRes(
     loader: ModLoader?,
     @DrawableRes
     defaultIcon: Int = R.drawable.img_minecraft,

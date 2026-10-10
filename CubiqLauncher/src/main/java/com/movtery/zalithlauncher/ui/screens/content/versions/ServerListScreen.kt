@@ -33,6 +33,15 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import com.movtery.zalithlauncher.ui.components.MinecraftBlockCard
+import com.movtery.zalithlauncher.ui.components.MinecraftButton
+import com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle
+import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -534,12 +543,12 @@ fun ServerListScreen(
             }
         )
 
-        VersionChunkBackground(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(all = 12.dp)
-                .offset { IntOffset(x = 0, y = yOffset.roundToPx()) },
-            paddingValues = PaddingValues()
+                .background(Color(0xFF141416))
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .offset { IntOffset(x = 0, y = yOffset.roundToPx()) }
         ) {
             when (viewModel.operation) {
                 is ServerListOperation.Loading -> {
@@ -547,7 +556,7 @@ fun ServerListScreen(
                         Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        LoadingIndicator()
+                        LoadingIndicator(color = Color(0xFF55FF55))
                     }
                 }
                 is ServerListOperation.LoadedData -> {
@@ -569,6 +578,8 @@ fun ServerListScreen(
                                 viewModel.loadServer()
                             }
                         )
+
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         ServerListBody(
                             modifier = Modifier
@@ -602,67 +613,94 @@ private fun ServerListHeader(
     onSearchNameChange: (String) -> Unit,
     onAddServer: () -> Unit,
     refreshServers: () -> Unit,
-    modifier: Modifier = Modifier,
-    inputFieldColor: Color = itemColor(),
-    inputFieldContentColor: Color = onItemColor()
+    modifier: Modifier = Modifier
 ) {
-    CardTitleLayout(modifier = modifier) {
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp)
-                .padding(top = 4.dp)
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Title Bar
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                SimpleTextInputField(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 4.dp),
-                    value = searchName,
-                    onValueChange = { onSearchNameChange(it) },
-                    hint = {
-                        Text(
-                            text = stringResource(R.string.generic_search),
-                            style = TextStyle(color = LocalContentColor.current).copy(fontSize = 12.sp)
-                        )
-                    },
-                    color = inputFieldColor,
-                    contentColor = inputFieldContentColor,
-                    singleLine = true
+            Column {
+                Text(
+                    text = "PLAY MULTIPLAYER",
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                Text(
+                    text = "Minecraft Java Edition Server List",
+                    color = Color(0xFF9E9E9E),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 10.5.sp
+                )
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                MinecraftButton(
+                    onClick = onAddServer,
+                    style = MinecraftButtonStyle.GREEN,
+                    text = "+ ADD SERVER",
+                    fontSize = 11.sp,
+                    modifier = Modifier.height(34.dp)
                 )
 
-                val scrollState = rememberScrollState()
-                LaunchedEffect(Unit) {
-                    scrollState.scrollTo(scrollState.maxValue)
-                }
-                Row(
-                    modifier = Modifier
-                        .fadeEdge(
-                            state = scrollState,
-                            length = 32.dp,
-                            direction = EdgeDirection.Horizontal
-                        )
-                        .widthIn(max = this@BoxWithConstraints.maxWidth / 2)
-                        .horizontalScroll(scrollState),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Spacer(modifier = Modifier.width(6.dp))
+                MinecraftButton(
+                    onClick = refreshServers,
+                    style = MinecraftButtonStyle.STONE,
+                    text = "↻",
+                    fontSize = 13.sp,
+                    modifier = Modifier.size(34.dp)
+                )
+            }
+        }
 
-                    //添加服务器
-                    IconTextButton(
-                        onClick = onAddServer,
-                        painter = painterResource(R.drawable.ic_add),
-                        text = stringResource(R.string.servers_list_add_server)
+        // Search Box (Minecraft Block Card Style)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(3.dp))
+                .background(Color(0xFF1E1E20))
+                .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(3.dp))
+                .padding(horizontal = 10.dp, vertical = 6.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "🔍",
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(end = 6.dp)
+                )
+                SimpleTextInputField(
+                    modifier = Modifier.weight(1f),
+                    value = searchName,
+                    onValueChange = onSearchNameChange,
+                    hint = {
+                        Text(
+                            text = "Search servers by name or IP...",
+                            color = Color(0xFF888888),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 12.sp
+                        )
+                    },
+                    color = Color.Transparent,
+                    contentColor = Color.White,
+                    singleLine = true
+                )
+                if (searchName.isNotEmpty()) {
+                    Text(
+                        text = "✕",
+                        color = Color(0xFF888888),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 12.sp,
+                        modifier = Modifier
+                            .clickable { onSearchNameChange("") }
+                            .padding(horizontal = 4.dp)
                     )
-
-                    IconButton(
-                        onClick = refreshServers
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_refresh),
-                            contentDescription = stringResource(R.string.generic_refresh)
-                        )
-                    }
                 }
             }
         }
@@ -685,12 +723,9 @@ private fun ServerListBody(
         if (list.isNotEmpty()) {
             val scrollState = rememberLazyListState()
             LazyColumn(
-                modifier = modifier.nonInteractiveScrollbar(
-                    state = scrollState.scrollIndicatorState!!,
-                    orientation = Orientation.Vertical,
-                ),
-                contentPadding = PaddingValues(all = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = modifier,
+                contentPadding = PaddingValues(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 state = scrollState,
             ) {
                 items(list) { server ->
@@ -708,22 +743,25 @@ private fun ServerListBody(
                 }
             }
         } else {
-            //如果列表是空的，则是由搜索导致的
-            //展示“无匹配项”文本
-            Box(modifier = Modifier.fillMaxSize()) {
-                ScalingLabel(
-                    modifier = Modifier.align(Alignment.Center),
-                    text = stringResource(R.string.generic_no_matching_items)
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "No matching servers found",
+                    color = Color(0xFF888888),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 13.sp
                 )
             }
         }
     } ?: run {
-        //如果为null，则代表本身就没有存档可以展示
-        Box(modifier = Modifier.fillMaxSize()) {
-            ScalingLabel(
-                modifier = Modifier.align(Alignment.Center),
-                text = stringResource(R.string.servers_list_no_servers)
-            )
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "No servers added yet",
+                    color = Color(0xFF888888),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 13.sp
+                )
+            }
         }
     }
 }
@@ -739,69 +777,58 @@ private fun ServerItem(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
-    shape: Shape = MaterialTheme.shapes.large,
-    itemColor: Color = itemColor(),
-    itemContentColor: Color = onItemColor(),
+    onClick: () -> Unit = {}
 ) {
     val ot = item.operation
-
-    val scale = remember { Animatable(initialValue = 0.95f) }
-    LaunchedEffect(Unit) {
-        scale.animateTo(targetValue = 1f, animationSpec = getAnimateTween())
-    }
 
     LaunchedEffect(item) {
         onLoad()
     }
 
-    Surface(
-        modifier = modifier.graphicsLayer(scaleY = scale.value, scaleX = scale.value),
-        onClick = onClick,
-        shape = shape,
-        color = itemColor,
-        contentColor = itemContentColor,
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color(0xFF1E1E20))
+            .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(4.dp))
+            .clickable(onClick = onClick)
+            .padding(10.dp)
     ) {
-        val alphaModifier = Modifier.alpha(0.7f)
-
-        Row(
-            modifier = Modifier
-                .padding(all = 8.dp)
-                .height(IntrinsicSize.Min),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            //服务器的图标
-            ServerIcon(
-                modifier = Modifier
-                    .clip(shape = RoundedCornerShape(10.dp)),
-                server = item,
-                size = 64.dp,
-            )
-
-            Column(
-                modifier = Modifier.weight(1f),
+            // Top Row: Icon + Server Info
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                //服务器名称、状态、描述
-                Column(
-                    modifier = Modifier.weight(1f),
-                ) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ServerIcon(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(3.dp))
+                        .border(BorderStroke(1.dp, Color(0xFF444444)), RoundedCornerShape(3.dp)),
+                    server = item,
+                    size = 54.dp,
+                )
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        //服务器名称
                         MinecraftColorTextNormal(
-                            modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
+                            modifier = Modifier.weight(1f),
                             inputText = item.name,
-                            style = MaterialTheme.typography.titleSmall,
+                            style = TextStyle(
+                                fontFamily = MinecraftFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            ),
                             maxLines = 1
                         )
 
-                        //显示服务器的延迟、在线人数
                         if (ot is ServerData.Operation.Loaded) {
-                            val undefined = stringResource(R.string.servers_list_undefined)
-
-                            //服务器延迟显示部分
                             val signalStrength = remember(ot) {
                                 val pingMs = ot.result.pingMs
                                 if (pingMs < 150L) 5
@@ -811,203 +838,125 @@ private fun ServerItem(
                                 else 1
                             }
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
                             ) {
                                 ServerSignalIcon(
-                                    modifier = Modifier.size(16.dp),
+                                    modifier = Modifier.size(14.dp),
                                     signalStrength = signalStrength
                                 )
                                 Text(
-                                    modifier = alphaModifier,
-                                    text = "${ot.result.pingMs} ms",
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            }
-
-                            //在线人数显示部分
-                            val playerFull = stringResource(R.string.servers_list_players_full)
-
-                            val onlineStatus = remember(ot) {
-                                val players = ot.result.status.players
-
-                                buildString {
-                                    val max = players.max
-                                    val online = players.online
-
-                                    //在线玩家数小于0，则认为服务器未定义
-                                    if (online < 0) {
-                                        append(undefined)
-                                    } else {
-                                        if (max > 0) {
-                                            if (online in 0..players.max) {
-                                                append(online)
-                                            } else {
-                                                append(playerFull)
-                                            }
-                                            append('/')
-                                            append(players.max)
-                                        } else {
-                                            //服务器未定义最大玩家数
-                                            //仅显示当前在线玩家数
-                                            append(online)
-                                        }
-                                    }
-                                }
-                                "${players.online}/${players.max}"
-                            }
-                            //在线人数信息
-                            Row(
-                                modifier = alphaModifier,
-                                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    modifier = Modifier.size(16.dp),
-                                    painter = painterResource(R.drawable.ic_person_outlined),
-                                    contentDescription = null
-                                )
-                                Text(
-                                    text = onlineStatus,
-                                    style = MaterialTheme.typography.labelSmall
+                                    text = "${ot.result.pingMs}ms",
+                                    color = Color(0xFF55FF55),
+                                    fontFamily = MinecraftFontFamily,
+                                    fontSize = 10.sp
                                 )
                             }
                         }
                     }
 
-                    when (ot) {
-                        is ServerData.Operation.Loading -> {
-                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                        }
+                    Text(
+                        text = item.originIp,
+                        color = Color(0xFF9E9E9E),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 11.sp,
+                        maxLines = 1
+                    )
 
-                        is ServerData.Operation.Loaded -> {
-                            ot.result.status.description?.let { des ->
-                                DescriptionTextRender(
-                                    description = des,
-                                    fontSize = MaterialTheme.typography.bodySmall.fontSize,
-                                    maxLines = 2
-                                )
-                            }
-                        }
-
-                        is ServerData.Operation.Failed -> {
-                            Text(
-                                text = stringResource(R.string.servers_list_failed_to_connect),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
+                    if (ot is ServerData.Operation.Loaded) {
+                        val players = ot.result.status.players
+                        Text(
+                            text = "Players: ${players.online}/${players.max}",
+                            color = Color(0xFF55FFFF),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 10.5.sp
+                        )
                     }
                 }
-
-                //服务器ip地址
-                Text(
-                    modifier = alphaModifier,
-                    text = item.originIp,
-                    style = MaterialTheme.typography.labelSmall
-                )
             }
 
-            Row {
-
-                //快速启动
-                IconButton(
-                    onClick = onPlay,
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_play_arrow_filled),
-                        contentDescription = stringResource(R.string.main_launch_game)
+            // Description / Status
+            when (ot) {
+                is ServerData.Operation.Loading -> {
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(4.dp),
+                        color = Color(0xFF55FF55),
+                        trackColor = Color(0xFF282828)
                     )
                 }
-
-                Box {
-                    var expanded by remember { mutableStateOf(false) }
-
-                    IconButton(onClick = { expanded = !expanded }) {
-                        Icon(
-                            modifier = Modifier.size(24.dp),
-                            painter = painterResource(R.drawable.ic_more_horiz),
-                            contentDescription = stringResource(R.string.generic_more)
-                        )
-                    }
-
-                    //当前服务器是否正在加载中
-                    val isLoading = ot is ServerData.Operation.Loading
-
-                    DropdownMenu(
-                        expanded = expanded,
-                        shape = MaterialTheme.shapes.large,
-                        shadowElevation = 3.dp,
-                        onDismissRequest = { expanded = false },
-                    ) {
-                        //刷新服务器
-                        DropdownMenuItem(
-                            enabled = !isLoading,
-                            text = { Text(text = stringResource(R.string.generic_refresh)) },
-                            leadingIcon = {
-                                Icon(
-                                    modifier = Modifier.size(20.dp),
-                                    painter = painterResource(R.drawable.ic_refresh),
-                                    contentDescription = stringResource(R.string.generic_refresh)
-                                )
-                            },
-                            onClick = {
-                                onRefresh()
-                                expanded = false
-                            }
-                        )
-
-                        //复制服务器ip
-                        DropdownMenuItem(
-                            text = { Text(text = stringResource(R.string.servers_list_copy_server_address)) },
-                            leadingIcon = {
-                                Icon(
-                                    modifier = Modifier.size(20.dp),
-                                    painter = painterResource(R.drawable.ic_copy_all_filled),
-                                    contentDescription = stringResource(R.string.servers_list_copy_server_address)
-                                )
-                            },
-                            onClick = {
-                                onCopy()
-                                expanded = false
-                            }
-                        )
-
-                        //编辑服务器
-                        DropdownMenuItem(
-                            enabled = !isSavingServer,
-                            text = { Text(text = stringResource(R.string.servers_list_edit_server)) },
-                            leadingIcon = {
-                                Icon(
-                                    modifier = Modifier.size(20.dp),
-                                    painter = painterResource(R.drawable.ic_edit_filled),
-                                    contentDescription = stringResource(R.string.servers_list_edit_server)
-                                )
-                            },
-                            onClick = {
-                                onEdit()
-                                expanded = false
-                            }
-                        )
-
-                        //删除服务器
-                        DropdownMenuItem(
-                            enabled = !isSavingServer,
-                            text = { Text(text = stringResource(R.string.servers_list_delete_server)) },
-                            leadingIcon = {
-                                Icon(
-                                    modifier = Modifier.size(20.dp),
-                                    painter = painterResource(R.drawable.ic_delete_filled),
-                                    contentDescription = stringResource(R.string.servers_list_delete_server)
-                                )
-                            },
-                            onClick = {
-                                onDelete()
-                                expanded = false
-                            }
+                is ServerData.Operation.Loaded -> {
+                    ot.result.status.description?.let { des ->
+                        DescriptionTextRender(
+                            description = des,
+                            fontSize = 11.sp,
+                            maxLines = 2
                         )
                     }
                 }
+                is ServerData.Operation.Failed -> {
+                    Text(
+                        text = "Can't connect to server",
+                        color = Color(0xFFFF5555),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+
+            // Bottom Actions Row (3D Buttons)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Big 3D Join Button
+                MinecraftButton(
+                    onClick = onPlay,
+                    style = MinecraftButtonStyle.GREEN,
+                    text = "▶ JOIN SERVER",
+                    fontSize = 12.sp,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(36.dp)
+                )
+
+                // Refresh Button
+                MinecraftButton(
+                    onClick = onRefresh,
+                    style = MinecraftButtonStyle.STONE,
+                    text = "↻",
+                    fontSize = 12.sp,
+                    modifier = Modifier.size(36.dp)
+                )
+
+                // Copy IP Button
+                MinecraftButton(
+                    onClick = onCopy,
+                    style = MinecraftButtonStyle.STONE,
+                    text = "📋",
+                    fontSize = 12.sp,
+                    modifier = Modifier.size(36.dp)
+                )
+
+                // Edit Button
+                MinecraftButton(
+                    onClick = onEdit,
+                    style = MinecraftButtonStyle.STONE,
+                    text = "✎",
+                    fontSize = 12.sp,
+                    modifier = Modifier.size(36.dp)
+                )
+
+                // Delete Button
+                MinecraftButton(
+                    onClick = onDelete,
+                    style = MinecraftButtonStyle.RED,
+                    text = "✕",
+                    fontSize = 12.sp,
+                    modifier = Modifier.size(36.dp)
+                )
             }
         }
     }

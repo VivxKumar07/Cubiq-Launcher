@@ -122,9 +122,16 @@ class Version(
     fun getVersionName(): String = versionName
 
     /**
-     * @return 启动器版本标识文件夹
+     * @return 启动器版本标识文件夹（支持将旧的 zalith 文件夹自动迁移为 Cubiq）
      */
-    fun getZalithVersionPath(): File = File(getVersionPath(), BuildKeys.LAUNCHER_IDENTIFIER)
+    fun getZalithVersionPath(): File {
+        val target = File(getVersionPath(), BuildKeys.LAUNCHER_IDENTIFIER)
+        val legacy = File(getVersionPath(), "zalith")
+        if (!target.exists() && legacy.exists()) {
+            legacy.renameTo(target)
+        }
+        return target
+    }
 
     /**
      * @return 游戏的上一次运行日志

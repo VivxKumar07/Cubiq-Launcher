@@ -33,6 +33,8 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.runtime.Composable
@@ -156,6 +158,12 @@ class PlayerSkin(
         }
     }
 
+    fun loadSkinUrl(skinUrl: String?, model: SkinModelType?) {
+        val modelString = model?.takeIf { it != SkinModelType.NONE }?.modelType ?: "auto-detect"
+        val jsUrl = skinUrl ?: defaultSkin
+        webview?.evaluateJavascript("loadSkin('$jsUrl', '$modelString')", null)
+    }
+
     fun loadCape(cape: PlayerProfile.Cape?) {
         val path = cape?.takeIf { it != EmptyCape }?.id?.let { id ->
             AssetsUrlBuilder()
@@ -242,7 +250,8 @@ enum class ModelAnimation {
 /**
  * 3D 玩家皮肤预览：基于 skinview3d 的 WebView 渲染正面立绘与待机动画
  *
- * @param skinFile 皮肤文件，null 时展示默认皮肤
+ * @param skinFile 皮肤文件，null 时展示默认皮肤或 skinUrl
+ * @param skinUrl 皮肤网络 URL 或 base64 data URL
  * @param capeFile 披风文件，null 时移除披风
  * @param modelType 皮肤模型类型，null 时自动检测
  * @param animation 预览动画
@@ -252,12 +261,12 @@ enum class ModelAnimation {
  * 关闭时触摸不进入 WebView，交还给上层手势处理
  * @param refreshKey 变化时重新加载皮肤与披风
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SkinPreview3D(
-    skinFile: File?,
-    capeFile: File?,
-    modelType: SkinModelType?,
+    skinFile: File? = null,
+    skinUrl: String? = null,
+    capeFile: File? = null,
+    modelType: SkinModelType? = null,
     modifier: Modifier = Modifier,
     animation: ModelAnimation = ModelAnimation.NewIdle,
     azimuth: Int = -35,
@@ -303,26 +312,48 @@ fun SkinPreview3D(
             if (!pageFinished) return@LaunchedEffect
             playerSkin.setInteractionEnabled(interactionEnabled)
         }
-        LaunchedEffect(pageFinished, skinFile, capeFile, modelType, refreshKey) {
+        LaunchedEffect(pageFinished, skinFile, skinUrl, capeFile, modelType, refreshKey) {
             if (!pageFinished) return@LaunchedEffect
             runCatching {
-                skinFile?.inputStream().use { playerSkin.loadSkin(it, modelType) }
-                capeFile?.inputStream().use { playerSkin.loadCape(it) }
+                if (skinFile != null && skinFile.exists()) {
+                    skinFile.inputStream().use { playerSkin.loadSkin(it, modelType) }
+                } else if (!skinUrl.isNullOrBlank()) {
+                    playerSkin.loadSkinUrl(skinUrl, modelType)
+                } else {
+                    playerSkin.loadSkin(skinId = null, modelType)
+                }
+                capeFile?.inputStream()?.use { playerSkin.loadCape(it) }
             }
         }
 
         if (!pageFinished) {
-            LoadingIndicator(modifier = Modifier.align(Alignment.Center))
+            Box(
+                modifier = Modifier.align(Alignment.Center),
+                contentAlignment = Alignment.Center
+            ) {
+                coil3.compose.AsyncImage(
+                    model = com.movtery.zalithlauncher.R.drawable.mc_loading_spinner,
+                    contentDescription = "Loading skin preview...",
+                    modifier = Modifier.size(48.dp)
+                )
+            }
         }
     }
 }
 
 /**
  * 触摸门控容器：gateOpen 为 false 时拦截全部发往子 View 的触摸，
- * 且自身不消费，手势继续交还上层处理
+ * 且自身不消费，手势继续交还上层处理；在触摸时阻止外层滚动容器截获拖动手势
  */
 private class TouchGateLayout(context: Context) : FrameLayout(context) {
     var gateOpen: Boolean = true
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (gateOpen && (ev.action == MotionEvent.ACTION_DOWN || ev.action == MotionEvent.ACTION_MOVE)) {
+            parent?.requestDisallowInterceptTouchEvent(true)
+        }
+        return super.dispatchTouchEvent(ev)
+    }
 
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean = !gateOpen
 

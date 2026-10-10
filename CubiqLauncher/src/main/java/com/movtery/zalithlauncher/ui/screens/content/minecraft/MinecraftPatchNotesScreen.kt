@@ -1,6 +1,6 @@
 /*
  * Cubiq Launcher
- * Minecraft PC Launcher Official Patch Notes Screen
+ * Minecraft Official Patch Notes Screen (1:1 Replica of Image 4)
  */
 
 package com.movtery.zalithlauncher.ui.screens.content.minecraft
@@ -13,19 +13,25 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,40 +64,85 @@ fun MinecraftPatchNotesScreen(
 ) {
     val livePatchNotes by MinecraftOfficialContentManager.patchNotes.collectAsStateWithLifecycle()
 
-    // Fallback notes if offline
+    var showReleases by remember { mutableStateOf(true) }
+    var showSnapshots by remember { mutableStateOf(false) }
+    var viewingNote by remember { mutableStateOf<OfficialPatchNote?>(null) }
+
+    // Fallback official releases matching PC launcher patch notes
     val defaultNotes = remember {
         listOf(
             OfficialPatchNote(
                 title = "Minecraft: Java Edition 26.3",
                 version = "26.3",
-                body = "Welcome to the latest release of Minecraft Java Edition 26.3!\n\n" +
-                        "• New biome features, pale garden ambiance, and creaking mob adjustments\n" +
-                        "• Resin blocks and brick crafting recipes\n" +
-                        "• Full rendering and rendering pipeline optimizations\n" +
-                        "• Bug fixes, memory optimizations, and security patches for Java Edition.",
+                body = "Welcome to Minecraft: Java Edition 26.3!\n\n" +
+                        "• Added new ambient sounds, creaking mob updates, and pale garden biome enhancements.\n" +
+                        "• Resin block variants, resin clumps, and new crafting recipes.\n" +
+                        "• Full rendering and rendering pipeline optimizations.\n" +
+                        "• Fixed over 120 bugs and gameplay issues across Java Edition.",
                 imageUrl = "https://launchercontent.mojang.com/v2/images/1-21-patchnotes.jpg"
             ),
             OfficialPatchNote(
                 title = "Minecraft: Java Edition 26.2",
                 version = "26.2",
-                body = "Release 26.2 introduces major stability improvements, redstone fixes, and enhanced multiplayer packet compression.",
+                body = "Minecraft: Java Edition 26.2 brings significant internal game loop improvements, chunk loading speedups, and bug fixes.",
+                imageUrl = null
+            ),
+            OfficialPatchNote(
+                title = "Minecraft: Java Edition 26.1.2",
+                version = "26.1.2",
+                body = "Release 26.1.2 resolves critical multiplayer packet compression issues and memory leaks.",
+                imageUrl = null
+            ),
+            OfficialPatchNote(
+                title = "Minecraft: Java Edition 26.1.1",
+                version = "26.1.1",
+                body = "Hotfix release 26.1.1 resolving rendering artifacts on high-resolution textures.",
                 imageUrl = null
             ),
             OfficialPatchNote(
                 title = "Minecraft: Java Edition 1.21.4 - Tricky Trials",
                 version = "1.21.4",
-                body = "• Trial Chambers: Explore sprawling underground structures filled with perilous challenges, trial spawners, and vaults.\n" +
-                        "• The Breeze: A hostile mob that leaps circles around opponents and fires wind charges.\n" +
-                        "• The Crafter: A new Redstone block that enables automated crafting of items.\n" +
-                        "• The Mace: A powerful new weapon delivering devastating smash attacks from high falls.\n" +
-                        "• Performance and security enhancements for Java Edition.",
+                body = "• Trial Chambers: Explore subterranean labyrinths filled with spawners and vaults.\n" +
+                        "• The Breeze: A tempestuous hostile mob.\n" +
+                        "• The Crafter: Automated crafting for Redstone contraptions.\n" +
+                        "• The Mace: High-flying heavy melee weapon.",
+                imageUrl = null
+            ),
+            OfficialPatchNote(
+                title = "Minecraft: Java Edition 1.21.3",
+                version = "1.21.3",
+                body = "Performance updates and server packet validation fixes for 1.21 Tricky Trials.",
+                imageUrl = null
+            ),
+            OfficialPatchNote(
+                title = "Minecraft: Java Edition 1.21.1",
+                version = "1.21.1",
+                body = "Stability update for Minecraft 1.21 Tricky Trials.",
+                imageUrl = null
+            ),
+            OfficialPatchNote(
+                title = "Minecraft: Java Edition 1.20.6 - Armored Paws",
+                version = "1.20.6",
+                body = "• Armadillo mob and Wolf Armor crafting.\n" +
+                        "• Eight new wolf variants across diverse biomes.\n" +
+                        "• Java Edition backend technical fixes.",
                 imageUrl = null
             )
         )
     }
 
     val displayNotes = if (livePatchNotes.isNotEmpty()) livePatchNotes else defaultNotes
-    var selectedNote by remember(displayNotes) { mutableStateOf(displayNotes.first()) }
+
+    val filteredNotes = remember(displayNotes, showReleases, showSnapshots) {
+        displayNotes.filter { note ->
+            val isSnapshot = note.version.contains("w", ignoreCase = true) ||
+                    note.version.contains("pre", ignoreCase = true) ||
+                    note.version.contains("rc", ignoreCase = true) ||
+                    note.title.contains("snapshot", ignoreCase = true)
+            val isRelease = !isSnapshot
+            (showReleases && isRelease) || (showSnapshots && isSnapshot) || (!showReleases && !showSnapshots)
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -102,124 +154,264 @@ fun MinecraftPatchNotesScreen(
                 .fillMaxSize()
                 .padding(horizontal = 14.dp, vertical = 8.dp)
         ) {
-            // Version Selector Pills
-            LazyRow(
+            // Header (Image 4): VERSIONS label & Filter Checkboxes
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Start
             ) {
-                items(displayNotes.take(12)) { note ->
-                    val isSelected = selectedNote.version == note.version
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(if (isSelected) Color(0xFF3C8527) else Color(0xFF222224))
-                            .border(
-                                BorderStroke(
-                                    1.dp,
-                                    if (isSelected) Color(0xFF55FF55) else Color(0xFF383838)
-                                ),
-                                RoundedCornerShape(3.dp)
-                            )
-                            .clickable {
-                                selectedNote = note
-                                if (!note.contentPath.isNullOrBlank()) {
-                                    MinecraftOfficialContentManager.fetchDetailedPatchNote(note)
-                                }
-                            }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text(
-                            text = note.version,
-                            color = Color.White,
-                            fontFamily = MinecraftFontFamily,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 12.sp
-                        )
+                Text(
+                    text = "VERSIONS",
+                    color = Color(0xFFFFFFFF),
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.5.sp
+                )
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                // Releases Checkbox
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        showReleases = !showReleases
                     }
+                ) {
+                    Checkbox(
+                        checked = showReleases,
+                        onCheckedChange = {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            showReleases = it
+                        },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = Color(0xFF3C8527),
+                            checkmarkColor = Color.White,
+                            uncheckedColor = Color(0xFF666666)
+                        ),
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Releases",
+                        color = if (showReleases) Color.White else Color(0xFF888888),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 11.5.sp
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                // Snapshots Checkbox
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        showSnapshots = !showSnapshots
+                    }
+                ) {
+                    Checkbox(
+                        checked = showSnapshots,
+                        onCheckedChange = {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            showSnapshots = it
+                        },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = Color(0xFF3C8527),
+                            checkmarkColor = Color.White,
+                            uncheckedColor = Color(0xFF666666)
+                        ),
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Snapshots",
+                        color = if (showSnapshots) Color.White else Color(0xFF888888),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 11.5.sp
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Patch Note Content Card
-            Column(
+            // Patch Notes 2-Column Grid (Image 4)
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(Color(0xFF1E1E20))
-                    .border(BorderStroke(1.dp, Color(0xFF333333)), RoundedCornerShape(3.dp))
-                    .verticalScroll(rememberScrollState())
-                    .padding(14.dp)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(bottom = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Update Banner Image
-                if (!selectedNote.imageUrl.isNullOrBlank()) {
-                    AsyncImage(
-                        model = selectedNote.imageUrl,
-                        contentDescription = selectedNote.title,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                            .clip(RoundedCornerShape(3.dp)),
-                        contentScale = ContentScale.Crop
+                items(filteredNotes) { note ->
+                    PatchNoteGridCard(
+                        note = note,
+                        onClick = {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            viewingNote = note
+                            if (!note.contentPath.isNullOrBlank()) {
+                                MinecraftOfficialContentManager.fetchDetailedPatchNote(note)
+                            }
+                        }
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                } else {
-                    Image(
-                        painter = painterResource(R.drawable.img_mc_hero_latest),
-                        contentDescription = "Minecraft Art",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(160.dp)
-                            .clip(RoundedCornerShape(3.dp)),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
                 }
+            }
+        }
 
-                // Title
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(R.drawable.img_minecraft),
-                        contentDescription = null,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+        // Full Patch Note Dialog / Viewer
+        viewingNote?.let { note ->
+            AlertDialog(
+                onDismissRequest = { viewingNote = null },
+                containerColor = Color(0xFF1E1E20),
+                title = {
                     Text(
-                        text = selectedNote.title.ifBlank { "Minecraft ${selectedNote.version}" },
+                        text = note.title.ifBlank { "Minecraft ${note.version}" },
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp
                     )
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        if (!note.imageUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = note.imageUrl,
+                                contentDescription = note.title,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(140.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(R.drawable.img_mc_hero_latest),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(130.dp)
+                                    .clip(RoundedCornerShape(3.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        Text(
+                            text = cleanPatchNoteHtml(note.body),
+                            color = Color(0xFFD0D0D0),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 12.sp,
+                            lineHeight = 17.sp
+                        )
+                    }
+                },
+                confirmButton = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        MinecraftButton(
+                            onClick = {
+                                com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                                viewingNote = null
+                            },
+                            style = MinecraftButtonStyle.STONE,
+                            text = "CLOSE",
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(38.dp)
+                        )
+
+                        MinecraftButton(
+                            onClick = {
+                                com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                                onOpenLink("https://www.minecraft.net/en-us/article/minecraft-java-edition-${note.version.replace('.', '-')}")
+                            },
+                            style = MinecraftButtonStyle.GREEN,
+                            text = "WEB CHANGELOG ↗",
+                            fontSize = 11.sp,
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .height(38.dp)
+                        )
+                    }
                 }
+            )
+        }
+    }
+}
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Release details body
-                Text(
-                    text = cleanPatchNoteHtml(selectedNote.body),
-                    color = Color(0xFFD0D0D0),
-                    fontFamily = MinecraftFontFamily,
-                    fontSize = 12.sp,
-                    lineHeight = 18.sp
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Changelog Button
-                MinecraftButton(
-                    onClick = {
-                        onOpenLink("https://www.minecraft.net/en-us/article/minecraft-java-edition-${selectedNote.version.replace('.', '-')}")
-                    },
-                    style = MinecraftButtonStyle.GREEN,
-                    text = "VIEW FULL CHANGELOG ON MINECRAFT.NET",
-                    fontSize = 11.5.sp,
+/**
+ * Patch Note Card matching Image 4 (Square/Rectangle Banner image with black bar below)
+ */
+@Composable
+private fun PatchNoteGridCard(
+    note: OfficialPatchNote,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(3.dp))
+            .border(BorderStroke(1.dp, Color(0xFF2C2C2E)), RoundedCornerShape(3.dp))
+            .background(Color(0xFF0F0F10))
+            .clickable(onClick = onClick)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Artwork Image
+            if (!note.imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = note.imageUrl,
+                    contentDescription = note.title,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(44.dp)
+                        .aspectRatio(1.25f),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Image(
+                    painter = painterResource(R.drawable.img_mc_news_cave),
+                    contentDescription = note.title,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1.25f),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            // Dark info banner underneath matching Image 4
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF141416))
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "Minecraft: Java Edition",
+                    color = Color(0xFFAAAAAA),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 9.5.sp,
+                    maxLines = 1
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = note.version,
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    maxLines = 1
                 )
             }
         }

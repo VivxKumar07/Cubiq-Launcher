@@ -40,6 +40,7 @@ import com.materialkolor.dynamicColorScheme
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.setting.enums.isLauncherInDarkTheme
 import com.movtery.zalithlauncher.ui.theme.components.activeMaskView
+import androidx.compose.ui.unit.dp
 import com.movtery.zalithlauncher.utils.festival.Festival
 import com.movtery.zalithlauncher.utils.festival.LocalFestivals
 import com.movtery.zalithlauncher.viewmodel.BackgroundViewModel
@@ -599,6 +600,14 @@ private fun customDark(
     )
 }
 
+val CubiqShapes = androidx.compose.material3.Shapes(
+    extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(3.dp),
+    small = androidx.compose.foundation.shape.RoundedCornerShape(3.dp),
+    medium = androidx.compose.foundation.shape.RoundedCornerShape(3.dp),
+    large = androidx.compose.foundation.shape.RoundedCornerShape(3.dp),
+    extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(3.dp)
+)
+
 @Composable
 fun ZalithLauncherTheme(
     darkTheme: Boolean = isLauncherInDarkTheme(),
@@ -681,6 +690,7 @@ fun ZalithLauncherTheme(
             colorScheme = currentDisplayScheme,
             motionScheme = MotionScheme.expressive(),
             typography = AppTypography,
+            shapes = CubiqShapes,
             content = content
         )
     }

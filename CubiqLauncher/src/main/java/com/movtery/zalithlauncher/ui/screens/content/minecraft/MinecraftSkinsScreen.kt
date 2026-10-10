@@ -123,11 +123,16 @@ fun MinecraftSkinsScreen(
         }
     }
 
-    val displaySkinModel: Any = remember(selectedPreset, account, activeSkinFile, refreshWardrobe) {
+    val displaySkinModel: Any = remember(selectedPreset, account, activeSkinFile, refreshWardrobe, isSlimModel) {
         when {
-            selectedPreset != "Current" -> "https://mc-heads.net/body/$selectedPreset/400.png"
+            selectedPreset != "Current" -> {
+                if (selectedPreset == "Steve" && isSlimModel) "https://mc-heads.net/body/Alex/400.png"
+                else if (selectedPreset == "Alex" && !isSlimModel) "https://mc-heads.net/body/Steve/400.png"
+                else "https://mc-heads.net/body/$selectedPreset/400.png"
+            }
             activeSkinFile != null && activeSkinFile.exists() -> activeSkinFile
             account != null && account.username.isNotBlank() -> "https://mc-heads.net/body/${account.username}/400.png"
+            isSlimModel -> "https://mc-heads.net/body/Alex/400.png"
             else -> "https://mc-heads.net/body/Steve/400.png"
         }
     }
@@ -161,11 +166,11 @@ fun MinecraftSkinsScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Centered 3D Player Stage
+            // Centered 3D Player Stage (Interactive 360° Drag Orbit & Real 3D Model Mesh)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(260.dp)
+                    .height(280.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .background(
                         Brush.verticalGradient(
@@ -179,42 +184,48 @@ fun MinecraftSkinsScreen(
                     .border(BorderStroke(1.5.dp, Color(0xFF383838)), RoundedCornerShape(4.dp)),
                 contentAlignment = Alignment.Center
             ) {
+                // Interactive 3D Skinview3D WebGL Player Stage with 360° rotation & idle animation
+                val activeModelType = if (isSlimModel) com.movtery.zalithlauncher.game.account.wardrobe.SkinModelType.ALEX else com.movtery.zalithlauncher.game.account.wardrobe.SkinModelType.STEVE
+
+                val previewSkinFile = if (selectedPreset == "Current") activeSkinFile else null
+                val previewSkinUrl = when {
+                    selectedPreset == "Current" && activeSkinFile == null && account != null && account.username.isNotBlank() -> "https://minotar.net/skin/${account.username}"
+                    selectedPreset != "Current" && selectedPreset != "Steve" && selectedPreset != "Alex" -> "https://minotar.net/skin/$selectedPreset"
+                    selectedPreset == "Alex" -> "https://minotar.net/skin/MHF_Alex"
+                    selectedPreset == "Steve" -> "https://minotar.net/skin/MHF_Steve"
+                    else -> null
+                }
+
+                com.movtery.zalithlauncher.ui.components.SkinPreview3D(
+                    skinFile = previewSkinFile,
+                    skinUrl = previewSkinUrl,
+                    capeFile = null,
+                    modelType = activeModelType,
+                    modifier = Modifier.fillMaxSize(),
+                    interactionEnabled = true,
+                    refreshKey = remember(selectedPreset, isSlimModel, activeSkinFile, previewSkinUrl) { "$selectedPreset-$isSlimModel-${activeSkinFile?.path}-$previewSkinUrl" }
+                )
+
+                // Overlay Info Badge at Bottom
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Full Body Minecraft Character Render
-                    Box(
-                        modifier = Modifier
-                            .height(180.dp)
-                            .width(90.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        AsyncImage(
-                            model = displaySkinModel,
-                            contentDescription = "Minecraft Player Skin",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Fit
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
                     Text(
                         text = if (selectedPreset == "Current") (account?.username ?: "Player (Active)") else selectedPreset,
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontSize = 13.5.sp
                     )
 
-                    Spacer(modifier = Modifier.height(2.dp))
-
                     Text(
-                        text = if (isSlimModel) "Slim Model (3px)" else "Classic Model (4px)",
+                        text = if (isSlimModel) "Slim Model (3px Arms) • Drag to Rotate 360°" else "Classic Model (4px Arms) • Drag to Rotate 360°",
                         color = Color(0xFF55FF55),
                         fontFamily = MinecraftFontFamily,
-                        fontSize = 11.sp
+                        fontSize = 10.sp
                     )
                 }
             }
@@ -245,12 +256,15 @@ fun MinecraftSkinsScreen(
                         .background(if (!isSlimModel) Color(0xFF3C8527) else Color(0xFF222224))
                         .border(
                             BorderStroke(
-                                1.dp,
+                                1.5.dp,
                                 if (!isSlimModel) Color(0xFF55FF55) else Color(0xFF383838)
                             ),
                             RoundedCornerShape(3.dp)
                         )
-                        .clickable { isSlimModel = false }
+                        .clickable {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            isSlimModel = false
+                        }
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -271,12 +285,15 @@ fun MinecraftSkinsScreen(
                         .background(if (isSlimModel) Color(0xFF3C8527) else Color(0xFF222224))
                         .border(
                             BorderStroke(
-                                1.dp,
+                                1.5.dp,
                                 if (isSlimModel) Color(0xFF55FF55) else Color(0xFF383838)
                             ),
                             RoundedCornerShape(3.dp)
                         )
-                        .clickable { isSlimModel = true }
+                        .clickable {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            isSlimModel = true
+                        }
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -294,7 +311,10 @@ fun MinecraftSkinsScreen(
 
             // Action Buttons: BROWSE SKIN FILE (.PNG)
             MinecraftButton(
-                onClick = { skinPickerLauncher.launch("image/png") },
+                onClick = {
+                    com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                    skinPickerLauncher.launch("image/png")
+                },
                 style = MinecraftButtonStyle.GREEN,
                 text = "+ BROWSE CUSTOM SKIN (.PNG)",
                 fontSize = 12.sp,
@@ -330,19 +350,18 @@ fun MinecraftSkinsScreen(
                             .clip(RoundedCornerShape(3.dp))
                             .background(
                                 if (isSelected) Color(0xFF2A3A2A)
-                                else if (isCurrentSkin) Color(0xFF222822)
                                 else Color(0xFF1E1E20)
                             )
                             .border(
                                 BorderStroke(
-                                    1.dp,
+                                    1.5.dp,
                                     if (isSelected) Color(0xFF55FF55)
-                                    else if (isCurrentSkin) Color(0xFF3C8527)
                                     else Color(0xFF383838)
                                 ),
                                 RoundedCornerShape(3.dp)
                             )
                             .clickable {
+                                com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
                                 selectedPreset = label
                                 if (label != "Current") {
                                     Toast.makeText(context, "$label skin selected", Toast.LENGTH_SHORT).show()
@@ -373,12 +392,12 @@ fun MinecraftSkinsScreen(
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = if (isCurrentSkin) "CURRENT" else label,
-                                color = if (isSelected) Color(0xFF55FF55) else if (isCurrentSkin) Color(0xFFAAFF88) else Color.White,
+                                color = if (isSelected) Color(0xFF55FF55) else Color.White,
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 10.5.sp,
-                                fontWeight = if (isSelected || isCurrentSkin) FontWeight.Bold else FontWeight.Normal
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
-                            if (isCurrentSkin) {
+                            if (isSelected) {
                                 Text(
                                     text = "ACTIVE",
                                     color = Color(0xFF55FF55),
@@ -386,6 +405,8 @@ fun MinecraftSkinsScreen(
                                     fontSize = 8.5.sp,
                                     fontWeight = FontWeight.Bold
                                 )
+                            } else {
+                                Spacer(modifier = Modifier.height(11.dp))
                             }
                         }
                     }

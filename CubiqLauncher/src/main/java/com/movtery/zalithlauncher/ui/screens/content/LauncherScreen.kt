@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -29,6 +30,12 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -142,6 +149,7 @@ fun LauncherScreen(
         val currentVersion by VersionsManager.currentVersion.collectAsStateWithLifecycle()
         val allVersions by VersionsManager.versions.collectAsStateWithLifecycle()
         val isRefreshingVersions by VersionsManager.isRefreshing.collectAsStateWithLifecycle()
+        val runningTasks by com.movtery.zalithlauncher.coroutine.TaskSystem.tasksFlow.collectAsStateWithLifecycle()
 
         // Active navigation state from singleton so any screen can trigger tab change
         val activeTab = LauncherNavState.activeTab
@@ -174,7 +182,7 @@ fun LauncherScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Top Account Header with Interactive Account Switcher Dropdown
+                // Top Account Header with Interactive Account Switcher Dropdown and Files / Multiplayer Quick Actions
                 TopAccountHeader(
                     account = account,
                     accountsList = accountsList,
@@ -182,7 +190,13 @@ fun LauncherScreen(
                         AccountsManager.setCurrentAccount(selectedAcc)
                         Toast.makeText(context, "Switched to ${selectedAcc.username}", Toast.LENGTH_SHORT).show()
                     },
-                    onManageAccounts = toAccountManageScreen
+                    onManageAccounts = toAccountManageScreen,
+                    onOpenMultiplayer = {
+                        backStackViewModel.mainScreen.removeAndNavigateTo(
+                            removes = backStackViewModel.clearBeforeNavKeys,
+                            screenKey = NormalNavKey.Multiplayer
+                        )
+                    }
                 )
 
                 // Sub-navigation Tabs: Installations | Skins | Patch Notes
@@ -338,13 +352,39 @@ fun LauncherScreen(
                                             account = account,
                                             isLaunching = isRefreshingVersions,
                                             onPlayClick = {
+                                                val isDownloading = runningTasks.any { it.id != com.movtery.zalithlauncher.game.account.MICROSOFT_LOGGING_TASK }
+                                                if (isDownloading) {
+                                                    Toast.makeText(context, "Please wait for the game to finish downloading...", Toast.LENGTH_SHORT).show()
+                                                    return@PlayActionRow
+                                                }
                                                 if (account == null) {
                                                     Toast.makeText(context, "Please create an account first!", Toast.LENGTH_SHORT).show()
                                                     LauncherNavState.selectedBottomNav = 3
                                                     LauncherNavState.activeTab = -1
                                                     return@PlayActionRow
                                                 }
-                                                val targetVersion = currentVersion ?: allVersions.firstOrNull()
+                                                val hasDownloadedVersion = allVersions.any { ver ->
+                                                    val clientJar = ver.getClientJar()
+                                                    val mcVer = ver.getVersionInfo()?.minecraftVersion ?: ver.getVersionName()
+                                                    val inheritedJar = ver.getInheritedClientJar(mcVer)
+                                                    (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
+                                                }
+                                                if (!hasDownloadedVersion) {
+                                                    Toast.makeText(context, "Please create an installation first!", Toast.LENGTH_SHORT).show()
+                                                    LauncherNavState.activeTab = 0
+                                                    return@PlayActionRow
+                                                }
+                                                val targetVersion = currentVersion?.takeIf { ver ->
+                                                    val clientJar = ver.getClientJar()
+                                                    val mcVer = ver.getVersionInfo()?.minecraftVersion ?: ver.getVersionName()
+                                                    val inheritedJar = ver.getInheritedClientJar(mcVer)
+                                                    (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
+                                                } ?: allVersions.firstOrNull { ver ->
+                                                    val clientJar = ver.getClientJar()
+                                                    val mcVer = ver.getVersionInfo()?.minecraftVersion ?: ver.getVersionName()
+                                                    val inheritedJar = ver.getInheritedClientJar(mcVer)
+                                                    (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
+                                                }
                                                 if (targetVersion == null) {
                                                     Toast.makeText(context, "Please create an installation first!", Toast.LENGTH_SHORT).show()
                                                     LauncherNavState.activeTab = 0
@@ -362,10 +402,24 @@ fun LauncherScreen(
                                                 VersionsManager.saveVersion(ver)
                                             },
                                             onPlayVersion = { ver ->
+                                                val isDownloading = runningTasks.any { it.id != com.movtery.zalithlauncher.game.account.MICROSOFT_LOGGING_TASK }
+                                                if (isDownloading) {
+                                                    Toast.makeText(context, "Please wait for the game to finish downloading...", Toast.LENGTH_SHORT).show()
+                                                    return@InstalledVersionsSection
+                                                }
                                                 if (account == null) {
                                                     Toast.makeText(context, "Please create an account first!", Toast.LENGTH_SHORT).show()
                                                     LauncherNavState.selectedBottomNav = 3
                                                     LauncherNavState.activeTab = -1
+                                                    return@InstalledVersionsSection
+                                                }
+                                                val clientJar = ver.getClientJar()
+                                                val verMc = ver.getVersionInfo()?.minecraftVersion ?: ver.getVersionName()
+                                                val inheritedJar = ver.getInheritedClientJar(verMc)
+                                                val isDownloaded = (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
+                                                if (!isDownloaded) {
+                                                    Toast.makeText(context, "Please create an installation first!", Toast.LENGTH_SHORT).show()
+                                                    LauncherNavState.activeTab = 0
                                                     return@InstalledVersionsSection
                                                 }
                                                 VersionsManager.saveVersion(ver)
@@ -505,77 +559,133 @@ private fun TopAccountHeader(
     account: Account?,
     accountsList: List<Account>,
     onSelectAccount: (Account) -> Unit,
-    onManageAccounts: () -> Unit
+    onManageAccounts: () -> Unit,
+    onOpenMultiplayer: () -> Unit
 ) {
+    val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
+    var showAddOfflineDialog by remember { mutableStateOf(false) }
+    var offlineUsername by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
 
     Box {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(Color(0xFF161616))
-                .clickable { expanded = true }
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                .padding(horizontal = 12.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Player Head Avatar with vibrant blue rounded square border
-            Box(
+            // Left: Player Head and Name clickable for Account Switcher
+            Row(
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .border(BorderStroke(2.dp, Color(0xFF1E88E5)), RoundedCornerShape(6.dp))
-                    .background(Color(0xFF222222)),
-                contentAlignment = Alignment.Center
+                    .weight(1f)
+                    .clip(RoundedCornerShape(4.dp))
+                    .clickable {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        expanded = true
+                    }
+                    .padding(end = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                val skinFile = account?.getSkinFile()
-                if (account != null && skinFile != null && skinFile.exists()) {
-                    PlayerFace(
-                        account = account,
-                        avatarSize = 36.dp
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(R.drawable.ic_mc_pc_profile),
-                        contentDescription = "Steve Face",
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        contentScale = ContentScale.Fit
+                // Player Head Avatar with vibrant blue rounded square border
+                Box(
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .border(BorderStroke(2.dp, Color(0xFF1E88E5)), RoundedCornerShape(6.dp))
+                        .background(Color(0xFF222222)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val skinFile = account?.getSkinFile()
+                    if (account != null && skinFile != null && skinFile.exists()) {
+                        PlayerFace(
+                            account = account,
+                            avatarSize = 34.dp
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(R.drawable.ic_mc_pc_profile),
+                            contentDescription = "Steve Face",
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(RoundedCornerShape(4.dp)),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Column(
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = account?.username ?: "Player",
+                            color = Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            painter = painterResource(R.drawable.ic_keyboard_arrow_down),
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    Text(
+                        text = account?.let { "(${getAccountTypeName(it)})" } ?: "(No Active Account)",
+                        color = Color(0xFF9E9E9E),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 11.sp,
+                        maxLines = 1
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column(
-                verticalArrangement = Arrangement.Center
+            // Right: Files and Multiplayer Action Buttons
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = account?.username ?: "Player",
-                        color = Color.White,
-                        fontFamily = MinecraftFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        painter = painterResource(R.drawable.ic_keyboard_arrow_down),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-                Text(
-                    text = account?.let { "(${getAccountTypeName(it)})" } ?: "(No Active Account)",
-                    color = Color(0xFF9E9E9E),
-                    fontFamily = MinecraftFontFamily,
+                // Files Quick Action (3D Beveled Stone Button)
+                MinecraftButton(
+                    onClick = {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        com.movtery.zalithlauncher.filemanager.FileManagerLauncher.launch(
+                            context = context,
+                            rootPath = com.movtery.zalithlauncher.path.PathManager.DIR_FILES_EXTERNAL.absolutePath,
+                            currentPath = null,
+                            logsDir = com.movtery.zalithlauncher.path.PathManager.DIR_LAUNCHER_LOGS.absolutePath
+                        )
+                    },
+                    style = MinecraftButtonStyle.STONE,
+                    text = "FILES",
                     fontSize = 11.5.sp,
-                    maxLines = 1
+                    modifier = Modifier
+                        .height(36.dp)
+                        .widthIn(min = 68.dp)
+                )
+
+                // Multiplayer Quick Action (3D Beveled Green Button)
+                MinecraftButton(
+                    onClick = {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        onOpenMultiplayer()
+                    },
+                    style = MinecraftButtonStyle.GREEN,
+                    text = "MULTIPLAYER",
+                    fontSize = 11.5.sp,
+                    modifier = Modifier
+                        .height(36.dp)
+                        .widthIn(min = 106.dp)
                 )
             }
         }
@@ -662,10 +772,26 @@ private fun TopAccountHeader(
             DropdownMenuItem(
                 text = {
                     Text(
-                        text = "+ Manage Accounts & Settings",
+                        text = "+ Add Offline Account",
                         color = Color(0xFF55FF55),
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                },
+                onClick = {
+                    expanded = false
+                    showAddOfflineDialog = true
+                }
+            )
+
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = "Manage Accounts & Settings",
+                        color = Color(0xFFAAAAAA),
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Normal,
                         fontSize = 12.sp
                     )
                 },
@@ -676,47 +802,153 @@ private fun TopAccountHeader(
             )
         }
     }
+
+    if (showAddOfflineDialog) {
+        AlertDialog(
+            onDismissRequest = { showAddOfflineDialog = false },
+            containerColor = Color(0xFF1C1C1E),
+            title = {
+                Text(
+                    text = "ADD OFFLINE ACCOUNT",
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Enter username for local offline play:",
+                        color = Color(0xFFCCCCCC),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 12.sp
+                    )
+                    OutlinedTextField(
+                        value = offlineUsername,
+                        onValueChange = { offlineUsername = it },
+                        placeholder = { Text("Username", color = Color(0xFF666666), fontSize = 12.sp) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF242426),
+                            unfocusedContainerColor = Color(0xFF242426),
+                            focusedBorderColor = Color(0xFF55FF55),
+                            unfocusedBorderColor = Color(0xFF383838),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                MinecraftButton(
+                    onClick = {
+                        val trimmed = offlineUsername.trim()
+                        if (trimmed.isNotBlank()) {
+                            coroutineScope.launch {
+                                val newAcc = Account(
+                                    username = trimmed,
+                                    accountType = com.movtery.zalithlauncher.game.account.AccountType.LOCAL.tag
+                                )
+                                withContext(Dispatchers.IO) {
+                                    AccountsManager.suspendSaveAccount(newAcc)
+                                }
+                                AccountsManager.setCurrentAccount(newAcc)
+                                Toast.makeText(context, "Account '$trimmed' added!", Toast.LENGTH_SHORT).show()
+                                showAddOfflineDialog = false
+                                offlineUsername = ""
+                            }
+                        } else {
+                            Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    style = MinecraftButtonStyle.GREEN,
+                    text = "CREATE",
+                    fontSize = 11.5.sp,
+                    modifier = Modifier
+                        .width(84.dp)
+                        .height(34.dp)
+                )
+            },
+            dismissButton = {
+                MinecraftButton(
+                    onClick = { showAddOfflineDialog = false },
+                    style = MinecraftButtonStyle.STONE,
+                    text = "CANCEL",
+                    fontSize = 11.5.sp,
+                    modifier = Modifier
+                        .width(84.dp)
+                        .height(34.dp)
+                )
+            }
+        )
+    }
 }
 
 /**
- * Sub-Navigation Tabs: Installations | Skins | Patch Notes
- * Centered horizontally across the screen as requested
+ * Sub-Navigation Tabs: Play | Installations | Skins | Patch Notes
  */
 @Composable
 private fun SubNavigationTabs(
     activeTab: Int,
     onTabSelected: (Int) -> Unit
 ) {
-    val tabs = listOf("Installations", "Skins", "Patch Notes")
+    // -1: Play, 0: Installations, 1: Skins, 2: Patch Notes
+    val tabs = listOf(
+        Pair("Play", -1),
+        Pair("Installations", 0),
+        Pair("Skins", 1),
+        Pair("Patch Notes", 2)
+    )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF161616))
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.Center,
+            .background(Color(0xFF141416))
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        tabs.forEachIndexed { index, title ->
-            val isSelected = activeTab == index
-            Text(
-                text = title,
-                color = if (isSelected) Color.White else Color(0xFF9E9E9E),
-                fontFamily = MinecraftFontFamily,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                fontSize = 13.5.sp,
+        tabs.forEach { (title, tabIndex) ->
+            val isSelected = activeTab == tabIndex
+            Column(
                 modifier = Modifier
                     .clip(RoundedCornerShape(3.dp))
-                    .clickable { onTabSelected(index) }
-                    .padding(vertical = 4.dp, horizontal = 12.dp)
-            )
+                    .clickable {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        onTabSelected(tabIndex)
+                    }
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = title,
+                    color = if (isSelected) Color.White else Color(0xFF9E9E9E),
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    fontSize = 13.sp
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                if (isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .width(36.dp)
+                            .height(2.5.dp)
+                            .clip(RoundedCornerShape(1.dp))
+                            .background(Color(0xFF38D122))
+                    )
+                } else {
+                    Spacer(modifier = Modifier.height(2.5.dp))
+                }
+            }
         }
     }
 }
 
 /**
- * Hero Card with authentic Minecraft pixel frame border, dynamic key art based on selected version,
- * 3D embossed MINECRAFT JAVA EDITION logo, and bottom version selector pill.
+ * Hero Card with authentic Wilderness Bound hero banner centered-aligned,
+ * centered 3D embossed MINECRAFT JAVA EDITION typography logo, and bottom version selector pill.
  */
 @Composable
 private fun HeroMinecraftCard(
@@ -725,8 +957,12 @@ private fun HeroMinecraftCard(
     onVersionClick: () -> Unit
 ) {
     val latestReleaseVersion by MinecraftOfficialContentManager.latestReleaseVersion.collectAsStateWithLifecycle()
-    val latestHeroUrl by MinecraftOfficialContentManager.latestHeroImageUrl.collectAsStateWithLifecycle()
-    val heroArtRes = getHeroArtForVersion(version)
+
+    val verIconFile = remember(version) { version?.getVersionIconFile() }
+    val verHasCustomIcon = verIconFile != null && verIconFile.exists()
+    val verFallbackIcon = remember(version) {
+        version?.let { com.movtery.zalithlauncher.ui.screens.content.elements.getLoaderIconRes(it.getVersionInfo()?.loaderInfo?.loader) } ?: R.drawable.img_minecraft
+    }
 
     MinecraftPixelBorderContainer(
         modifier = Modifier
@@ -736,19 +972,25 @@ private fun HeroMinecraftCard(
         borderColor = Color(0xFF3C8527)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Background Artwork (Dynamic based on selected version or latest release)
-            val artModel = remember(version) {
-                MinecraftArtworkManager.getArtworkModel(version)
-            }
-            AsyncImage(
-                model = artModel,
-                placeholder = painterResource(heroArtRes),
-                error = painterResource(heroArtRes),
-                fallback = painterResource(heroArtRes),
-                contentDescription = "Minecraft Version Key Art",
+            // Background Artwork (Single centered Wilderness Bound banner from official folder)
+            Image(
+                painter = painterResource(R.drawable.img_hero_wilderness),
+                contentDescription = "Minecraft Wilderness Bound Hero Banner",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
                 alignment = Alignment.Center
+            )
+
+            // Minecraft Java Edition Typography Logo positioned in upper area
+            Image(
+                painter = painterResource(R.drawable.img_mc_java_logo),
+                contentDescription = "Minecraft Java Edition",
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 18.dp)
+                    .fillMaxWidth(0.82f)
+                    .height(68.dp),
+                contentScale = ContentScale.Fit
             )
 
             // Scrim gradient for contrast at the bottom where version selector sits
@@ -758,8 +1000,8 @@ private fun HeroMinecraftCard(
                     .background(
                         Brush.verticalGradient(
                             0.0f to Color.Transparent,
-                            0.60f to Color.Transparent,
-                            0.82f to Color(0x66000000),
+                            0.55f to Color.Transparent,
+                            0.78f to Color(0x77000000),
                             1.0f to Color(0xDD0D0D0D)
                         )
                     )
@@ -774,21 +1016,35 @@ private fun HeroMinecraftCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Start
             ) {
-                // Version Selector Dropdown Pill (Stone Block Beveled Style)
+                // Version Selector Dropdown Pill (Stone Block Beveled Style with Version's Installation Icon)
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(3.dp))
                         .background(Color(0xEE1E1E1E))
                         .border(BorderStroke(1.5.dp, Color(0xFF444444)), RoundedCornerShape(3.dp))
-                        .clickable(onClick = onVersionClick)
+                        .clickable(onClick = {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            onVersionClick()
+                        })
                         .padding(horizontal = 10.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Image(
-                        painter = painterResource(R.drawable.img_minecraft),
-                        contentDescription = "Grass Block",
-                        modifier = Modifier.size(26.dp)
-                    )
+                    if (verHasCustomIcon) {
+                        AsyncImage(
+                            model = verIconFile,
+                            contentDescription = "Selected Version Icon",
+                            modifier = Modifier.size(26.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(verFallbackIcon),
+                            contentDescription = "Selected Version Icon",
+                            modifier = Modifier.size(26.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
@@ -838,7 +1094,10 @@ private fun PlayActionRow(
         contentAlignment = Alignment.Center
     ) {
         MinecraftButton(
-            onClick = onPlayClick,
+            onClick = {
+                com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                onPlayClick()
+            },
             style = MinecraftButtonStyle.GREEN,
             isLoading = isLaunching,
             text = "PLAY",
@@ -852,7 +1111,7 @@ private fun PlayActionRow(
 
 /**
  * Installed Versions Section:
- * Displays all installations as distinct Minecraft-themed cards below the main latest version card.
+ * Displays all installations as distinct Minecraft-themed cards with their respective selected installation icons.
  */
 @Composable
 private fun InstalledVersionsSection(
@@ -887,7 +1146,10 @@ private fun InstalledVersionsSection(
                 fontSize = 12.sp,
                 modifier = Modifier
                     .clip(RoundedCornerShape(3.dp))
-                    .clickable(onClick = onAddNewClick)
+                    .clickable(onClick = {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        onAddNewClick()
+                    })
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             )
         }
@@ -898,7 +1160,10 @@ private fun InstalledVersionsSection(
             MinecraftPixelBorderContainer(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(onClick = onAddNewClick),
+                    .clickable(onClick = {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        onAddNewClick()
+                    }),
                 borderColor = Color(0xFF383838)
             ) {
                 Column(
@@ -916,7 +1181,10 @@ private fun InstalledVersionsSection(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     MinecraftButton(
-                        onClick = onAddNewClick,
+                        onClick = {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            onAddNewClick()
+                        },
                         style = MinecraftButtonStyle.GREEN,
                         text = "+ CREATE INSTALLATION",
                         fontSize = 11.sp,
@@ -929,12 +1197,20 @@ private fun InstalledVersionsSection(
         } else {
             allVersions.forEach { ver ->
                 val isSelected = ver.getVersionName() == currentVersion?.getVersionName()
-                val heroRes = getHeroArtForVersion(ver)
+                val iconFile = remember(ver) { ver.getVersionIconFile() }
+                val hasCustomIcon = iconFile.exists()
+                val fallbackIcon = remember(ver) {
+                    com.movtery.zalithlauncher.ui.screens.content.elements.getLoaderIconRes(ver.getVersionInfo()?.loaderInfo?.loader)
+                }
+
                 MinecraftPixelBorderContainer(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
-                        .clickable { onSelectVersion(ver) },
+                        .clickable {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            onSelectVersion(ver)
+                        },
                     borderColor = if (isSelected) Color(0xFF55FF55) else Color(0xFF333333)
                 ) {
                     Row(
@@ -944,14 +1220,31 @@ private fun InstalledVersionsSection(
                             .padding(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Image(
-                            painter = painterResource(heroRes),
-                            contentDescription = ver.getVersionName(),
+                        // Respective Installation Block/Icon
+                        Box(
                             modifier = Modifier
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(3.dp)),
-                            contentScale = ContentScale.Crop
-                        )
+                                .size(56.dp)
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(Color(0xFF222224))
+                                .border(BorderStroke(1.dp, if (isSelected) Color(0xFF55FF55) else Color(0xFF383838)), RoundedCornerShape(3.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (hasCustomIcon) {
+                                AsyncImage(
+                                    model = iconFile,
+                                    contentDescription = ver.getVersionName(),
+                                    modifier = Modifier.size(46.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            } else {
+                                Image(
+                                    painter = painterResource(fallbackIcon),
+                                    contentDescription = ver.getVersionName(),
+                                    modifier = Modifier.size(46.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.width(10.dp))
 
@@ -985,7 +1278,10 @@ private fun InstalledVersionsSection(
                         }
 
                         MinecraftButton(
-                            onClick = { onPlayVersion(ver) },
+                            onClick = {
+                                com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                                onPlayVersion(ver)
+                            },
                             style = MinecraftButtonStyle.GREEN,
                             text = "PLAY",
                             fontSize = 11.sp,

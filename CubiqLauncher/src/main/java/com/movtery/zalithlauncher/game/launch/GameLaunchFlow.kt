@@ -196,8 +196,10 @@ class GameLaunchFlow(scope: CoroutineScope) {
                 }
             }
 
-            if (!version.skipGameIntegrityCheck()) {
-                //校验并修复游戏文件
+            val jarFile = version.getClientJar()
+            val needDownloadOrVerify = !version.skipGameIntegrityCheck() || !jarFile.exists()
+            if (needDownloadOrVerify) {
+                //校验并修复游戏文件 / 自动下载缺失的游戏核心文件
                 addTask(
                     icon = R.drawable.ic_assignment_filled,
                     title = androidText(R.string.minecraft_download_stat_verify_task),

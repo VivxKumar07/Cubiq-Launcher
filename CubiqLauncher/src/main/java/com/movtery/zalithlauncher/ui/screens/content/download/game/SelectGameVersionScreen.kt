@@ -20,10 +20,20 @@ package com.movtery.zalithlauncher.ui.screens.content.download.game
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -33,11 +43,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -304,91 +316,135 @@ private fun VersionHeader(
     itemContentColor: Color,
     onRefreshClick: () -> Unit = {}
 ) {
-    Column(modifier = modifier) {
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                val scrollState = rememberScrollState()
-                Row(
-                    modifier = Modifier
-                        .fadeEdge(
-                            state = scrollState,
-                            direction = EdgeDirection.Horizontal
-                        )
-                        .widthIn(max = this@BoxWithConstraints.maxWidth / 5 * 3) //3/5
-                        .horizontalScroll(scrollState),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    //版本筛选条件
-                    VersionTypeItem(
-                        selected = versionFilter.release,
-                        onClick = {
-                            onVersionFilterChange(versionFilter.copy(release = versionFilter.release.not()))
-                        },
-                        text = stringResource(R.string.download_game_type_release)
-                    )
-                    VersionTypeItem(
-                        selected = versionFilter.snapshot,
-                        onClick = {
-                            onVersionFilterChange(versionFilter.copy(snapshot = versionFilter.snapshot.not()))
-                        },
-                        text = stringResource(R.string.download_game_type_snapshot)
-                    )
-                    VersionTypeItem(
-                        selected = versionFilter.aprilFools,
-                        onClick = {
-                            onVersionFilterChange(versionFilter.copy(aprilFools = versionFilter.aprilFools.not()))
-                        },
-                        text = stringResource(R.string.download_game_type_april_fools)
-                    )
-                    VersionTypeItem(
-                        selected = versionFilter.old,
-                        onClick = {
-                            onVersionFilterChange(versionFilter.copy(old = versionFilter.old.not()))
-                        },
-                        text = stringResource(R.string.download_game_type_old)
-                    )
-                }
+    Column(
+        modifier = modifier.padding(vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        val scrollState = rememberScrollState()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fadeEdge(
+                    state = scrollState,
+                    direction = EdgeDirection.Horizontal
+                )
+                .horizontalScroll(scrollState),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            //版本筛选条件
+            VersionTypeItem(
+                selected = versionFilter.release,
+                onClick = {
+                    onVersionFilterChange(versionFilter.copy(release = versionFilter.release.not()))
+                },
+                text = stringResource(R.string.download_game_type_release)
+            )
+            VersionTypeItem(
+                selected = versionFilter.snapshot,
+                onClick = {
+                    onVersionFilterChange(versionFilter.copy(snapshot = versionFilter.snapshot.not()))
+                },
+                text = stringResource(R.string.download_game_type_snapshot)
+            )
+            VersionTypeItem(
+                selected = versionFilter.aprilFools,
+                onClick = {
+                    onVersionFilterChange(versionFilter.copy(aprilFools = versionFilter.aprilFools.not()))
+                },
+                text = stringResource(R.string.download_game_type_april_fools)
+            )
+            VersionTypeItem(
+                selected = versionFilter.old,
+                onClick = {
+                    onVersionFilterChange(versionFilter.copy(old = versionFilter.old.not()))
+                },
+                text = stringResource(R.string.download_game_type_old)
+            )
+        }
 
-                //搜索、刷新
+        // Cubiq Blocky Search Box & Refresh Button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(36.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(Color(0xFF1E1E20))
+                    .border(
+                        BorderStroke(
+                            1.dp,
+                            if (versionFilter.id.isNotEmpty()) Color(0xFF55FF55) else Color(0xFF383838)
+                        ),
+                        RoundedCornerShape(3.dp)
+                    )
+                    .padding(horizontal = 8.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
                 Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    SimpleTextInputField(
-                        modifier = Modifier.weight(1f),
-                        value = versionFilter.id,
-                        onValueChange = { onVersionFilterChange(versionFilter.copy(id = it)) },
-                        color = itemContainerColor,
-                        contentColor = itemContentColor,
-                        singleLine = true,
-                        hint = {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_search),
+                        contentDescription = null,
+                        tint = if (versionFilter.id.isNotEmpty()) Color(0xFF55FF55) else Color(0xFF888888),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(modifier = Modifier.weight(1f)) {
+                        if (versionFilter.id.isEmpty()) {
                             Text(
                                 text = stringResource(R.string.generic_search),
-                                style = TextStyle(color = itemContentColor).copy(fontSize = 12.sp)
+                                color = Color(0xFF777777),
+                                fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                                fontSize = 11.5.sp
                             )
                         }
-                    )
-
-                    IconButton(
-                        onClick = onRefreshClick
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_refresh),
-                            contentDescription = stringResource(R.string.generic_refresh)
+                        androidx.compose.foundation.text.BasicTextField(
+                            value = versionFilter.id,
+                            onValueChange = { onVersionFilterChange(versionFilter.copy(id = it)) },
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                color = Color.White,
+                                fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            cursorBrush = androidx.compose.ui.graphics.SolidColor(Color(0xFF55FF55)),
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
+            }
+
+            IconButton(
+                onClick = {
+                    com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                    onRefreshClick()
+                },
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(Color(0xFF1E1E20))
+                    .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(3.dp))
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_refresh),
+                    contentDescription = stringResource(R.string.generic_refresh),
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
             }
         }
 
         HorizontalDivider(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+            color = Color(0xFF383838)
         )
     }
 }
@@ -400,14 +456,80 @@ private fun VersionTypeItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    CheckChip(
-        modifier = modifier,
-        selected = selected,
-        onClick = onClick,
-        label = {
-            Text(text)
-        },
-    )
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val outerBorder = if (selected) Color(0xFF1B4E12) else Color(0xFF38383C)
+    val topHighlight = if (selected) {
+        if (isPressed) Color(0xFF194411) else Color(0xFF5AC636)
+    } else {
+        if (isPressed) Color(0xFF1E1E22) else Color(0xFF3E3E44)
+    }
+    val bottomShadow = if (selected) {
+        if (isPressed) Color(0xFF5AC636) else Color(0xFF194411)
+    } else {
+        if (isPressed) Color(0xFF3E3E44) else Color(0xFF141416)
+    }
+    val bgGradient = if (selected) {
+        if (isPressed) listOf(Color(0xFF286D19), Color(0xFF205814))
+        else listOf(Color(0xFF388E23), Color(0xFF2C741B))
+    } else {
+        if (isPressed) listOf(Color(0xFF1A1A1E), Color(0xFF161618))
+        else listOf(Color(0xFF2A2A2E), Color(0xFF202024))
+    }
+
+    Box(
+        modifier = modifier
+            .offset { IntOffset(0, if (isPressed) 2 else 0) }
+            .clip(RoundedCornerShape(3.dp))
+            .border(
+                BorderStroke(1.dp, outerBorder),
+                RoundedCornerShape(3.dp)
+            )
+            .background(Brush.verticalGradient(bgGradient))
+            .drawWithContent {
+                drawContent()
+                val highlightThick = 2.dp.toPx()
+                val shadowThick = 2.5.dp.toPx()
+                // Top highlight
+                drawRect(
+                    color = topHighlight,
+                    topLeft = Offset(0.5f, 0.5f),
+                    size = Size(size.width - 1f, highlightThick)
+                )
+                // Bottom shadow
+                drawRect(
+                    color = bottomShadow,
+                    topLeft = Offset(0.5f, size.height - shadowThick),
+                    size = Size(size.width - 1f, shadowThick)
+                )
+            }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = {
+                    com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                    onClick()
+                }
+            )
+            .padding(horizontal = 9.dp, vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = if (selected) Color.White else Color(0xFFCCCCCC),
+            fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+            fontSize = 11.5.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+            style = TextStyle(
+                shadow = Shadow(
+                    color = if (selected) Color(0xFF0F2B0A) else Color.Black,
+                    offset = Offset(1.5f, 1.5f),
+                    blurRadius = 0f
+                )
+            )
+        )
+    }
 }
 
 @Composable
@@ -433,9 +555,11 @@ private fun VersionList(
                     .padding(vertical = 6.dp),
                 version = version,
                 onClick = {
+                    com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
                     onVersionSelect(version.version.id)
                 },
                 onAccessWiki = { wikiUrl ->
+                    com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
                     openLink(wikiUrl)
                 },
             )
@@ -556,7 +680,7 @@ private fun getVersionComponents(
         }
         MinecraftVersion.Type.Snapshot -> {
             Quadruple(
-                painterResource(R.drawable.img_command_block),
+                painterResource(R.drawable.block_command_block),
                 stringResource(R.string.download_game_type_snapshot),
                 stringResource(R.string.url_wiki_minecraft_game_snapshot, urlSuffix),
                 summary
@@ -564,7 +688,7 @@ private fun getVersionComponents(
         }
         MinecraftVersion.Type.AprilFools -> {
             Quadruple(
-                painterResource(R.drawable.img_diamond_block),
+                painterResource(R.drawable.block_diamond_block),
                 stringResource(R.string.download_game_type_april_fools),
                 stringResource(R.string.url_wiki_minecraft_game_snapshot, urlSuffix),
                 summary
@@ -572,7 +696,7 @@ private fun getVersionComponents(
         }
         MinecraftVersion.Type.OldBeta -> {
             Quadruple(
-                painterResource(R.drawable.img_old_cobblestone),
+                painterResource(R.drawable.block_stone),
                 stringResource(R.string.download_game_type_old_beta),
                 null,
                 summary
@@ -580,7 +704,7 @@ private fun getVersionComponents(
         }
         MinecraftVersion.Type.OldAlpha -> {
             Quadruple(
-                painterResource(R.drawable.img_old_grass_block),
+                painterResource(R.drawable.block_dirt),
                 stringResource(R.string.download_game_type_old_alpha),
                 null,
                 summary
@@ -588,7 +712,7 @@ private fun getVersionComponents(
         }
         else -> {
             Quadruple(
-                null,
+                painterResource(R.drawable.img_minecraft),
                 stringResource(R.string.generic_unknown),
                 null,
                 version.summary?.let { stringResource(it) }

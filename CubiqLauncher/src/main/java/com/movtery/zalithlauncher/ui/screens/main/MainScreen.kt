@@ -29,6 +29,9 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,9 +42,16 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import com.movtery.zalithlauncher.ui.components.MinecraftBlockCard
+import com.movtery.zalithlauncher.ui.components.MinecraftButton
+import com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle
+import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CardDefaults
@@ -173,7 +183,15 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            if (!inLauncherScreen && mainScreenKey !is NestedNavKey.Download && mainScreenKey !is NestedNavKey.Settings) {
+            val shouldShowTopBar = !inLauncherScreen &&
+                    mainScreenKey !is NestedNavKey.Download &&
+                    mainScreenKey !is NestedNavKey.Settings &&
+                    mainScreenKey !is NestedNavKey.VersionSettings &&
+                    mainScreenKey !is NestedNavKey.VersionExport &&
+                    mainScreenKey !is NormalNavKey.VersionsManager &&
+                    mainScreenKey !is NormalNavKey.Multiplayer
+
+            if (shouldShowTopBar) {
                 TopBar(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -234,11 +252,7 @@ fun MainScreen(
                     TaskMenu(
                         tasks = nonAuthTasks,
                         isExpanded = isTaskMenuExpanded,
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .fillMaxWidth(0.3f)
-                            .align(Alignment.CenterStart)
-                            .padding(all = 6.dp)
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         changeTasksExpandedState()
                     }
@@ -672,81 +686,102 @@ private fun TaskMenu(
 ) {
     val show = isExpanded && tasks.isNotEmpty()
 
-    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     AnimatedVisibility(
         modifier = modifier,
-        enter = slideInHorizontally(
-            initialOffsetX = { if (isRtl) it else -it },
-            animationSpec = getAnimateTween()
-        ) + fadeIn(),
-        exit = slideOutHorizontally(
-            targetOffsetX = { if (isRtl) it else -it },
-            animationSpec = getAnimateTween()
-        ) + fadeOut(),
+        enter = fadeIn(animationSpec = getAnimateTween()),
+        exit = fadeOut(animationSpec = getAnimateTween()),
         visible = show
     ) {
-        BackgroundCard(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(all = 6.dp),
-            influencedByBackground = false,
-            shape = MaterialTheme.shapes.extraLarge,
-            colors = CardDefaults.cardColors(
-                containerColor = backgroundColor(),
-                contentColor = onBackgroundColor()
-            ),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
+                .background(Color(0x99000000))
+                .clickable(onClick = changeExpandedState),
+            contentAlignment = Alignment.Center
         ) {
-            Column {
-                CardTitleLayout(blur = 0) {
-                    Box(
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(0.92f)
+                    .clickable(enabled = false) {}
+            ) {
+                MinecraftBlockCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = Color(0xFF1E1E20)
+                ) {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp)
-                            .padding(top = 8.dp, bottom = 4.dp)
+                            .padding(16.dp)
                     ) {
-                        IconButton(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .align(Alignment.CenterStart),
-                            onClick = changeExpandedState
+                        // Title Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                modifier = Modifier.size(28.dp),
-                                painter = painterResource(R.drawable.ic_arrow_left_rounded),
-                                contentDescription = stringResource(R.string.generic_collapse)
+                            Text(
+                                text = "ACTIVE DOWNLOAD TASKS",
+                                color = Color.White,
+                                fontFamily = MinecraftFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
                             )
+                            IconButton(
+                                modifier = Modifier.size(28.dp),
+                                onClick = changeExpandedState
+                            ) {
+                                Icon(
+                                    modifier = Modifier.size(20.dp),
+                                    painter = painterResource(R.drawable.ic_close),
+                                    contentDescription = stringResource(R.string.generic_collapse),
+                                    tint = Color.White
+                                )
+                            }
                         }
 
-                        Text(
-                            modifier = Modifier.align(Alignment.Center),
-                            text = stringResource(R.string.main_task_menu)
-                        )
-                    }
-                }
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .weight(1f),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    items(tasks) { task ->
-                        val taskProgress by task.progress.collectAsStateWithLifecycle()
-                        val taskMessage by task.message.collectAsStateWithLifecycle()
-                        val rateBytesPerSec by task.rateBytesPerSec.collectAsStateWithLifecycle()
-
-                        TaskItem(
-                            taskProgress = taskProgress,
-                            taskMessage = taskMessage,
-                            rateBytesPerSec = rateBytesPerSec,
+                        LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 6.dp)
+                                .heightIn(max = 240.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            //取消任务
-                            TaskSystem.cancelTask(task.id)
+                            items(tasks) { task ->
+                                val taskProgress by task.progress.collectAsStateWithLifecycle()
+                                val currentFileProgress by task.currentFileProgress.collectAsStateWithLifecycle()
+                                val executingAction by task.executingAction.collectAsStateWithLifecycle()
+                                val taskMessage by task.message.collectAsStateWithLifecycle()
+                                val rateBytesPerSec by task.rateBytesPerSec.collectAsStateWithLifecycle()
+
+                                TaskItem(
+                                    taskProgress = taskProgress,
+                                    currentFileProgress = currentFileProgress,
+                                    executingAction = executingAction,
+                                    taskMessage = taskMessage,
+                                    rateBytesPerSec = rateBytesPerSec,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    TaskSystem.cancelTask(task.id)
+                                }
+                            }
                         }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // "DOWNLOAD IN BACKGROUND" Button
+                        MinecraftButton(
+                            onClick = {
+                                com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                                changeExpandedState()
+                            },
+                            style = MinecraftButtonStyle.GREEN,
+                            text = "DOWNLOAD IN BACKGROUND",
+                            fontSize = 12.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                        )
                     }
                 }
             }
@@ -757,79 +792,182 @@ private fun TaskMenu(
 @Composable
 private fun TaskItem(
     taskProgress: Float,
+    currentFileProgress: Float,
+    executingAction: String?,
     taskMessage: AndroidStringText?,
     rateBytesPerSec: Long?,
     modifier: Modifier = Modifier,
-    shape: Shape = MaterialTheme.shapes.large,
-    color: Color = cardColor(false),
-    contentColor: Color = onCardColor(),
     onCancelClick: () -> Unit = {}
 ) {
-    Surface(
-        modifier = modifier,
-        shape = shape,
-        color = color,
-        contentColor = contentColor,
+    Box(
+        modifier = modifier
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
+            .background(Color(0xFF141416))
+            .border(BorderStroke(1.dp, Color(0xFF383838)), androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
+            .padding(10.dp)
     ) {
         Row(
-            modifier = Modifier.padding(all = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
+                // 1. Text of which thing is executing
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "EXECUTING: ",
+                        color = Color(0xFF55FF55),
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
+                    )
+                    if (taskMessage != null) {
+                        AndroidStringText(
+                            text = taskMessage,
+                            style = TextStyle(
+                                color = Color.White,
+                                fontFamily = MinecraftFontFamily,
+                                fontSize = 11.sp
+                            )
+                        )
+                    } else if (!executingAction.isNullOrBlank()) {
+                        Text(
+                            text = executingAction,
+                            color = Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    } else {
+                        Text(
+                            text = "Downloading assets...",
+                            color = Color(0xFFCCCCCC),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+
+                // 2. Total Progress Bar
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "TOTAL PROGRESS",
+                            color = Color(0xFFAAAAAA),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 9.5.sp
+                        )
+                        Text(
+                            text = if (taskProgress >= 0f) "${(taskProgress * 100).toInt()}%" else "Working...",
+                            color = Color(0xFF55FF55),
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 9.5.sp
+                        )
+                    }
+                    if (taskProgress < 0f) {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(5.dp)
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)),
+                            color = Color(0xFF55FF55),
+                            trackColor = Color(0xFF242426)
+                        )
+                    } else {
+                        LinearProgressIndicator(
+                            progress = { taskProgress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(5.dp)
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)),
+                            color = Color(0xFF55FF55),
+                            trackColor = Color(0xFF242426)
+                        )
+                    }
+                }
+
+                // 3. Current File Download Progress Bar
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "CURRENT FILE PROGRESS",
+                            color = Color(0xFFAAAAAA),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 9.5.sp
+                        )
+                        val subPct = if (currentFileProgress >= 0f) "${(currentFileProgress * 100).toInt()}%"
+                        else if (taskProgress >= 0f) "${((taskProgress * 1000) % 100).toInt()}%"
+                        else "Downloading..."
+                        Text(
+                            text = subPct,
+                            color = Color(0xFF38BAFF),
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 9.5.sp
+                        )
+                    }
+                    val currentVal = if (currentFileProgress >= 0f) currentFileProgress
+                    else if (taskProgress >= 0f) ((taskProgress * 10f) % 1f)
+                    else -1f
+
+                    if (currentVal < 0f) {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)),
+                            color = Color(0xFF38BAFF),
+                            trackColor = Color(0xFF242426)
+                        )
+                    } else {
+                        LinearProgressIndicator(
+                            progress = { currentVal },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)),
+                            color = Color(0xFF38BAFF),
+                            trackColor = Color(0xFF242426)
+                        )
+                    }
+                }
+
+                // Speed indicator if available
+                rateBytesPerSec?.let { bytes ->
+                    val speedText = remember(bytes) { "${formatFileSize(bytes)}/s" }
+                    Text(
+                        text = "Speed: $speedText",
+                        color = Color(0xFF888888),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 9.5.sp
+                    )
+                }
+            }
+
             IconButton(
-                modifier = Modifier
-                    .size(24.dp)
-                    .align(Alignment.CenterVertically),
+                modifier = Modifier.size(24.dp),
                 onClick = onCancelClick
             ) {
                 Icon(
                     modifier = Modifier.size(20.dp),
                     painter = painterResource(R.drawable.ic_close),
-                    contentDescription = stringResource(R.string.generic_cancel)
+                    contentDescription = stringResource(R.string.generic_cancel),
+                    tint = Color(0xFFFF5555)
                 )
-            }
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically)
-            ) {
-                taskMessage?.let { message ->
-                    AndroidStringText(
-                        text = message,
-                        style = MaterialTheme.typography.labelMedium
-                    )
-                }
-
-                if (taskProgress < 0) { //负数则代表不确定
-                    LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
-                    LinearProgressIndicator(
-                        progress = { taskProgress },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    taskProgress.takeIf { it >= 0f }?.let { progress ->
-                        Text(
-                            text = "${(progress * 100).toInt()}%",
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                    }
-                    rateBytesPerSec?.let { bytes ->
-                        val text = remember(bytes) { "${formatFileSize(bytes)}/s" }
-                        Text(
-                            text = text,
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                    }
-                }
             }
         }
     }

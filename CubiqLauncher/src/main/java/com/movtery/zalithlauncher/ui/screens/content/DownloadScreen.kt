@@ -18,10 +18,13 @@
 
 package com.movtery.zalithlauncher.ui.screens.content
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,12 +50,19 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -244,29 +254,78 @@ private fun HorizontalTabMenu(
     ) {
         items(downloadsList) { item ->
             val isSelected = backScreenViewModel.downloadScreen.currentKey == item.key
+            val interactionSource = remember { MutableInteractionSource() }
+            val isPressed by interactionSource.collectIsPressedAsState()
+
+            val outerBorder = if (isSelected) Color(0xFF1B4E12) else Color(0xFF38383C)
+            val topHighlight = if (isSelected) {
+                if (isPressed) Color(0xFF194411) else Color(0xFF5AC636)
+            } else {
+                if (isPressed) Color(0xFF1E1E22) else Color(0xFF3E3E44)
+            }
+            val bottomShadow = if (isSelected) {
+                if (isPressed) Color(0xFF5AC636) else Color(0xFF194411)
+            } else {
+                if (isPressed) Color(0xFF3E3E44) else Color(0xFF141416)
+            }
+            val bgGradient = if (isSelected) {
+                if (isPressed) listOf(Color(0xFF286D19), Color(0xFF205814))
+                else listOf(Color(0xFF388E23), Color(0xFF2C741B))
+            } else {
+                if (isPressed) listOf(Color(0xFF1A1A1E), Color(0xFF161618))
+                else listOf(Color(0xFF2A2A2E), Color(0xFF202024))
+            }
+
             Box(
                 modifier = Modifier
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
-                    .background(if (isSelected) androidx.compose.ui.graphics.Color(0xFF3C8527) else androidx.compose.ui.graphics.Color(0xFF262628))
+                    .offset { IntOffset(0, if (isPressed) 2 else 0) }
+                    .clip(RoundedCornerShape(4.dp))
                     .border(
-                        androidx.compose.foundation.BorderStroke(
-                            1.dp,
-                            if (isSelected) androidx.compose.ui.graphics.Color(0xFF55FF55) else androidx.compose.ui.graphics.Color(0xFF383838)
-                        ),
-                        androidx.compose.foundation.shape.RoundedCornerShape(3.dp)
+                        BorderStroke(1.dp, outerBorder),
+                        RoundedCornerShape(4.dp)
                     )
-                    .clickable {
-                        backStack.navigateOnce(item.key)
+                    .background(Brush.verticalGradient(bgGradient))
+                    .drawWithContent {
+                        drawContent()
+                        val highlightThick = 2.dp.toPx()
+                        val shadowThick = 2.5.dp.toPx()
+                        // Top highlight
+                        drawRect(
+                            color = topHighlight,
+                            topLeft = Offset(0.5f, 0.5f),
+                            size = Size(size.width - 1f, highlightThick)
+                        )
+                        // Bottom shadow
+                        drawRect(
+                            color = bottomShadow,
+                            topLeft = Offset(0.5f, size.height - shadowThick),
+                            size = Size(size.width - 1f, shadowThick)
+                        )
                     }
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = {
+                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                            backStack.navigateOnce(item.key)
+                        }
+                    )
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = stringResource(item.textRes),
-                    color = androidx.compose.ui.graphics.Color.White,
+                    color = if (isSelected) Color.White else Color(0xFFCCCCCC),
                     fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
-                    fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal,
-                    fontSize = 12.sp
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    style = TextStyle(
+                        shadow = Shadow(
+                            color = if (isSelected) Color(0xFF0F2B0A) else Color.Black,
+                            offset = Offset(1.5f, 1.5f),
+                            blurRadius = 0f
+                        )
+                    )
                 )
             }
         }

@@ -28,9 +28,9 @@ import com.movtery.zalithlauncher.ui.components.influencedByBackgroundColor
 
 /** 应用整体背景的颜色 */
 @Composable
-fun backgroundColor(): Color = MaterialTheme.colorScheme.surfaceContainer
+fun backgroundColor(): Color = Color(0xFF141416)
 @Composable
-fun onBackgroundColor(): Color = MaterialTheme.colorScheme.onSurfaceVariant
+fun onBackgroundColor(): Color = Color.White
 
 /**
  * 卡片背景颜色
@@ -43,18 +43,18 @@ fun onBackgroundColor(): Color = MaterialTheme.colorScheme.onSurfaceVariant
 fun cardColor(
     influencedByBackground: Boolean = true
 ): Color = influencedByBackgroundColor(
-    color = MaterialTheme.colorScheme.surfaceBright,
+    color = Color(0xFF1E1E22),
     enabled = influencedByBackground
 )
 @Composable
-fun onCardColor(): Color = MaterialTheme.colorScheme.onSurface
+fun onCardColor(): Color = Color.White
 /**
  * 卡片顶部Title的背景颜色，半透明的surface
  */
 @Composable
 fun cardTitleColor(
     alpha: Float = 0.5f
-): Color = MaterialTheme.colorScheme.surface.copy(alpha = alpha)
+): Color = Color(0xFF18181B).copy(alpha = alpha)
 
 /**
  * 卡片上的Item的背景颜色
@@ -66,13 +66,9 @@ fun itemColor(
     isDark: Boolean = isLauncherInDarkTheme()
 ): Color {
     return influencedByBackgroundColor(
-        color = if (isDark) {
-            MaterialTheme.colorScheme.surfaceVariant
-        } else {
-            MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp)
-        },
+        color = Color(0xFF26262B),
         enabled = influencedByBackground
     )
 }
 @Composable
-fun onItemColor() = MaterialTheme.colorScheme.onSurface
+fun onItemColor() = Color.White

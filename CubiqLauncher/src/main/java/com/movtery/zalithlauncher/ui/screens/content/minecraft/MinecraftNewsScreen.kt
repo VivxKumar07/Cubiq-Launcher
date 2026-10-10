@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -137,15 +138,17 @@ private fun NewsArticleCard(
             .border(BorderStroke(1.dp, Color(0xFF333333)), RoundedCornerShape(4.dp))
             .clickable(onClick = onClick)
     ) {
-        // High-res Image Banner
+        // High-res Image Banner (Zoomed out with proper 16:9 aspect ratio)
         if (news.imageUrl.isNotBlank()) {
             AsyncImage(
                 model = news.imageUrl,
                 contentDescription = news.title,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(170.dp),
-                contentScale = ContentScale.Crop
+                    .aspectRatio(16f / 9f)
+                    .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                    .background(Color(0xFF141416)),
+                contentScale = ContentScale.Fit
             )
         } else {
             Image(
@@ -153,7 +156,8 @@ private fun NewsArticleCard(
                 contentDescription = "News Banner",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(150.dp),
+                    .aspectRatio(16f / 9f)
+                    .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)),
                 contentScale = ContentScale.Crop
             )
         }
