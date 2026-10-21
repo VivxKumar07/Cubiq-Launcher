@@ -82,7 +82,7 @@ class OfflineYggdrasilServer(
     private var server: EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? = null
 
     fun start() {
-        server = embeddedServer(CIO, port = port) {
+        server = embeddedServer(CIO, host = "127.0.0.1", port = port) {
             install(ContentNegotiation) {
                 json(Json {
                     prettyPrint = true

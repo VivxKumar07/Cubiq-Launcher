@@ -19,6 +19,7 @@
 package com.movtery.zalithlauncher.provider;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
@@ -27,6 +28,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.ParcelFileDescriptor;
+import android.provider.DocumentsContract;
 import android.provider.DocumentsContract.Document;
 import android.provider.DocumentsContract.Root;
 import android.provider.DocumentsProvider;
@@ -35,10 +37,11 @@ import android.system.Os;
 import android.system.StructStat;
 import android.webkit.MimeTypeMap;
 
+import com.movtery.zalithlauncher.utils.file.SafePaths;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
 
 public class FolderProvider extends DocumentsProvider {
     public static final String COLUMN_MT_EXTRAS = "mt_extras";
@@ -68,6 +71,7 @@ public class FolderProvider extends DocumentsProvider {
     };
 
     private String packageName;
+    private String authority;
     private File androidDataDir;
 
     /**
@@ -77,6 +81,7 @@ public class FolderProvider extends DocumentsProvider {
     public void attachInfo(Context context, ProviderInfo info) {
         super.attachInfo(context, info);
         packageName = context.getPackageName();
+        authority = info.authority;
         File externalFilesDir = context.getExternalFilesDir(null);
         if (externalFilesDir != null) {
             androidDataDir = externalFilesDir.getParentFile();
@@ -118,7 +123,11 @@ public class FolderProvider extends DocumentsProvider {
         }
         File f = null;
         if (type.equalsIgnoreCase("android_data") && androidDataDir != null) {
-            f = new File(androidDataDir, subPath);
+            try {
+                f = SafePaths.resolveChild(androidDataDir, subPath);
+            } catch (IOException | SecurityException e) {
+                throw new FileNotFoundException("Document is outside the allowed directory");
+            }
         }
         if (f == null) {
             throw new FileNotFoundException(docId + " not found");
@@ -220,6 +229,7 @@ public class FolderProvider extends DocumentsProvider {
 
     @Override
     public String createDocument(String parentDocumentId, String mimeType, String displayName) throws FileNotFoundException {
+        validateDisplayName(displayName);
         File parent = getFileForDocId(parentDocumentId);
         if (parent != null) {
             File newFile = new File(parent, displayName);
@@ -284,6 +294,7 @@ public class FolderProvider extends DocumentsProvider {
 
     @Override
     public String renameDocument(String documentId, String displayName) throws FileNotFoundException {
+        validateDisplayName(displayName);
         File file = getFileForDocId(documentId);
         if (file != null) {
             File target = new File(file.getParentFile(), displayName);
@@ -316,7 +327,20 @@ public class FolderProvider extends DocumentsProvider {
 
     @Override
     public boolean isChildDocument(String parentDocumentId, String documentId) {
-        return documentId.startsWith(parentDocumentId);
+        try {
+            File parent = getFileForDocId(parentDocumentId, false);
+            File child = getFileForDocId(documentId, false);
+            return child != null && (parent == null || SafePaths.isWithin(parent, child));
+        } catch (IOException | SecurityException e) {
+            return false;
+        }
+    }
+
+    private static void validateDisplayName(String name) throws FileNotFoundException {
+        if (name == null || name.isEmpty() || name.equals(".") || name.equals("..")
+                || name.indexOf('/') >= 0 || name.indexOf('\\') >= 0) {
+            throw new FileNotFoundException("Invalid document name");
+        }
     }
 
     private static String getMimeType(File file) {
@@ -346,8 +370,21 @@ public class FolderProvider extends DocumentsProvider {
         Bundle out = new Bundle();
         try {
             Uri uri = extras.getParcelable("uri");
-            List<String> pathSegments = uri.getPathSegments();
-            String documentId = pathSegments.size() >= 4 ? pathSegments.get(3) : pathSegments.get(1);
+            if (uri == null || !"content".equals(uri.getScheme()) || !authority.equals(uri.getAuthority())) {
+                throw new SecurityException("Invalid document authority");
+            }
+            getContext().enforceCallingOrSelfUriPermission(uri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION, "Write access to the document is required");
+            String documentId = DocumentsContract.getDocumentId(uri);
+            File grantedRoot = androidDataDir;
+            if (DocumentsContract.isTreeUri(uri)) {
+                String treeId = DocumentsContract.getTreeDocumentId(uri);
+                if (!treeId.equals(documentId) && !isChildDocument(treeId, documentId)) {
+                    throw new SecurityException("Document is outside the granted tree");
+                }
+                File treeRoot = getFileForDocId(treeId, false);
+                if (treeRoot != null) grantedRoot = treeRoot;
+            }
             switch (method) {
                 case METHOD_SET_LAST_MODIFIED: {
                     File file = getFileForDocId(documentId);
@@ -381,6 +418,7 @@ public class FolderProvider extends DocumentsProvider {
                         out.putBoolean("result", false);
                     } else {
                         String path = extras.getString("path");
+                        SafePaths.validateRelativeSymlink(grantedRoot, file, path);
                         try {
                             Os.symlink(path, file.getPath());
                             out.putBoolean("result", true);

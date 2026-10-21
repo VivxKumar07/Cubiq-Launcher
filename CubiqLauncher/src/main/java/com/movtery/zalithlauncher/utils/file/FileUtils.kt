@@ -352,7 +352,7 @@ private suspend fun <T : ZipEntryBase> extractZipEntries(
                 throw SecurityException("Illegal path traversal detected: $name")
             }
 
-            val targetFile = File(outputDir, relative)
+            val targetFile = SafePaths.resolveChild(outputDir, relative)
             val targetPath = targetFile.toPath().normalize()
 
             if (!targetPath.startsWith(rootPath)) {

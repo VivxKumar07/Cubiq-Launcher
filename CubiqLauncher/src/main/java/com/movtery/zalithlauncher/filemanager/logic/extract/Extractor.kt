@@ -18,6 +18,8 @@
 
 package com.movtery.zalithlauncher.filemanager.logic.extract
 
+import com.movtery.zalithlauncher.utils.file.SafePaths
+
 import com.movtery.zalithlauncher.filemanager.logic.entry.ArchiveType
 import com.movtery.zalithlauncher.filemanager.logic.ops.FilePermissions
 import com.movtery.zalithlauncher.filemanager.os.FmLog
@@ -267,7 +269,7 @@ object Extractor {
                     checkCancel()
                     val name = header.fileName
                     val relative = safeRelative(name) ?: continue
-                    val target = outputDir.resolve(relative)
+                    val target = SafePaths.resolveChild(outputDir.toFile(), relative.toString()).toPath()
                     if (header.isDirectory) {
                         Files.createDirectories(target)
                         FilePermissions.apply(target)
@@ -376,7 +378,7 @@ object Extractor {
         onBytesN: (Int) -> Unit
     ) {
         val relative = safeRelative(entry.name) ?: return
-        val target = outputDir.resolve(relative)
+        val target = SafePaths.resolveChild(outputDir.toFile(), relative.toString()).toPath()
 
         if (entry.isDirectory) {
             withContext(Dispatchers.IO) {
@@ -431,7 +433,7 @@ object Extractor {
                         checkCancel()
                         val entry = tar.nextEntry ?: break
                         val relative = safeRelative(entry.name) ?: continue
-                        val target = outputDir.resolve(relative)
+                        val target = SafePaths.resolveChild(outputDir.toFile(), relative.toString()).toPath()
                         if (entry.isDirectory) {
                             Files.createDirectories(target)
                             FilePermissions.apply(target)

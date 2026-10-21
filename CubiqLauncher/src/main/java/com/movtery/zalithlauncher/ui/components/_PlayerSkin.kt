@@ -55,6 +55,7 @@ import com.movtery.zalithlauncher.game.account.wardrobe.EmptyCape
 import com.movtery.zalithlauncher.game.account.wardrobe.SkinModelType
 import com.movtery.zalithlauncher.game.account.yggdrasil.PlayerProfile
 import com.movtery.zalithlauncher.path.PathManager
+import org.json.JSONObject
 import java.io.File
 import java.io.InputStream
 
@@ -146,13 +147,13 @@ class PlayerSkin(
                 .append("$id.png")
                 .toString()
         } ?: defaultSkin
-        webview?.evaluateJavascript("loadSkin('$jsUrl', '$modelString')", null)
+        webview?.evaluateJavascript("loadSkin(${JSONObject.quote(jsUrl)}, ${JSONObject.quote(modelString)})", null)
     }
 
     fun loadSkin(inputStream: InputStream?, model: SkinModelType?) {
         inputStream?.asBase64Image()?.let { dataUrl ->
             val modelString = model.takeIf { it != SkinModelType.NONE }?.modelType ?: "auto-detect"
-            webview?.evaluateJavascript("loadSkin('$dataUrl', '$modelString')", null)
+            webview?.evaluateJavascript("loadSkin(${JSONObject.quote(dataUrl)}, ${JSONObject.quote(modelString)})", null)
         } ?: run {
             loadSkin(skinId = null, model)
         }
@@ -161,7 +162,7 @@ class PlayerSkin(
     fun loadSkinUrl(skinUrl: String?, model: SkinModelType?) {
         val modelString = model?.takeIf { it != SkinModelType.NONE }?.modelType ?: "auto-detect"
         val jsUrl = skinUrl ?: defaultSkin
-        webview?.evaluateJavascript("loadSkin('$jsUrl', '$modelString')", null)
+        webview?.evaluateJavascript("loadSkin(${JSONObject.quote(jsUrl)}, ${JSONObject.quote(modelString)})", null)
     }
 
     fun loadCape(cape: PlayerProfile.Cape?) {
@@ -171,13 +172,13 @@ class PlayerSkin(
                 .append("$id.png")
                 .toString()
         }
-        val jsUrl = path?.let { "'$it'" } ?: "null"
+        val jsUrl = path?.let(JSONObject::quote) ?: "null"
         webview?.evaluateJavascript("loadCape($jsUrl)", null)
     }
 
     fun loadCape(inputStream: InputStream?) {
         inputStream?.asBase64Image()?.let { dataUrl ->
-            webview?.evaluateJavascript("loadCape('$dataUrl')", null)
+            webview?.evaluateJavascript("loadCape(${JSONObject.quote(dataUrl)})", null)
         } ?: run {
             loadCape(cape = null)
         }
@@ -193,7 +194,7 @@ class PlayerSkin(
         speed: Float? = null
     ) {
         webview?.evaluateJavascript(
-            "startAnim('${animation.name}', $speed)",
+            "startAnim(${JSONObject.quote(animation.name)}, $speed)",
             null
         )
     }

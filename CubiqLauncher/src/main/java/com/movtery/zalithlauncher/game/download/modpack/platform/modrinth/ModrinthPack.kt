@@ -27,6 +27,7 @@ import com.movtery.zalithlauncher.game.download.modpack.install.ModPackInfo
 import com.movtery.zalithlauncher.game.download.modpack.install.ModPackInfoTask
 import com.movtery.zalithlauncher.game.download.modpack.platform.PackPlatform
 import com.movtery.zalithlauncher.ui.androidText
+import com.movtery.zalithlauncher.utils.file.SafePaths
 import com.movtery.zalithlauncher.utils.file.copyDirectoryContents
 import java.io.File
 
@@ -54,7 +55,7 @@ class ModrinthPack(
             //客户端不支持
             if (manifestFile.env?.client == "unsupported") return@mapNotNull null
             ModFile(
-                outputFile = File(targetFolder, manifestFile.path),
+                outputFile = SafePaths.resolveChild(targetFolder, manifestFile.path),
                 downloadUrls = manifestFile.downloads.mapMCIMMirrorUrls(),
                 sha1 = manifestFile.hashes.sha1
             )

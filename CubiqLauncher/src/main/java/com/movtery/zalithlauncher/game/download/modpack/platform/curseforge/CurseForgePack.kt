@@ -34,6 +34,7 @@ import com.movtery.zalithlauncher.game.download.modpack.install.ModPackInfoTask
 import com.movtery.zalithlauncher.game.download.modpack.platform.PackPlatform
 import com.movtery.zalithlauncher.game.version.installed.VersionFolders
 import com.movtery.zalithlauncher.ui.androidText
+import com.movtery.zalithlauncher.utils.file.SafePaths
 import com.movtery.zalithlauncher.utils.file.copyDirectoryContents
 import com.movtery.zalithlauncher.utils.logging.Logger
 import java.io.File
@@ -97,7 +98,7 @@ class CurseForgePack(
                                 } ?: modsFolder
 
                             ModFile(
-                                outputFile = File(folder, fileName),
+                                outputFile = SafePaths.resolveChild(folder, fileName),
                                 downloadUrls = url.mapMCIMMirrorUrls(),
                                 sha1 = version.getSHA1()
                             )
@@ -112,7 +113,7 @@ class CurseForgePack(
                 )
             } else {
                 ModFile(
-                    outputFile = File(modsFolder, manifestFile.fileName),
+                    outputFile = SafePaths.resolveChild(modsFolder, manifestFile.fileName),
                     downloadUrls = listOf(manifestFile.getFileUrl()!!)
                 )
             }
@@ -164,7 +165,7 @@ class CurseForgePack(
             targetFolder = versionFolder,
             extractFiles = { internal, out ->
                 val sourceDir = internal.takeIf { it.isNotBlank() }
-                    ?.let { File(root, it) }
+                    ?.let { SafePaths.resolveChild(root, it) }
                     ?: root
                 //提取文件
                 copyDirectoryContents(

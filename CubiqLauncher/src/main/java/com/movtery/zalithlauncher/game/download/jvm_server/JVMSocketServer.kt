@@ -29,9 +29,7 @@ import java.io.IOException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.SocketException
-import java.net.UnknownHostException
+import java.security.MessageDigest
 
 private const val TAG = "JVMSocketServer"
 
@@ -39,94 +37,65 @@ private const val TAG = "JVMSocketServer"
  * [Reference FCL](https://github.com/FCL-Team/FoldCraftLauncher/blob/main/FCLCore/src/main/java/com/tungsten/fclcore/util/SocketServer.java)
  */
 object JVMSocketServer {
-    private lateinit var ip: String
-    private var port: Int = PROCESS_SERVICE_PORT
-
     private var scope: CoroutineScope? = null
-    private var packet: DatagramPacket? = null
     private var socket: DatagramSocket? = null
 
-    /**
-     * 上一次接收的消息
-     */
+    @Volatile
     var receiveMsg: String? = null
         private set
 
+    /** Binds before returning so the service can safely use the assigned callback port. */
     fun start(
+        sessionToken: String,
         ip: String = "127.0.0.1",
-        port: Int = PROCESS_SERVICE_PORT,
+        port: Int = 0,
         onReceive: suspend (receiveMsg: String) -> Unit
-    ) {
-        this.ip = ip
-        this.port = port
-        //清空上一轮的接收结果，防止陈旧退出码被当作本轮结果消费
+    ): Int {
+        require(sessionToken.isNotBlank()) { "A JVM session token is required" }
+        stop()
         receiveMsg = null
+        val receiver = DatagramSocket(port, InetAddress.getByName(ip))
+        socket = receiver
+        val expectedToken = sessionToken.toByteArray(Charsets.UTF_8)
+        val receiverScope = CoroutineScope(Dispatchers.IO)
+        scope = receiverScope
 
-        scope?.let {
-            it.cancel()
-            scope = null
-        }
-        scope = CoroutineScope(Dispatchers.Default)
-
-        scope?.launch(Dispatchers.IO) {
+        receiverScope.launch {
             val bytes = ByteArray(1024)
-            packet = DatagramPacket(bytes, bytes.size)
+            val packet = DatagramPacket(bytes, bytes.size)
             try {
-                socket = DatagramSocket(port, InetAddress.getByName(ip))
-                Logger.info(TAG, "Socket server init!")
-            } catch (e: SocketException) {
-                Logger.error(TAG, "Failed to init socket server", e)
-            } catch (e: UnknownHostException) {
-                Logger.error(TAG, "Failed to init socket server", e)
-            }
-
-            startServer(onReceive)
-        }
-    }
-
-    private fun startServer(
-        onReceive: suspend (receiveMsg: String) -> Unit
-    ) {
-        scope?.launch(Dispatchers.IO) {
-            if (packet == null || socket == null) {
-                return@launch
-            }
-            Logger.info(TAG, "Socket server $ip:$port start!")
-
-            while (true) {
-                try {
+                while (true) {
                     ensureActive()
-                    socket!!.receive(packet)
-                    val receiveMsg = String(packet!!.data, packet!!.offset, packet!!.length)
-                    Logger.info(TAG, "receive msg: $receiveMsg")
-                    this@JVMSocketServer.receiveMsg = receiveMsg
-                    onReceive(receiveMsg)
-                } catch (e: Exception) {
-                    if (e is CancellationException) return@launch
-                    else {
-                        Logger.warning(TAG, "Socket server $ip:$port crashed!", e)
-                    }
+                    // Receiving a short datagram must not truncate subsequent replies.
+                    packet.length = bytes.size
+                    receiver.receive(packet)
+                    val message = String(packet.data, packet.offset, packet.length, Charsets.UTF_8)
+                    val separator = message.indexOf(':')
+                    if (separator <= 0) continue
+                    val token = message.substring(0, separator).toByteArray(Charsets.UTF_8)
+                    if (!MessageDigest.isEqual(expectedToken, token)) continue
+                    val code = message.substring(separator + 1).toIntOrNull() ?: continue
+                    val result = code.toString()
+                    receiveMsg = result
+                    Logger.info(TAG, "Received JVM exit code $result")
+                    onReceive(result)
+                    return@launch
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: IOException) {
+                if (!receiver.isClosed) Logger.warning(TAG, "JVM callback receiver failed", e)
+            } finally {
+                receiver.close()
             }
         }
-    }
-
-    @Throws(IOException::class)
-    fun send(msg: String) {
-        socket!!.connect(InetSocketAddress(ip, port))
-        val data = msg.toByteArray()
-        val packet = DatagramPacket(data, data.size)
-        socket!!.send(packet)
+        return receiver.localPort
     }
 
     fun stop() {
-        socket?.let {
-            it.close()
-            Logger.info(TAG, "Socket server $ip:$port stopped!")
-        }
+        socket?.close()
         scope?.cancel()
         scope = null
         socket = null
-        packet = null
     }
 }

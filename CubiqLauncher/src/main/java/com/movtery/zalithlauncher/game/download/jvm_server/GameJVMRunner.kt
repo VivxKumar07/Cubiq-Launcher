@@ -31,6 +31,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
+import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -168,6 +169,7 @@ suspend fun startJvmServiceAndWaitExit(
     logOutput: TaskLogOutput? = null,
 ): Int = withContext(Dispatchers.IO) {
     val doneSignal = CompletableDeferred<Unit>()
+    val sessionToken = UUID.randomUUID().toString()
 
     val tailerJob = logOutput?.let {
         ProcessLogTailer(LATEST_PROCESS_LOG_FILE, it).launch(this)
@@ -176,18 +178,19 @@ suspend fun startJvmServiceAndWaitExit(
     try {
         // 先起接收端再拉起服务
         // JVM 秒退时退出码不会因 socket 尚未绑定而丢失
-        JVMSocketServer.start { receiveMsg ->
+        val callbackPort = JVMSocketServer.start(sessionToken = sessionToken) { receiveMsg ->
             Logger.info(TAG, "receive msg: $receiveMsg, stopping server...")
             if (!doneSignal.isCompleted) {
                 doneSignal.complete(Unit)
             }
-            JVMSocketServer.stop()
         }
 
         var attempt = 0
         while (true) {
             try {
                 startJvmService(
+                    sessionToken = sessionToken,
+                    callbackPort = callbackPort,
                     context = GlobalContext,
                     jvmArgs = jvmArgs,
                     userHome = userHome,
@@ -229,6 +232,7 @@ suspend fun startJvmServiceAndWaitExit(
     }
 
     val code = JVMSocketServer.receiveMsg?.toIntOrNull()
-    Logger.info(TAG, "receive exit code: ${code ?: "unknown, default 0"}")
-    code ?: 0
+        ?: throw IOException("The JVM process did not return a valid exit code")
+    Logger.info(TAG, "receive exit code: $code")
+    code
 }

@@ -24,6 +24,7 @@ import com.movtery.zalithlauncher.ZLApplication.Companion.DEVICE_ARCHITECTURE
 import com.movtery.zalithlauncher.components.jre.Jre
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.device.Architecture
+import com.movtery.zalithlauncher.utils.file.SafePaths
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
 import com.movtery.zalithlauncher.utils.file.ensureParentDirectory
@@ -87,7 +88,7 @@ object RuntimesManager {
 
     fun loadRuntime(name: String, forceLoad: Boolean = false): Runtime {
         return cache[name]?.takeIf { !forceLoad } ?: run {
-            val runtimeDir = File(RUNTIME_FOLDER, name)
+            val runtimeDir = SafePaths.resolveChild(RUNTIME_FOLDER, name)
             val internalJre = Jre.entries.firstOrNull { it.jreName == name }
             val defaultMajorVersion = internalJre?.majorVersion ?: 0
 
@@ -177,7 +178,7 @@ object RuntimesManager {
         name: String,
         updateProgress: (Int, Array<Any>) -> Unit = { _, _ -> }
     ) = withContext(Dispatchers.IO) {
-        val dest = RUNTIME_FOLDER.child(name)
+        val dest = SafePaths.resolveChild(RUNTIME_FOLDER, name)
         try {
             if (dest.exists()) FileUtils.deleteDirectory(dest)
             uncompressTarXZ(inputStream, dest, updateProgress)
@@ -193,7 +194,7 @@ object RuntimesManager {
 
     @Throws(IOException::class)
     suspend fun postPrepare(name: String) = withContext(Dispatchers.IO) {
-        val dest = RUNTIME_FOLDER.child(name)
+        val dest = SafePaths.resolveChild(RUNTIME_FOLDER, name)
         if (!dest.exists()) return@withContext
         val runtime = loadRuntime(name)
         postPrepare(runtime)
@@ -250,7 +251,7 @@ object RuntimesManager {
         binPackVersion: String,
         updateProgress: (Int, Array<Any>) -> Unit = { _, _ -> }
     ) = withContext(Dispatchers.IO) {
-        val dest = RUNTIME_FOLDER.child(name)
+        val dest = SafePaths.resolveChild(RUNTIME_FOLDER, name)
         try {
             if (dest.exists()) FileUtils.deleteDirectory(dest)
             installRuntimeNoRemove(universalFileInputStream, dest, updateProgress)
@@ -283,13 +284,13 @@ object RuntimesManager {
 
     @Throws(IOException::class)
     fun removeRuntime(name: String) {
-        val dest: File = RUNTIME_FOLDER.child(name).takeIf { it.exists() } ?: return
+        val dest: File = SafePaths.resolveChild(RUNTIME_FOLDER, name).takeIf { it.exists() } ?: return
         FileUtils.deleteDirectory(dest)
         cache.remove(name)
     }
 
     fun getRuntimeHome(name: String): File {
-        val dest = RUNTIME_FOLDER.child(name)
+        val dest = SafePaths.resolveChild(RUNTIME_FOLDER, name)
         if (!dest.exists() || forceReload(name).versionString == null) {
             throw RuntimeException("Selected runtime is broken!")
         }
@@ -357,14 +358,17 @@ object RuntimesManager {
                 val tarEntryName = tarEntry.name
                 updateProgress(R.string.generic_unpacking, arrayOf(tarEntryName))
 
-                val destPath = File(dest, tarEntryName).ensureParentDirectory()
+                val destPath = SafePaths.resolveChild(dest, tarEntryName).ensureParentDirectory()
 
                 when {
-                    tarEntry.isSymbolicLink -> try {
-                        if (destPath.exists()) destPath.delete()
-                        Os.symlink(tarEntry.linkName, destPath.absolutePath)
-                    } catch (e: Throwable) {
-                        Logger.warning(TAG, "Failed to create symbolic link: ${destPath.absolutePath} -> ${tarEntry.linkName} (${e.message})")
+                    tarEntry.isSymbolicLink -> {
+                        SafePaths.validateRelativeSymlink(dest, destPath, tarEntry.linkName)
+                        try {
+                            if (destPath.exists()) destPath.delete()
+                            Os.symlink(tarEntry.linkName, destPath.absolutePath)
+                        } catch (e: Throwable) {
+                            Logger.warning(TAG, "Failed to create symbolic link: ${destPath.absolutePath} -> ${tarEntry.linkName} (${e.message})")
+                        }
                     }
 
                     tarEntry.isDirectory -> destPath.ensureDirectory()

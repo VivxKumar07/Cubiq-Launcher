@@ -61,6 +61,12 @@ class JvmService : Service() {
             return START_NOT_STICKY
         }
 
+        val sessionToken = intent.getStringExtra(SERVICE_SESSION_TOKEN)
+        val callbackPort = intent.getIntExtra(SERVICE_CALLBACK_PORT, -1)
+        if (sessionToken.isNullOrBlank() || callbackPort !in 1..65535) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
         val jvmArgs = intent.extras?.getString(SERVICE_JVM_ARGS) ?: error("The JVM parameters must be set.")
         val jreName = intent.extras?.getString(SERVICE_JRE_NAME)
         val userHome = intent.extras?.getString(SERVICE_USER_HOME)
@@ -87,7 +93,7 @@ class JvmService : Service() {
                     //移除前台通知再停止服务，让系统知道这是正常关闭
                     stopForeground(STOP_FOREGROUND_REMOVE)
                     //必须同步发送退出码
-                    sendCode(code)
+                    sendCode(code, sessionToken, callbackPort)
                     stopSelf()
                 }
             )
@@ -96,14 +102,14 @@ class JvmService : Service() {
         return START_NOT_STICKY
     }
 
-    private fun sendCode(code: Int) {
+    private fun sendCode(code: Int, sessionToken: String, callbackPort: Int) {
         try {
             DatagramSocket().use { socket ->
-                socket.connect(InetSocketAddress("127.0.0.1", PROCESS_SERVICE_PORT))
-                val data = (code.toString() + "").toByteArray()
+                socket.connect(InetSocketAddress("127.0.0.1", callbackPort))
+                val data = "$sessionToken:$code".toByteArray(Charsets.UTF_8)
                 val packet = DatagramPacket(data, data.size)
                 socket.send(packet)
-                Logger.info(TAG, "Send code $code to 127.0.0.1:$PROCESS_SERVICE_PORT")
+                Logger.info(TAG, "Send code $code to 127.0.0.1:$callbackPort")
             }
         } catch (e: Exception) {
             Logger.error(TAG, "Failed to send exit code", e)
