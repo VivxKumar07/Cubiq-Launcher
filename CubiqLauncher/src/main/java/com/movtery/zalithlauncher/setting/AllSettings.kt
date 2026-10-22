@@ -50,7 +50,7 @@ object AllSettings : SettingsRegistry() {
     /**
      * 全局渲染器
      */
-    val renderer = stringSetting("renderer", "")
+    val renderer = stringSetting("renderer", "d2c1e8b4-55a1-4e78-9032-11cf4e87d3a1")
 
     /**
      * Vulkan 驱动器

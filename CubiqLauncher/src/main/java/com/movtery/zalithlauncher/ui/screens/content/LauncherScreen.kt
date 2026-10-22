@@ -832,6 +832,7 @@ private fun TopAccountHeader(
     var msDeviceCodeText by remember { mutableStateOf<String?>(null) }
     var msVerificationUrl by remember { mutableStateOf<String?>(null) }
     var showAddOfflineDialog by remember { mutableStateOf(false) }
+    var showAddElybyDialog by remember { mutableStateOf(false) }
     var offlineUsername by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
@@ -1218,7 +1219,50 @@ private fun TopAccountHeader(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Action 2: Add Offline Account
+            // Action 2: Add Ely.by Account
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(Color(0xFF0C2438))
+                    .border(BorderStroke(1.dp, Color(0xFF0284C7)), RoundedCornerShape(3.dp))
+                    .clickable {
+                        expanded = false
+                        showAddElybyDialog = true
+                    }
+                    .padding(horizontal = 8.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF0369A1)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("E", color = Color(0xFF38BDF8), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = "Add Ely.by Account",
+                        color = Color(0xFF38BDF8),
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
+                    )
+                    Text(
+                        text = "Custom skins, capes & authlib login",
+                        color = Color(0xFF64748B),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 9.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Action 3: Add Offline Account
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1261,7 +1305,7 @@ private fun TopAccountHeader(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Action 3: Manage Accounts & Settings
+            // Action 4: Manage Accounts & Settings
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1290,6 +1334,13 @@ private fun TopAccountHeader(
                 )
             }
         }
+    }
+
+    if (showAddElybyDialog) {
+        com.movtery.zalithlauncher.ui.screens.content.minecraft.ElybyLoginDialog(
+            onDismiss = { showAddElybyDialog = false },
+            onSuccess = { showAddElybyDialog = false }
+        )
     }
 
     if (isLoggingInMicrosoft) {

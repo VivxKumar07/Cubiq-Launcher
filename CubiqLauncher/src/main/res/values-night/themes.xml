@@ -20,6 +20,8 @@
     </style>
     <style name="AppTheme.Fullscreen" parent="AppTheme.CubiqLauncher">
         <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:colorBackground">#000000</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
 </resources>

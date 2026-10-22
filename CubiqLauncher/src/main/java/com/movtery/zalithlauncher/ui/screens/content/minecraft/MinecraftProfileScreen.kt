@@ -87,6 +87,7 @@ import com.movtery.zalithlauncher.BuildKeys
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.account.AccountsManager
+import com.movtery.zalithlauncher.game.account.auth_server.AuthServerHelper
 import com.movtery.zalithlauncher.game.account.getAccountTypeName
 import com.movtery.zalithlauncher.game.account.localLogin
 import com.movtery.zalithlauncher.game.account.microsoftLogin
@@ -145,6 +146,7 @@ fun MinecraftProfileScreen(
     val refreshWardrobe by AccountsManager.refreshWardrobe.collectAsStateWithLifecycle()
 
     var showAddOfflineDialog by remember { mutableStateOf(false) }
+    var showAddElybyDialog by remember { mutableStateOf(false) }
     var showManageAccounts by remember { mutableStateOf(false) }
     var offlineUsername by remember { mutableStateOf("") }
     var accountToDelete by remember { mutableStateOf<Account?>(null) }
@@ -371,6 +373,7 @@ fun MinecraftProfileScreen(
                         }
                     )
                 },
+                onAddElybyClick = { showAddElybyDialog = true },
                 onAddOfflineClick = { showAddOfflineDialog = true },
                 onSelectAccount = { acc ->
                     AllSettings.currentAccount.save(acc.uniqueUUID)
@@ -689,6 +692,13 @@ fun MinecraftProfileScreen(
             )
         }
 
+        if (showAddElybyDialog) {
+            ElybyLoginDialog(
+                onDismiss = { showAddElybyDialog = false },
+                onSuccess = { showAddElybyDialog = false }
+            )
+        }
+
         if (showAddOfflineDialog) {
             AddOfflineAccountDialog(
                 username = offlineUsername,
@@ -872,6 +882,221 @@ fun MicrosoftLoginDialog(
             MinecraftButton(
                 onClick = onDismiss,
                 style = MinecraftButtonStyle.RED,
+                text = "CANCEL",
+                fontSize = 11.5.sp,
+                modifier = Modifier
+                    .width(84.dp)
+                    .height(34.dp)
+            )
+        }
+    )
+}
+
+@Composable
+fun ElybyLoginDialog(
+    onDismiss: () -> Unit,
+    onSuccess: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var emailOrUsername by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        containerColor = Color(0xFF1C1C1E),
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0xFF0284C7)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("E", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                }
+                Text(
+                    text = "ADD ELY.BY ACCOUNT",
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    text = "Sign in with your Ely.by username/email and password for custom skins, capes, and authlib integration:",
+                    color = Color(0xFFCCCCCC),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 11.5.sp
+                )
+
+                OutlinedTextField(
+                    value = emailOrUsername,
+                    onValueChange = { emailOrUsername = it; errorMessage = null },
+                    placeholder = { Text("Username or Email", color = Color(0xFF666666), fontSize = 12.sp) },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF242426),
+                        unfocusedContainerColor = Color(0xFF242426),
+                        focusedBorderColor = Color(0xFF0284C7),
+                        unfocusedBorderColor = Color(0xFF383838),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White
+                    )
+                )
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it; errorMessage = null },
+                    placeholder = { Text("Password", color = Color(0xFF666666), fontSize = 12.sp) },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                    trailingIcon = {
+                        Text(
+                            text = if (passwordVisible) "HIDE" else "SHOW",
+                            color = Color(0xFF0284C7),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 10.sp,
+                            modifier = Modifier
+                                .clickable { passwordVisible = !passwordVisible }
+                                .padding(end = 8.dp)
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color(0xFF242426),
+                        unfocusedContainerColor = Color(0xFF242426),
+                        focusedBorderColor = Color(0xFF0284C7),
+                        unfocusedBorderColor = Color(0xFF383838),
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White
+                    )
+                )
+
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage ?: "",
+                        color = Color(0xFFFF5555),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 11.sp
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Don't have an account?",
+                        color = Color(0xFF888888),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 10.5.sp
+                    )
+                    Text(
+                        text = "Register at Ely.by ↗",
+                        color = Color(0xFF38BDF8),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ely.by/registration")).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            context.startActivity(intent)
+                        }
+                    )
+                }
+
+                if (isLoading) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color(0xFF0284C7),
+                            strokeWidth = 2.dp,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Authenticating with Ely.by...",
+                            color = Color(0xFFCCCCCC),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            MinecraftButton(
+                onClick = {
+                    val trimmedUser = emailOrUsername.trim()
+                    if (trimmedUser.isBlank() || password.isBlank()) {
+                        errorMessage = "Please enter username/email and password"
+                        return@MinecraftButton
+                    }
+                    isLoading = true
+                    errorMessage = null
+                    val helper = AuthServerHelper(
+                        baseUrl = "https://authserver.ely.by/api/authlib-injector",
+                        serverName = "Ely.by",
+                        email = trimmedUser,
+                        password = password,
+                        onSuccess = { acc, task ->
+                            task.updateMessage(com.movtery.zalithlauncher.ui.androidText(R.string.account_logging_in_saving))
+                            acc.downloadYggdrasil()
+                            AccountsManager.suspendSaveAccount(acc)
+                            AccountsManager.setCurrentAccount(acc)
+                            withContext(Dispatchers.Main) {
+                                isLoading = false
+                                Toast.makeText(context, "Logged in as ${acc.username}!", Toast.LENGTH_SHORT).show()
+                                onSuccess()
+                            }
+                        },
+                        onFailed = { th ->
+                            scope.launch(Dispatchers.Main) {
+                                isLoading = false
+                                errorMessage = th.localizedMessage ?: "Authentication failed"
+                            }
+                        }
+                    )
+                    helper.createNewAccount(context) { profiles, select ->
+                        if (profiles.isNotEmpty()) {
+                            select(profiles.first())
+                        }
+                    }
+                },
+                style = MinecraftButtonStyle.GREEN,
+                text = if (isLoading) "WAIT..." else "LOGIN",
+                fontSize = 11.5.sp,
+                modifier = Modifier
+                    .width(84.dp)
+                    .height(34.dp)
+            )
+        },
+        dismissButton = {
+            MinecraftButton(
+                onClick = onDismiss,
+                style = MinecraftButtonStyle.STONE,
                 text = "CANCEL",
                 fontSize = 11.5.sp,
                 modifier = Modifier
@@ -1331,6 +1556,7 @@ private fun AccountSection(
     refreshWardrobe: Boolean,
     isLoggingInMicrosoft: Boolean,
     onMicrosoftLoginClick: () -> Unit,
+    onAddElybyClick: () -> Unit,
     onAddOfflineClick: () -> Unit,
     onSelectAccount: (Account) -> Unit,
     onDeleteAccount: (Account) -> Unit
@@ -1392,7 +1618,7 @@ private fun AccountSection(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 MinecraftButton(
                     onClick = onMicrosoftLoginClick,
@@ -1405,12 +1631,22 @@ private fun AccountSection(
                 )
 
                 MinecraftButton(
+                    onClick = onAddElybyClick,
+                    style = MinecraftButtonStyle.STONE,
+                    text = "+ ELY.BY",
+                    fontSize = 9.5.sp,
+                    modifier = Modifier
+                        .weight(0.9f)
+                        .height(38.dp)
+                )
+
+                MinecraftButton(
                     onClick = onAddOfflineClick,
                     style = MinecraftButtonStyle.STONE,
                     text = "+ OFFLINE",
                     fontSize = 9.5.sp,
                     modifier = Modifier
-                        .weight(0.85f)
+                        .weight(0.9f)
                         .height(38.dp)
                 )
             }

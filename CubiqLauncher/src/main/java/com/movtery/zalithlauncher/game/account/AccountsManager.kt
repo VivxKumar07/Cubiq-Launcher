@@ -124,7 +124,16 @@ object AccountsManager {
      */
     fun reloadAuthServers() {
         scope.launch {
-            val loadedServers = authServerDao.getAllServers()
+            val loadedServers = authServerDao.getAllServers().toMutableList()
+            if (loadedServers.none { it.baseUrl.contains("ely.by") }) {
+                val elyServer = com.movtery.zalithlauncher.game.account.auth_server.data.AuthServer(
+                    baseUrl = "https://authserver.ely.by/api/authlib-injector",
+                    serverName = "Ely.by",
+                    register = "https://ely.by/registration"
+                )
+                authServerDao.saveServer(elyServer)
+                loadedServers.add(elyServer)
+            }
             _authServers.clear()
             _authServers.addAll(loadedServers)
 
