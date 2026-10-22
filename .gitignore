@@ -34,8 +34,17 @@ LWJGL/*/build/
 
 # Binaries and release outputs
 *.apk
+release_apks/
 release_binaries/
-.vs/
+
+# Local backups and research
+backup_libs/
+offline_runtimes_backup/
+cubiq_control_research/
+cubiq_control_assets/
 Cubiq_Minecraft_Java_Touch_Controls*
 generate_asset_pack.py
 
+# IDE
+.vs/
+.zcodeignore
