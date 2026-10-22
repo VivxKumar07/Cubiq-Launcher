@@ -51,8 +51,19 @@ abstract class AbstractHandler(
         scope: CoroutineScope
     ) {
         scope.launch(Dispatchers.Default) {
-            val code = launcher.launch(screenSize)
-            onExit(code)
+            try {
+                val code = launcher.launch(screenSize)
+                onExit(code)
+            } catch (th: Throwable) {
+                com.movtery.zalithlauncher.utils.logging.Logger.error("AbstractHandler", "Game launch execution failed", th)
+                errorViewModel.showError(
+                    ErrorViewModel.ThrowableMessage(
+                        title = com.movtery.zalithlauncher.ui.androidText("Game Launch Error"),
+                        message = com.movtery.zalithlauncher.ui.androidText(th.localizedMessage ?: th.message ?: th.toString())
+                    )
+                )
+                onExit(-1)
+            }
         }
     }
 

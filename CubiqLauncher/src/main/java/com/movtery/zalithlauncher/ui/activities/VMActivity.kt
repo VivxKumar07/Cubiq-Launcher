@@ -377,6 +377,15 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
         //初始化物理鼠标连接检查器
         PhysicalMouseChecker.initChecker(this)
 
+        // Performance & Thread Priority for silky-smooth 60+ FPS gameplay
+        runCatching {
+            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_DISPLAY)
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                window.setSustainedPerformanceMode(true)
+            }
+        }
+
         //启动前台服务，防止后台网络中断
         runCatching {
             //应用处于后台等受限状态时系统会拒绝启动，此时无需保活，忽略即可
@@ -385,6 +394,7 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
         val bundle = intent.extras ?: throw IllegalStateException("Unknown VM launch state!")
 
+        val launchStartTime = System.currentTimeMillis()
         vmViewModel.initSession(
             activity = this,
             bundle = bundle,
@@ -393,12 +403,22 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
             gamepadViewModel = gamepadViewModel,
             exitListener = { exitCode: Int, isSignal: Boolean ->
                 stopAllService()
-                if (exitCode != 0) {
-                    val logPath = withLauncher {
-                        getLogFile().absolutePath
-                    }
-                    showExitMessage(this@VMActivity, exitCode, isSignal, logPath)
+                val elapsedMs = System.currentTimeMillis() - launchStartTime
+                val logPath = runCatching { withLauncher { getLogFile().absolutePath } }.getOrDefault("")
+                val logFile = File(logPath)
+                val isPrematureExit = elapsedMs < 6000L
+                val hasCrash = exitCode != 0 || (isPrematureExit && logFile.exists() && logFile.length() > 0)
+
+                if (hasCrash) {
+                    val codeToReport = if (exitCode != 0) exitCode else -1
+                    AllSettings.lastCrashCode.save(codeToReport)
+                    AllSettings.lastCrashIsSignal.save(isSignal)
+                    AllSettings.lastCrashLogPath.save(logPath)
+                    AllSettings.lastCrashTimestamp.save(System.currentTimeMillis())
+                    showExitMessage(this@VMActivity, codeToReport, isSignal, logPath)
                 } else {
+                    AllSettings.lastCrashCode.save(0)
+                    AllSettings.lastCrashLogPath.save("")
                     //重启启动器
                     ProcessPhoenix.triggerRebirth(this@VMActivity)
                 }
@@ -948,17 +968,14 @@ fun runJar(
     jreName: String? = null,
     customArgs: String? = null
 ) {
-    RuntimesManager.getExactJreName(8) ?: run {
-        Toast.makeText(context, R.string.multirt_no_java_8, Toast.LENGTH_SHORT).show()
-        return
-    }
+    val targetJre = jreName ?: RuntimesManager.getExactJreName(8) ?: com.movtery.zalithlauncher.components.jre.Jre.JRE_8.jreName
 
     val jvmArgsPrefix = customArgs?.let { "$it " } ?: ""
     val jvmArgs = "$jvmArgsPrefix-jar ${jarFile.absolutePath}"
 
     val jvmLaunchInfo = JvmLaunchInfo(
         jvmArgs = jvmArgs,
-        jreName = jreName
+        jreName = targetJre
     )
 
     startGameService(context)

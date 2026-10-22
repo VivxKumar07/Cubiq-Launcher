@@ -105,7 +105,15 @@ class GameLauncher(
             Renderers.setCurrentRenderer(version.getRenderer())
         }
 
-        val manifest = GSON.fromJson(File(version.getVersionPath(), "${version.getVersionName()}.json").readText(), GameManifest::class.java)
+        val versionJsonFile = File(version.getVersionPath(), "${version.getVersionName()}.json")
+        val manifestJsonText = when {
+            versionJsonFile.exists() -> versionJsonFile.readText()
+            else -> {
+                val candidate = version.getVersionPath().listFiles()?.firstOrNull { it.extension == "json" }
+                candidate?.readText() ?: throw IllegalStateException("Game version files not found for '${version.getVersionName()}'. Please install or download the version first.")
+            }
+        }
+        val manifest = GSON.fromJson(manifestJsonText, GameManifest::class.java)
         val clientJar = manifest.inheritsFrom?.let { inheritsFrom ->
             //FIXME: 依赖的是一个原版ID的版本，但这个版本可能是用户自行安装的，只是版本名称与ID一致，不保证客户端真的是对应版本
             version.getInheritedClientJar(inheritsFrom)
@@ -233,17 +241,44 @@ class GameLauncher(
         var runtime = RuntimesManager.forceReload(javaRuntime)
         val runtimeHome = File(PathManager.DIR_MULTIRT, javaRuntime)
         val internalJre = Jre.entries.firstOrNull { it.jreName == javaRuntime }
-        if (!runtimeHome.exists() || runtime.versionString == null || runtime.arch == null) {
+        val hasLibJli = listOf(
+            File(runtimeHome, "lib/jli/libjli.so"),
+            File(runtimeHome, "lib/libjli.so"),
+            File(runtimeHome, "jre/lib/jli/libjli.so"),
+            File(runtimeHome, "jre/lib/libjli.so"),
+            File(runtimeHome, "lib/aarch64/jli/libjli.so"),
+            File(runtimeHome, "jre/lib/aarch64/jli/libjli.so"),
+            File(runtimeHome, "lib/aarch32/jli/libjli.so"),
+            File(runtimeHome, "jre/lib/aarch32/jli/libjli.so"),
+            File(runtimeHome, "lib/arm/jli/libjli.so"),
+            File(runtimeHome, "jre/lib/arm/jli/libjli.so")
+        ).any { it.exists() && it.isFile }
+
+        if (!runtimeHome.exists() || !hasLibJli || runtime.versionString == null || runtime.arch == null) {
+            Logger.info(TAG, "Runtime $javaRuntime is missing, incomplete, or missing libjli.so, preparing runtime...")
+            var installed = false
             if (internalJre != null) {
-                Logger.info(TAG, "Runtime $javaRuntime is missing or incomplete, unpacking before launch...")
                 runCatching {
                     val task = UnpackJreTask(activity, internalJre)
-                    task.run()
-                }.onFailure { e ->
-                    Logger.error(TAG, "Failed to unpack runtime $javaRuntime", e)
+                    if (!task.isCheckFailed()) {
+                        task.run()
+                        installed = true
+                    }
                 }
-                runtime = RuntimesManager.forceReload(javaRuntime)
             }
+            if (!installed) {
+                Logger.info(TAG, "Downloading $javaRuntime on-demand...")
+                val success = try {
+                    com.movtery.zalithlauncher.game.multirt.JreDownloadManager.downloadAndInstallJre(activity, javaRuntime)
+                } catch (e: Exception) {
+                    Logger.error(TAG, "Failed to download runtime $javaRuntime", e)
+                    false
+                }
+                if (!success) {
+                    throw IllegalStateException("Unable to download Java Runtime ($javaRuntime). Please check your internet connection and try again.")
+                }
+            }
+            runtime = RuntimesManager.forceReload(javaRuntime)
         }
 
         val gameDirPath = version.getGameDir()
@@ -328,29 +363,22 @@ class GameLauncher(
      */
     private fun getRuntime(): String {
         val versionRuntime = version.getJavaRuntime().takeIf { it.isNotEmpty() } ?: ""
-        if (versionRuntime.isNotEmpty()) return versionRuntime
+        if (versionRuntime.isNotEmpty() && RuntimesManager.isRuntimeReady(versionRuntime)) {
+            return versionRuntime
+        }
 
         val runtime = AllSettings.javaRuntime.getValue()
-        val pickedRuntime = RuntimesManager.loadRuntime(runtime)
 
         if (AllSettings.autoPickJavaRuntime.getValue()) {
-            val loaderInfo = version.getVersionInfo()?.loaderInfo
-            //开启了自动选择，根据游戏需求的版本做选择
-            val targetJavaVersion = when (loaderInfo?.loader) {
-                ModLoader.BABRIC -> 17 //Babric 推荐使用 17
-                ModLoader.CLEANROOM -> {
-                    if (loaderInfo.version.isBiggerTo("0.4.4-alpha")) {
-                        25 //0.5.0-alpha 及以上要求使用 25
-                    } else {
-                        21 //0.4.4-alpha 及以下要求使用 21
-                    }
-                }
-                else -> gameManifest.javaVersion?.majorVersion ?: 8
-            }
-            if (pickedRuntime.javaVersion == 0 || pickedRuntime.javaVersion < targetJavaVersion) {
-                val runtime0 = RuntimesManager.getNearestJreName(targetJavaVersion)
-                if (runtime0 != null) {
-                    return runtime0
+            val candidate = RuntimesManager.getTargetRuntimeName(version, gameManifest)
+            if (RuntimesManager.isRuntimeReady(candidate)) {
+                return candidate
+            } else {
+                val targetJavaVersion = RuntimesManager.determineTargetJavaVersion(version, gameManifest)
+                val fallbackCandidate = RuntimesManager.getExactJreName(targetJavaVersion)
+                    ?: RuntimesManager.getNearestJreName(targetJavaVersion)
+                if (fallbackCandidate != null && RuntimesManager.isRuntimeReady(fallbackCandidate)) {
+                    return fallbackCandidate
                 } else {
                     activity.runOnUiThread {
                         Toast.makeText(activity, activity.getString(R.string.game_auto_pick_runtime_failed), Toast.LENGTH_SHORT).show()

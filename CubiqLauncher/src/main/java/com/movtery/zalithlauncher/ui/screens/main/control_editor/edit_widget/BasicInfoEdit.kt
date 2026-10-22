@@ -111,6 +111,62 @@ fun EditWidgetInfo(
                         buttonSize = data.buttonSize,
                         onButtonSizeChanged = { data.buttonSize = it }
                     )
+
+                    // 控件独立不透明度 (Opacity Slider)
+                    item {
+                        InfoLayoutSliderItem(
+                            modifier = Modifier.fillMaxWidth(),
+                            title = "Button Opacity",
+                            value = (data.opacity ?: 1.0f) * 100f,
+                            onValueChange = {
+                                data.opacity = (it / 100f).coerceIn(0.1f, 1.0f)
+                                onPreviewRequested()
+                            },
+                            valueRange = 10f..100f,
+                            onValueChangeFinished = onDismissRequested,
+                            decimalFormat = "#0",
+                            suffix = "%"
+                        )
+                    }
+
+                    // 控件图标选择 (Icon Selector)
+                    val iconOptions = listOf(
+                        null,
+                        "attack",
+                        "use_item",
+                        "jump",
+                        "sneak",
+                        "sprint",
+                        "inventory",
+                        "chat",
+                        "pause",
+                        "f3_debug",
+                        "keyboard",
+                        "perspective",
+                        "gui",
+                        "menu_button",
+                        "swap_hands",
+                        "dismount",
+                        "pick_block",
+                        "forward_button_be2",
+                        "backward_button_be2",
+                        "left_button_be2",
+                        "right_button_be2",
+                        "sneak_button_be2"
+                    )
+                    item {
+                        InfoLayoutListItem(
+                            modifier = Modifier.fillMaxWidth(),
+                            title = "Button Icon",
+                            items = iconOptions,
+                            selectedItem = data.icon,
+                            onItemSelected = {
+                                data.icon = it
+                                onPreviewRequested()
+                            },
+                            getItemText = { it ?: "None (Text Only)" }
+                        )
+                    }
                 }
                 is ObservableJoystickData -> {
                     joystickInfos(

@@ -31,9 +31,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -148,6 +150,7 @@ fun FmEntryItem(
             )
 
             Row(
+                modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // 下拉菜单锚点
@@ -169,7 +172,9 @@ fun FmEntryItem(
                 }
 
                 Column(
-                    modifier = Modifier.alpha(contentAlpha)
+                    modifier = Modifier
+                        .weight(1f)
+                        .alpha(contentAlpha)
                 ) {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
@@ -182,6 +187,19 @@ fun FmEntryItem(
                     EntrySubtitle(
                         modifier = Modifier.fillMaxWidth(),
                         entry = entry
+                    )
+                }
+            }
+
+            if (!multiSelect) {
+                IconButton(
+                    modifier = Modifier.size(36.dp),
+                    onClick = { menuExpanded = true }
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = "Options",
+                        tint = fmSecondaryTextColor()
                     )
                 }
             }
@@ -246,10 +264,11 @@ private fun FmEntryMenu(
         iconRes: Int,
         action: () -> Unit,
         modifier: Modifier = Modifier,
+        customLabel: String? = null
     ) {
         DropdownMenuItem(
             modifier = modifier,
-            text = { Text(stringResource(labelRes)) },
+            text = { Text(customLabel ?: stringResource(labelRes)) },
             leadingIcon = {
                 Icon(
                     painter = painterResource(iconRes),
@@ -284,7 +303,13 @@ private fun FmEntryMenu(
         }
         Row(Modifier.fillMaxWidth()) {
             MenuItem(R.string.generic_copy, R.drawable.ic_content_copy_filled, onCopy, Modifier.weight(1f))
-            MenuItem(R.string.fm_cut, R.drawable.ic_drive_file_move_filled, onCut, Modifier.weight(1f))
+            MenuItem(
+                labelRes = R.string.fm_cut,
+                iconRes = R.drawable.ic_drive_file_move_filled,
+                action = onCut,
+                modifier = Modifier.weight(1f),
+                customLabel = if (entry.isDirectory) "Move (Cut)" else null
+            )
         }
         if (entry.isFile) {
             MenuItem(R.string.generic_delete, R.drawable.ic_delete_filled, onDelete, Modifier.fillMaxWidth())

@@ -162,7 +162,7 @@ fun MinecraftModsScreen(
 
                     MinecraftButton(
                         onClick = {
-                            backStackViewModel.navigateToDownload()
+                            backStackViewModel.navigateToDownload(backStackViewModel.downloadModScreen)
                         },
                         style = MinecraftButtonStyle.GREEN,
                         text = "FULL BROWSER",

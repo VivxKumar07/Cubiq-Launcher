@@ -1,0 +1,41 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+    <!-- Book Leather Cover -->
+    <path
+        android:fillColor="#3D1810"
+        android:pathData="M2,4 h9 v11 h-9 Z" />
+    <path
+        android:fillColor="#7A3022"
+        android:pathData="M3,5 h7 v9 h-7 Z" />
+    <path
+        android:fillColor="#9C4434"
+        android:pathData="M3,6 h6 v2 h-6 Z M3,9 h6 v2 h-6 Z" />
+    <!-- Book Pages / Paper Edge -->
+    <path
+        android:fillColor="#E8DFD0"
+        android:pathData="M11,5 h2 v9 h-2 Z M4,14 h8 v1 h-8 Z" />
+    <path
+        android:fillColor="#BAAE9B"
+        android:pathData="M12,6 h1 v8 h-1 Z M4,15 h8 v1 h-8 Z" />
+    <!-- Gold Corner Accent -->
+    <path
+        android:fillColor="#F4B333"
+        android:pathData="M9,5 h1 v1 h-1 Z M3,13 h1 v1 h-1 Z" />
+    <!-- Feather Quill (Diagonal White/Grey with ink tip) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M13,1 h2 v2 h-2 Z M12,2 h2 v2 h-2 Z M11,3 h2 v3 h-2 Z M10,5 h2 v3 h-2 Z" />
+    <path
+        android:fillColor="#C4C4C4"
+        android:pathData="M14,1 h1 v1 h-1 Z M13,3 h1 v2 h-1 Z M12,5 h1 v2 h-1 Z M11,7 h1 v2 h-1 Z" />
+    <!-- Quill Shaft and Ink Nib -->
+    <path
+        android:fillColor="#707070"
+        android:pathData="M9,8 h2 v2 h-2 Z M8,10 h2 v2 h-2 Z" />
+    <path
+        android:fillColor="#1A1A1A"
+        android:pathData="M7,12 h2 v2 h-2 Z" />
+</vector>

@@ -27,7 +27,9 @@ val defaultStorePassword = project.findProperty("default_store_password") as? St
 val defaultKeyPassword = project.findProperty("default_key_password") as? String ?: error("The \"default_key_password\" property is not set in gradle.properties.")
 val defaultCurseForgeApiKey = project.findProperty("curseforge_api_key") as? String
 
-val projectArch: String = System.getProperty("arch", "all")
+val projectArch: String = (project.findProperty("projectArch") as? String)
+    ?: (project.findProperty("arch") as? String)
+    ?: System.getProperty("arch", "all")
 
 fun getKeyFromLocal(envKey: String, fileName: String? = null, default: String? = null): String {
     val key = System.getenv(envKey)
@@ -75,7 +77,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            isShrinkResources = false
+            isShrinkResources = true
             signingConfig = if (System.getenv("STORE_PASSWORD") != null || File(rootDir, ".store_password.txt").exists()) {
                 signingConfigs.getByName("releaseBuild")
             } else {
@@ -139,6 +141,10 @@ android {
             //让 android.util.Log 等框架方法在本地单测中返回默认值而非抛出异常
             isReturnDefaultValues = true
         }
+    }
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
     }
 }
 

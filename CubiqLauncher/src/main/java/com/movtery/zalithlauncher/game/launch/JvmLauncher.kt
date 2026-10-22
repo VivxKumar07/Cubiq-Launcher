@@ -62,6 +62,25 @@ open class JvmLauncher(
     }
 
     override suspend fun launch(screenSize: IntSize): Int {
+        val targetName = jvmLaunchInfo.jreName ?: AllSettings.javaRuntime.getValue().takeIf { it.isNotEmpty() } ?: "Internal-8"
+        val targetHome = File(PathManager.DIR_MULTIRT, targetName)
+        val hasLibJli = listOf(
+            File(targetHome, "lib/jli/libjli.so"),
+            File(targetHome, "lib/libjli.so"),
+            File(targetHome, "jre/lib/jli/libjli.so"),
+            File(targetHome, "jre/lib/libjli.so"),
+            File(targetHome, "lib/aarch64/jli/libjli.so"),
+            File(targetHome, "jre/lib/aarch64/jli/libjli.so"),
+            File(targetHome, "lib/aarch32/jli/libjli.so"),
+            File(targetHome, "jre/lib/aarch32/jli/libjli.so"),
+            File(targetHome, "lib/arm/jli/libjli.so"),
+            File(targetHome, "jre/lib/arm/jli/libjli.so")
+        ).any { it.exists() && it.isFile }
+
+        if (!targetHome.exists() || !hasLibJli) {
+            com.movtery.zalithlauncher.game.multirt.JreDownloadManager.downloadAndInstallJre(context, targetName)
+        }
+
         generateLauncherProfiles(jvmLaunchInfo.userHome)
         initLwjglComponent(context, 0)
         val (runtime, argList) = getStartupNeeded(screenSize)

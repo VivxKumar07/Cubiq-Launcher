@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -110,6 +111,7 @@ fun BoxWithConstraintsScope.ControlEditor(
     /** 默认新建的文本框的名称 */
     val defaultTextName = stringResource(R.string.control_editor_edit_text_default)
 
+    val context = LocalContext.current
     val density = LocalDensity.current
     val screenSize = rememberBoxSize()
 
@@ -209,6 +211,12 @@ fun BoxWithConstraintsScope.ControlEditor(
             }
         },
         addNewButton = {
+            val preferredStyle = viewModel.observableLayout.styles.value.firstOrNull { 
+                it.name.contains("bedrock", ignoreCase = true) || 
+                it.name.equals("default", ignoreCase = true) || 
+                it.name.equals("rounded", ignoreCase = true) 
+            }?.uuid ?: viewModel.observableLayout.styles.value.firstOrNull()?.uuid
+
             viewModel.addWidget(layers) { layer ->
                 layer.addNormalButton(
                     createWidgetWithUUID { uuid ->
@@ -220,6 +228,7 @@ fun BoxWithConstraintsScope.ControlEditor(
                                 referenceLength = screenSize.height,
                                 density = density.density
                             ),
+                            buttonStyle = preferredStyle,
                             visibilityType = VisibilityType.ALWAYS,
                             isSwipple = false,
                             isPenetrable = false,
@@ -292,6 +301,69 @@ fun BoxWithConstraintsScope.ControlEditor(
             viewModel.save(targetFile, onSaved = exit)
         },
         onExit = menuExit,
+        onToggleMovement = {
+            val allLayers = viewModel.observableLayout.layers.value
+            val joyLayer = allLayers.find { it.name.contains("joystick", ignoreCase = true) || it.name.equals("move", ignoreCase = true) }
+            val dpadLayer = allLayers.find { it.name.contains("dpad", ignoreCase = true) }
+            if (joyLayer != null && dpadLayer != null) {
+                if (!joyLayer.hide) {
+                    joyLayer.hide = true
+                    joyLayer.editorHide = true
+                    dpadLayer.hide = false
+                    dpadLayer.editorHide = false
+                } else {
+                    joyLayer.hide = false
+                    joyLayer.editorHide = false
+                    dpadLayer.hide = true
+                    dpadLayer.editorHide = true
+                }
+            }
+        },
+        onMirrorLayout = {
+            val allLayers = viewModel.observableLayout.layers.value
+            val screenWidthDp = screenSize.width / density.density
+            allLayers.forEach { layer ->
+                layer.normalButtons.value.forEach { btn ->
+                    val w = if (btn.buttonSize.type == com.movtery.layer_controller.data.ButtonSize.Type.Percentage) {
+                        btn.buttonSize.widthPercentage
+                    } else {
+                        ((btn.buttonSize.widthDp / screenWidthDp) * 10000).toInt()
+                    }
+                    val newX = (10000 - btn.position.x - w).coerceIn(0, 10000)
+                    btn.position = btn.position.copy(x = newX)
+                }
+                layer.textBoxes.value.forEach { text ->
+                    val w = if (text.buttonSize.type == com.movtery.layer_controller.data.ButtonSize.Type.Percentage) {
+                        text.buttonSize.widthPercentage
+                    } else {
+                        ((text.buttonSize.widthDp / screenWidthDp) * 10000).toInt()
+                    }
+                    val newX = (10000 - text.position.x - w).coerceIn(0, 10000)
+                    text.position = text.position.copy(x = newX)
+                }
+                layer.joystickButtons.value.forEach { joy ->
+                    val s = if (joy.sizeType == com.movtery.layer_controller.data.ButtonSize.Type.Percentage) {
+                        joy.sizePercentage
+                    } else {
+                        ((joy.sizeDp / screenWidthDp) * 10000).toInt()
+                    }
+                    val newX = (10000 - joy.position.x - s).coerceIn(0, 10000)
+                    joy.position = joy.position.copy(x = newX)
+                }
+            }
+        },
+        onResetToDefault = {
+            val assetName = if (targetFile.name.contains("pocket", ignoreCase = true) || targetFile.name.contains("bedrock", ignoreCase = true)) {
+                "pocket_edition_layout.json"
+            } else {
+                "default_layout.json"
+            }
+            runCatching {
+                val jsonString = context.assets.open(assetName).bufferedReader().use { it.readText() }
+                val defaultLayout = com.movtery.layer_controller.layout.loadLayoutFromString(jsonString)
+                viewModel.initLayout(defaultLayout)
+            }
+        }
     )
 
     MenuBox(

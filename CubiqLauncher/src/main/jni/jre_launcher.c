@@ -115,13 +115,44 @@ static void abort_waiter_setup() {
     {
         if (sigaction(tracked_signals[i], &sigactions[i], NULL) != 0)
         {
-            printf("Failed to set signal hander for signal %i: %s", i, strerror(errno));
+            printf("Failed to set signal hander for signal %zu: %s", i, strerror(errno));
         }
     }
 }
 
 static jint launchJVM(int margc, char** margv) {
    void* libjli = dlopen("libjli.so", RTLD_LAZY | RTLD_GLOBAL);
+   if (NULL == libjli) {
+       const char* java_home = getenv("JAVA_HOME");
+       if (java_home != NULL) {
+           char path[1024];
+           const char* subpaths[] = {
+               "/lib/jli/libjli.so",
+               "/lib/libjli.so",
+               "/lib/aarch64/jli/libjli.so",
+               "/lib/aarch32/jli/libjli.so",
+               "/lib/arm/jli/libjli.so",
+               "/lib/i386/jli/libjli.so",
+               "/lib/amd64/jli/libjli.so",
+               "/lib/x86_64/jli/libjli.so",
+               "/jre/lib/aarch64/jli/libjli.so",
+               "/jre/lib/aarch32/jli/libjli.so",
+               "/jre/lib/arm/jli/libjli.so",
+               "/jre/lib/amd64/jli/libjli.so",
+               "/jre/lib/x86_64/jli/libjli.so",
+               "/jre/lib/jli/libjli.so",
+               "/jre/lib/libjli.so"
+           };
+           for (size_t i = 0; i < sizeof(subpaths)/sizeof(subpaths[0]); i++) {
+               snprintf(path, sizeof(path), "%s%s", java_home, subpaths[i]);
+               libjli = dlopen(path, RTLD_LAZY | RTLD_GLOBAL);
+               if (libjli != NULL) {
+                   LOG_TO_I("Loaded libjli from fallback path: %s", path);
+                   break;
+               }
+           }
+       }
+   }
    struct sigaction clean_sa;
    memset(&clean_sa, 0, sizeof (struct sigaction));
 
@@ -161,8 +192,8 @@ static jint launchJVM(int margc, char** margv) {
                    0, NULL, // sizeof(const_appclasspath) / sizeof(char *), const_appclasspath,
                    FULL_VERSION,
                    DOT_VERSION,
-                   *margv, // (const_progname != NULL) ? const_progname : *margv,
-                   *margv, // (const_launcher != NULL) ? const_launcher : *margv,
+                   (const_progname != NULL) ? const_progname : *margv,
+                   (const_launcher != NULL) ? const_launcher : *margv,
                    (const_jargs != NULL) ? JNI_TRUE : JNI_FALSE,
                    const_cpwildcard, const_javaw, const_ergo_class);
 
@@ -187,7 +218,7 @@ JNIEXPORT jint JNICALL Java_com_oracle_dalvik_VMLauncher_launchJVM(JNIEnv *env, 
     res = launchJVM(argc, argv);
 
     LOG_TO_D("Going to free args");
-    free_char_array(env, argsArray, argv);
+    free_char_array(env, argsArray, (const char **)argv);
 
     LOG_TO_D("Free done");
     return res;

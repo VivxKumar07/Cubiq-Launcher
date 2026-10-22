@@ -37,7 +37,7 @@ import java.io.IOException
 private const val TAG = "MinecraftDownloader"
 
 /** 单个安装流程的最大并发下载连接数 */
-const val DEFAULT_DOWNLOAD_THREADS = 64
+const val DEFAULT_DOWNLOAD_THREADS = 16
 
 /**
  * Minecraft 安装器：装配版本 JSON、client jar、assets 与 libraries 的下载任务，

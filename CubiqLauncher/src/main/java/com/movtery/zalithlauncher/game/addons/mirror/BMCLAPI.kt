@@ -57,23 +57,18 @@ private val REPLACE_MIRROR_HOLDERS = mapOf(
 )
 
 /**
- * 替换为镜像源链接并按用户偏好排序；非中国大陆不注入任何镜像。
+ * 替换为镜像源链接并按用户偏好排序；即使在非中国大陆地区也保留镜像备用，防止官方源超时失败。
  */
 fun String.mapBMCLMirrorUrls(): List<String> {
-    if (!isChinaMainland()) return listOf(this)
-
     val mirrorUrl = REPLACE_MIRROR_HOLDERS.entries.firstOrNull { (origin, _) ->
         this.startsWith(origin)
     }?.let { (origin, mirror) ->
         replaceFirst(origin, mirror)
     }
 
-    return orderCandidates(
-        official = this,
-        mirror = mirrorUrl,
-        priority = resolveMirrorPriority(
-            source = AllSettings.gameDownloadSource.getValue(),
-            mainland = true
-        )
-    )
+    val source = AllSettings.gameDownloadSource.getValue()
+    return when (source) {
+        com.movtery.zalithlauncher.setting.enums.MirrorSourceType.OFFICIAL -> listOfNotNull(this, mirrorUrl)
+        else -> listOfNotNull(mirrorUrl, this)
+    }
 }

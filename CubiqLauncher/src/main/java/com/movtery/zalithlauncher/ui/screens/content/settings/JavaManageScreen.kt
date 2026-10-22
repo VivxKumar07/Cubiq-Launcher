@@ -179,7 +179,7 @@ fun JavaManageScreen(
                         text = stringResource(R.string.generic_refresh),
                     )
                     ImportMultipleFileButton(
-                        extension = "xz",
+                        extension = "*",
                         progressUris = { uris ->
                             uris.forEach { uri ->
                                 progressRuntimeUri(
@@ -325,12 +325,20 @@ private fun progressRuntimeUri(
         showError(message = androidText(R.string.multirt_runtime_import_failed_file_name))
         return
     }
+    val cleanName = name
+        .removeSuffix(".tar.xz")
+        .removeSuffix(".tar.gz")
+        .removeSuffix(".tgz")
+        .removeSuffix(".zip")
+        .removeSuffix(".tar")
+        .removeSuffix(".xz")
+
     TaskSystem.submitTask(
         Task.runTask(
-            id = name,
+            id = cleanName,
             dispatcher = Dispatchers.IO,
             task = { task ->
-                name.checkExtensionOrThrow(listOf("xz"))
+                name.checkExtensionOrThrow(listOf("xz", "zip", "gz", "tar"))
 
                 val inputStream = context.contentResolver.openInputStream(uri) ?: run {
                     showError(message = androidText(R.string.multirt_runtime_import_failed_input_stream))
@@ -339,7 +347,7 @@ private fun progressRuntimeUri(
                 RuntimesManager.installRuntime(
                     nativeLibDir = PathManager.DIR_NATIVE_LIB,
                     inputStream = inputStream,
-                    name = name,
+                    name = cleanName,
                     updateProgress = { textRes, textArg ->
                         task.updateMessage(androidText(
                             textRes, *textArg
@@ -353,7 +361,7 @@ private fun progressRuntimeUri(
             onFinally = callRefresh,
             onCancel = {
                 runCatching {
-                    RuntimesManager.removeRuntime(name)
+                    RuntimesManager.removeRuntime(cleanName)
                     callRefresh()
                 }.onFailure { t ->
                     showError(

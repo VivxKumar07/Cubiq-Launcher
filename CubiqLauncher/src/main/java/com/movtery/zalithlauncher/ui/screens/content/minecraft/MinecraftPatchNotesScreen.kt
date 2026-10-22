@@ -55,6 +55,7 @@ import com.movtery.zalithlauncher.game.versioninfo.MinecraftOfficialContentManag
 import com.movtery.zalithlauncher.game.versioninfo.OfficialPatchNote
 import com.movtery.zalithlauncher.ui.components.MinecraftButton
 import com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle
+import com.movtery.zalithlauncher.ui.components.verticalScrollWithBar
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 
 @Composable
@@ -68,13 +69,13 @@ fun MinecraftPatchNotesScreen(
     var showSnapshots by remember { mutableStateOf(false) }
     var viewingNote by remember { mutableStateOf<OfficialPatchNote?>(null) }
 
-    // Fallback official releases matching PC launcher patch notes
+    // Fallback official releases matching authentic PC launcher patch notes
     val defaultNotes = remember {
         listOf(
             OfficialPatchNote(
-                title = "Minecraft: Java Edition 26.3",
-                version = "26.3",
-                body = "Welcome to Minecraft: Java Edition 26.3!\n\n" +
+                title = "Minecraft: Java Edition 1.21.4",
+                version = "1.21.4",
+                body = "Welcome to Minecraft: Java Edition 1.21.4!\n\n" +
                         "• Added new ambient sounds, creaking mob updates, and pale garden biome enhancements.\n" +
                         "• Resin block variants, resin clumps, and new crafting recipes.\n" +
                         "• Full rendering and rendering pipeline optimizations.\n" +
@@ -82,42 +83,30 @@ fun MinecraftPatchNotesScreen(
                 imageUrl = "https://launchercontent.mojang.com/v2/images/1-21-patchnotes.jpg"
             ),
             OfficialPatchNote(
-                title = "Minecraft: Java Edition 26.2",
-                version = "26.2",
-                body = "Minecraft: Java Edition 26.2 brings significant internal game loop improvements, chunk loading speedups, and bug fixes.",
-                imageUrl = null
-            ),
-            OfficialPatchNote(
-                title = "Minecraft: Java Edition 26.1.2",
-                version = "26.1.2",
-                body = "Release 26.1.2 resolves critical multiplayer packet compression issues and memory leaks.",
-                imageUrl = null
-            ),
-            OfficialPatchNote(
-                title = "Minecraft: Java Edition 26.1.1",
-                version = "26.1.1",
-                body = "Hotfix release 26.1.1 resolving rendering artifacts on high-resolution textures.",
-                imageUrl = null
-            ),
-            OfficialPatchNote(
-                title = "Minecraft: Java Edition 1.21.4 - Tricky Trials",
-                version = "1.21.4",
-                body = "• Trial Chambers: Explore subterranean labyrinths filled with spawners and vaults.\n" +
-                        "• The Breeze: A tempestuous hostile mob.\n" +
-                        "• The Crafter: Automated crafting for Redstone contraptions.\n" +
-                        "• The Mace: High-flying heavy melee weapon.",
-                imageUrl = null
-            ),
-            OfficialPatchNote(
                 title = "Minecraft: Java Edition 1.21.3",
                 version = "1.21.3",
-                body = "Performance updates and server packet validation fixes for 1.21 Tricky Trials.",
+                body = "Minecraft: Java Edition 1.21.3 brings significant internal game loop improvements, chunk loading speedups, and critical bug fixes.",
+                imageUrl = null
+            ),
+            OfficialPatchNote(
+                title = "Minecraft: Java Edition 1.21.2",
+                version = "1.21.2",
+                body = "Release 1.21.2 resolves bundle mechanics, weapon reach changes, and internal network stability.",
                 imageUrl = null
             ),
             OfficialPatchNote(
                 title = "Minecraft: Java Edition 1.21.1",
                 version = "1.21.1",
-                body = "Stability update for Minecraft 1.21 Tricky Trials.",
+                body = "Hotfix release 1.21.1 resolving rendering artifacts on high-resolution textures and server packet validation.",
+                imageUrl = null
+            ),
+            OfficialPatchNote(
+                title = "Minecraft: Java Edition 1.21 - Tricky Trials",
+                version = "1.21",
+                body = "• Trial Chambers: Explore subterranean labyrinths filled with spawners and vaults.\n" +
+                        "• The Breeze: A tempestuous hostile mob.\n" +
+                        "• The Crafter: Automated crafting for Redstone contraptions.\n" +
+                        "• The Mace: High-flying heavy melee weapon.",
                 imageUrl = null
             ),
             OfficialPatchNote(
@@ -237,28 +226,41 @@ fun MinecraftPatchNotesScreen(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Patch Notes 2-Column Grid (Image 4)
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+            // Patch Notes 2-Column Grid with Visible Scrollbar
+            val patchScrollState = rememberScrollState()
+            Column(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = PaddingValues(bottom = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    .fillMaxWidth()
+                    .verticalScrollWithBar(patchScrollState),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(filteredNotes) { note ->
-                    PatchNoteGridCard(
-                        note = note,
-                        onClick = {
-                            com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
-                            viewingNote = note
-                            if (!note.contentPath.isNullOrBlank()) {
-                                MinecraftOfficialContentManager.fetchDetailedPatchNote(note)
+                val chunkedNotes = remember(filteredNotes) { filteredNotes.chunked(2) }
+                chunkedNotes.forEach { rowNotes ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        rowNotes.forEach { note ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                PatchNoteGridCard(
+                                    note = note,
+                                    onClick = {
+                                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                                        viewingNote = note
+                                        if (!note.contentPath.isNullOrBlank()) {
+                                            MinecraftOfficialContentManager.fetchDetailedPatchNote(note)
+                                        }
+                                    }
+                                )
                             }
                         }
-                    )
+                        if (rowNotes.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
                 }
+                Spacer(modifier = Modifier.height(14.dp))
             }
         }
 

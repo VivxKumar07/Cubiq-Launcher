@@ -56,6 +56,17 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.sp
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.download.assets.platform.PlatformSortField
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.runtime.mutableFloatStateOf
+import android.content.res.Configuration
+import kotlin.math.roundToInt
 import com.movtery.zalithlauncher.ui.components.MinecraftButton
 import com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
@@ -324,6 +335,45 @@ fun SearchAssetsScreen(
         getModloaders(viewModel.searchPlatform)
     }
 
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val density = LocalDensity.current
+
+    var headerHeightPx by remember { mutableFloatStateOf(0f) }
+    var headerOffsetPx by remember { mutableFloatStateOf(0f) }
+
+    val nestedScrollConnection = remember(isLandscape) {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (!isLandscape || headerHeightPx <= 0f) return Offset.Zero
+                val delta = available.y
+                if (kotlin.math.abs(delta) < 0.5f) return Offset.Zero
+                // Scrolling down (delta < 0): collapse header before list scrolls
+                if (delta < 0f) {
+                    val newOffset = (headerOffsetPx + delta).coerceIn(-headerHeightPx, 0f)
+                    val consumed = newOffset - headerOffsetPx
+                    headerOffsetPx = newOffset
+                    return Offset(0f, consumed)
+                }
+                return Offset.Zero
+            }
+
+            override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                if (!isLandscape || headerHeightPx <= 0f) return Offset.Zero
+                val delta = available.y
+                if (kotlin.math.abs(delta) < 0.5f) return Offset.Zero
+                // Scrolling up (delta > 0): expand header only after list reached top
+                if (delta > 0f) {
+                    val newOffset = (headerOffsetPx + delta).coerceIn(-headerHeightPx, 0f)
+                    val consumedY = newOffset - headerOffsetPx
+                    headerOffsetPx = newOffset
+                    return Offset(0f, consumedY)
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
     BaseScreen(
         levels1 = listOf(
             Pair(NestedNavKey.Download::class.java, mainScreenKey)
@@ -335,16 +385,39 @@ fun SearchAssetsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFF141414))
+                .nestedScroll(nestedScrollConnection)
         ) {
             val searchedVersions by viewModel.searchedVersions.collectAsStateWithLifecycle()
 
-            // TOP SEARCH & FILTER BAR (PORTRAIT FRIENDLY IN MINECRAFT STYLE)
-            Column(
+            // TOP SEARCH & FILTER BAR (PORTRAIT FRIENDLY IN MINECRAFT STYLE, RESPONSIVE COLLAPSIBLE IN LANDSCAPE)
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFF1E1E20))
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                    .then(
+                        if (isLandscape && headerHeightPx > 0f) {
+                            Modifier.height(
+                                with(density) { (headerHeightPx + headerOffsetPx).coerceAtLeast(0f).toDp() }
+                            )
+                        } else Modifier
+                    )
+                    .clipToBounds()
             ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onSizeChanged { size ->
+                            if (size.height > 0 && (headerHeightPx == 0f || headerOffsetPx == 0f)) {
+                                headerHeightPx = size.height.toFloat()
+                            }
+                        }
+                        .then(
+                            if (isLandscape) {
+                                Modifier.offset { IntOffset(0, headerOffsetPx.roundToInt()) }
+                            } else Modifier
+                        )
+                        .background(Color(0xFF1E1E20))
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                ) {
                 // 1. Search Box & Search Button
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -661,6 +734,7 @@ fun SearchAssetsScreen(
                     }
                 }
             }
+        }
 
             // 4. Result List taking full screen width in portrait!
             ResultListLayout(

@@ -48,6 +48,7 @@ import com.movtery.zalithlauncher.ui.activities.runGame
 import com.movtery.zalithlauncher.ui.androidText
 import com.movtery.zalithlauncher.utils.GSON
 import com.movtery.zalithlauncher.utils.network.isNetworkAvailable
+import com.movtery.zalithlauncher.utils.string.isBiggerTo
 import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -208,7 +209,7 @@ class GameLaunchFlow(scope: CoroutineScope) {
             val mcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
             val inheritedJar = version.getInheritedClientJar(mcVer)
             val hasJar = (jarFile.exists() && jarFile.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
-            val needDownloadOrVerify = !version.skipGameIntegrityCheck() || !hasJar
+            val needDownloadOrVerify = !hasJar
             if (needDownloadOrVerify) {
                 //校验并修复游戏文件 / 自动下载缺失的游戏核心文件
                 addTask(
@@ -220,6 +221,30 @@ class GameLaunchFlow(scope: CoroutineScope) {
                         submitError = submitError
                     )
                 )
+            }
+
+            val targetRuntimeName = version.getJavaRuntime().takeIf { it.isNotEmpty() } ?: run {
+                if (com.movtery.zalithlauncher.setting.AllSettings.autoPickJavaRuntime.getValue()) {
+                    com.movtery.zalithlauncher.game.multirt.RuntimesManager.getTargetRuntimeName(version)
+                } else {
+                    com.movtery.zalithlauncher.setting.AllSettings.javaRuntime.getValue().takeIf { it.isNotEmpty() } ?: "Internal-17"
+                }
+            }
+
+            if (!com.movtery.zalithlauncher.game.multirt.RuntimesManager.isRuntimeReady(targetRuntimeName)) {
+                addTask(
+                    icon = R.drawable.ic_assignment_filled,
+                    title = androidText("Downloading Java Runtime ($targetRuntimeName)"),
+                    dispatcher = Dispatchers.IO
+                ) { task ->
+                    val success = com.movtery.zalithlauncher.game.multirt.JreDownloadManager.downloadAndInstallJre(context, targetRuntimeName) { progress, message ->
+                        task.updateProgress(progress / 100f)
+                        task.updateMessage(androidText(message))
+                    }
+                    if (!success) {
+                        throw IllegalStateException("Failed to download Java Runtime ($targetRuntimeName). Please check your internet connection.")
+                    }
+                }
             }
 
             //启动游戏

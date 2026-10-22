@@ -49,16 +49,20 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import android.content.Intent
+import android.net.Uri
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.plugin.driver.Driver
 import com.movtery.zalithlauncher.game.plugin.driver.DriverPluginManager
 import com.movtery.zalithlauncher.game.plugin.renderer_v2.RendererV2Data
 import com.movtery.zalithlauncher.game.renderer.RendererInterface
 import com.movtery.zalithlauncher.game.renderer.Renderers
+import com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer
 import com.movtery.zalithlauncher.game.version.installed.GraphicsApi
 import com.movtery.zalithlauncher.path.URL_CLOUD_DRIVE_DRIVER_PLUGINS
 import com.movtery.zalithlauncher.path.URL_CLOUD_RENDERER_PLUGINS
 import com.movtery.zalithlauncher.path.URL_GITHUB_DRIVER_PLUGINS
+import com.movtery.zalithlauncher.path.URL_GITHUB_MOBILEGLUES_RELEASES
 import com.movtery.zalithlauncher.path.URL_GITHUB_RENDERER_PLUGINS
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.setting.enums.ResolutionRule
@@ -171,6 +175,50 @@ fun RendererSettingsScreen(
                             units = v2PluginEnvUnits,
                             onDismissRequest = { showV2ConfigDialog = false }
                         )
+                    }
+
+                    if (currentRendererId == MobileGluesRenderer.getUniqueIdentifier()) {
+                        val ctx = LocalContext.current
+                        SettingsCard(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            position = CardPosition.Middle,
+                            onClick = {
+                                runCatching {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(URL_GITHUB_MOBILEGLUES_RELEASES)).apply {
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                    ctx.startActivity(intent)
+                                }
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Download MobileGlues Companion App",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "Official MobileGlues APK release on GitHub. Required to enable MobileGlues rendering engine.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.alpha(0.75f)
+                                    )
+                                }
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_download_2_filled),
+                                    contentDescription = "Download MobileGlues",
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
 
                     ListSettingsCard(

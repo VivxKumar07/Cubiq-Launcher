@@ -31,6 +31,7 @@ import com.movtery.zalithlauncher.utils.logging.Logger
 import com.movtery.zalithlauncher.utils.math.findNearestPositive
 import com.movtery.zalithlauncher.utils.string.compareVersion
 import com.movtery.zalithlauncher.utils.string.extractUntilCharacter
+import com.movtery.zalithlauncher.utils.string.isBiggerTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -38,11 +39,14 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorInputStream
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.IOUtils
+import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
+import java.util.zip.GZIPInputStream
+import java.util.zip.ZipInputStream
 
 private const val TAG = "RuntimesManager"
 
@@ -78,6 +82,57 @@ object RuntimesManager {
 
     fun getNearestJreName(majorVersion: Int): String? {
         return findNearestPositive(majorVersion, getRuntimes()) { it.javaVersion }?.value?.name
+    }
+
+    /**
+     * Determines the required Java major version for a given Minecraft version and modloader.
+     * Rules:
+     * - Official manifest javaVersion takes highest priority if present and valid.
+     * - Cleanroom requires Java 25 (if >= 0.4.4-alpha) or Java 21.
+     * - Babric requires Java 17.
+     * - NeoForge requires Java 21 for MC 1.20.5+, Java 17 for MC 1.20.2-1.20.4.
+     * - MC 1.20.5+, 1.20.6, 1.21+, 26.x snapshots require Java 21.
+     * - MC 1.17, 1.18, 1.19, 1.20 - 1.20.4 require Java 17 (Java 16 requested by 1.17 is fully compatible with Java 17).
+     * - MC <= 1.16.5 requires Java 8.
+     */
+    fun determineTargetJavaVersion(version: com.movtery.zalithlauncher.game.version.installed.Version, manifest: com.movtery.zalithlauncher.game.versioninfo.models.GameManifest? = null): Int {
+        val manifestMajor = manifest?.javaVersion?.majorVersion
+        if (manifestMajor != null && manifestMajor > 0) {
+            return if (manifestMajor == 16) 17 else manifestMajor
+        }
+
+        val loaderInfo = version.getVersionInfo()?.loaderInfo
+        when (loaderInfo?.loader) {
+            com.movtery.zalithlauncher.game.addons.modloader.ModLoader.BABRIC -> return 17
+            com.movtery.zalithlauncher.game.addons.modloader.ModLoader.CLEANROOM -> {
+                return if (loaderInfo.version.isBiggerTo("0.4.4-alpha")) 25 else 21
+            }
+            com.movtery.zalithlauncher.game.addons.modloader.ModLoader.NEOFORGE -> {
+                val mcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
+                return if (mcVer.contains("1.20.5") || mcVer.contains("1.20.6") || mcVer.contains("1.21") || mcVer.contains("26.")) 21 else 17
+            }
+            else -> {}
+        }
+
+        val mcVersionStr = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
+        return when {
+            mcVersionStr.contains("1.20.5") || mcVersionStr.contains("1.20.6") || mcVersionStr.contains("1.21") || mcVersionStr.contains("26.") -> 21
+            mcVersionStr.contains("1.17") || mcVersionStr.contains("1.18") || mcVersionStr.contains("1.19") || mcVersionStr.contains("1.20") -> 17
+            else -> 8
+        }
+    }
+
+    fun getTargetRuntimeName(version: com.movtery.zalithlauncher.game.version.installed.Version, manifest: com.movtery.zalithlauncher.game.versioninfo.models.GameManifest? = null): String {
+        val targetJavaVersion = determineTargetJavaVersion(version, manifest)
+        return Jre.entries.firstOrNull { it.majorVersion == targetJavaVersion }?.jreName
+            ?: getExactJreName(targetJavaVersion)
+            ?: getNearestJreName(targetJavaVersion)
+            ?: "Internal-$targetJavaVersion"
+    }
+
+    fun isRuntimeReady(name: String): Boolean {
+        val dir = File(RUNTIME_FOLDER, name)
+        return isRuntimeValid(dir)
     }
 
     fun forceReload(name: String): Runtime {
@@ -165,7 +220,7 @@ object RuntimesManager {
                 arch = detectedArch,
                 javaVersion = majorVersion,
                 isProvidedByLauncher = internalJre != null,
-                isJDK8 = isJDK8(runtimeDir.absolutePath) || (majorVersion == 8 && File(runtimeDir, "jre").exists())
+                isJDK8 = (majorVersion == 8) || isJDK8(runtimeDir.absolutePath)
             ).also { cache[name] = it }
         }
     }
@@ -180,7 +235,7 @@ object RuntimesManager {
         val dest = RUNTIME_FOLDER.child(name)
         try {
             if (dest.exists()) FileUtils.deleteDirectory(dest)
-            uncompressTarXZ(inputStream, dest, updateProgress)
+            uncompressArchive(inputStream, dest, updateProgress)
             unpack200(nativeLibDir, dest.absolutePath)
             loadRuntime(name).also { runtime ->
                 postPrepare(runtime)
@@ -212,13 +267,16 @@ object RuntimesManager {
             }?.name ?: Architecture.archAsString(DEVICE_ARCHITECTURE)
         }
 
-        if (dest.child(libFolder, arch).exists()) {
-            libFolder += "/$arch"
+        val isJDK8 = isJDK8(dest.absolutePath) || runtime.javaVersion == 8 || runtime.name.contains("8")
+        if (dest.child("jre").exists()) {
+            libFolder = "jre/lib"
         }
-
-        val isJDK8 = isJDK8(dest.absolutePath)
-        if (isJDK8) {
-            libFolder = "/jre$libFolder"
+        val possibleArchs = listOf("aarch64", "aarch32", "arm", "amd64", "x86_64", "i386", arch)
+        for (a in possibleArchs) {
+            if (dest.child(libFolder, a).exists()) {
+                libFolder += "/$a"
+                break
+            }
         }
 
         runCatching {
@@ -240,6 +298,14 @@ object RuntimesManager {
                 Logger.warning(TAG, "Failed to copy libawt_xawt.so: ${e.message}")
             }
         }
+
+        listOf(dest.child("bin"), dest.child("jre/bin")).forEach { binDir ->
+            if (binDir.isDirectory) {
+                binDir.listFiles()?.forEach { file ->
+                    if (file.isFile) file.setExecutable(true, false)
+                }
+            }
+        }
     }
 
     @Throws(IOException::class)
@@ -258,6 +324,10 @@ object RuntimesManager {
 
             unpack200(PathManager.DIR_NATIVE_LIB, dest.absolutePath)
 
+            loadRuntime(name).also { runtime ->
+                postPrepare(runtime)
+            }
+
             val versionFile = File(dest, "version")
             versionFile.writeText(binPackVersion)
 
@@ -268,16 +338,90 @@ object RuntimesManager {
         }
     }
 
+    fun isRuntimeValid(name: String): Boolean {
+        return isRuntimeValid(RUNTIME_FOLDER.child(name))
+    }
+
+    fun isRuntimeValid(dir: File): Boolean {
+        if (!dir.exists() || !dir.isDirectory) return false
+        val hasRelease = File(dir, "release").exists() || File(dir, "jre/release").exists()
+        val hasJava = File(dir, "bin/java").exists() || File(dir, "jre/bin/java").exists()
+        if (!hasRelease || !hasJava) return false
+
+        // Check essential shared libraries (libjli.so, libjvm.so, libjava.so)
+        val hasLibJli = listOf(
+            File(dir, "lib/jli/libjli.so"),
+            File(dir, "lib/libjli.so"),
+            File(dir, "lib/aarch64/jli/libjli.so"),
+            File(dir, "lib/aarch32/jli/libjli.so"),
+            File(dir, "lib/arm/jli/libjli.so"),
+            File(dir, "lib/x86_64/jli/libjli.so"),
+            File(dir, "lib/i386/jli/libjli.so"),
+            File(dir, "jre/lib/jli/libjli.so"),
+            File(dir, "jre/lib/libjli.so"),
+            File(dir, "jre/lib/aarch64/jli/libjli.so"),
+            File(dir, "jre/lib/aarch32/jli/libjli.so"),
+            File(dir, "jre/lib/arm/jli/libjli.so")
+        ).any { it.exists() && it.isFile } || runCatching {
+            dir.walkTopDown().maxDepth(5).any { it.name == "libjli.so" && it.isFile }
+        }.getOrDefault(false)
+
+        val hasLibJvm = listOf(
+            File(dir, "lib/server/libjvm.so"),
+            File(dir, "lib/client/libjvm.so"),
+            File(dir, "lib/aarch64/server/libjvm.so"),
+            File(dir, "lib/aarch32/client/libjvm.so"),
+            File(dir, "lib/aarch32/server/libjvm.so"),
+            File(dir, "lib/arm/server/libjvm.so"),
+            File(dir, "lib/arm/client/libjvm.so"),
+            File(dir, "jre/lib/server/libjvm.so"),
+            File(dir, "jre/lib/client/libjvm.so"),
+            File(dir, "jre/lib/aarch64/server/libjvm.so"),
+            File(dir, "jre/lib/aarch32/client/libjvm.so")
+        ).any { it.exists() && it.isFile } || runCatching {
+            dir.walkTopDown().maxDepth(5).any { it.name == "libjvm.so" && it.isFile }
+        }.getOrDefault(false)
+
+        val hasLibJava = listOf(
+            File(dir, "lib/libjava.so"),
+            File(dir, "lib/aarch64/libjava.so"),
+            File(dir, "lib/aarch32/libjava.so"),
+            File(dir, "lib/arm/libjava.so"),
+            File(dir, "jre/lib/libjava.so"),
+            File(dir, "jre/lib/aarch64/libjava.so"),
+            File(dir, "jre/lib/aarch32/libjava.so"),
+            File(dir, "jre/lib/arm/libjava.so")
+        ).any { it.exists() && it.isFile } || runCatching {
+            dir.walkTopDown().maxDepth(5).any { it.name == "libjava.so" && it.isFile }
+        }.getOrDefault(false)
+
+        if (!hasLibJli || !hasLibJvm || !hasLibJava) return false
+
+        // Check classes packaging
+        val isJ8 = isJDK8(dir.absolutePath)
+        if (isJ8) {
+            val hasRt = File(dir, "lib/rt.jar").exists() || File(dir, "jre/lib/rt.jar").exists()
+            // If .pack files remain, unpacking was incomplete
+            val hasRemainingPacks = runCatching {
+                FileUtils.listFiles(dir, arrayOf("pack"), true).isNotEmpty()
+            }.getOrDefault(false)
+            if (!hasRt || hasRemainingPacks) return false
+        } else {
+            val hasModules = File(dir, "lib/modules").exists()
+            if (!hasModules) return false
+        }
+
+        return true
+    }
+
     fun loadInternalRuntimeVersion(name: String): String? {
-        val versionFile = RUNTIME_FOLDER.child(name, "version")
-        try {
-            return if (versionFile.exists()) {
-                versionFile.readText()
-            } else {
-                null
-            }
+        val dest = RUNTIME_FOLDER.child(name)
+        if (!isRuntimeValid(dest)) return null
+        val versionFile = File(dest, "version")
+        return try {
+            if (versionFile.exists()) versionFile.readText() else null
         } catch (_: IOException) {
-            return null
+            null
         }
     }
 
@@ -290,15 +434,15 @@ object RuntimesManager {
 
     fun getRuntimeHome(name: String): File {
         val dest = RUNTIME_FOLDER.child(name)
-        if (!dest.exists() || forceReload(name).versionString == null) {
-            throw RuntimeException("Selected runtime is broken!")
+        if (!dest.exists() || !isRuntimeValid(dest)) {
+            throw RuntimeException("Selected Java Runtime '$name' is not installed or incomplete.")
         }
-
         return dest
     }
 
     /**
      * Unpacks all .pack files into .jar Serves only for java 8, as java 9 brought project jigsaw
+     *
      * @param nativeLibraryDir The native lib path, required to execute the unpack200 binary
      * @param runtimePath The path to the runtime to walk into
      */
@@ -306,31 +450,52 @@ object RuntimesManager {
         nativeLibraryDir: String,
         runtimePath: String
     ) = withContext(Dispatchers.Default) {
-            val basePath = File(runtimePath)
-            val files: Collection<File> = FileUtils.listFiles(basePath, arrayOf("pack"), true)
+        val basePath = File(runtimePath)
+        val files: Collection<File> = runCatching {
+            FileUtils.listFiles(basePath, arrayOf("pack"), true)
+        }.getOrDefault(emptyList())
 
-            val workDir = File(nativeLibraryDir)
-            val processBuilder = ProcessBuilder().directory(workDir)
+        if (files.isEmpty()) return@withContext
 
-            files.forEach { jarFile ->
-                ensureActive()
-                runCatching {
-                    val destPath = jarFile.absolutePath.replace(".pack", "")
-                    processBuilder.command(
-                        "./libunpack200.so",
-                        "-r",
-                        jarFile.absolutePath,
-                        destPath
-                    ).start().apply {
-                        waitFor()
-                    }
-                }.onFailure { e ->
-                    if (e is IOException) {
-                        Logger.error(TAG, "Failed to unpack the runtime!", e)
-                    } else throw e
-                }
+        val nativeUnpack = File(nativeLibraryDir, "libunpack200.so")
+        val runtimeUnpack = File(runtimePath, "bin/unpack200")
+        val unpackBinary: File? = when {
+            nativeUnpack.exists() && nativeUnpack.canExecute() -> nativeUnpack
+            nativeUnpack.exists() -> {
+                runCatching { nativeUnpack.setExecutable(true, false) }
+                nativeUnpack
+            }
+            runtimeUnpack.exists() -> {
+                runCatching { runtimeUnpack.setExecutable(true, false) }
+                runtimeUnpack
+            }
+            else -> null
+        }
+
+        if (unpackBinary == null) {
+            throw IOException("No unpack200 binary found in $nativeLibraryDir or $runtimePath to unpack .pack files!")
+        }
+
+        files.forEach { jarFile ->
+            ensureActive()
+            val destPath = jarFile.absolutePath.replace(".pack", "")
+            val pb = ProcessBuilder(
+                unpackBinary.absolutePath,
+                "-r",
+                jarFile.absolutePath,
+                destPath
+            )
+            val process = pb.start()
+            val code = process.waitFor()
+            if (code == 0) {
+                jarFile.delete()
+                Logger.info(TAG, "Unpacked ${jarFile.name} -> ${File(destPath).name}")
+            } else {
+                val err = runCatching { process.errorStream.bufferedReader().readText() }.getOrDefault("")
+                throw IOException("unpack200 exited with $code for ${jarFile.name}: $err")
             }
         }
+    }
 
     @Throws(IOException::class)
     private suspend fun installRuntimeNoRemove(
@@ -338,7 +503,7 @@ object RuntimesManager {
         dest: File,
         updateProgress: (Int, Array<Any>) -> Unit = { _, _ -> }
     ) = withContext(Dispatchers.IO) {
-        uncompressTarXZ(inputStream, dest, updateProgress)
+        uncompressArchive(inputStream, dest, updateProgress)
         inputStream.close()
     }
 
@@ -347,37 +512,96 @@ object RuntimesManager {
         inputStream: InputStream,
         dest: File,
         updateProgress: (Int, Array<Any>) -> Unit = { _, _ -> }
+    ) = uncompressArchive(inputStream, dest, updateProgress)
+
+    @Throws(IOException::class)
+    private suspend fun uncompressArchive(
+        inputStream: InputStream,
+        dest: File,
+        updateProgress: (Int, Array<Any>) -> Unit = { _, _ -> }
     ) = withContext(Dispatchers.IO) {
         dest.ensureDirectory()
         val buffer = ByteArray(8192)
+        val bis = BufferedInputStream(inputStream)
+        bis.mark(16)
+        val header = ByteArray(6)
+        val read = bis.read(header)
+        bis.reset()
 
-        TarArchiveInputStream(XZCompressorInputStream(inputStream)).use { tarIn ->
-            generateSequence { tarIn.nextEntry }.forEach { tarEntry ->
-                ensureActive()
-                val tarEntryName = tarEntry.name
-                updateProgress(R.string.generic_unpacking, arrayOf(tarEntryName))
+        val isZip = read >= 4 && header[0] == 0x50.toByte() && header[1] == 0x4B.toByte() && header[2] == 0x03.toByte() && header[3] == 0x04.toByte()
+        val isGzip = read >= 2 && header[0] == 0x1F.toByte() && header[1] == 0x8B.toByte()
+        val isXz = read >= 6 && header[0] == 0xFD.toByte() && header[1] == 0x37.toByte() && header[2] == 0x7A.toByte() && header[3] == 0x58.toByte() && header[4] == 0x5A.toByte() && header[5] == 0x00.toByte()
 
-                val destPath = File(dest, tarEntryName).ensureParentDirectory()
-
-                when {
-                    tarEntry.isSymbolicLink -> try {
-                        if (destPath.exists()) destPath.delete()
-                        Os.symlink(tarEntry.linkName, destPath.absolutePath)
-                    } catch (e: Throwable) {
-                        Logger.warning(TAG, "Failed to create symbolic link: ${destPath.absolutePath} -> ${tarEntry.linkName} (${e.message})")
-                    }
-
-                    tarEntry.isDirectory -> destPath.ensureDirectory()
-                    !destPath.exists() || destPath.length() != tarEntry.size ->
+        if (isZip) {
+            ZipInputStream(bis).use { zipIn ->
+                generateSequence { zipIn.nextEntry }.forEach { entry ->
+                    ensureActive()
+                    updateProgress(R.string.generic_unpacking, arrayOf(entry.name))
+                    val destPath = File(dest, entry.name).ensureParentDirectory()
+                    if (entry.isDirectory) {
+                        destPath.ensureDirectory()
+                    } else {
                         FileOutputStream(destPath).use { os ->
-                            IOUtils.copyLarge(tarIn, os, buffer)
+                            IOUtils.copyLarge(zipIn, os, buffer)
                         }
+                    }
+                    zipIn.closeEntry()
+                }
+            }
+        } else {
+            val tarStream: InputStream = when {
+                isGzip -> GZIPInputStream(bis)
+                isXz -> XZCompressorInputStream(bis)
+                else -> bis
+            }
+            TarArchiveInputStream(tarStream).use { tarIn ->
+                generateSequence { tarIn.nextEntry }.forEach { tarEntry ->
+                    ensureActive()
+                    val tarEntryName = tarEntry.name
+                    updateProgress(R.string.generic_unpacking, arrayOf(tarEntryName))
+
+                    val destPath = File(dest, tarEntryName).ensureParentDirectory()
+
+                    when {
+                        tarEntry.isSymbolicLink -> try {
+                            if (destPath.exists()) destPath.delete()
+                            Os.symlink(tarEntry.linkName, destPath.absolutePath)
+                        } catch (e: Throwable) {
+                            Logger.warning(TAG, "Failed to create symbolic link: ${destPath.absolutePath} -> ${tarEntry.linkName} (${e.message})")
+                        }
+
+                        tarEntry.isDirectory -> destPath.ensureDirectory()
+                        !destPath.exists() || destPath.length() != tarEntry.size -> {
+                            FileOutputStream(destPath).use { os ->
+                                IOUtils.copyLarge(tarIn, os, buffer)
+                            }
+                            if (tarEntry.mode != 0) {
+                                try {
+                                    Os.chmod(destPath.absolutePath, tarEntry.mode and 0b111_111_111)
+                                } catch (_: Throwable) {
+                                    if ((tarEntry.mode and 0b001_000_000) != 0) {
+                                        destPath.setExecutable(true, false)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
     fun isJDK8(runtimeDir: String): Boolean {
-        return File(runtimeDir, "jre").exists() && File(runtimeDir, "bin/javac").exists()
+        val dir = File(runtimeDir)
+        if (File(dir, "release").exists()) {
+            val releaseText = runCatching { File(dir, "release").readText() }.getOrDefault("")
+            if (releaseText.contains("JAVA_VERSION=\"1.8") || releaseText.contains("JAVA_VERSION=\"8")) return true
+        }
+        return dir.name.contains("8") ||
+                File(dir, "lib/aarch64").exists() ||
+                File(dir, "lib/aarch32").exists() ||
+                File(dir, "jre/lib/aarch64").exists() ||
+                File(dir, "jre/lib/aarch32").exists() ||
+                (File(dir, "jre").exists() && File(dir, "bin/javac").exists())
     }
 }

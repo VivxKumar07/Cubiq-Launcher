@@ -376,12 +376,13 @@ fun MinecraftPCBottomNavBar(
     selectedItem: Int, // 0: News, 1: Versions, 2: Mods, 3: Profile
     onItemSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    barHeight: Dp = 58.dp,
     playerHeadContent: (@Composable () -> Unit)? = null
 ) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(6.dp))
             .background(Color(0xFF1B1B1E))
             .border(BorderStroke(1.5.dp, Color(0xFF2C2C32)), RoundedCornerShape(6.dp))
@@ -391,7 +392,7 @@ fun MinecraftPCBottomNavBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(58.dp),
+                .height(barHeight),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
@@ -479,34 +480,34 @@ private fun MinecraftPCNavItem(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
-    // Selected = Minecraft Green Tab, Unselected = Dark Stone PC Tab
+    // Selected = Sleek Minecraft Green Accent Tab with dark background so icons stay natural
     val outerBorder = if (isSelected) {
-        if (isPressed) Color(0xFF143D0F) else Color(0xFF1B4E12)
+        if (isPressed) Color(0xFF1B5E20) else Color(0xFF22C55E)
     } else {
         if (isPressed) Color(0xFF18181B) else Color(0xFF24242A)
     }
 
     val topHighlight = if (isSelected) {
-        if (isPressed) Color(0xFF194411) else Color(0xFF5AC636)
+        if (isPressed) Color(0xFF2E7D32) else Color(0xFF4CAF50)
     } else {
         if (isPressed) Color(0xFF1E1E22) else Color(0xFF383842)
     }
 
     val bottomShadow = if (isSelected) {
-        if (isPressed) Color(0xFF5AC636) else Color(0xFF194411)
+        if (isPressed) Color(0xFF1B5E20) else Color(0xFF143015)
     } else {
         if (isPressed) Color(0xFF383842) else Color(0xFF121215)
     }
 
     val bgGradient = if (isSelected) {
-        if (isPressed) listOf(Color(0xFF286D19), Color(0xFF205814))
-        else listOf(Color(0xFF388E23), Color(0xFF2C741B))
+        if (isPressed) listOf(Color(0xFF1C241D), Color(0xFF161C17))
+        else listOf(Color(0xFF222B23), Color(0xFF1A221B))
     } else {
         if (isPressed) listOf(Color(0xFF222226), Color(0xFF1B1B1F))
         else listOf(Color(0xFF2C2C34), Color(0xFF222228))
     }
 
-    val textColor = if (isSelected) Color.White else Color(0xFFCCCCCC)
+    val textColor = if (isSelected) Color(0xFF55FF55) else Color(0xFFCCCCCC)
     val textShadow = if (isSelected) Color(0xFF0F2B0A) else Color(0xFF101012)
 
     Column(

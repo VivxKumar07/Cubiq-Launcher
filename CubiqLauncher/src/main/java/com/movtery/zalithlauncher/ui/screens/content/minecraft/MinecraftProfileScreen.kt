@@ -8,6 +8,9 @@ package com.movtery.zalithlauncher.ui.screens.content.minecraft
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.movtery.zalithlauncher.utils.file.shareFile
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -77,6 +80,7 @@ import com.movtery.layer_controller.data.lang.createTranslatable
 import com.movtery.layer_controller.layout.EmptyControlLayout
 import com.movtery.layer_controller.layout.EmptyLayoutInfo
 import com.movtery.layer_controller.layout.loadLayoutFromFile
+import com.movtery.layer_controller.layout.loadLayoutFromString
 import com.movtery.layer_controller.utils.newRandomFileName
 import com.movtery.layer_controller.utils.saveToFile
 import com.movtery.zalithlauncher.BuildKeys
@@ -106,6 +110,8 @@ import com.movtery.zalithlauncher.ui.control.gamepad.getNameByGamepadEvent
 import com.movtery.zalithlauncher.ui.control.gamepad.remapperMMKV
 import com.movtery.zalithlauncher.ui.screens.content.elements.PlayerFace
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
+import com.movtery.zalithlauncher.ui.theme.FontManager
+import com.movtery.zalithlauncher.game.plugin.driver.DriverPluginManager
 import com.movtery.zalithlauncher.context.copyAssetFile
 import com.movtery.zalithlauncher.utils.platform.getMaxMemoryForSettings
 import com.movtery.zalithlauncher.viewmodel.GamepadViewModel
@@ -200,7 +206,10 @@ fun MinecraftProfileScreen(
     }
 
     // REAL Zalith Renderer Settings
-    val allRenderers = remember { Renderers.getRenderers() }
+    val allRenderers = remember {
+        Renderers.init()
+        Renderers.getRenderers()
+    }
     var selectedRendererId by remember {
         mutableStateOf(AllSettings.renderer.state.ifBlank { allRenderers.firstOrNull()?.getUniqueIdentifier() ?: "" })
     }
@@ -273,6 +282,37 @@ fun MinecraftProfileScreen(
     }
     var seasonalEffects by remember {
         mutableStateOf(AllSettings.launcherFestivalEffects.state)
+    }
+
+    val importControlsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            scope.launch(Dispatchers.IO) {
+                val stream = runCatching { context.contentResolver.openInputStream(uri) }.getOrNull()
+                if (stream != null) {
+                    ControlManager.importControl(
+                        inputStream = stream,
+                        onSerializationError = {
+                            scope.launch(Dispatchers.Main) {
+                                Toast.makeText(context, "Invalid control layout JSON", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        catchedError = { e ->
+                            scope.launch(Dispatchers.Main) {
+                                Toast.makeText(context, "Failed to import controls: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        onFinished = {
+                            ControlManager.refresh()
+                            scope.launch(Dispatchers.Main) {
+                                Toast.makeText(context, "Control layout imported successfully!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    )
+                }
+            }
+        }
     }
 
     Box(
@@ -547,13 +587,7 @@ fun MinecraftProfileScreen(
                 SettingsTab.LAUNCHER -> {
                     LauncherSettingsTab(
                         isFullScreen = isFullScreen,
-                        onFullScreenChange = { isFullScreen = it },
-                        backgroundBlurVal = backgroundBlurVal,
-                        onBackgroundBlurChange = { backgroundBlurVal = it },
-                        animateSpeedVal = animateSpeedVal,
-                        onAnimateSpeedChange = { animateSpeedVal = it },
-                        seasonalEffects = seasonalEffects,
-                        onSeasonalEffectsChange = { seasonalEffects = it }
+                        onFullScreenChange = { isFullScreen = it }
                     )
                 }
 
@@ -607,25 +641,12 @@ fun MinecraftProfileScreen(
                             activeControlLayoutName = name
                         },
                         onLaunchEditor = {
-                            val bedrockFile = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
-                            val shouldOverwriteBedrock = runCatching {
-                                if (!bedrockFile.exists()) true
-                                else {
-                                    val existing = loadLayoutFromFile(bedrockFile)
-                                    existing.info.versionCode < 6
-                                }
-                            }.getOrDefault(!bedrockFile.exists())
-                            if (shouldOverwriteBedrock) {
-                                runCatching {
-                                    context.copyAssetFile("bedrock_touch_layout.json", bedrockFile, true)
-                                }
-                            }
                             val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
                             val shouldOverwriteDefault = runCatching {
                                 if (!defaultFile.exists()) true
                                 else {
                                     val existing = loadLayoutFromFile(defaultFile)
-                                    existing.info.versionCode < 6
+                                    existing.info.versionCode < 10
                                 }
                             }.getOrDefault(true)
                             if (shouldOverwriteDefault) {
@@ -635,15 +656,15 @@ fun MinecraftProfileScreen(
                             }
 
                             val activeControl = controlLayouts.find { it.file.name == activeControlLayoutName }
-                                ?: controlLayouts.find { it.file.name == "bedrock_touch_layout.json" }
+                                ?: controlLayouts.find { it.file.name == "default_layout.json" }
                                 ?: controlLayouts.firstOrNull()
                             val activeFile = activeControl?.file
-                                ?: bedrockFile.takeIf { it.exists() }
-                                ?: File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json").takeIf { it.exists() }
-                                ?: bedrockFile
+                                ?: defaultFile
                             startEditorActivity(context, activeFile)
                         },
-                        onCreateNewLayout = { showCreateLayoutDialog = true }
+                        onCreateNewLayout = { showCreateLayoutDialog = true },
+                        onImportControls = { importControlsLauncher.launch("application/json") },
+                        onExportLayout = { data -> shareFile(context, data.file) }
                     )
                 }
 
@@ -734,7 +755,7 @@ fun MinecraftProfileScreen(
 }
 
 @Composable
-private fun MicrosoftLoginDialog(
+fun MicrosoftLoginDialog(
     msDeviceCodeText: String?,
     msVerificationUrl: String?,
     onDismiss: () -> Unit
@@ -1149,6 +1170,7 @@ private fun CreateTouchLayoutDialog(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var selectedTemplate by remember { mutableStateOf("Plain Java Controls") }
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color(0xFF1C1C1E),
@@ -1172,7 +1194,7 @@ private fun CreateTouchLayoutDialog(
                 OutlinedTextField(
                     value = layoutName,
                     onValueChange = onLayoutNameChange,
-                    placeholder = { Text("Layout Name (e.g. PvP, Building)", color = Color(0xFF666666), fontSize = 12.sp) },
+                    placeholder = { Text("Layout Name (e.g. PvP, Bedrock Touch)", color = Color(0xFF666666), fontSize = 12.sp) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -1184,6 +1206,57 @@ private fun CreateTouchLayoutDialog(
                         unfocusedTextColor = Color.White
                     )
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Base Layout Template:",
+                    color = Color(0xFFCCCCCC),
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.5.sp
+                )
+
+                listOf("Plain Java Controls", "Pocket Edition Controls").forEach { template ->
+                    val isSel = selectedTemplate == template
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(if (isSel) Color(0xFF263820) else Color(0xFF242426))
+                            .border(
+                                BorderStroke(1.dp, if (isSel) Color(0xFF55FF55) else Color(0xFF383838)),
+                                RoundedCornerShape(2.dp)
+                            )
+                            .clickable { selectedTemplate = template }
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = template,
+                                color = if (isSel) Color(0xFF55FF55) else Color.White,
+                                fontFamily = MinecraftFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.sp
+                            )
+                            Text(
+                                text = if (template == "Pocket Edition Controls") "Bedrock mobile controls layout (~65% opacity)" else "Standard PC keyboard on-screen buttons",
+                                color = Color(0xFF888888),
+                                fontFamily = MinecraftFontFamily,
+                                fontSize = 9.sp
+                            )
+                        }
+                        RadioButton(
+                            selected = isSel,
+                            onClick = { selectedTemplate = template },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = Color(0xFF55FF55),
+                                unselectedColor = Color(0xFF666666)
+                            )
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
@@ -1193,17 +1266,30 @@ private fun CreateTouchLayoutDialog(
                         scope.launch(Dispatchers.IO) {
                             val file = File(PathManager.DIR_CONTROL_LAYOUTS, "${newRandomFileName()}.json")
                             try {
-                                val layout = EmptyControlLayout.copy(
-                                    info = EmptyLayoutInfo.copy(
-                                        name = createTranslatable(default = layoutName.trim()),
-                                        author = createTranslatable(default = "Player"),
-                                        versionName = "1.0"
+                                val assetName = if (selectedTemplate == "Pocket Edition Controls") "pocket_edition_layout.json" else "default_layout.json"
+                                val layout = runCatching {
+                                    val jsonStr = context.assets.open(assetName).bufferedReader().use { it.readText() }
+                                    val base = loadLayoutFromString(jsonStr)
+                                    base.copy(
+                                        info = base.info.copy(
+                                            name = createTranslatable(default = layoutName.trim()),
+                                            author = createTranslatable(default = "Player"),
+                                            versionName = "1.0"
+                                        )
                                     )
-                                )
+                                }.getOrElse {
+                                    EmptyControlLayout.copy(
+                                        info = EmptyLayoutInfo.copy(
+                                            name = createTranslatable(default = layoutName.trim()),
+                                            author = createTranslatable(default = "Player"),
+                                            versionName = "1.0"
+                                        )
+                                    )
+                                }
                                 layout.saveToFile(file)
                                 ControlManager.refresh()
                                 withContext(Dispatchers.Main) {
-                                    Toast.makeText(context, "Layout '${layoutName.trim()}' created!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, "Layout '${layoutName.trim()}' created from $selectedTemplate!", Toast.LENGTH_SHORT).show()
                                     onCreated()
                                 }
                             } catch (e: Exception) {
@@ -1456,6 +1542,8 @@ private fun GameSettingsTab(
     onLogTextSizeChange: (Float) -> Unit
 ) {
     val context = LocalContext.current
+    var showAdvancedGameOptions by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1465,58 +1553,51 @@ private fun GameSettingsTab(
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 1. RAM Allocation (Presets + Direct MB Entry + Fine Slider)
+        // 1. RAM Allocation (Presets + Fine Slider)
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("RAM Allocation", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text("${ramValue.toInt()} MB", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            var manualMbText by remember(ramValue) { mutableStateOf(ramValue.toInt().toString()) }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                OutlinedTextField(
-                    value = manualMbText,
-                    onValueChange = { str ->
-                        manualMbText = str.filter { it.isDigit() }
-                    },
-                    label = { Text("Custom MB", color = Color(0xFF888888), fontSize = 10.sp) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF242426),
-                        unfocusedContainerColor = Color(0xFF242426),
-                        focusedBorderColor = Color(0xFF55FF55),
-                        unfocusedBorderColor = Color(0xFF383838),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    )
-                )
-                MinecraftButton(
-                    onClick = {
-                        val num = manualMbText.toIntOrNull()
-                        if (num != null) {
-                            val clamped = num.toFloat().coerceIn(256f, maxRam)
-                            onRamChange(clamped)
-                            AllSettings.ramAllocation.save(clamped.toInt())
-                            Toast.makeText(context, "Memory set to ${clamped.toInt()} MB", Toast.LENGTH_SHORT).show()
-                        }
-                    },
-                    style = MinecraftButtonStyle.GREEN,
-                    text = "SET MB",
-                    fontSize = 10.5.sp,
-                    modifier = Modifier
-                        .width(76.dp)
-                        .height(38.dp)
-                )
+                Text("RAM Allocation", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("${ramValue.toInt()} MB (${String.format(java.util.Locale.ROOT, "%.1f", ramValue / 1024f)} GB)", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 11.sp, fontWeight = FontWeight.Bold)
             }
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Quick RAM Presets (Beginner Friendly)
+            val ramPresets = listOf(1536f, 2048f, 3072f, 4096f, 6144f).filter { it <= maxRam }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                ramPresets.forEach { presetMb ->
+                    val isPresetSel = kotlin.math.abs(ramValue - presetMb) < 64f
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(if (isPresetSel) Color(0xFF2E6930) else Color(0xFF28282A))
+                            .border(BorderStroke(1.dp, if (isPresetSel) Color(0xFF55FF55) else Color(0xFF404040)), RoundedCornerShape(2.dp))
+                            .clickable {
+                                onRamChange(presetMb)
+                                AllSettings.ramAllocation.save(presetMb.toInt())
+                            }
+                            .padding(vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (presetMb >= 1024f) "${(presetMb / 1024f).toInt()} GB" else "${presetMb.toInt()} MB",
+                            color = if (isPresetSel) Color(0xFF55FF55) else Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
             Slider(
                 value = ramValue,
                 onValueChange = onRamChange,
@@ -1573,7 +1654,7 @@ private fun GameSettingsTab(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text("Version Isolation", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Isolate mods and configs per Minecraft version", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text("Isolate mods, resource packs and configs per version", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
             }
             Switch(
                 checked = versionIsolation,
@@ -1597,8 +1678,8 @@ private fun GameSettingsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Skip Asset Verification", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Faster game launch by bypassing SHA1 file checks", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text("Fast Launch (Skip Verification)", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Dramatically speeds up startup by skipping SHA-1 hash checks", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
             }
             Switch(
                 checked = skipGameIntegrity,
@@ -1615,130 +1696,218 @@ private fun GameSettingsTab(
             )
         }
 
-        // 5. Custom JVM Arguments
-        Column {
-            Text("Custom JVM Arguments", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(4.dp))
-            OutlinedTextField(
-                value = jvmArgs,
-                onValueChange = {
-                    onJvmArgsChange(it)
-                    AllSettings.jvmArgs.save(it)
-                },
-                placeholder = {
-                    Text("-XX:+UseG1GC -Dminecraft.applet.TargetDirectory=...", color = Color(0xFF666666), fontSize = 11.sp)
-                },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF242426),
-                    unfocusedContainerColor = Color(0xFF242426),
-                    focusedBorderColor = Color(0xFF55FF55),
-                    unfocusedBorderColor = Color(0xFF383838),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
-            )
-        }
-
-        // 6. Version Custom Subtitle
-        Column {
-            Text("Version Custom Subtitle", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(4.dp))
-            OutlinedTextField(
-                value = versionCustomInfo,
-                onValueChange = {
-                    onVersionCustomInfoChange(it)
-                    AllSettings.versionCustomInfo.save(it)
-                },
-                placeholder = {
-                    Text("Cubiq[zl_version]", color = Color(0xFF666666), fontSize = 11.sp)
-                },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF242426),
-                    unfocusedContainerColor = Color(0xFF242426),
-                    focusedBorderColor = Color(0xFF55FF55),
-                    unfocusedBorderColor = Color(0xFF383838),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
-            )
-        }
-
-        // 7. Auto Show Log
+        // Collapsible Advanced JVM & Debug Settings (Accordion)
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(2.dp))
+                .background(Color(0xFF262629))
+                .border(BorderStroke(1.dp, Color(0xFF444448)), RoundedCornerShape(2.dp))
+                .clickable { showAdvancedGameOptions = !showAdvancedGameOptions }
+                .padding(horizontal = 10.dp, vertical = 9.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Show Console Log on Launch", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Automatically displays runtime log window on game start", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
-            }
-            Switch(
-                checked = showLogAuto,
-                onCheckedChange = {
-                    onShowLogAutoChange(it)
-                    AllSettings.showLogAutomatic.save(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFF3C8527),
-                    uncheckedThumbColor = Color(0xFF888888),
-                    uncheckedTrackColor = Color(0xFF333333)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (showAdvancedGameOptions) "▼" else "▶",
+                    color = Color(0xFF55FF55),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 10.sp
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "ADVANCED JVM & CONSOLE OPTIONS",
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.5.sp
+                )
+            }
+            Text(
+                text = if (showAdvancedGameOptions) "Hide" else "Show",
+                color = Color(0xFF888888),
+                fontFamily = MinecraftFontFamily,
+                fontSize = 10.sp
             )
         }
 
-        // 8. Log Text Size
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+        if (showAdvancedGameOptions) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text("Console Log Text Size", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
-                Text("${logTextSize.toInt()} sp", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
-            }
-            Slider(
-                value = logTextSize,
-                onValueChange = onLogTextSizeChange,
-                onValueChangeFinished = {
-                    AllSettings.logTextSize.save(logTextSize.toInt())
-                },
-                valueRange = 8f..20f,
-                colors = SliderDefaults.colors(
-                    thumbColor = Color(0xFF55FF55),
-                    activeTrackColor = Color(0xFF3C8527),
-                    inactiveTrackColor = Color(0xFF333333)
-                )
-            )
-        }
+                // Custom MB Manual Entry
+                var manualMbText by remember(ramValue) { mutableStateOf(ramValue.toInt().toString()) }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = manualMbText,
+                        onValueChange = { str ->
+                            manualMbText = str.filter { it.isDigit() }
+                        },
+                        label = { Text("Exact Memory (MB)", color = Color(0xFF888888), fontSize = 10.sp) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF242426),
+                            unfocusedContainerColor = Color(0xFF242426),
+                            focusedBorderColor = Color(0xFF55FF55),
+                            unfocusedBorderColor = Color(0xFF383838),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                    MinecraftButton(
+                        onClick = {
+                            val num = manualMbText.toIntOrNull()
+                            if (num != null) {
+                                val clamped = num.toFloat().coerceIn(256f, maxRam)
+                                onRamChange(clamped)
+                                AllSettings.ramAllocation.save(clamped.toInt())
+                                Toast.makeText(context, "Memory set to ${clamped.toInt()} MB", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        style = MinecraftButtonStyle.GREEN,
+                        text = "SET MB",
+                        fontSize = 10.5.sp,
+                        modifier = Modifier
+                            .width(76.dp)
+                            .height(38.dp)
+                    )
+                }
 
-        // 9. Log Buffer Flush Interval
-        var flushInterval by remember { mutableFloatStateOf(AllSettings.logBufferFlushInterval.state.toFloat()) }
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Log Buffer Flush Interval", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
-                Text("${flushInterval.toInt()} ms", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                // Custom JVM Arguments
+                Column {
+                    Text("Custom JVM Arguments", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = jvmArgs,
+                        onValueChange = {
+                            onJvmArgsChange(it)
+                            AllSettings.jvmArgs.save(it)
+                        },
+                        placeholder = {
+                            Text("-XX:+UseG1GC -Dminecraft.applet.TargetDirectory=...", color = Color(0xFF666666), fontSize = 11.sp)
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF242426),
+                            unfocusedContainerColor = Color(0xFF242426),
+                            focusedBorderColor = Color(0xFF55FF55),
+                            unfocusedBorderColor = Color(0xFF383838),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                }
+
+                // Version Custom Subtitle
+                Column {
+                    Text("Version Custom Subtitle", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = versionCustomInfo,
+                        onValueChange = {
+                            onVersionCustomInfoChange(it)
+                            AllSettings.versionCustomInfo.save(it)
+                        },
+                        placeholder = {
+                            Text("Cubiq[zl_version]", color = Color(0xFF666666), fontSize = 11.sp)
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF242426),
+                            unfocusedContainerColor = Color(0xFF242426),
+                            focusedBorderColor = Color(0xFF55FF55),
+                            unfocusedBorderColor = Color(0xFF383838),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                }
+
+                // Auto Show Log
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Show Console Log on Launch", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text("Displays runtime log window during game execution", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                    }
+                    Switch(
+                        checked = showLogAuto,
+                        onCheckedChange = {
+                            onShowLogAutoChange(it)
+                            AllSettings.showLogAutomatic.save(it)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF3C8527),
+                            uncheckedThumbColor = Color(0xFF888888),
+                            uncheckedTrackColor = Color(0xFF333333)
+                        )
+                    )
+                }
+
+                // Log Text Size
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Console Log Text Size", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
+                        Text("${logTextSize.toInt()} sp", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
+                    }
+                    Slider(
+                        value = logTextSize,
+                        onValueChange = onLogTextSizeChange,
+                        onValueChangeFinished = {
+                            AllSettings.logTextSize.save(logTextSize.toInt())
+                        },
+                        valueRange = 8f..20f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color(0xFF55FF55),
+                            activeTrackColor = Color(0xFF3C8527),
+                            inactiveTrackColor = Color(0xFF333333)
+                        )
+                    )
+                }
+
+                // Log Buffer Flush Interval
+                var flushInterval by remember { mutableFloatStateOf(AllSettings.logBufferFlushInterval.state.toFloat()) }
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Log Buffer Flush Interval", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
+                        Text("${flushInterval.toInt()} ms", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
+                    }
+                    Slider(
+                        value = flushInterval,
+                        onValueChange = { flushInterval = it },
+                        onValueChangeFinished = {
+                            AllSettings.logBufferFlushInterval.save(flushInterval.toInt())
+                        },
+                        valueRange = 100f..1000f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color(0xFF55FF55),
+                            activeTrackColor = Color(0xFF3C8527),
+                            inactiveTrackColor = Color(0xFF333333)
+                        )
+                    )
+                }
             }
-            Slider(
-                value = flushInterval,
-                onValueChange = { flushInterval = it },
-                onValueChangeFinished = {
-                    AllSettings.logBufferFlushInterval.save(flushInterval.toInt())
-                },
-                valueRange = 100f..1000f,
-                colors = SliderDefaults.colors(
-                    thumbColor = Color(0xFF55FF55),
-                    activeTrackColor = Color(0xFF3C8527),
-                    inactiveTrackColor = Color(0xFF333333)
-                )
-            )
         }
     }
 }
@@ -1769,6 +1938,9 @@ private fun VideoSettingsTab(
     useSurfaceView: Boolean,
     onUseSurfaceViewChange: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
+    var showAdvancedVideoOptions by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1780,7 +1952,7 @@ private fun VideoSettingsTab(
     ) {
         // 1. Renderer Selection
         Column {
-            Text("Renderer Selection", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+            Text("Graphics Renderer", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
             Spacer(modifier = Modifier.height(6.dp))
             for (renderer in allRenderers) {
                 val isSel = selectedRendererId == renderer.getUniqueIdentifier()
@@ -1832,7 +2004,8 @@ private fun VideoSettingsTab(
                             text = renderer.getCompatibilityDescription(),
                             color = if (isSel) Color(0xFFCCCCCC) else Color(0xFF888888),
                             fontFamily = MinecraftFontFamily,
-                            fontSize = 10.sp
+                            fontSize = 10.sp,
+                            lineHeight = 14.sp
                         )
                     }
                     RadioButton(
@@ -1848,6 +2021,25 @@ private fun VideoSettingsTab(
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            if (selectedRendererId == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.getUniqueIdentifier()) {
+                MinecraftButton(
+                    onClick = {
+                        runCatching {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(com.movtery.zalithlauncher.path.URL_GITHUB_MOBILEGLUES_RELEASES)).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            context.startActivity(intent)
+                        }
+                    },
+                    style = MinecraftButtonStyle.STONE,
+                    text = "DOWNLOAD MOBILEGLUES COMPANION APP",
+                    fontSize = 11.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp)
+                )
             }
         }
 
@@ -1900,56 +2092,7 @@ private fun VideoSettingsTab(
             )
         }
 
-        // 4. Custom Resolution
-        Column {
-            Text("Custom Resolution (Width x Height)", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = if (customResolutionWidth > 0) customResolutionWidth.toString() else "",
-                    onValueChange = {
-                        val num = it.toIntOrNull() ?: 0
-                        onCustomResolutionWidthChange(num)
-                        AllSettings.customResolutionWidth.save(num)
-                    },
-                    placeholder = { Text("Width (e.g. 1920)", color = Color(0xFF666666), fontSize = 11.sp) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF242426),
-                        unfocusedContainerColor = Color(0xFF242426),
-                        focusedBorderColor = Color(0xFF55FF55),
-                        unfocusedBorderColor = Color(0xFF383838),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    )
-                )
-                OutlinedTextField(
-                    value = if (customResolutionHeight > 0) customResolutionHeight.toString() else "",
-                    onValueChange = {
-                        val num = it.toIntOrNull() ?: 0
-                        onCustomResolutionHeightChange(num)
-                        AllSettings.customResolutionHeight.save(num)
-                    },
-                    placeholder = { Text("Height (e.g. 1080)", color = Color(0xFF666666), fontSize = 11.sp) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color(0xFF242426),
-                        unfocusedContainerColor = Color(0xFF242426),
-                        focusedBorderColor = Color(0xFF55FF55),
-                        unfocusedBorderColor = Color(0xFF383838),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
-                    )
-                )
-            }
-        }
-
-        // 5. Sustained Performance Mode
+        // 4. Sustained Performance Mode
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1974,128 +2117,294 @@ private fun VideoSettingsTab(
             )
         }
 
-        // 6. SurfaceView vs TextureView
+        // Collapsible Advanced Video & Driver Settings (Accordion)
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(2.dp))
+                .background(Color(0xFF262629))
+                .border(BorderStroke(1.dp, Color(0xFF444448)), RoundedCornerShape(2.dp))
+                .clickable { showAdvancedVideoOptions = !showAdvancedVideoOptions }
+                .padding(horizontal = 10.dp, vertical = 9.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Use SurfaceView Rendering", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Improves frame pacing and reduces battery drain", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
-            }
-            Switch(
-                checked = useSurfaceView,
-                onCheckedChange = {
-                    onUseSurfaceViewChange(it)
-                    AllSettings.useSurfaceView.save(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFF3C8527),
-                    uncheckedThumbColor = Color(0xFF888888),
-                    uncheckedTrackColor = Color(0xFF333333)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = if (showAdvancedVideoOptions) "▼" else "▶",
+                    color = Color(0xFF55FF55),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 10.sp
                 )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "ADVANCED GRAPHICS & DRIVERS",
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.5.sp
+                )
+            }
+            Text(
+                text = if (showAdvancedVideoOptions) "Hide" else "Show",
+                color = Color(0xFF888888),
+                fontFamily = MinecraftFontFamily,
+                fontSize = 10.sp
             )
         }
 
-        // 7. Vulkan Driver
-        Column {
-            Text("Vulkan Driver", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-            Spacer(modifier = Modifier.height(4.dp))
-            OutlinedTextField(
-                value = selectedVulkanDriver,
-                onValueChange = {
-                    onVulkanDriverChange(it)
-                    AllSettings.vulkanDriver.save(it)
-                },
-                placeholder = { Text("default turnip", color = Color(0xFF666666), fontSize = 11.sp) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFF242426),
-                    unfocusedContainerColor = Color(0xFF242426),
-                    focusedBorderColor = Color(0xFF55FF55),
-                    unfocusedBorderColor = Color(0xFF383838),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
-            )
-        }
+        if (showAdvancedVideoOptions) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // Custom Resolution
+                Column {
+                    Text("Custom Resolution (Width x Height)", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = if (customResolutionWidth > 0) customResolutionWidth.toString() else "",
+                            onValueChange = {
+                                val num = it.toIntOrNull() ?: 0
+                                onCustomResolutionWidthChange(num)
+                                AllSettings.customResolutionWidth.save(num)
+                            },
+                            placeholder = { Text("Width (e.g. 1920)", color = Color(0xFF666666), fontSize = 11.sp) },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFF242426),
+                                unfocusedContainerColor = Color(0xFF242426),
+                                focusedBorderColor = Color(0xFF55FF55),
+                                unfocusedBorderColor = Color(0xFF383838),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            )
+                        )
+                        OutlinedTextField(
+                            value = if (customResolutionHeight > 0) customResolutionHeight.toString() else "",
+                            onValueChange = {
+                                val num = it.toIntOrNull() ?: 0
+                                onCustomResolutionHeightChange(num)
+                                AllSettings.customResolutionHeight.save(num)
+                            },
+                            placeholder = { Text("Height (e.g. 1080)", color = Color(0xFF666666), fontSize = 11.sp) },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedContainerColor = Color(0xFF242426),
+                                unfocusedContainerColor = Color(0xFF242426),
+                                focusedBorderColor = Color(0xFF55FF55),
+                                unfocusedBorderColor = Color(0xFF383838),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            )
+                        )
+                    }
+                }
 
-        // 8. Use System Vulkan Driver
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Use System Vulkan Driver", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Bypasses bundled Turnip driver and uses Qualcomm/Mali system driver", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
-            }
-            Switch(
-                checked = zinkPreferSystemDriver,
-                onCheckedChange = {
-                    onZinkPreferSystemDriverChange(it)
-                    AllSettings.zinkPreferSystemDriver.save(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFF3C8527),
-                    uncheckedThumbColor = Color(0xFF888888),
-                    uncheckedTrackColor = Color(0xFF333333)
-                )
-            )
-        }
+                // SurfaceView vs TextureView
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Use SurfaceView Rendering", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text("Improves frame pacing and reduces battery drain", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                    }
+                    Switch(
+                        checked = useSurfaceView,
+                        onCheckedChange = {
+                            onUseSurfaceViewChange(it)
+                            AllSettings.useSurfaceView.save(it)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF3C8527),
+                            uncheckedThumbColor = Color(0xFF888888),
+                            uncheckedTrackColor = Color(0xFF333333)
+                        )
+                    )
+                }
 
-        // 9. Vsync in Zink
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Vsync (Zink)", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Synchronizes frame rate to device refresh rate to eliminate tearing", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
-            }
-            Switch(
-                checked = vsyncInZink,
-                onCheckedChange = {
-                    onVsyncInZinkChange(it)
-                    AllSettings.vsyncInZink.save(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFF3C8527),
-                    uncheckedThumbColor = Color(0xFF888888),
-                    uncheckedTrackColor = Color(0xFF333333)
-                )
-            )
-        }
+                // Vulkan Driver & Turnip Selection
+                Column {
+                    val context = LocalContext.current
+                    val importDriverLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.GetContent()
+                    ) { uri: Uri? ->
+                        if (uri != null) {
+                            val customDir = File(context.filesDir, "custom_drivers").apply { mkdirs() }
+                            val name = uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "custom_turnip.so"
+                            val target = File(customDir, name)
+                            runCatching {
+                                context.contentResolver.openInputStream(uri)?.use { input ->
+                                    target.outputStream().use { output -> input.copyTo(output) }
+                                }
+                                DriverPluginManager.initDriver(context)
+                                onVulkanDriverChange(name)
+                                AllSettings.vulkanDriver.save(name)
+                                Toast.makeText(context, "Loaded custom driver: $name", Toast.LENGTH_SHORT).show()
+                            }.onFailure { e ->
+                                Toast.makeText(context, "Import failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
 
-        // 10. Shader Logging / Dump
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Shader Logging & Dump", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Dumps compiled shaders to storage for debugging graphical glitches", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Turnip Vulkan Driver", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(Color(0xFF2E6930))
+                                .clickable { importDriverLauncher.launch("*/*") }
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text("+ IMPORT TURNIP", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 9.sp)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    val drivers = remember {
+                        DriverPluginManager.initDriver(context)
+                        DriverPluginManager.getDriverList()
+                    }
+                    for (driver in drivers) {
+                        val isDriverSel = selectedVulkanDriver == driver.id || (selectedVulkanDriver.isBlank() && driver.isLauncher)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(if (isDriverSel) Color(0xFF263820) else Color(0xFF242426))
+                                .border(
+                                    BorderStroke(1.dp, if (isDriverSel) Color(0xFF55FF55) else Color(0xFF383838)),
+                                    RoundedCornerShape(2.dp)
+                                )
+                                .clickable {
+                                    onVulkanDriverChange(driver.id)
+                                    AllSettings.vulkanDriver.save(driver.id)
+                                }
+                                .padding(horizontal = 10.dp, vertical = 7.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = driver.name.ifBlank { driver.id },
+                                    color = if (isDriverSel) Color(0xFF55FF55) else Color.White,
+                                    fontFamily = MinecraftFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.5.sp
+                                )
+                                Text(
+                                    text = driver.summary ?: if (driver.isLauncher) "Bundled Turnip driver for Adreno GPUs" else "Custom driver: ${driver.path}",
+                                    color = if (isDriverSel) Color(0xFFCCCCCC) else Color(0xFF888888),
+                                    fontFamily = MinecraftFontFamily,
+                                    fontSize = 9.5.sp
+                                )
+                            }
+                            RadioButton(
+                                selected = isDriverSel,
+                                onClick = {
+                                    onVulkanDriverChange(driver.id)
+                                    AllSettings.vulkanDriver.save(driver.id)
+                                },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = Color(0xFF55FF55),
+                                    unselectedColor = Color(0xFF666666)
+                                )
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+                }
+
+                // Use System Vulkan Driver
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Use System Vulkan Driver", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text("Bypasses Turnip and uses Qualcomm/Mali system driver", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                    }
+                    Switch(
+                        checked = zinkPreferSystemDriver,
+                        onCheckedChange = {
+                            onZinkPreferSystemDriverChange(it)
+                            AllSettings.zinkPreferSystemDriver.save(it)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF3C8527),
+                            uncheckedThumbColor = Color(0xFF888888),
+                            uncheckedTrackColor = Color(0xFF333333)
+                        )
+                    )
+                }
+
+                // Vsync in Zink
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Vsync (Zink)", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text("Syncs frame rate to screen refresh rate", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                    }
+                    Switch(
+                        checked = vsyncInZink,
+                        onCheckedChange = {
+                            onVsyncInZinkChange(it)
+                            AllSettings.vsyncInZink.save(it)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF3C8527),
+                            uncheckedThumbColor = Color(0xFF888888),
+                            uncheckedTrackColor = Color(0xFF333333)
+                        )
+                    )
+                }
+
+                // Shader Logging / Dump
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Shader Logging & Dump", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text("Dumps compiled shaders to storage for debugging", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                    }
+                    Switch(
+                        checked = dumpShaders,
+                        onCheckedChange = {
+                            onDumpShadersChange(it)
+                            AllSettings.dumpShaders.save(it)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF3C8527),
+                            uncheckedThumbColor = Color(0xFF888888),
+                            uncheckedTrackColor = Color(0xFF333333)
+                        )
+                    )
+                }
             }
-            Switch(
-                checked = dumpShaders,
-                onCheckedChange = {
-                    onDumpShadersChange(it)
-                    AllSettings.dumpShaders.save(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFF3C8527),
-                    uncheckedThumbColor = Color(0xFF888888),
-                    uncheckedTrackColor = Color(0xFF333333)
-                )
-            )
         }
     }
 }
@@ -2352,13 +2661,7 @@ private fun ControlsSettingsTab(
 @Composable
 private fun LauncherSettingsTab(
     isFullScreen: Boolean,
-    onFullScreenChange: (Boolean) -> Unit,
-    backgroundBlurVal: Float,
-    onBackgroundBlurChange: (Float) -> Unit,
-    animateSpeedVal: Float,
-    onAnimateSpeedChange: (Float) -> Unit,
-    seasonalEffects: Boolean,
-    onSeasonalEffectsChange: (Boolean) -> Unit
+    onFullScreenChange: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -2367,7 +2670,7 @@ private fun LauncherSettingsTab(
             .background(Color(0xFF1E1E20))
             .border(BorderStroke(1.dp, Color(0xFF333333)), RoundedCornerShape(3.dp))
             .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -2393,51 +2696,130 @@ private fun LauncherSettingsTab(
             )
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text("Seasonal & Festival Effects", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
-                Text("Show snowflake & holiday particle effects", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
-            }
-            Switch(
-                checked = seasonalEffects,
-                onCheckedChange = {
-                    onSeasonalEffectsChange(it)
-                    AllSettings.launcherFestivalEffects.save(it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = Color(0xFF3C8527),
-                    uncheckedThumbColor = Color(0xFF888888),
-                    uncheckedTrackColor = Color(0xFF333333)
-                )
-            )
-        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color(0xFF2E2E30))
+        )
 
+        // Launcher Font Customizer
         Column {
+            val context = LocalContext.current
+            val importFontLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri: Uri? ->
+                if (uri != null) {
+                    val fontDir = File(context.filesDir, "fonts").apply { mkdirs() }
+                    val name = uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "custom_font.ttf"
+                    val target = File(fontDir, name)
+                    runCatching {
+                        context.contentResolver.openInputStream(uri)?.use { input ->
+                            target.outputStream().use { output -> input.copyTo(output) }
+                        }
+                        FontManager.setFont(FontManager.FONT_CUSTOM, target.absolutePath)
+                        Toast.makeText(context, "Loaded custom font: $name", Toast.LENGTH_SHORT).show()
+                    }.onFailure { e ->
+                        Toast.makeText(context, "Failed to load font: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("UI Blur Intensity", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
-                Text("${backgroundBlurVal.toInt()} px", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                    Text("Launcher Font Style", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    Text("Select a preset typography or load custom font", color = Color(0xFF888888), fontFamily = MinecraftFontFamily, fontSize = 10.sp, lineHeight = 14.sp)
+                }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(Color(0xFF2E6930))
+                        .clickable { importFontLauncher.launch("*/*") }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        "+ BROWSE FONT",
+                        color = Color(0xFF55FF55),
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 9.sp,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
             }
-            Slider(
-                value = backgroundBlurVal,
-                onValueChange = onBackgroundBlurChange,
-                onValueChangeFinished = {
-                    AllSettings.backgroundBlur.save(backgroundBlurVal.toInt())
-                },
-                valueRange = 0f..25f,
-                colors = SliderDefaults.colors(
-                    thumbColor = Color(0xFF55FF55),
-                    activeTrackColor = Color(0xFF3C8527),
-                    inactiveTrackColor = Color(0xFF333333)
-                )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val fontOptions = listOf(
+                Triple(FontManager.FONT_MINECRAFT, "Minecraft Pixel", "Authentic retro Minecraft pixel font"),
+                Triple(FontManager.FONT_SANS, "Modern Sans", "Clean, high-legibility modern sans-serif font"),
+                Triple(FontManager.FONT_MONOSPACE, "Monospace Code", "Developer monospaced terminal font"),
+                Triple(FontManager.FONT_SERIF, "Serif Classical", "Book-style elegant serif typeface"),
+                Triple(FontManager.FONT_SYSTEM, "System Default", "Native Android operating system font"),
+                Triple(FontManager.FONT_CUSTOM, "Custom Font", FontManager.customFontPath.ifBlank { "Tap to choose a .ttf or .otf file from storage" })
             )
+
+            fontOptions.forEach { (type, name, desc) ->
+                val isFontSel = FontManager.currentFontType == type
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(if (isFontSel) Color(0xFF263820) else Color(0xFF242426))
+                        .border(
+                            BorderStroke(1.dp, if (isFontSel) Color(0xFF55FF55) else Color(0xFF383838)),
+                            RoundedCornerShape(2.dp)
+                        )
+                        .clickable {
+                            if (type == FontManager.FONT_CUSTOM) {
+                                importFontLauncher.launch("*/*")
+                            } else {
+                                FontManager.setFont(type, "")
+                                Toast.makeText(context, "Switched font to $name", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        .padding(horizontal = 10.dp, vertical = 7.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = name,
+                            color = if (isFontSel) Color(0xFF55FF55) else Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.5.sp
+                        )
+                        Text(
+                            text = desc,
+                            color = if (isFontSel) Color(0xFFCCCCCC) else Color(0xFF888888),
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 10.sp,
+                            lineHeight = 14.sp
+                        )
+                    }
+                    RadioButton(
+                        selected = isFontSel,
+                        onClick = {
+                            if (type == FontManager.FONT_CUSTOM) {
+                                importFontLauncher.launch("*/*")
+                            } else {
+                                FontManager.setFont(type, "")
+                                Toast.makeText(context, "Switched font to $name", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        colors = RadioButtonDefaults.colors(
+                            selectedColor = Color(0xFF55FF55),
+                            unselectedColor = Color(0xFF666666)
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
         }
     }
 }
@@ -2765,6 +3147,40 @@ private fun JavaSettingsTab(
     onSelectJava: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var isImporting by remember { mutableStateOf(false) }
+    var refreshKey by remember { mutableIntStateOf(0) }
+
+    val importJreLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val rawName = uri.lastPathSegment?.substringAfterLast('/')?.substringAfterLast(':') ?: "custom_jre"
+            val cleanName = rawName
+                .removeSuffix(".tar.xz")
+                .removeSuffix(".tar.gz")
+                .removeSuffix(".tgz")
+                .removeSuffix(".zip")
+                .removeSuffix(".tar")
+                .removeSuffix(".xz")
+            scope.launch(Dispatchers.IO) {
+                isImporting = true
+                val success = com.movtery.zalithlauncher.game.multirt.JreDownloadManager.importCustomJre(context, uri, cleanName)
+                withContext(Dispatchers.Main) {
+                    isImporting = false
+                    if (success) {
+                        refreshKey++
+                        onSelectJava(cleanName)
+                        AllSettings.javaRuntime.save(cleanName)
+                        Toast.makeText(context, "Successfully imported $cleanName!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Failed to import custom JRE archive", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -2774,21 +3190,64 @@ private fun JavaSettingsTab(
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(
-            text = "INSTALLED JAVA RUNTIMES",
-            color = Color.White,
-            fontFamily = MinecraftFontFamily,
-            fontWeight = FontWeight.Bold,
-            fontSize = 13.sp
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                Text(
+                    text = "INSTALLED JAVA RUNTIMES",
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp
+                )
+                Text(
+                    text = "Import archives (.tar.xz, .zip, .tar.gz) or pick runtime",
+                    color = Color(0xFF888888),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 10.sp,
+                    lineHeight = 14.sp
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(Color(0xFF2E6930))
+                    .clickable { importJreLauncher.launch("*/*") }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(
+                    "+ IMPORT JRE",
+                    color = Color(0xFF55FF55),
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 9.sp,
+                    maxLines = 1,
+                    softWrap = false
+                )
+            }
+        }
 
-        val runtimes = remember { RuntimesManager.getRuntimes() }
+        if (isImporting) {
+            Text(
+                text = "Unpacking and registering runtime archive...",
+                color = Color(0xFF55FF55),
+                fontFamily = MinecraftFontFamily,
+                fontSize = 10.sp,
+                lineHeight = 14.sp
+            )
+        }
+
+        val runtimes = remember(refreshKey) { RuntimesManager.getRuntimes(forceLoad = true) }
         if (runtimes.isEmpty()) {
             Text(
                 text = "No custom Java runtimes installed. Internal runtime will be used automatically.",
                 color = Color(0xFF888888),
                 fontFamily = MinecraftFontFamily,
-                fontSize = 11.5.sp
+                fontSize = 11.5.sp,
+                lineHeight = 15.sp
             )
         } else {
             runtimes.forEach { rt ->
@@ -2811,7 +3270,7 @@ private fun JavaSettingsTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = rt.name,
                             color = if (isSelected) Color(0xFF55FF55) else Color.White,
@@ -2823,7 +3282,8 @@ private fun JavaSettingsTab(
                             text = "Java Version: ${rt.versionString ?: rt.javaVersion} • ${rt.arch ?: "default"}",
                             color = Color(0xFF888888),
                             fontFamily = MinecraftFontFamily,
-                            fontSize = 10.sp
+                            fontSize = 10.sp,
+                            lineHeight = 14.sp
                         )
                     }
                     if (isSelected) {
@@ -2843,7 +3303,9 @@ private fun LayoutsSettingsTab(
     onControlsOpacityChange: (Int) -> Unit,
     onSelectLayout: (String) -> Unit,
     onLaunchEditor: () -> Unit,
-    onCreateNewLayout: () -> Unit
+    onCreateNewLayout: () -> Unit,
+    onImportControls: () -> Unit,
+    onExportLayout: (ControlData) -> Unit
 ) {
     val context = LocalContext.current
     val locale = LocalConfiguration.current.locales[0]
@@ -2900,27 +3362,56 @@ private fun LayoutsSettingsTab(
             )
         }
 
-        // Create New Layout & Header Row
+        // Layout Actions Header: + NEW LAYOUT | IMPORT CONTROLS | EXPORT ACTIVE
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "SAVED LAYOUTS (${controlLayouts.size})",
-                color = Color(0xFFAAAAAA),
-                fontFamily = MinecraftFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.5.sp
-            )
             MinecraftButton(
                 onClick = onCreateNewLayout,
                 style = MinecraftButtonStyle.STONE,
-                text = "+ NEW LAYOUT",
-                fontSize = 9.5.sp,
-                modifier = Modifier.height(28.dp)
+                text = "+ NEW",
+                fontSize = 10.sp,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(34.dp)
+            )
+            MinecraftButton(
+                onClick = onImportControls,
+                style = MinecraftButtonStyle.STONE,
+                text = "IMPORT",
+                fontSize = 10.sp,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(34.dp)
+            )
+            MinecraftButton(
+                onClick = {
+                    val active = controlLayouts.find { it.file.name == activeControlLayoutName }
+                        ?: controlLayouts.find { it.file.name == "default_layout.json" }
+                        ?: controlLayouts.firstOrNull()
+                    if (active != null) {
+                        onExportLayout(active)
+                    } else {
+                        Toast.makeText(context, "No active layout to export", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                style = MinecraftButtonStyle.STONE,
+                text = "EXPORT",
+                fontSize = 10.sp,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(34.dp)
             )
         }
+
+        Text(
+            text = "SAVED LAYOUTS (${controlLayouts.size})",
+            color = Color(0xFFAAAAAA),
+            fontFamily = MinecraftFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 11.5.sp
+        )
 
         // Layout List
         if (controlLayouts.isEmpty()) {
@@ -2969,8 +3460,35 @@ private fun LayoutsSettingsTab(
                             fontSize = 9.5.sp
                         )
                     }
-                    if (isSelected) {
-                        Text("ACTIVE", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        if (isSelected) {
+                            Text("ACTIVE", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        MinecraftButton(
+                            onClick = { onExportLayout(data) },
+                            style = MinecraftButtonStyle.STONE,
+                            text = "SHARE",
+                            fontSize = 9.sp,
+                            modifier = Modifier.height(26.dp)
+                        )
+
+                        if (data.file.name != "default_layout.json") {
+                            MinecraftButton(
+                                onClick = {
+                                    ControlManager.deleteControl(data)
+                                    Toast.makeText(context, "Deleted ${data.file.name}", Toast.LENGTH_SHORT).show()
+                                },
+                                style = MinecraftButtonStyle.RED,
+                                text = "DEL",
+                                fontSize = 9.sp,
+                                modifier = Modifier.height(26.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -3007,10 +3525,10 @@ private fun AboutSettingsTab() {
         )
 
         Text(
-            text = "v1.0.0 (Release)",
+            text = "v1.2.0 (Release)",
             color = Color(0xFF55FF55),
             fontFamily = MinecraftFontFamily,
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             fontWeight = FontWeight.Bold
         )
 
@@ -3021,15 +3539,71 @@ private fun AboutSettingsTab() {
             fontSize = 11.sp
         )
 
-        Text(
-            text = "Cubiq is an open-source Minecraft Java Edition launcher for Android built with Jetpack Compose.",
-            color = Color(0xFFAAAAAA),
-            fontFamily = MinecraftFontFamily,
-            fontSize = 11.sp,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-        )
+        // Zalith Launcher 2 Fork Attribution Notice
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(3.dp))
+                .background(Color(0xFF161618))
+                .border(BorderStroke(1.dp, Color(0xFF333336)), RoundedCornerShape(3.dp))
+                .padding(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "GPLv3 FORK ATTRIBUTION",
+                    color = Color(0xFFFFAA00),
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp
+                )
+                Text(
+                    text = "Cubiq Launcher is an independent, unofficial fork of Zalith Launcher 2 created by MovTery & contributors, licensed under the GNU General Public License v3.0 (GPLv3).\nAll modifications, improvements, and custom modules are published under GPLv3.",
+                    color = Color(0xFFAAAAAA),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 10.sp,
+                    lineHeight = 14.sp
+                )
+            }
+        }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        // v1.2.0 Changelog & Features
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(3.dp))
+                .background(Color(0xFF161618))
+                .border(BorderStroke(1.dp, Color(0xFF223322)), RoundedCornerShape(3.dp))
+                .padding(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "WHAT'S NEW IN v1.2.0",
+                    color = Color(0xFF55FF55),
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.5.sp
+                )
+                val changes = listOf(
+                    "3D Minecraft PC Java Edition responsive UI & Mojang content feed",
+                    "Multi-Renderer Engine (Krypton, Kopper Zink, GL4ES, Angle, VirGL)",
+                    "On-demand JRE engine (decreased app footprint by over 60%)",
+                    "Persistent Crash Recovery System with 1-click sharing",
+                    "Custom Typography Hub (Pixel, Modern Sans, Monospace, Serif)",
+                    "Maximum FPS optimizations with Sustained Performance mode"
+                )
+                changes.forEach { item ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text("•", color = Color(0xFF55FF55), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(item, color = Color(0xFFCCCCCC), fontFamily = MinecraftFontFamily, fontSize = 10.sp, lineHeight = 13.5.sp)
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),

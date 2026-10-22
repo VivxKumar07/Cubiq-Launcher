@@ -19,13 +19,17 @@
 package com.movtery.layer_controller.layout
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -172,7 +176,12 @@ internal fun JoystickWidgetRenderer(
         }
     }
 
-    if (visible) {
+    val isBedrockJoystick = (data.joystickStyleId?.contains("bedrock", ignoreCase = true) == true) ||
+            (data.joystickStyleId?.contains("pe", ignoreCase = true) == true) ||
+            (joystickStyle?.name?.contains("bedrock", ignoreCase = true) == true) ||
+            (joystickStyle?.name?.contains("pocket edition", ignoreCase = true) == true)
+
+    if (visible && !data.isTemporarilyHidden) {
         Box(
             modifier = Modifier
                 .onSizeChanged { size ->
@@ -220,46 +229,83 @@ internal fun JoystickWidgetRenderer(
                 },
             contentAlignment = Alignment.Center
         ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
+            if (isBedrockJoystick) {
+                Image(
+                    painter = painterResource(id = com.movtery.layer_controller.R.drawable.joystick_base),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(alpha)
+                )
+
                 if (initialized) {
-                    val minSide = minOf(size.width, size.height)
-                    val bgCenter = Offset(size.width / 2f, size.height / 2f)
-
-                    // 背景层
-                    drawBackgroundLayer(
-                        layoutDirection = layoutDirection,
-                        size = Size(size.width, size.height),
-                        shape = backgroundShape,
-                        backgroundColor = currentBackgroundColor,
-                        borderColor = currentBorderColor,
-                        borderWidthPx = (minSide * borderWidthRatio).coerceAtLeast(0f)
-                    )
-
-                    // 摇杆头
+                    val minSide = minOf(currentSize.width.toFloat(), currentSize.height.toFloat())
                     val knobSize = minSide * joystickSizeRatio
-                    val knobCenter = Offset(
-                        bgCenter.x + data.knobOffset.x,
-                        bgCenter.y + data.knobOffset.y
-                    )
-                    drawJoystick(
-                        layoutDirection = layoutDirection,
-                        color = when {
-                            data.isLocked -> currentJoystickLockedColor
-                            data.canLockState -> currentJoystickCanLockColor
-                            else -> currentJoystickColor
-                        },
-                        center = knobCenter,
-                        size = knobSize,
-                        shape = joystickShape
+                    val knobSizeDp = with(density) { knobSize.toDp() }
+                    val knobOffsetX = with(density) { data.knobOffset.x.toDp() }
+                    val knobOffsetY = with(density) { data.knobOffset.y.toDp() }
+
+                    Image(
+                        painter = painterResource(id = com.movtery.layer_controller.R.drawable.joystick_handle),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(knobSizeDp)
+                            .offset(x = knobOffsetX, y = knobOffsetY)
+                            .alpha(alpha)
                     )
 
-                    // 绘制锁定标记
                     if (data.isLocked) {
-                        drawCircle(
-                            color = currentLockMarkColor,
-                            center = Offset(bgCenter.x, 0f),
-                            radius = 4f
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            drawCircle(
+                                color = currentLockMarkColor,
+                                center = Offset(size.width / 2f, 0f),
+                                radius = 4f
+                            )
+                        }
+                    }
+                }
+            } else {
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    if (initialized) {
+                        val minSide = minOf(size.width, size.height)
+                        val bgCenter = Offset(size.width / 2f, size.height / 2f)
+
+                        // 背景层
+                        drawBackgroundLayer(
+                            layoutDirection = layoutDirection,
+                            size = Size(size.width, size.height),
+                            shape = backgroundShape,
+                            backgroundColor = currentBackgroundColor,
+                            borderColor = currentBorderColor,
+                            borderWidthPx = (minSide * borderWidthRatio).coerceAtLeast(0f)
                         )
+
+                        // 摇杆头
+                        val knobSize = minSide * joystickSizeRatio
+                        val knobCenter = Offset(
+                            bgCenter.x + data.knobOffset.x,
+                            bgCenter.y + data.knobOffset.y
+                        )
+                        drawJoystick(
+                            layoutDirection = layoutDirection,
+                            color = when {
+                                data.isLocked -> currentJoystickLockedColor
+                                data.canLockState -> currentJoystickCanLockColor
+                                else -> currentJoystickColor
+                            },
+                            center = knobCenter,
+                            size = knobSize,
+                            shape = joystickShape
+                        )
+
+                        // 绘制锁定标记
+                        if (data.isLocked) {
+                            drawCircle(
+                                color = currentLockMarkColor,
+                                center = Offset(bgCenter.x, 0f),
+                                radius = 4f
+                            )
+                        }
                     }
                 }
             }

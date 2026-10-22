@@ -49,11 +49,12 @@ class ObservableNormalData(data: NormalData) : ObservableWidget() {
     var isSwipple by mutableStateOf(data.isSwipple)
     var isPenetrable by mutableStateOf(data.isPenetrable)
     var isToggleable by mutableStateOf(data.isToggleable)
+    var opacity by mutableStateOf(data.opacity)
 
     override val behavior: InteractionBehavior
         get() = InteractionBehavior.from(
             isSwipple = isSwipple,
-            isToggleable = isToggleable
+            isToggleable = isToggleable || text.default.equals("SPRINT", ignoreCase = true)
         )
 
     /**
@@ -76,6 +77,68 @@ class ObservableNormalData(data: NormalData) : ObservableWidget() {
                 isPressed = true
             }
         }
+
+        // GUI Button: clicking a button labeled "GUI" toggles visibility for all other controls
+        val isGuiButton = text.default.equals("GUI", ignoreCase = true) ||
+                text.matchQueue.any { it.value.equals("GUI", ignoreCase = true) } ||
+                icon.equals("gui", ignoreCase = true)
+        if (isGuiButton && isPressed) {
+            val otherLayers = allLayers.filter { layer ->
+                !layer.name.equals("gui", ignoreCase = true) &&
+                        layer.normalButtons.value.none { it.uuid == this.uuid }
+            }
+            val shouldHide = otherLayers.any { !it.hide } ||
+                    allLayers.any { l -> l.normalButtons.value.any { b -> b.uuid != this.uuid && !b.isTemporarilyHidden } }
+
+            otherLayers.forEach { layer ->
+                layer.hide = shouldHide
+            }
+            allLayers.forEach { layer ->
+                layer.normalButtons.value.forEach { b ->
+                    if (b.uuid != this.uuid) b.isTemporarilyHidden = shouldHide
+                }
+                layer.textBoxes.value.forEach { t ->
+                    t.isTemporarilyHidden = shouldHide
+                }
+                layer.joystickButtons.value.forEach { j ->
+                    j.isTemporarilyHidden = shouldHide
+                }
+            }
+        }
+
+        // Inventory Button: clicking three dots / INV hides overlapping movement controls while inventory is open,
+        // and restores them when closing inventory.
+        val isInvButton = text.default.equals("INV", ignoreCase = true) ||
+                text.default == "..." ||
+                text.default.equals("INVENTORY", ignoreCase = true)
+        if (isInvButton && isPressed) {
+            val movementLayers = allLayers.filter { layer ->
+                layer.name.equals("move", ignoreCase = true) ||
+                        layer.name.contains("joystick", ignoreCase = true) ||
+                        layer.name.contains("dpad", ignoreCase = true)
+            }
+            if (movementLayers.isNotEmpty()) {
+                val shouldHide = movementLayers.any { !it.hide }
+                movementLayers.forEach { layer ->
+                    layer.hide = shouldHide
+                }
+            }
+        }
+
+        // Esc button: closes inventory / pause menu in MC, so restore movement layers
+        val isEscButton = text.default.equals("ESC", ignoreCase = true) ||
+                clickEvents.any { it.key == "GLFW_KEY_ESCAPE" }
+        if (isEscButton && isPressed) {
+            val movementLayers = allLayers.filter { layer ->
+                layer.name.equals("move", ignoreCase = true) ||
+                        layer.name.contains("joystick", ignoreCase = true) ||
+                        layer.name.contains("dpad", ignoreCase = true)
+            }
+            movementLayers.forEach { layer ->
+                layer.hide = false
+            }
+        }
+
         eventHandler.onKeyPressed(clickEvents, isPressed) { event ->
             eventHandler.onSwitchLayer(
                 clickEvent = event,
@@ -222,7 +285,8 @@ class ObservableNormalData(data: NormalData) : ObservableWidget() {
             _clickEvents = clickEvents.filterValidEvent(),
             isSwipple = isSwipple,
             isPenetrable = isPenetrable,
-            isToggleable = isToggleable
+            isToggleable = isToggleable,
+            opacity = opacity
         )
     }
 }

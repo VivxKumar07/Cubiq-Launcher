@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import com.movtery.zalithlauncher.utils.logging.Logger
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -312,30 +313,28 @@ fun LaunchGameOperation(
                 Renderers.setCurrentRenderer(version.getRenderer())
                 var currentRenderer = Renderers.getCurrentRenderer()
 
-                val mcVer = version.getVersionInfo()!!.minecraftVersion
+                val mcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
 
                 // 设备完全支持 Vulkan 时跳过渲染器的版本支持检查
                 val hasVulkan = version.hasVulkanBackend()
                 val currentRendererId = currentRenderer.getRendererId().lowercase()
                 val rendererRequiresVulkan = currentRenderer == KopperZinkRenderer || currentRendererId.contains("zink")
-                val needsVulkan = hasVulkan || rendererRequiresVulkan
 
-                val isVulkanSupported = if (needsVulkan) {
-                    ensureVulkanSupported(version)
-                } else {
-                    true
+                val isVulkanSupported = when {
+                    hasVulkan -> ensureVulkanSupported(version)
+                    rendererRequiresVulkan -> {
+                        // Zink translation layer requires Vulkan 1.2+ on the device, independent of MC 26.2+ profile
+                        runCatching {
+                            val caps = com.movtery.zalithlauncher.utils.device.VulkanChecker.checkCapabilities(null, null, null)
+                            caps != null && caps.isVersionSupported
+                        }.getOrDefault(true)
+                    }
+                    else -> true
                 }
 
-                if (needsVulkan && !isVulkanSupported) {
-                    // 设备不支持 Vulkan，而该版本带有 Vulkan 后端或当前渲染器需要 Vulkan。
-                    // 自动平滑回退到无需 Vulkan 的 Krypton Wrapper (NGGL4ES)
-                    Renderers.setCurrentRenderer(NGGL4ESRenderer.getUniqueIdentifier())
-                    currentRenderer = Renderers.getCurrentRenderer()
-                    android.widget.Toast.makeText(
-                        activity,
-                        "Non-Vulkan device detected: Switched to Krypton Wrapper (OpenGL ES 3) for compatibility!",
-                        android.widget.Toast.LENGTH_LONG
-                    ).show()
+                if (rendererRequiresVulkan && !isVulkanSupported) {
+                    // Only fallback if the chosen renderer strictly requires Vulkan and Vulkan is missing
+                    Logger.warning("LaunchCheck", "Vulkan is not supported for renderer ${currentRenderer.getRendererName()}")
                 }
 
                 if (!hasVulkan || !isVulkanSupported) {

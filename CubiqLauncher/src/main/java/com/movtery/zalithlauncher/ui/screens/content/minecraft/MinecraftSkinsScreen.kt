@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,6 +57,7 @@ import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.ui.components.MinecraftButton
 import com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle
+import com.movtery.zalithlauncher.ui.components.verticalScrollWithBar
 import com.movtery.zalithlauncher.ui.screens.content.elements.PlayerFace
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import kotlinx.coroutines.Dispatchers
@@ -138,112 +140,86 @@ fun MinecraftSkinsScreen(
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFF141414))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Header
-            Text(
-                text = "SKINS & WARDROBE",
-                color = Color.White,
-                fontFamily = MinecraftFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
-            Text(
-                text = "Full body 3D preview & official Minecraft skin library",
-                color = Color(0xFF888888),
-                fontFamily = MinecraftFontFamily,
-                fontSize = 11.sp
-            )
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val scrollState = rememberScrollState()
 
-            Spacer(modifier = Modifier.height(12.dp))
+    val activeModelType = if (isSlimModel) com.movtery.zalithlauncher.game.account.wardrobe.SkinModelType.ALEX else com.movtery.zalithlauncher.game.account.wardrobe.SkinModelType.STEVE
+    val previewSkinFile = if (selectedPreset == "Current") activeSkinFile else null
+    val previewSkinUrl = when {
+        selectedPreset == "Current" && activeSkinFile == null && account != null && account.username.isNotBlank() -> "https://minotar.net/skin/${account.username}"
+        selectedPreset != "Current" && selectedPreset != "Steve" && selectedPreset != "Alex" -> "https://minotar.net/skin/$selectedPreset"
+        selectedPreset == "Alex" -> "https://minotar.net/skin/MHF_Alex"
+        selectedPreset == "Steve" -> "https://minotar.net/skin/MHF_Steve"
+        else -> null
+    }
 
-            // Centered 3D Player Stage (Interactive 360° Drag Orbit & Real 3D Model Mesh)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(280.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFF24272B),
-                                Color(0xFF181A1C),
-                                Color(0xFF101112)
-                            )
+    @Composable
+    fun Stage3DPreview(modifier: Modifier = Modifier) {
+        Box(
+            modifier = modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF24272B),
+                            Color(0xFF181A1C),
+                            Color(0xFF101112)
                         )
                     )
-                    .border(BorderStroke(1.5.dp, Color(0xFF383838)), RoundedCornerShape(4.dp)),
-                contentAlignment = Alignment.Center
+                )
+                .border(BorderStroke(1.5.dp, Color(0xFF383838)), RoundedCornerShape(4.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            com.movtery.zalithlauncher.ui.components.SkinPreview3D(
+                skinFile = previewSkinFile,
+                skinUrl = previewSkinUrl,
+                capeFile = null,
+                modelType = activeModelType,
+                modifier = Modifier.fillMaxSize(),
+                interactionEnabled = true,
+                refreshKey = remember(selectedPreset, isSlimModel, activeSkinFile, previewSkinUrl) { "$selectedPreset-$isSlimModel-${activeSkinFile?.path}-$previewSkinUrl" }
+            )
+
+            // Overlay Info Badge at Bottom
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Interactive 3D Skinview3D WebGL Player Stage with 360° rotation & idle animation
-                val activeModelType = if (isSlimModel) com.movtery.zalithlauncher.game.account.wardrobe.SkinModelType.ALEX else com.movtery.zalithlauncher.game.account.wardrobe.SkinModelType.STEVE
-
-                val previewSkinFile = if (selectedPreset == "Current") activeSkinFile else null
-                val previewSkinUrl = when {
-                    selectedPreset == "Current" && activeSkinFile == null && account != null && account.username.isNotBlank() -> "https://minotar.net/skin/${account.username}"
-                    selectedPreset != "Current" && selectedPreset != "Steve" && selectedPreset != "Alex" -> "https://minotar.net/skin/$selectedPreset"
-                    selectedPreset == "Alex" -> "https://minotar.net/skin/MHF_Alex"
-                    selectedPreset == "Steve" -> "https://minotar.net/skin/MHF_Steve"
-                    else -> null
-                }
-
-                com.movtery.zalithlauncher.ui.components.SkinPreview3D(
-                    skinFile = previewSkinFile,
-                    skinUrl = previewSkinUrl,
-                    capeFile = null,
-                    modelType = activeModelType,
-                    modifier = Modifier.fillMaxSize(),
-                    interactionEnabled = true,
-                    refreshKey = remember(selectedPreset, isSlimModel, activeSkinFile, previewSkinUrl) { "$selectedPreset-$isSlimModel-${activeSkinFile?.path}-$previewSkinUrl" }
+                Text(
+                    text = if (selectedPreset == "Current") (account?.username ?: "Player (Active)") else selectedPreset,
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.5.sp
                 )
 
-                // Overlay Info Badge at Bottom
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = if (selectedPreset == "Current") (account?.username ?: "Player (Active)") else selectedPreset,
-                        color = Color.White,
-                        fontFamily = MinecraftFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.5.sp
-                    )
-
-                    Text(
-                        text = if (isSlimModel) "Slim Model (3px Arms) • Drag to Rotate 360°" else "Classic Model (4px Arms) • Drag to Rotate 360°",
-                        color = Color(0xFF55FF55),
-                        fontFamily = MinecraftFontFamily,
-                        fontSize = 10.sp
-                    )
-                }
+                Text(
+                    text = if (isSlimModel) "Slim Model (3px Arms) • Drag 360°" else "Classic Model (4px Arms) • Drag 360°",
+                    color = Color(0xFF55FF55),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 9.5.sp
+                )
             }
+        }
+    }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
+    @Composable
+    fun WardrobeControls(modifier: Modifier = Modifier) {
+        Column(
+            modifier = modifier,
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
             // Player Model Selector (Classic vs Slim)
             Text(
                 text = "PLAYER MODEL",
                 color = Color(0xFFAAAAAA),
                 fontFamily = MinecraftFontFamily,
                 fontWeight = FontWeight.Bold,
-                fontSize = 11.sp,
-                modifier = Modifier.align(Alignment.Start)
+                fontSize = 11.sp
             )
-
-            Spacer(modifier = Modifier.height(4.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -308,8 +284,6 @@ fun MinecraftSkinsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
             // Action Buttons: BROWSE SKIN FILE (.PNG)
             MinecraftButton(
                 onClick = {
@@ -318,13 +292,11 @@ fun MinecraftSkinsScreen(
                 },
                 style = MinecraftButtonStyle.GREEN,
                 text = "+ BROWSE CUSTOM SKIN (.PNG)",
-                fontSize = 12.sp,
+                fontSize = 11.5.sp,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(42.dp)
+                    .height(40.dp)
             )
-
-            Spacer(modifier = Modifier.height(14.dp))
 
             // Preset Character Skins Library
             Text(
@@ -332,11 +304,8 @@ fun MinecraftSkinsScreen(
                 color = Color(0xFFAAAAAA),
                 fontFamily = MinecraftFontFamily,
                 fontWeight = FontWeight.Bold,
-                fontSize = 11.sp,
-                modifier = Modifier.align(Alignment.Start)
+                fontSize = 11.sp
             )
-
-            Spacer(modifier = Modifier.height(6.dp))
 
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
@@ -374,7 +343,7 @@ fun MinecraftSkinsScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Box(
                                 modifier = Modifier
-                                    .size(44.dp)
+                                    .size(42.dp)
                                     .clip(RoundedCornerShape(2.dp))
                                     .background(Color(0xFF28282A)),
                                 contentAlignment = Alignment.Center
@@ -408,7 +377,7 @@ fun MinecraftSkinsScreen(
                                 text = if (isCurrentSkin) "CURRENT" else label,
                                 color = if (isSelected) Color(0xFF55FF55) else Color.White,
                                 fontFamily = MinecraftFontFamily,
-                                fontSize = 10.5.sp,
+                                fontSize = 10.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                             )
                             if (isSelected) {
@@ -416,18 +385,97 @@ fun MinecraftSkinsScreen(
                                     text = "ACTIVE",
                                     color = Color(0xFF55FF55),
                                     fontFamily = MinecraftFontFamily,
-                                    fontSize = 8.5.sp,
+                                    fontSize = 8.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             } else {
-                                Spacer(modifier = Modifier.height(11.dp))
+                                Spacer(modifier = Modifier.height(10.dp))
                             }
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF141414))
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+    ) {
+        if (isLandscape) {
+            // Landscape 2-Column Layout: Left Stage (Interactive), Right Controls (Scrollable)
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Left 3D Stage (Fixed width, full height)
+                Column(
+                    modifier = Modifier
+                        .width(260.dp)
+                        .fillMaxHeight()
+                ) {
+                    Text(
+                        text = "SKINS & WARDROBE",
+                        color = Color.White,
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Stage3DPreview(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
+                }
+
+                // Right Scrollable Controls
+                WardrobeControls(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .verticalScrollWithBar(scrollState)
+                )
+            }
+        } else {
+            // Portrait Layout: Single Column
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScrollWithBar(scrollState),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Header
+                Text(
+                    text = "SKINS & WARDROBE",
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
+                Text(
+                    text = "Full body 3D preview & official Minecraft skin library",
+                    color = Color(0xFF888888),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 11.sp
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Stage3DPreview(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(280.dp)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                WardrobeControls(modifier = Modifier.fillMaxWidth())
+            }
         }
     }
 }

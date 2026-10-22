@@ -94,36 +94,13 @@ class ControlEditorActivity : BaseAppCompatActivity() {
         var controlFile: File? = controlPath?.let { File(it) }?.takeIf { it.isFile && it.exists() }
 
         if (controlFile == null) {
-            val bedrockFile = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
             val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
-            val shouldOverwriteBedrock = runCatching {
-                if (!bedrockFile.exists()) true
-                else {
-                    val existing = loadLayoutFromFile(bedrockFile)
-                    existing.info.versionCode < 6
-                }
-            }.getOrDefault(!bedrockFile.exists())
-
-            if (shouldOverwriteBedrock) {
+            if (!defaultFile.exists()) {
                 runCatching {
-                    copyAssetFile(fileName = "bedrock_touch_layout.json", output = bedrockFile, overwrite = true)
+                    copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = false)
                 }
             }
-
-            val shouldOverwriteDefault = runCatching {
-                if (!defaultFile.exists()) true
-                else {
-                    val existing = loadLayoutFromFile(defaultFile)
-                    existing.info.versionCode < 6
-                }
-            }.getOrDefault(true)
-
-            if (shouldOverwriteDefault) {
-                runCatching {
-                    copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = true)
-                }
-            }
-            controlFile = if (bedrockFile.exists()) bedrockFile else defaultFile
+            controlFile = defaultFile
         }
 
         val layout: ControlLayout = runCatching {
@@ -134,7 +111,9 @@ class ControlEditorActivity : BaseAppCompatActivity() {
             Logger.warning("ControlEditorActivity", "Failed to load layout from $controlFile", e)
             val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
             runCatching {
-                copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = true)
+                if (!defaultFile.exists()) {
+                    copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = false)
+                }
                 loadLayoutFromFile(defaultFile)
             }.getOrNull() ?: return runFinish()
         }

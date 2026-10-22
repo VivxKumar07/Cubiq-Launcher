@@ -19,6 +19,7 @@
 package com.movtery.zalithlauncher.ui.screens.content.settings
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +38,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -88,6 +90,7 @@ import com.movtery.layer_controller.data.lang.createTranslatable
 import com.movtery.layer_controller.layout.ControlLayout
 import com.movtery.layer_controller.layout.EmptyControlLayout
 import com.movtery.layer_controller.layout.EmptyLayoutInfo
+import com.movtery.layer_controller.layout.loadLayoutFromString
 import com.movtery.layer_controller.observable.ObservableControlLayout
 import com.movtery.layer_controller.observable.ObservableTranslatableString
 import com.movtery.layer_controller.utils.AUTHOR_NAME_LENGTH
@@ -231,14 +234,27 @@ fun ControlManageScreen(
     ControlOperation(
         operation = viewModel.operation,
         changeOperation = { viewModel.operation = it },
-        onCreate = { name, author, versionName ->
-            val layout = EmptyControlLayout.copy(
-                info = EmptyLayoutInfo.copy(
-                    name = createTranslatable(default = name),
-                    author = createTranslatable(default = author),
-                    versionName = versionName
+        onCreate = { name, author, versionName, templateType ->
+            val assetName = if (templateType == "Pocket Edition Controls") "pocket_edition_layout.json" else "default_layout.json"
+            val layout = runCatching {
+                val jsonStr = context.assets.open(assetName).bufferedReader().use { it.readText() }
+                val base = loadLayoutFromString(jsonStr)
+                base.copy(
+                    info = base.info.copy(
+                        name = createTranslatable(default = name),
+                        author = createTranslatable(default = author),
+                        versionName = versionName
+                    )
                 )
-            )
+            }.getOrElse {
+                EmptyControlLayout.copy(
+                    info = EmptyLayoutInfo.copy(
+                        name = createTranslatable(default = name),
+                        author = createTranslatable(default = author),
+                        versionName = versionName
+                    )
+                )
+            }
             viewModel.createNew(layout) { e ->
                 submitError(
                     ErrorViewModel.ThrowableMessage(
@@ -341,7 +357,7 @@ fun ControlManageScreen(
 private fun ControlOperation(
     operation: ControlOperation,
     changeOperation: (ControlOperation) -> Unit,
-    onCreate: (name: String, author: String, versionName: String) -> Unit,
+    onCreate: (name: String, author: String, versionName: String, templateType: String) -> Unit,
     onDelete: (ControlData) -> Unit,
     onSave: (ControlData) -> Unit
 ) {
@@ -875,11 +891,12 @@ private fun ControlInfoItem(
 @Composable
 private fun CreateNewLayoutDialog(
     onDismissRequest: () -> Unit,
-    onCreate: (name: String, author: String, versionName: String) -> Unit
+    onCreate: (name: String, author: String, versionName: String, templateType: String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var author by remember { mutableStateOf("") }
     var versionName by remember { mutableStateOf("1.0") }
+    var selectedTemplate by remember { mutableStateOf("Plain Java Controls") }
 
     val blankError = stringResource(R.string.control_manage_create_new_field_blank)
     val longError = stringResource(R.string.control_manage_create_new_field_long)
@@ -1056,6 +1073,44 @@ private fun CreateNewLayoutDialog(
                             ),
                             shape = MaterialTheme.shapes.large
                         )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Base Layout Template",
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        )
+
+                        listOf("Plain Java Controls", "Pocket Edition Controls").forEach { template ->
+                            val isSel = selectedTemplate == template
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(MaterialTheme.shapes.medium)
+                                    .clickable { selectedTemplate = template }
+                                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                RadioButton(
+                                    selected = isSel,
+                                    onClick = { selectedTemplate = template }
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = template,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Text(
+                                        text = if (template == "Pocket Edition Controls") "Bedrock mobile controls layout (~65% opacity)" else "Standard PC keyboard on-screen buttons",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
                     }
 
                     Row(
@@ -1073,7 +1128,7 @@ private fun CreateNewLayoutDialog(
                             onClick = onClick@{
                                 if (isNameError || isAuthorNameError || isVersionNameError) return@onClick
                                 onDismissRequest()
-                                onCreate(name, author, versionName)
+                                onCreate(name, author, versionName, selectedTemplate)
                             }
                         ) {
                             MarqueeText(text = stringResource(R.string.control_manage_create_new))
@@ -1090,6 +1145,6 @@ private fun CreateNewLayoutDialog(
 private fun PreviewCreateNewLayoutDialog() {
     CreateNewLayoutDialog(
         onDismissRequest = {},
-        onCreate = { _, _, _ -> }
+        onCreate = { _, _, _, _ -> }
     )
 }

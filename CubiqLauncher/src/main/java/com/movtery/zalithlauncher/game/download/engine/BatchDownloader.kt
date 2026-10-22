@@ -191,7 +191,7 @@ class BatchDownloader(
 
     companion object {
         private const val TAG = "BatchDownloader"
-        const val DEFAULT_MAX_CONNECTIONS = 64
+        const val DEFAULT_MAX_CONNECTIONS = 16
         const val PROGRESS_INTERVAL_MS = 100L
 
         /** 异常详情中最多列出的失败条数 */

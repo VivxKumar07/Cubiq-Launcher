@@ -70,20 +70,24 @@ class ResponseInfo(
     }
 }
 
-/** 响应体传输编码；不支持 broker 压缩（如 br），遇到即视为该次尝试失败 */
+/** 响应体传输编码；支持 gzip 与 deflate 压缩 */
 enum class ContentEncoding {
-    IDENTITY, GZIP;
+    IDENTITY, GZIP, DEFLATE;
 
-    fun wrap(input: InputStream): InputStream =
-        if (this == GZIP) GZIPInputStream(input) else input
+    fun wrap(input: InputStream): InputStream = when (this) {
+        GZIP -> GZIPInputStream(input)
+        DEFLATE -> java.util.zip.InflaterInputStream(input)
+        IDENTITY -> input
+    }
 
     companion object {
         fun fromHeaders(response: ResponseInfo): ContentEncoding {
             val encoding = response.header("content-encoding") ?: return IDENTITY
             return when {
-                encoding.isEmpty() || encoding == "identity" -> IDENTITY
+                encoding.isEmpty() || encoding.equals("identity", ignoreCase = true) -> IDENTITY
                 encoding.equals("gzip", ignoreCase = true) -> GZIP
-                else -> throw IOException("Unsupported content encoding: $encoding")
+                encoding.equals("deflate", ignoreCase = true) -> DEFLATE
+                else -> IDENTITY
             }
         }
     }
@@ -181,12 +185,13 @@ class ChecksumMismatchException(
  * 4xx 视为该源无货（不重试、立即换下一候选），写盘损坏从头重试且不消耗重试次数。
  */
 object Fetcher {
-    const val DEFAULT_RETRY = 5
+    const val DEFAULT_RETRY = 4
 
-    private const val TIMEOUT_MILLIS = 10_000
+    private const val CONNECT_TIMEOUT_MILLIS = 15_000
+    private const val READ_TIMEOUT_MILLIS = 30_000
     private const val MAX_REDIRECTS = 20
-    private const val RETRY_BACKOFF_MILLIS = 200L
-    private const val BUFFER_SIZE = 32 * 1024
+    private const val RETRY_BACKOFF_MILLIS = 500L
+    private const val BUFFER_SIZE = 128 * 1024
 
     /**
      * 按候选源顺序下载文件；全部候选耗尽后抛 [AllSourcesFailedException]，
@@ -260,13 +265,14 @@ object Fetcher {
         try {
             while (retryTime < retryLimit) {
                 currentCoroutineContext().ensureActive()
-                Logger.info(TAG, "Download started: $url")
                 val attempt = retryTime
                 retryTime++
+                val startTime = System.currentTimeMillis()
+                Logger.info(TAG, "Download started: $url (attempt ${attempt + 1}/$retryLimit)")
 
                 try {
                     val result = runInterruptible(Dispatchers.IO) {
-                        attempt(url, targetFile, sha1, state, onBytes)
+                        attempt(url, targetFile, sha1, state, onBytes, attempt + 1, retryLimit, startTime)
                     }
                     if (result == AttemptResult.DONE) return
                     //续传失效或 416：从头重来且不消耗重试次数
@@ -274,14 +280,25 @@ object Fetcher {
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: HttpResultException) {
-                    Logger.warning(TAG, "Download failed: $url", e)
+                    val elapsed = System.currentTimeMillis() - startTime
+                    val received = state.resume?.countUncompressed ?: 0L
+                    Logger.warning(TAG, "[Fetcher] host=${url.host}, code=${e.code}, expected=-1, received=$received, elapsed=${elapsed}ms, attempt=${attempt + 1}/$retryLimit, error=${e.message}")
                     if (e.code in 400..499) throw DownloadException(url.toString(), e)
                     exceptions += e
-                    if (attempt < retryLimit - 1) delay(RETRY_BACKOFF_MILLIS.milliseconds)
+                    if (attempt < retryLimit - 1) {
+                        val backoff = (RETRY_BACKOFF_MILLIS * (1L shl attempt.coerceAtMost(4))).milliseconds
+                        delay(backoff)
+                    }
                 } catch (e: Exception) {
-                    Logger.warning(TAG, "Download failed: $url", e)
+                    val elapsed = System.currentTimeMillis() - startTime
+                    val received = state.resume?.countUncompressed ?: 0L
+                    val sanitizedError = e.javaClass.simpleName + (e.message?.let { ": $it" } ?: "")
+                    Logger.warning(TAG, "[Fetcher] host=${url.host}, code=-1, expected=-1, received=$received, elapsed=${elapsed}ms, attempt=${attempt + 1}/$retryLimit, error=$sanitizedError")
                     exceptions += e
-                    if (attempt < retryLimit - 1) delay(RETRY_BACKOFF_MILLIS.milliseconds)
+                    if (attempt < retryLimit - 1) {
+                        val backoff = (RETRY_BACKOFF_MILLIS * (1L shl attempt.coerceAtMost(4))).milliseconds
+                        delay(backoff)
+                    }
                 }
             }
         } finally {
@@ -299,11 +316,14 @@ object Fetcher {
         targetFile: File,
         sha1: String?,
         state: CandidateState,
-        onBytes: (Long) -> Unit
+        onBytes: (Long) -> Unit,
+        attemptNumber: Int = 1,
+        maxAttempts: Int = DEFAULT_RETRY,
+        startTime: Long = System.currentTimeMillis()
     ): AttemptResult {
         var redirects: MutableList<URL>? = null
 
-        val headers = linkedMapOf("accept-encoding" to "gzip")
+        val headers = linkedMapOf("accept-encoding" to "gzip", "connection" to "keep-alive")
         val resumeRequested = state.resume?.hasPartialContent() == true
         if (resumeRequested) {
             val resume = state.resume!!
@@ -404,6 +424,11 @@ object Fetcher {
         }
         state.resume = null
         state.sink = null
+
+        val elapsed = System.currentTimeMillis() - startTime
+        val received = if (contentLength >= 0) contentLength else 0L
+        Logger.info(TAG, "[Fetcher] host=${url.host}, code=$code, expected=$contentLength, received=$received, elapsed=${elapsed}ms, attempt=$attemptNumber/$maxAttempts, success")
+
         return AttemptResult.DONE
     }
 
@@ -439,10 +464,12 @@ object Fetcher {
 
     private fun openConnection(url: URL): HttpURLConnection {
         val connection = url.openConnection() as HttpURLConnection
-        connection.connectTimeout = TIMEOUT_MILLIS
-        connection.readTimeout = TIMEOUT_MILLIS
+        connection.connectTimeout = CONNECT_TIMEOUT_MILLIS
+        connection.readTimeout = READ_TIMEOUT_MILLIS
         connection.instanceFollowRedirects = false
         connection.setRequestProperty("User-Agent", URL_USER_AGENT)
+        connection.setRequestProperty("Connection", "keep-alive")
+        connection.setRequestProperty("Accept-Encoding", "gzip")
         return connection
     }
 

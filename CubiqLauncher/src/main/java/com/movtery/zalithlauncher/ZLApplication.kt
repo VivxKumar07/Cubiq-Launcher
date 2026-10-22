@@ -84,6 +84,7 @@ class ZLApplication : Application(), SingletonImageLoader.Factory {
         }
 
         super.onCreate()
+        System.setProperty("http.maxConnections", "128")
         runCatching {
             Fishnet.init(this, PathManager.DIR_NATIVE_LOGS.absolutePath)
 

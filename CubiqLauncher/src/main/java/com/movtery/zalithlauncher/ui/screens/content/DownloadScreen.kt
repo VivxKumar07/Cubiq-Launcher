@@ -217,14 +217,18 @@ fun DownloadScreen(
                 )
             }
 
-            // Always show Minecraft PC Bottom Navigation Bar
-            com.movtery.zalithlauncher.ui.components.MinecraftPCBottomNavBar(
-                selectedItem = 2,
-                onItemSelected = { index ->
-                    com.movtery.zalithlauncher.ui.screens.content.LauncherNavState.selectedBottomNav = index
-                    backScreenViewModel.mainScreen.navigateTo(NormalNavKey.LauncherMain)
-                }
-            )
+            // Only show Minecraft PC Bottom Navigation Bar in portrait mode
+            val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+            val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+            if (!isLandscape) {
+                com.movtery.zalithlauncher.ui.components.MinecraftPCBottomNavBar(
+                    selectedItem = 2,
+                    onItemSelected = { index ->
+                        com.movtery.zalithlauncher.ui.screens.content.LauncherNavState.selectedBottomNav = index
+                        backScreenViewModel.mainScreen.navigateTo(NormalNavKey.LauncherMain)
+                    }
+                )
+            }
         }
     }
 }

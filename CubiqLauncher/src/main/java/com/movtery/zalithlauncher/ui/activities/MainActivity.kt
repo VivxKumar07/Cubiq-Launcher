@@ -23,6 +23,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import java.util.Locale
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.WindowManager
@@ -112,13 +113,35 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.Locale
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 
 private const val TAG = "MainActivity"
 
 @AndroidEntryPoint
 class MainActivity : BaseAppCompatActivity() {
-    override fun isIgnoreNotch(): Boolean = AllSettings.launcherFullScreen.getValue()
+    override fun isFullScreenActivity(): Boolean {
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        return isLandscape
+    }
+
+    override fun isIgnoreNotch(): Boolean {
+        val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        return isLandscape
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        refreshFullscreen()
+        refreshIgnoreNotch()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshFullscreen()
+        refreshIgnoreNotch()
+        ControlManager.checkDefaultAndRefresh(this@MainActivity)
+    }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         FestivalTapObserver.observe(event)
@@ -187,6 +210,15 @@ class MainActivity : BaseAppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Apply saved orientation lock
+        val savedOrientation = AllSettings.launcherOrientationLock.getValue()
+        if (savedOrientation == "landscape") {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        } else if (savedOrientation == "portrait") {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+
         //处理外部导入
         val isImporting = handleImportIfNeeded(intent)
 
@@ -479,6 +511,21 @@ class MainActivity : BaseAppCompatActivity() {
                     onLinkClick = { eventViewModel.sendEvent(EventViewModel.Event.OpenLink(it)) }
                 )
 
+                // Cubiq Launcher GitHub Update Dialog
+                val cubiqUpdate by com.movtery.zalithlauncher.game.versioninfo.CubiqGitHubManager.newUpdate.collectAsStateWithLifecycle()
+                cubiqUpdate?.let { release ->
+                    com.movtery.zalithlauncher.ui.screens.content.elements.CubiqUpdateDialog(
+                        release = release,
+                        onDownloadNow = { url ->
+                            openLink(url)
+                            com.movtery.zalithlauncher.game.versioninfo.CubiqGitHubManager.dismissUpdate(ignoreForVersion = true)
+                        },
+                        onNotNow = {
+                            com.movtery.zalithlauncher.game.versioninfo.CubiqGitHubManager.dismissUpdate(ignoreForVersion = true)
+                        }
+                    )
+                }
+
                 val vcOperation by vulkanCheckerViewModel.vcOperation.collectAsStateWithLifecycle()
                 VulkanChecker(
                     operation = vcOperation,
@@ -736,11 +783,6 @@ class MainActivity : BaseAppCompatActivity() {
             importControlFiles(listOf(uri))
         }
         return uri != null
-    }
-
-    override fun onResume() {
-        super.onResume()
-        ControlManager.checkDefaultAndRefresh(this@MainActivity)
     }
 
     @SuppressLint("RestrictedApi")

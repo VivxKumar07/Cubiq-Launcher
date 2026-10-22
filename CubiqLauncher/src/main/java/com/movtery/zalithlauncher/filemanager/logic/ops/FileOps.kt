@@ -260,6 +260,19 @@ class FileOps(private val scope: AccessScope) {
             return
         } catch (_: Exception) {
         }
+        try {
+            withContext(Dispatchers.IO) {
+                Files.move(source, target)
+            }
+            return
+        } catch (_: Exception) {
+        }
+        try {
+            if (source.toFile().renameTo(target.toFile())) {
+                return
+            }
+        } catch (_: Exception) {
+        }
 
         copyTree(source, target, checkCancel, onBytes = onBytes)
         if (Files.exists(target, LinkOption.NOFOLLOW_LINKS)) deleteRecursive(source, checkCancel)

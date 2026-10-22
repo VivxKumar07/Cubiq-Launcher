@@ -18,6 +18,9 @@
 
 package com.movtery.zalithlauncher.ui.screens.content.download.assets.download
 
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -369,57 +372,161 @@ fun DownloadAssetsScreen(
         Triple(parentScreenKey, parentCurrentKey, false),
         Triple(key, currentKey, false),
     ) { isVisible ->
-        Row(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            val yOffset by swapAnimateDpAsState(targetValue = (-40).dp, swapIn = isVisible)
-            Versions(
-                modifier = Modifier
-                    .weight(versionsUIWeight)
-                    .fillMaxHeight()
-                    .offset { IntOffset(x = 0, y = yOffset.roundToPx()) },
-                viewModel = viewModel,
-                installedChecker = installedChecker,
-                onReload = { viewModel.getVersions() },
-                onItemClicked = { version ->
-                    val deps = version.platformDependencies().mapNotNull { dep ->
-                        val key = dep.cacheKey()
-                        val project = viewModel.cachedDependencyProject[key]
-                        when {
-                            project != null -> DependencyEntry(dep, project)
-                            viewModel.notFoundDependencyProjects.contains(key) ->
-                                DependencyEntry(dep, null, notFound = true)
-                            viewModel.failedDependencyProjects.contains(key) ->
-                                DependencyEntry(dep, null)
-                            //依赖项目信息仍在获取中
-                            else -> null
-                        }
-                    }
-                    onItemClicked(viewModel.classes, version, key.iconUrl, deps)
-                },
-            )
+        val configuration = LocalConfiguration.current
+        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-            val xOffset by swapAnimateDpAsState(
-                targetValue = 40.dp,
-                swapIn = isVisible,
-                isHorizontal = true
-            )
-            ProjectInfo(
-                modifier = Modifier
-                    .weight(projectUIWeight)
-                    .fillMaxHeight()
-                    .padding(vertical = 12.dp)
-                    .padding(end = 12.dp)
-                    .offset { IntOffset(x = xOffset.roundToPx(), y = 0) },
-                projectResult = viewModel.projectResult,
-                platform = key.platform,
-                projectId = key.projectId,
-                classes = viewModel.classes,
-                onReload = { viewModel.getProject() },
-                openLink = { url ->
-                    eventViewModel.sendEvent(EventViewModel.Event.OpenLink(url))
+        if (isLandscape) {
+            Row(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                val leftOffset by swapAnimateDpAsState(
+                    targetValue = (-40).dp,
+                    swapIn = isVisible,
+                    isHorizontal = true
+                )
+                ProjectInfo(
+                    modifier = Modifier
+                        .weight(projectUIWeight)
+                        .fillMaxHeight()
+                        .padding(vertical = 8.dp)
+                        .padding(start = 8.dp, end = 4.dp)
+                        .offset { IntOffset(x = leftOffset.roundToPx(), y = 0) },
+                    projectResult = viewModel.projectResult,
+                    platform = key.platform,
+                    projectId = key.projectId,
+                    classes = viewModel.classes,
+                    onReload = { viewModel.getProject() },
+                    openLink = { url ->
+                        eventViewModel.sendEvent(EventViewModel.Event.OpenLink(url))
+                    }
+                )
+
+                val rightOffset by swapAnimateDpAsState(
+                    targetValue = 40.dp,
+                    swapIn = isVisible,
+                    isHorizontal = true
+                )
+                Versions(
+                    modifier = Modifier
+                        .weight(versionsUIWeight)
+                        .fillMaxHeight()
+                        .padding(vertical = 8.dp)
+                        .padding(start = 4.dp, end = 8.dp)
+                        .offset { IntOffset(x = rightOffset.roundToPx(), y = 0) },
+                    viewModel = viewModel,
+                    installedChecker = installedChecker,
+                    onReload = { viewModel.getVersions() },
+                    onItemClicked = { version ->
+                        val deps = version.platformDependencies().mapNotNull { dep ->
+                            val k = dep.cacheKey()
+                            val project = viewModel.cachedDependencyProject[k]
+                            when {
+                                project != null -> DependencyEntry(dep, project)
+                                viewModel.notFoundDependencyProjects.contains(k) ->
+                                    DependencyEntry(dep, null, notFound = true)
+                                viewModel.failedDependencyProjects.contains(k) ->
+                                    DependencyEntry(dep, null)
+                                else -> null
+                            }
+                        }
+                        onItemClicked(viewModel.classes, version, key.iconUrl, deps)
+                    },
+                )
+            }
+        } else {
+            var selectedPortraitTab by remember { mutableIntStateOf(0) }
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF1E1E20))
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(if (selectedPortraitTab == 0) Color(0xFF3C8527) else Color(0xFF28282A))
+                            .clickable { selectedPortraitTab = 0 }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "VERSIONS",
+                            color = Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            fontSize = 11.5.sp
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(if (selectedPortraitTab == 1) Color(0xFF3C8527) else Color(0xFF28282A))
+                            .clickable { selectedPortraitTab = 1 }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "PROJECT DETAILS",
+                            color = Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            fontSize = 11.5.sp
+                        )
+                    }
                 }
-            )
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
+                    if (selectedPortraitTab == 0) {
+                        Versions(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(vertical = 6.dp, horizontal = 8.dp),
+                            viewModel = viewModel,
+                            installedChecker = installedChecker,
+                            onReload = { viewModel.getVersions() },
+                            onItemClicked = { version ->
+                                val deps = version.platformDependencies().mapNotNull { dep ->
+                                    val k = dep.cacheKey()
+                                    val project = viewModel.cachedDependencyProject[k]
+                                    when {
+                                        project != null -> DependencyEntry(dep, project)
+                                        viewModel.notFoundDependencyProjects.contains(k) ->
+                                            DependencyEntry(dep, null, notFound = true)
+                                        viewModel.failedDependencyProjects.contains(k) ->
+                                            DependencyEntry(dep, null)
+                                        else -> null
+                                    }
+                                }
+                                onItemClicked(viewModel.classes, version, key.iconUrl, deps)
+                            },
+                        )
+                    } else {
+                        ProjectInfo(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(vertical = 6.dp, horizontal = 8.dp),
+                            projectResult = viewModel.projectResult,
+                            platform = key.platform,
+                            projectId = key.projectId,
+                            classes = viewModel.classes,
+                            onReload = { viewModel.getProject() },
+                            openLink = { url ->
+                                eventViewModel.sendEvent(EventViewModel.Event.OpenLink(url))
+                            }
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -481,18 +588,18 @@ private fun Versions(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .height(36.dp)
+                            .height(32.dp)
                             .clip(RoundedCornerShape(3.dp))
                             .background(Color(0xFF222224))
                             .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(3.dp))
-                            .padding(horizontal = 8.dp),
+                            .padding(horizontal = 6.dp),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         BasicTextField(
@@ -500,13 +607,13 @@ private fun Versions(
                             onValueChange = { viewModel.filterWith(searchMCVersion = it) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            textStyle = TextStyle(color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.sp),
+                            textStyle = TextStyle(color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 10.5.sp),
                             cursorBrush = SolidColor(Color(0xFF55FF55)),
                             decorationBox = { inner ->
                                 if (viewModel.searchMCVersion.isEmpty()) {
                                     Text(
-                                        text = stringResource(R.string.download_assets_search_mc_versions),
-                                        style = TextStyle(color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 11.sp)
+                                        text = "Search MC...",
+                                        style = TextStyle(color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
                                     )
                                 }
                                 inner()
@@ -516,7 +623,7 @@ private fun Versions(
 
                     Box(
                         modifier = Modifier
-                            .height(36.dp)
+                            .height(32.dp)
                             .clip(RoundedCornerShape(3.dp))
                             .background(if (viewModel.showOnlyMCRelease) Color(0xFF263820) else Color(0xFF222224))
                             .border(
@@ -526,11 +633,11 @@ private fun Versions(
                             .clickable {
                                 viewModel.filterWith(showOnlyMCRelease = !viewModel.showOnlyMCRelease)
                             }
-                            .padding(horizontal = 10.dp),
+                            .padding(horizontal = 6.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             if (viewModel.showOnlyMCRelease) {
@@ -538,14 +645,14 @@ private fun Versions(
                                     painter = painterResource(R.drawable.ic_check),
                                     contentDescription = null,
                                     tint = Color(0xFF55FF55),
-                                    modifier = Modifier.size(12.dp)
+                                    modifier = Modifier.size(11.dp)
                                 )
                             }
                             Text(
-                                text = "RELEASE ONLY",
+                                text = "RELEASE",
                                 color = if (viewModel.showOnlyMCRelease) Color(0xFF55FF55) else Color(0xFFCCCCCC),
                                 fontFamily = MinecraftFontFamily,
-                                fontSize = 10.sp
+                                fontSize = 9.sp
                             )
                         }
                     }
@@ -640,26 +747,26 @@ private fun ProjectInfo(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFF262628))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     ClassesIdentifier(
                         classes = classes,
-                        iconSize = 14.dp,
-                        textStyle = MaterialTheme.typography.labelMedium.copy(fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                        iconSize = 12.dp,
+                        textStyle = MaterialTheme.typography.labelMedium.copy(fontFamily = MinecraftFontFamily, fontSize = 9.sp)
                     )
 
                     val isFavorite = FavoriteProjectsRepository.isFavorite(platform, projectId)
                     FavoriteIdentifier(
                         isFavorite = isFavorite,
-                        iconSize = 14.dp,
+                        iconSize = 12.dp,
                         showText = false,
-                        textStyle = MaterialTheme.typography.labelMedium.copy(fontFamily = MinecraftFontFamily, fontSize = 10.sp),
+                        textStyle = MaterialTheme.typography.labelMedium.copy(fontFamily = MinecraftFontFamily, fontSize = 9.sp),
                         onClick = {
                             if (isFavorite) {
                                 FavoriteProjectsRepository.unfavorite(platform, projectId)
@@ -677,9 +784,9 @@ private fun ProjectInfo(
                     text = platform.displayName.uppercase(),
                     color = Color(0xFF888888),
                     fontFamily = MinecraftFontFamily,
-                    fontSize = 9.sp,
+                    fontSize = 8.5.sp,
                     maxLines = 1,
-                    softWrap = false
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
             }
 
@@ -745,37 +852,44 @@ private fun ProjectInfo(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 12.dp),
+                                    .padding(top = 8.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 AssetsIcon(
                                     modifier = Modifier.clip(shape = RoundedCornerShape(4.dp)),
-                                    size = 72.dp,
+                                    size = 56.dp,
                                     iconUrl = iconUrl
                                 )
                                 Column(
-                                    modifier = Modifier.padding(top = 8.dp),
+                                    modifier = Modifier.padding(top = 6.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    verticalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
                                     Text(
                                         text = mcmod.getMcmodTitle(title, context),
-                                        style = MaterialTheme.typography.titleMedium.copy(
+                                        style = MaterialTheme.typography.titleSmall.copy(
                                             fontFamily = MinecraftFontFamily,
                                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                            fontSize = 12.sp,
+                                            lineHeight = 15.sp,
                                             color = Color.White
                                         ),
-                                        textAlign = TextAlign.Center
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                     )
                                     summary?.let { summaryText ->
                                         Text(
                                             text = summaryText,
-                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                            style = MaterialTheme.typography.bodySmall.copy(
                                                 fontFamily = MinecraftFontFamily,
-                                                fontSize = 11.sp,
+                                                fontSize = 10.sp,
+                                                lineHeight = 13.sp,
                                                 color = Color(0xFFCCCCCC)
                                             ),
-                                            textAlign = TextAlign.Center
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 3,
+                                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                         )
                                     }
                                 }

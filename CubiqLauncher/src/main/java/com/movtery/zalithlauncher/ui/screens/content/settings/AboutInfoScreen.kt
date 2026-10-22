@@ -105,7 +105,7 @@ fun AboutInfoScreen(
                         ButtonIconItem(
                             icon = painterResource(R.drawable.img_launcher),
                             title = BuildKeys.LAUNCHER_NAME,
-                            text = "v1.0.0 (Release)",
+                            text = "v1.2.0 (Release) • Unofficial Fork of Zalith Launcher 2",
                             button = {
                                 Button(
                                     onClick = { openLink(URL_PROJECT) }
@@ -118,6 +118,50 @@ fun AboutInfoScreen(
                                     Text(text = "Discord")
                                 }
                             }
+                        )
+
+                        Text(
+                            text = "Notice: Cubiq Launcher is an unofficial version (fork) of Zalith Launcher 2, modified under the GNU General Public License v3.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            animatedItem(scope) { yOffset ->
+                ChunkLayout(
+                    modifier = Modifier.offset { IntOffset(x = 0, y = yOffset.roundToPx()) },
+                    title = "What's New in v1.2.0"
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            text = "• Full PC-Style Landscape UI with desktop navigation sidebar & hero banner",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• Multi-Renderer Selection (Krypton Wrapper, GL4ES, Kopper Zink, VirGL, Freedreno, Panfrost)",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• Custom Turnip Driver Support with driver picker & Vulkan manager",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• App Typography Customizer (Minecraft Pixel, Google Sans, System Default, Custom Fonts)",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• Smart Mod Loader filter in New Installation (greys out unsupported modloaders)",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• APK & Storage footprint optimization with dynamic on-demand runtime management",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• Color scheme unification: dark slate & Minecraft emerald green styling",
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 }

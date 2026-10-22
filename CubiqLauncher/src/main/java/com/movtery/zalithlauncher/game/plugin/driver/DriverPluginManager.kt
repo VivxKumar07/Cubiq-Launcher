@@ -49,11 +49,29 @@ object DriverPluginManager: ApkPluginManager() {
                 id = AllSettings.vulkanDriver.defaultValue,
                 appName = "",
                 appVersion = "",
-                name = "Turnip",
+                name = "Turnip (Default)",
+                summary = "Default bundled Turnip driver for Adreno GPUs",
                 path = applicationInfo.nativeLibraryDir,
                 isLauncher = true
             )
         )
+        // Load custom imported drivers from internal storage
+        val customDriversDir = java.io.File(context.filesDir, "custom_drivers").apply { mkdirs() }
+        customDriversDir.listFiles()?.forEach { file ->
+            if (file.isDirectory || file.extension.lowercase() in listOf("so", "zip")) {
+                driverList.add(
+                    Driver(
+                        id = file.name,
+                        appName = file.nameWithoutExtension,
+                        appVersion = "Custom",
+                        name = file.nameWithoutExtension,
+                        summary = "Imported custom driver: ${file.name}",
+                        path = if (file.isDirectory) file.absolutePath else file.parentFile?.absolutePath ?: file.absolutePath,
+                        isLauncher = false
+                    )
+                )
+            }
+        }
     }
 
     /**

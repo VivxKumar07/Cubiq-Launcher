@@ -18,6 +18,8 @@
 
 package com.movtery.zalithlauncher.ui.screens.main.control_editor.edit_widget
 
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -161,11 +163,14 @@ fun EditWidgetDialog(
                     }
                 }
 
+                val configuration = LocalConfiguration.current
+                val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth(0.75f)
-                        .fillMaxHeight()
-                        .padding(all = 16.dp),
+                        .fillMaxWidth(if (isLandscape) 0.75f else 0.95f)
+                        .fillMaxHeight(if (isLandscape) 1f else 0.94f)
+                        .padding(all = if (isLandscape) 16.dp else 8.dp),
                     shadowElevation = 3.dp,
                     color = cardColor(false),
                     contentColor = onCardColor(),

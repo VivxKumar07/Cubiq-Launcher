@@ -76,6 +76,7 @@ import com.movtery.layer_controller.observable.ObservableControlLayer
 import com.movtery.layer_controller.observable.ObservableControlLayout
 import com.movtery.layer_controller.observable.ObservableJoystickData
 import com.movtery.layer_controller.observable.ObservableJoystickStyle
+import com.movtery.layer_controller.observable.ObservableNormalData
 import com.movtery.layer_controller.observable.ObservableWidget
 import com.movtery.layer_controller.utils.getWidgetPosition
 import com.movtery.layer_controller.utils.snap.GuideLine
@@ -348,10 +349,13 @@ fun ControlEditorLayer(
                                         },
                                         onDrag = { change, dragAmount ->
                                             change.consume()
+                                            val isAspectLocked = (widget is ObservableJoystickData) ||
+                                                    (widget is ObservableNormalData && !widget.icon.isNullOrBlank())
+
                                             if (isTopLeft) {
                                                 var newTL = dragTL + dragAmount
-                                                if (widget is ObservableJoystickData) {
-                                                    val oldSide = dragBR.x - dragTL.x
+                                                if (isAspectLocked) {
+                                                    val oldSide = maxOf(dragBR.x - dragTL.x, dragBR.y - dragTL.y)
                                                     val distX = dragBR.x - newTL.x
                                                     val distY = dragBR.y - newTL.y
                                                     val deltaX = distX - oldSide
@@ -373,8 +377,8 @@ fun ControlEditorLayer(
                                                 updateSizeAndPos(finalTL, finalSize)
                                             } else {
                                                 var newBR = dragBR + dragAmount
-                                                if (widget is ObservableJoystickData) {
-                                                    val oldSide = dragBR.x - dragTL.x
+                                                if (isAspectLocked) {
+                                                    val oldSide = maxOf(dragBR.x - dragTL.x, dragBR.y - dragTL.y)
                                                     val distX = newBR.x - dragTL.x
                                                     val distY = newBR.y - dragTL.y
                                                     val deltaX = distX - oldSide
@@ -432,8 +436,13 @@ fun ControlEditorLayer(
                     //居中显示，但不能超出屏幕左右边界
                     val xPos = (centerX - barSize.width / 2)
                         .coerceIn(0f, maxOf(0f, screenSize.width.toFloat() - barSize.width))
-                    val yPos = targetY
-                        .coerceAtMost(maxOf(0f, screenSize.height.toFloat() - barSize.height))
+                    val preferredY = if (targetY + barSize.height > screenSize.height) {
+                        drawTL.y - barSize.height - with(density) { 8.dp.toPx() }
+                    } else {
+                        targetY
+                    }
+                    val yPos = preferredY
+                        .coerceIn(0f, maxOf(0f, screenSize.height.toFloat() - barSize.height))
 
                     Row(
                         modifier = Modifier

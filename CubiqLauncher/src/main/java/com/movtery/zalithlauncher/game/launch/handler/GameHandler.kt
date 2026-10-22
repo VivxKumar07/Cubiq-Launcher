@@ -103,7 +103,8 @@ class GameHandler(
 //            set("options.narrator", "0")
 //            set("narrator", "0")
 
-            if (version.getVersionInfo()!!.minecraftVersion.isLowerVer("1.13")) {
+            val mcVersionStr = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
+            if (mcVersionStr.isLowerVer("1.13")) {
                 //fix: 牢版本按键事件
                 //shift + w -> 87 错误的触发了F11，切换全屏
                 set("key_key.fullscreen", "0")
@@ -126,7 +127,7 @@ class GameHandler(
                 else -> set(graphicsOption, graphicsApi.option)
             }
 
-            loadLanguage(version.getVersionInfo()!!.minecraftVersion)
+            loadLanguage(mcVersionStr)
             save()
         }
 

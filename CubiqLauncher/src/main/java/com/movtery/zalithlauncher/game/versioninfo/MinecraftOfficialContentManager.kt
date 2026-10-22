@@ -6,6 +6,7 @@
 package com.movtery.zalithlauncher.game.versioninfo
 
 import com.google.gson.JsonObject
+import com.movtery.zalithlauncher.game.versioninfo.models.VersionManifest
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.GSON
 import com.movtery.zalithlauncher.utils.logging.Logger
@@ -41,7 +42,7 @@ object MinecraftOfficialContentManager {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private val _latestReleaseVersion = MutableStateFlow("26.3")
+    private val _latestReleaseVersion = MutableStateFlow("1.21.4")
     val latestReleaseVersion = _latestReleaseVersion.asStateFlow()
 
     private val _latestHeroImageUrl = MutableStateFlow<String?>("https://launchercontent.mojang.com/v2/images/1-21-patchnotes.jpg")
@@ -71,6 +72,15 @@ object MinecraftOfficialContentManager {
             parsePatchNotes(patchNotesJson)
             runCatching {
                 File(PathManager.DIR_CACHE_HOME_PAGE, "patch_notes.json").writeText(patchNotesJson)
+            }
+
+            // Sync with official Mojang version manifest
+            runCatching {
+                val manifest = MinecraftVersions.getVersionManifest(false)
+                val officialLatest = manifest.latest.release
+                if (officialLatest.isNotBlank()) {
+                    _latestReleaseVersion.value = officialLatest
+                }
             }
         } catch (e: Exception) {
             Logger.warning(TAG, "Failed to fetch patch notes from Mojang: ${e.message}")
@@ -136,7 +146,6 @@ object MinecraftOfficialContentManager {
                     !note.version.contains("pre", ignoreCase = true)
                 } ?: notes.first()
 
-                _latestReleaseVersion.value = firstRelease.version
                 if (!firstRelease.imageUrl.isNullOrBlank()) {
                     _latestHeroImageUrl.value = firstRelease.imageUrl
                 }
@@ -189,6 +198,15 @@ object MinecraftOfficialContentManager {
 
             val cacheFileNews = File(PathManager.DIR_CACHE_HOME_PAGE, "news.json")
             if (cacheFileNews.exists()) parseNews(cacheFileNews.readText())
+
+            val manifestFile = PathManager.FILE_MINECRAFT_VERSIONS
+            if (manifestFile.exists()) {
+                val vm = GSON.fromJson(manifestFile.readText(), VersionManifest::class.java)
+                val rel = vm?.latest?.release
+                if (!rel.isNullOrBlank()) {
+                    _latestReleaseVersion.value = rel
+                }
+            }
         }
     }
 }

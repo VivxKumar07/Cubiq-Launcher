@@ -64,6 +64,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImagePainter
 import coil3.compose.rememberAsyncImagePainter
@@ -389,57 +390,78 @@ private fun AssetsVersionListItem(
 
         Box(
             modifier = Modifier
-                .padding(start = 12.dp, end = 8.dp)
-                .size(34.dp)
+                .padding(start = 8.dp, end = 4.dp)
+                .size(28.dp)
                 .clip(shape = CircleShape)
                 .background(releaseType.color.copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = releaseType.name.take(1),
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                ),
                 color = releaseType.color
             )
         }
 
         //版本简要信息
         Column(
-            modifier = Modifier.padding(all = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = 6.dp, horizontal = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Text(
                 text = displayName,
-                style = MaterialTheme.typography.labelLarge
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    fontSize = 11.sp
+                ),
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
 
             val context = LocalContext.current
 
             Row(
-                modifier = Modifier.alpha(0.7f),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .alpha(0.7f),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 //下载量
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.weight(1f, fill = false),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier.size(12.dp),
                         painter = painterResource(R.drawable.ic_download_2_outlined),
                         contentDescription = null
                     )
                     Text(
                         text = formatNumberByLocale(context, downloadCount),
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                            fontSize = 8.5.sp
+                        ),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
                 //更新时间
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.weight(1f, fill = false),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier.size(12.dp),
                         painter = painterResource(R.drawable.ic_autorenew),
                         contentDescription = null
                     )
@@ -448,22 +470,31 @@ private fun AssetsVersionListItem(
                             context = LocalContext.current,
                             pastInstant = date
                         ),
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                            fontSize = 8.5.sp
+                        ),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
                 //版本状态
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier.size(12.dp),
                         painter = painterResource(R.drawable.ic_package_2_outlined),
                         contentDescription = null
                     )
                     Text(
                         text = stringResource(releaseType.textRes),
-                        style = MaterialTheme.typography.labelMedium
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
+                            fontSize = 8.5.sp
+                        ),
+                        maxLines = 1
                     )
                 }
             }

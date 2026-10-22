@@ -466,7 +466,7 @@ object AllSettings : SettingsRegistry() {
     /**
      * 全局默认控制布局文件名
      */
-    val controlLayout = stringSetting("controlLayout", "bedrock_touch_layout.json")
+    val controlLayout = stringSetting("controlLayout", "default_layout.json")
 
     //Other
     /**
@@ -613,4 +613,32 @@ object AllSettings : SettingsRegistry() {
      * 搜索光影的初始搜索平台
      */
     val searchShadersPlatform = enumSetting("searchShadersPlatform", Platform.CURSEFORGE)
+
+    /**
+     * Cubiq Launcher custom font style ("minecraft", "sans", "system", "custom")
+     */
+    val launcherFont = stringSetting("launcherFont", "minecraft")
+
+    /**
+     * Custom font file path
+     */
+    val customFontPath = stringSetting("customFontPath", "")
+
+    /**
+     * Whether the Zalith Launcher 2 unofficial fork notice has been dismissed
+     */
+    val forkNoticeDismissed = boolSetting("forkNoticeDismissed", false)
+
+    /**
+     * Persistent Crash Reporting Settings
+     */
+    val lastCrashCode = intSetting("lastCrashCode", 0)
+    val lastCrashIsSignal = boolSetting("lastCrashIsSignal", false)
+    val lastCrashLogPath = stringSetting("lastCrashLogPath", "")
+    val lastCrashTimestamp = longSetting("lastCrashTimestamp", 0L)
+
+    /**
+     * Launcher Orientation Lock ("unspecified", "portrait", "landscape")
+     */
+    val launcherOrientationLock = stringSetting("launcherOrientationLock", "unspecified")
 }

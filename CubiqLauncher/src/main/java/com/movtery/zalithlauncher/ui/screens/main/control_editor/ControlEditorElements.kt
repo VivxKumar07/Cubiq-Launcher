@@ -249,7 +249,10 @@ fun EditorMenu(
     onPreviewHideLayerChanged: (HideLayerWhen) -> Unit,
     onSave: () -> Unit,
     saveAndExit: () -> Unit,
-    onExit: () -> Unit
+    onExit: () -> Unit,
+    onToggleMovement: (() -> Unit)? = null,
+    onMirrorLayout: (() -> Unit)? = null,
+    onResetToDefault: (() -> Unit)? = null
 ) {
     DualMenuSubscreen(
         state = state,
@@ -278,7 +281,10 @@ fun EditorMenu(
                 onPreviewHideLayerChanged = onPreviewHideLayerChanged,
                 onSave = onSave,
                 saveAndExit = saveAndExit,
-                onExit = onExit
+                onExit = onExit,
+                onToggleMovement = onToggleMovement,
+                onMirrorLayout = onMirrorLayout,
+                onResetToDefault = onResetToDefault
             )
         },
         rightMenuTitle = {
@@ -343,6 +349,9 @@ private fun EditorMenuContent(
     onSave: () -> Unit,
     saveAndExit: () -> Unit,
     onExit: () -> Unit,
+    onToggleMovement: (() -> Unit)? = null,
+    onMirrorLayout: (() -> Unit)? = null,
+    onResetToDefault: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     color: Color = cardColor(false),
     contentColor: Color = onCardColor()
@@ -453,6 +462,54 @@ private fun EditorMenuContent(
                 color = color,
                 contentColor = contentColor,
             )
+        }
+
+        if (onToggleMovement != null) {
+            item(key = "toggle_movement_style") {
+                MenuTextButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = isPreviewMode.not(),
+                    text = "Switch Movement (Joystick / D-Pad)",
+                    onClick = {
+                        onToggleMovement()
+                        closeScreen()
+                    },
+                    color = color,
+                    contentColor = contentColor
+                )
+            }
+        }
+
+        if (onMirrorLayout != null) {
+            item(key = "mirror_left_handed") {
+                MenuTextButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = isPreviewMode.not(),
+                    text = "Mirror for Left-Handed",
+                    onClick = {
+                        onMirrorLayout()
+                        closeScreen()
+                    },
+                    color = color,
+                    contentColor = contentColor
+                )
+            }
+        }
+
+        if (onResetToDefault != null) {
+            item(key = "reset_to_default") {
+                MenuTextButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = isPreviewMode.not(),
+                    text = "Reset Layout to Default",
+                    onClick = {
+                        onResetToDefault()
+                        closeScreen()
+                    },
+                    color = color,
+                    contentColor = contentColor
+                )
+            }
         }
 
         item {

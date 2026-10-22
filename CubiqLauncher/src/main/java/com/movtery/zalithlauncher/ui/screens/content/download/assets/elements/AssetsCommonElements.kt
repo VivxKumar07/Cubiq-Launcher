@@ -263,7 +263,14 @@ fun AssetsIcon(
 
     when (state) {
         AsyncImagePainter.State.Empty -> {
-            Box(modifier = sizeModifier)
+            Image(
+                painter = painterResource(R.drawable.ic_unknown_icon),
+                contentDescription = null,
+                alignment = Alignment.Center,
+                contentScale = ContentScale.Fit,
+                modifier = sizeModifier,
+                colorFilter = colorFilter
+            )
         }
         is AsyncImagePainter.State.Loading -> {
             ShimmerBox(

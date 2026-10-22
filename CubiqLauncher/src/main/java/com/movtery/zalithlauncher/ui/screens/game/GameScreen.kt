@@ -21,6 +21,7 @@ package com.movtery.zalithlauncher.ui.screens.game
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -269,10 +270,8 @@ private class GameViewModel(
                     currentControlFile = layoutFile
                     var l = getLayout(layoutFile)
                     if (l === EmptyControlLayout || l.layers.isEmpty()) {
-                        val fallback: File? = File(PathManager.DIR_CONTROL_LAYOUTS, "bedrock_touch_layout.json")
+                        val fallback: File? = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
                             .takeIf { it.exists() && it != layoutFile }
-                            ?: File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
-                                .takeIf { it.exists() && it != layoutFile }
                         if (fallback != null) {
                             currentControlFile = fallback
                             l = getLayout(fallback)
@@ -649,6 +648,18 @@ fun GameScreen(
                 displayOffset = gameDisplayLayout.offset,
                 onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
                 onReleasePointer = { viewModel.occupiedPointers.remove(it) }
+            )
+        }
+
+        // In-game aim crosshair when cursor is grabbed
+        if (isGrabbing && !viewModel.isEditingLayout) {
+            Image(
+                painter = painterResource(R.drawable.crosshair),
+                contentDescription = "In-game Crosshair",
+                modifier = Modifier
+                    .size(20.dp)
+                    .align(Alignment.Center),
+                alpha = 0.9f
             )
         }
 

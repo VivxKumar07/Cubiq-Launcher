@@ -51,7 +51,7 @@
             android:exported="true"
             android:windowSoftInputMode="adjustResize"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
-            android:screenOrientation="portrait">
+            android:screenOrientation="unspecified">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -111,7 +111,7 @@
             android:name=".ui.activities.MainActivity"
             android:launchMode="singleTop"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="unspecified" />
         <activity
             android:name=".ui.activities.ControlEditorActivity"
             android:theme="@style/AppTheme.Fullscreen"
@@ -126,7 +126,7 @@
             android:screenOrientation="sensorLandscape" />
         <activity android:name=".ui.activities.ErrorActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="unspecified" />
         <activity android:name=".ui.activities.FatalErrorActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|keyboard|navigation"
             android:theme="@style/Theme.Material3.DayNight.Dialog.Alert" />
@@ -137,7 +137,7 @@
             android:taskAffinity=":filemanager"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation|uiMode|locale|layoutDirection"
             android:windowSoftInputMode="adjustResize"
-            android:screenOrientation="portrait"
+            android:screenOrientation="unspecified"
             android:enableOnBackInvokedCallback="true"
             android:exported="false" />
 

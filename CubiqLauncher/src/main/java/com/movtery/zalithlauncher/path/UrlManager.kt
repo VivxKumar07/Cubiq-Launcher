@@ -52,12 +52,13 @@ const val URL_MINECRAFT_PURCHASE = "https://www.xbox.com/games/store/minecraft-j
 const val URL_PROJECT: String = "https://github.com/VivxKumar07/Cubiq-Launcher"
 const val URL_PROJECT_INFO: String = "https://api.github.com/repos/ZalithLauncher/Zalith-Info/contents/v2"
 const val URL_COMMUNITY: String = "https://github.com/VivxKumar07/Cubiq-Launcher/graphs/contributors"
-const val URL_DISCORD: String = "https://discord.gg/RJfNxFVYj"
+const val URL_DISCORD: String = "https://discord.gg/7sfG3J93fH"
 const val URL_WEBLATE: String = "https://hosted.weblate.org/projects/zalithlauncher2"
-const val URL_SUPPORT: String = "https://discord.gg/RJfNxFVYj"
+const val URL_SUPPORT: String = "https://discord.gg/7sfG3J93fH"
 const val URL_EASYTIER: String = "https://easytier.cn/"
 
 const val URL_GITHUB_RENDERER_PLUGINS = "https://github.com/ShirosakiMio/FCLRendererPlugin/releases/tag/Renderer"
+const val URL_GITHUB_MOBILEGLUES_RELEASES = "https://github.com/MobileGL-Dev/MobileGlues-release/releases"
 const val URL_GITHUB_DRIVER_PLUGINS = "https://github.com/FCL-Team/FCLDriverPlugin/releases/tag/Turnip"
 const val URL_GITHUB_NATIVE_LIB_PLUGINS = "https://github.com/ZalithLauncher/NativeLibPlugin/releases"
 

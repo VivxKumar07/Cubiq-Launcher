@@ -199,6 +199,10 @@ abstract class FullScreenAppCompatActivity : AbstractAppCompatActivity() {
         refreshIgnoreNotch()
     }
 
+    fun refreshFullscreen() {
+        applyFullscreen()
+    }
+
     fun refreshIgnoreNotch() {
         if (Build.VERSION.SDK_INT >= VERSION_CODES.P) {
             val mode = if (isIgnoreNotch()) {
@@ -226,12 +230,14 @@ abstract class FullScreenAppCompatActivity : AbstractAppCompatActivity() {
 }
 
 /**
- * 实时监听全屏设置变化并更新刘海屏模式
+ * 实时监听全屏设置变化及屏幕旋转并更新刘海屏和沉浸式全屏模式
  */
 @Composable
 fun ObserveFullScreenSetting(fullScreen: Boolean) {
     val activity = LocalActivity.current as? FullScreenAppCompatActivity ?: return
-    LaunchedEffect(fullScreen) {
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    LaunchedEffect(fullScreen, configuration.orientation) {
+        activity.refreshFullscreen()
         activity.refreshIgnoreNotch()
     }
 }

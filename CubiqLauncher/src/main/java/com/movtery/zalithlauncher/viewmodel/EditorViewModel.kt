@@ -154,13 +154,18 @@ class EditorViewModel : ViewModel() {
      * 为控件层添加控件
      */
     fun addWidget(layers: List<ObservableControlLayer>, addToLayer: (ObservableControlLayer) -> Unit) {
-        val layer = selectedLayer
+        val targetLayer = selectedLayer ?: layers.find { 
+            it.name.contains("bedrock", ignoreCase = true) || 
+            it.name.equals("layer2", ignoreCase = true) || 
+            it.name.equals("control", ignoreCase = true) 
+        } ?: layers.firstOrNull()
+
         if (layers.isEmpty()) {
             editorWarningOperation = EditorWarningOperation.WarningNoLayers
-        } else if (layer == null) {
+        } else if (targetLayer == null) {
             editorWarningOperation = EditorWarningOperation.WarningNoSelectLayer
         } else {
-            addToLayer(layer)
+            addToLayer(targetLayer)
         }
     }
 
@@ -271,7 +276,9 @@ class EditorViewModel : ViewModel() {
                 editorOperation = EditorOperation.SaveFailed(e)
             }.onSuccess {
                 editorOperation = EditorOperation.None
-                onSaved()
+                withContext(Dispatchers.Main) {
+                    onSaved()
+                }
             }
         }
     }

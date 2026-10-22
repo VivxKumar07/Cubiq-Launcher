@@ -79,6 +79,28 @@ suspend fun runJvmRetryRuntimes(
         "$it $jvmArgs"
     } ?: jvmArgs
 
+    val jreName = jre.jreName
+    val runtimeHome = java.io.File(com.movtery.zalithlauncher.path.PathManager.DIR_MULTIRT, jreName)
+    val hasLibJli = listOf(
+        java.io.File(runtimeHome, "lib/jli/libjli.so"),
+        java.io.File(runtimeHome, "lib/libjli.so"),
+        java.io.File(runtimeHome, "jre/lib/jli/libjli.so"),
+        java.io.File(runtimeHome, "jre/lib/libjli.so"),
+        java.io.File(runtimeHome, "lib/aarch64/jli/libjli.so"),
+        java.io.File(runtimeHome, "jre/lib/aarch64/jli/libjli.so"),
+        java.io.File(runtimeHome, "lib/aarch32/jli/libjli.so"),
+        java.io.File(runtimeHome, "jre/lib/aarch32/jli/libjli.so"),
+        java.io.File(runtimeHome, "lib/arm/jli/libjli.so"),
+        java.io.File(runtimeHome, "jre/lib/arm/jli/libjli.so")
+    ).any { it.exists() && it.isFile }
+
+    if (!runtimeHome.exists() || !hasLibJli) {
+        logOutput?.appendLine("Preparing Java Runtime ($jreName)...")
+        com.movtery.zalithlauncher.game.multirt.JreDownloadManager.downloadAndInstallJre(GlobalContext, jreName) { p, m ->
+            logOutput?.appendLine("[$p%] $m")
+        }
+    }
+
     val exitCode = startJvmServiceAndWaitExit(
         jvmArgs = finalArgs,
         jreName = jre.jreName,

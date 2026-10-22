@@ -6,6 +6,7 @@ import com.movtery.zalithlauncher.game.addons.modloader.fabriclike.fabric.Fabric
 import com.movtery.zalithlauncher.game.addons.modloader.fabriclike.quilt.QuiltVersions
 import com.movtery.zalithlauncher.game.addons.modloader.forgelike.forge.ForgeVersions
 import com.movtery.zalithlauncher.game.addons.modloader.forgelike.neoforge.NeoForgeVersions
+import com.movtery.zalithlauncher.game.addons.modloader.optifine.OptiFineVersions
 import com.movtery.zalithlauncher.game.download.game.GameDownloadInfo
 import com.movtery.zalithlauncher.game.download.game.GameInstaller
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
@@ -22,6 +23,9 @@ object InstallationDownloadManager {
     private val _activeInstaller = MutableStateFlow<GameInstaller?>(null)
     val activeInstaller = _activeInstaller.asStateFlow()
 
+    private val _isPreparing = MutableStateFlow(false)
+    val isPreparing = _isPreparing.asStateFlow()
+
     private val _showForegroundDialog = MutableStateFlow(false)
     val showForegroundDialog = _showForegroundDialog.asStateFlow()
 
@@ -33,15 +37,17 @@ object InstallationDownloadManager {
     }
 
     fun showDialog() {
-        if (_activeInstaller.value != null) {
+        if (_activeInstaller.value != null || _isPreparing.value) {
             _showForegroundDialog.value = true
         }
     }
 
     fun cancelActiveInstallation() {
+        _isPreparing.value = false
         _activeInstaller.value = null
         _showForegroundDialog.value = false
         _activeInstallationName.value = null
+        com.movtery.zalithlauncher.keepalive.TaskKeepAlive.release()
     }
 
     fun startInstallation(
@@ -54,10 +60,50 @@ object InstallationDownloadManager {
     ) {
         val finalVersionName = if (name.isBlank()) "$version $loader" else name
         _activeInstallationName.value = finalVersionName
+        _isPreparing.value = true
         _showForegroundDialog.value = true
+
+        com.movtery.zalithlauncher.keepalive.TaskKeepAlive.acquire()
 
         scope.launch(Dispatchers.IO) {
             try {
+                // Ensure the required Java Runtime environment is ready for this Minecraft version
+                val targetMajor = when {
+                    version.contains("1.20.5") || version.contains("1.20.6") || version.contains("1.21") || version.contains("26.") -> 21
+                    version.contains("1.17") || version.contains("1.18") || version.contains("1.19") || version.contains("1.20") -> 17
+                    else -> 8
+                }
+                val targetRuntimeName = "Internal-$targetMajor"
+                val jreDir = java.io.File(com.movtery.zalithlauncher.path.PathManager.DIR_MULTIRT, targetRuntimeName)
+                val hasLib = listOf(
+                    java.io.File(jreDir, "lib/jli/libjli.so"),
+                    java.io.File(jreDir, "lib/libjli.so"),
+                    java.io.File(jreDir, "jre/lib/jli/libjli.so"),
+                    java.io.File(jreDir, "lib/arm/jli/libjli.so"),
+                    java.io.File(jreDir, "lib/aarch64/jli/libjli.so")
+                ).any { it.exists() }
+
+                if (!jreDir.exists() || !hasLib) {
+                    var installed = false
+                    val jre = com.movtery.zalithlauncher.components.jre.Jre.entries.firstOrNull { it.jreName == targetRuntimeName }
+                    if (jre != null) {
+                        runCatching {
+                            val task = com.movtery.zalithlauncher.components.jre.UnpackJreTask(context, jre)
+                            if (!task.isCheckFailed()) {
+                                task.run()
+                                installed = true
+                            }
+                        }
+                    }
+                    if (!installed) {
+                        com.movtery.zalithlauncher.game.multirt.JreDownloadManager.downloadAndInstallJre(context, targetRuntimeName)
+                    }
+                }
+
+                var optifineVer = if (loader.equals("OptiFine", ignoreCase = true)) {
+                    OptiFineVersions.fetchOptiFineList(gameVersion = version)?.firstOrNull()
+                } else null
+
                 var fabricVer = if (loader.equals("Fabric", ignoreCase = true)) {
                     FabricVersions.fetchFabricLoaderList(version)?.firstOrNull()
                 } else null
@@ -78,6 +124,7 @@ object InstallationDownloadManager {
                     gameVersion = version,
                     customVersionName = finalVersionName,
                     overwrite = true,
+                    optifine = optifineVer,
                     fabric = fabricVer,
                     forge = forgeVer,
                     neoforge = neoforgeVer,
@@ -85,6 +132,7 @@ object InstallationDownloadManager {
                 )
 
                 val installer = GameInstaller(context, downloadInfo, scope)
+                _isPreparing.value = false
                 _activeInstaller.value = installer
 
                 installer.installGame(
@@ -94,29 +142,36 @@ object InstallationDownloadManager {
                         _activeInstaller.value = null
                         _showForegroundDialog.value = false
                         _activeInstallationName.value = null
+                        com.movtery.zalithlauncher.keepalive.TaskKeepAlive.release()
                         scope.launch(Dispatchers.Main) {
                             Toast.makeText(context, "Installation $installedVersion installed successfully!", Toast.LENGTH_SHORT).show()
                             onSuccess(installedVersion)
                         }
                     },
                     onError = { th ->
+                        _isPreparing.value = false
                         _activeInstaller.value = null
                         _showForegroundDialog.value = false
                         _activeInstallationName.value = null
+                        com.movtery.zalithlauncher.keepalive.TaskKeepAlive.release()
                         scope.launch(Dispatchers.Main) {
                             Toast.makeText(context, "Failed to install $finalVersionName: ${th.message}", Toast.LENGTH_LONG).show()
                         }
                     },
                     onGameAlreadyInstalled = {
+                        _isPreparing.value = false
                         _activeInstaller.value = null
                         _showForegroundDialog.value = false
                         _activeInstallationName.value = null
+                        com.movtery.zalithlauncher.keepalive.TaskKeepAlive.release()
                     }
                 )
             } catch (e: Throwable) {
+                _isPreparing.value = false
                 _activeInstaller.value = null
                 _showForegroundDialog.value = false
                 _activeInstallationName.value = null
+                com.movtery.zalithlauncher.keepalive.TaskKeepAlive.release()
                 scope.launch(Dispatchers.Main) {
                     Toast.makeText(context, "Error setting up $loader: ${e.message}", Toast.LENGTH_LONG).show()
                 }
