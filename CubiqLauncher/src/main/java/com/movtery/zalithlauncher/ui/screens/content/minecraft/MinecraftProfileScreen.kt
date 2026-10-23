@@ -4923,39 +4923,31 @@ private fun VideoSettingsTab(
 
 
             if (selectedRendererId == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.getUniqueIdentifier()) {
-
+                val isInstalled = com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.isInstalled(context)
                 MinecraftButton(
-
                     onClick = {
-
                         runCatching {
-
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(com.movtery.zalithlauncher.path.URL_GITHUB_MOBILEGLUES_RELEASES)).apply {
-
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-
+                            if (isInstalled) {
+                                val launchIntent = context.packageManager.getLaunchIntentForPackage(com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.PACKAGE_NAME)
+                                if (launchIntent != null) {
+                                    launchIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    context.startActivity(launchIntent)
+                                }
+                            } else {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(com.movtery.zalithlauncher.path.URL_GITHUB_MOBILEGLUES_RELEASES)).apply {
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                }
+                                context.startActivity(intent)
                             }
-
-                            context.startActivity(intent)
-
                         }
-
                     },
-
-                    style = MinecraftButtonStyle.STONE,
-
-                    text = "DOWNLOAD MOBILEGLUES COMPANION APP",
-
+                    style = if (isInstalled) MinecraftButtonStyle.GREEN else MinecraftButtonStyle.STONE,
+                    text = if (isInstalled) "MOBILEGLUES INSTALLED (OPEN SETTINGS)" else "DOWNLOAD MOBILEGLUES COMPANION APP",
                     fontSize = 11.sp,
-
                     modifier = Modifier
-
                         .fillMaxWidth()
-
                         .height(36.dp)
-
                 )
-
             }
 
         }

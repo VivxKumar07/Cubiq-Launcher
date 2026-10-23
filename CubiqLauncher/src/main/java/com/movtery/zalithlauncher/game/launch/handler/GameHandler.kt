@@ -118,13 +118,24 @@ class GameHandler(
 
             val graphicsApi = version.getGraphicsApi()
             val graphicsOption = "preferredGraphicsBackend"
-            when (graphicsApi) {
-                GraphicsApi.DEFAULT, GraphicsApi.DEFAULT_OPENGL -> {
-                    if (!containsKey(graphicsOption)) {
-                        set(graphicsOption, graphicsApi.option)
+            val currentRenderer = com.movtery.zalithlauncher.game.renderer.Renderers.getCurrentRenderer()
+            val isOpenGLRenderer = currentRenderer == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer ||
+                currentRenderer is com.movtery.zalithlauncher.game.plugin.renderer.RendererPlugin ||
+                currentRenderer == com.movtery.zalithlauncher.game.renderer.renderers.LTWRenderer ||
+                currentRenderer == com.movtery.zalithlauncher.game.renderer.renderers.NGGL4ESRenderer ||
+                currentRenderer == com.movtery.zalithlauncher.game.renderer.renderers.GL4ESRenderer
+
+            if (isOpenGLRenderer && graphicsApi != GraphicsApi.VULKAN) {
+                set(graphicsOption, "\"opengl\"")
+            } else {
+                when (graphicsApi) {
+                    GraphicsApi.DEFAULT, GraphicsApi.DEFAULT_OPENGL -> {
+                        if (!containsKey(graphicsOption)) {
+                            set(graphicsOption, graphicsApi.option)
+                        }
                     }
+                    else -> set(graphicsOption, graphicsApi.option)
                 }
-                else -> set(graphicsOption, graphicsApi.option)
             }
 
             loadLanguage(mcVersionStr)

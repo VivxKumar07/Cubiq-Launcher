@@ -62,8 +62,10 @@ object PluginLoader {
                 Intent(Intent.ACTION_MAIN),
                 PACKAGE_FLAGS
             )
+        val scannedPackages = mutableSetOf<String>()
         queryIntentActivities.forEach { resolve ->
             val applicationInfo = resolve.activityInfo.applicationInfo
+            scannedPackages.add(applicationInfo.packageName)
             runCatching {
                 DriverPluginManager.parseApkPlugin(context, applicationInfo) { apkPluginList.add(it) }
                 RendererV2PluginManager.parseApkPlugin(context, applicationInfo) { apkPluginList.add(it) }
@@ -71,6 +73,24 @@ object PluginLoader {
                 NativePluginManager.parseApkPlugin(context, applicationInfo) { apkPluginList.add(it) }
             }.onFailure { e ->
                 Logger.error("PluginLoader", "An exception was encountered while importing the software plugin ${applicationInfo.packageName}", e)
+            }
+        }
+
+        // 显式解析已知插件包名，避免某些插件未提供 MAIN Activity 时遗漏
+        val explicitPluginPackages = listOf(
+            "com.fcl.plugin.mobileglues",
+            "com.bzlzhh.plugin.ngg",
+            "com.bzlzhh.plugin.ngg.angleless"
+        )
+        for (pkg in explicitPluginPackages) {
+            if (!scannedPackages.contains(pkg)) {
+                runCatching {
+                    val appInfo = context.packageManager.getApplicationInfo(pkg, PACKAGE_FLAGS)
+                    DriverPluginManager.parseApkPlugin(context, appInfo) { apkPluginList.add(it) }
+                    RendererV2PluginManager.parseApkPlugin(context, appInfo) { apkPluginList.add(it) }
+                    RendererPluginManager.parseApkPlugin(context, appInfo) { apkPluginList.add(it) }
+                    NativePluginManager.parseApkPlugin(context, appInfo) { apkPluginList.add(it) }
+                }
             }
         }
         FFmpegPluginManager.loadPlugin(context) { apkPluginList.add(it) }

@@ -447,7 +447,7 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
     envMap += renderer.getRendererEnv().value
 
     renderer.getRendererEGL()?.let { eglName ->
-        envMap["POJAVEXEC_EGL"] = eglName
+        envMap["POJAVEXEC_EGL"] = if (eglName.contains("/")) java.io.File(eglName).name else eglName
 
         // 指定 SDL EGL
         val nativeLibPath = if (renderer is Plugin) {
@@ -455,7 +455,7 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
         } else {
             PathManager.DIR_NATIVE_LIB
         }
-        envMap["SDL_EGL_LIBRARY"] = "$nativeLibPath/$eglName"
+        envMap["SDL_EGL_LIBRARY"] = if (eglName.startsWith("/")) eglName else "$nativeLibPath/$eglName"
     }
 
     envMap["POJAV_RENDERER"] = rendererId

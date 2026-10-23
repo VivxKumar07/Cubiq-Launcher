@@ -38,6 +38,7 @@ import com.movtery.zalithlauncher.game.path.getGameHome
 import com.movtery.zalithlauncher.game.plugin.ffmpeg.FFmpegPluginManager
 import com.movtery.zalithlauncher.game.plugin.natives.NativePluginManager
 import com.movtery.zalithlauncher.game.plugin.renderer.RendererPluginManager
+import com.movtery.zalithlauncher.game.renderer.Renderers
 import com.movtery.zalithlauncher.path.LibPath
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
@@ -401,7 +402,9 @@ abstract class Launcher(
         val libName = if (is64BitsDevice) "lib64" else "lib"
         val paths = buildList {
             FFmpegPluginManager.takeIf { it.isAvailable }?.libraryPath?.let { add(it) }
-            RendererPluginManager.selectedRendererPlugin?.path?.let { add(it) }
+            val pluginPath = RendererPluginManager.selectedRendererPlugin?.path
+                ?: (if (Renderers.getCurrentRenderer().getUniqueIdentifier() == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.PACKAGE_NAME) com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.getInstalledPluginNativePath() else null)
+            pluginPath?.let { add(it) }
             addAll(NativePluginManager.getPaths())
             add("$javaLibDir/jli")
             add("$javaLibDir/server")
@@ -446,6 +449,8 @@ abstract class Launcher(
 
     protected fun getLibraryPath(): String {
         val libDirName = if (is64BitsDevice) "lib64" else "lib"
+        val pluginPath = RendererPluginManager.selectedRendererPlugin?.path
+            ?: (if (Renderers.getCurrentRenderer().getUniqueIdentifier() == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.PACKAGE_NAME) com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.getInstalledPluginNativePath() else null)
         val path = listOfNotNull(
             // per-version LWJGL natives 优先，避免 APK 内旧版 native 抢占
             lwjglNativesDir,
@@ -453,7 +458,7 @@ abstract class Launcher(
             "/vendor/$libDirName",
             "/vendor/$libDirName/hw",
             "/system_ext/$libDirName",
-            RendererPluginManager.selectedRendererPlugin?.path,
+            pluginPath,
             PathManager.DIR_RUNTIME_MOD?.absolutePath,
             PathManager.DIR_NATIVE_LIB
         )

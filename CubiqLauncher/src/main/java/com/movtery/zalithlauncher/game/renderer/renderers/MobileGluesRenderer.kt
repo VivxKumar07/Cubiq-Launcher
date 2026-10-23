@@ -18,12 +18,26 @@
 
 package com.movtery.zalithlauncher.game.renderer.renderers
 
+import android.content.Context
+import android.content.pm.ApplicationInfo
+import com.movtery.zalithlauncher.context.GlobalContext
+import com.movtery.zalithlauncher.game.plugin.Plugin
 import com.movtery.zalithlauncher.game.renderer.RendererInterface
+import com.movtery.zalithlauncher.path.PathManager
+import java.io.File
 
-object MobileGluesRenderer : RendererInterface {
+object MobileGluesRenderer : RendererInterface, Plugin {
+    const val PACKAGE_NAME = "com.fcl.plugin.mobileglues"
+
+    override fun getIdentifier(): String = PACKAGE_NAME
+
+    override fun getNativeLibPath(): String {
+        return getInstalledPluginNativePath() ?: PathManager.DIR_NATIVE_LIB
+    }
+
     override fun getRendererId(): String = "opengles3_mobileglues"
 
-    override fun getUniqueIdentifier(): String = "com.fcl.plugin.mobileglues"
+    override fun getUniqueIdentifier(): String = PACKAGE_NAME
 
     override fun getRendererName(): String = "MobileGlues"
 
@@ -42,9 +56,37 @@ object MobileGluesRenderer : RendererInterface {
         )
     }
 
-    override fun getDlopenLibrary(): Lazy<List<String>> = lazy { emptyList() }
+    override fun getDlopenLibrary(): Lazy<List<String>> = lazy {
+        val path = getInstalledPluginNativePath()
+        if (path != null) listOf("$path/libmobileglues.so") else emptyList()
+    }
 
-    override fun getRendererLibrary(): String = "libmobileglues.so"
+    override fun getRendererLibrary(): String {
+        val path = getInstalledPluginNativePath()
+        return if (path != null) "$path/libmobileglues.so" else "libmobileglues.so"
+    }
 
-    override fun getRendererEGL(): String = "libmobileglues.so"
+    override fun getRendererEGL(): String {
+        val path = getInstalledPluginNativePath()
+        return if (path != null) "$path/libmobileglues.so" else "libmobileglues.so"
+    }
+
+    @JvmStatic
+    fun isInstalled(context: Context = GlobalContext): Boolean {
+        return getInstalledPluginInfo(context) != null
+    }
+
+    @JvmStatic
+    fun getInstalledPluginInfo(context: Context = GlobalContext): ApplicationInfo? {
+        return runCatching {
+            context.packageManager.getApplicationInfo(PACKAGE_NAME, 0)
+        }.getOrNull()
+    }
+
+    @JvmStatic
+    fun getInstalledPluginNativePath(context: Context = GlobalContext): String? {
+        val nativeDir = getInstalledPluginInfo(context)?.nativeLibraryDir ?: return null
+        val soFile = File(nativeDir, "libmobileglues.so")
+        return if (soFile.exists()) nativeDir else nativeDir
+    }
 }

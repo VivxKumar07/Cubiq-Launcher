@@ -321,7 +321,7 @@ fun LaunchGameOperation(
                 val rendererRequiresVulkan = currentRenderer == KopperZinkRenderer || currentRendererId.contains("zink")
 
                 val isVulkanSupported = when {
-                    hasVulkan -> ensureVulkanSupported(version)
+                    (rendererRequiresVulkan || version.getGraphicsApi() == com.movtery.zalithlauncher.game.version.installed.GraphicsApi.VULKAN) -> ensureVulkanSupported(version)
                     rendererRequiresVulkan -> {
                         // Zink translation layer requires Vulkan 1.2+ on the device, independent of MC 26.2+ profile
                         runCatching {
@@ -335,6 +335,15 @@ fun LaunchGameOperation(
                 if (rendererRequiresVulkan && !isVulkanSupported) {
                     // Only fallback if the chosen renderer strictly requires Vulkan and Vulkan is missing
                     Logger.warning("LaunchCheck", "Vulkan is not supported for renderer ${currentRenderer.getRendererName()}")
+                }
+
+                // 检查 MobileGlues 伴生应用是否已安装
+                if (currentRenderer.getUniqueIdentifier() == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.PACKAGE_NAME &&
+                    !com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.isInstalled(activity)
+                ) {
+                    android.widget.Toast.makeText(activity, "MobileGlues Companion App is not installed! Please install it first.", android.widget.Toast.LENGTH_LONG).show()
+                    launchGameViewModel.updateOperation(LaunchGameOperation.None)
+                    return@LaunchedEffect
                 }
 
                 if (!hasVulkan || !isVulkanSupported) {

@@ -79,10 +79,20 @@ object Renderers {
      * 加入单个渲染器
      */
     fun addRenderer(renderer: RendererInterface): Boolean {
-        return if (renderers.any { it.getUniqueIdentifier() == renderer.getUniqueIdentifier() }) {
-            Logger.warning(TAG, "The unique identifier of this renderer (${renderer.getRendererName()} - ${renderer.getUniqueIdentifier()}) conflicts with an already loaded renderer. " +
-                    "Normally, this shouldn't happen. You deliberately caused this conflict, didn't you, user?")
-            false
+        val existingIndex = renderers.indexOfFirst { it.getUniqueIdentifier() == renderer.getUniqueIdentifier() }
+        return if (existingIndex != -1) {
+            val existing = renderers[existingIndex]
+            if (existing !is com.movtery.zalithlauncher.game.plugin.Plugin && renderer is com.movtery.zalithlauncher.game.plugin.Plugin) {
+                renderers[existingIndex] = renderer
+                if (currentRenderer?.getUniqueIdentifier() == renderer.getUniqueIdentifier()) {
+                    currentRenderer = renderer
+                }
+                Logger.info(TAG, "Replaced placeholder renderer ${existing.getRendererName()} with installed plugin: ${renderer.getRendererName()}")
+                true
+            } else {
+                Logger.warning(TAG, "The unique identifier of this renderer (${renderer.getRendererName()} - ${renderer.getUniqueIdentifier()}) conflicts with an already loaded renderer.")
+                false
+            }
         } else {
             renderers.add(renderer)
             Logger.info(TAG, "Renderer loaded: ${renderer.getRendererName()} (${renderer.getRendererId()} - ${renderer.getUniqueIdentifier()})")

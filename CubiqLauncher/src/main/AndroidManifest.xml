@@ -22,6 +22,8 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"/>
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"/>
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <application
         android:name=".ZLApplication"
@@ -226,6 +228,9 @@
     </application>
     <queries>
         <package android:name="net.kdt.pojavlaunch.ffmpeg"/>
+        <package android:name="com.fcl.plugin.mobileglues"/>
+        <package android:name="com.bzlzhh.plugin.ngg"/>
+        <package android:name="com.bzlzhh.plugin.ngg.angleless"/>
         <intent>
             <action android:name="android.intent.action.MAIN" />
         </intent>

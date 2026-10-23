@@ -179,6 +179,7 @@ fun RendererSettingsScreen(
 
                     if (currentRendererId == MobileGluesRenderer.getUniqueIdentifier()) {
                         val ctx = LocalContext.current
+                        val isInstalled = MobileGluesRenderer.isInstalled(ctx)
                         SettingsCard(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -186,10 +187,18 @@ fun RendererSettingsScreen(
                             position = CardPosition.Middle,
                             onClick = {
                                 runCatching {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(URL_GITHUB_MOBILEGLUES_RELEASES)).apply {
-                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    if (isInstalled) {
+                                        val launchIntent = ctx.packageManager.getLaunchIntentForPackage(MobileGluesRenderer.PACKAGE_NAME)
+                                        if (launchIntent != null) {
+                                            launchIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                            ctx.startActivity(launchIntent)
+                                        }
+                                    } else {
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(URL_GITHUB_MOBILEGLUES_RELEASES)).apply {
+                                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                        }
+                                        ctx.startActivity(intent)
                                     }
-                                    ctx.startActivity(intent)
                                 }
                             }
                         ) {
@@ -202,20 +211,20 @@ fun RendererSettingsScreen(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "Download MobileGlues Companion App",
+                                        text = if (isInstalled) "MobileGlues Companion App: Installed" else "Download MobileGlues Companion App",
                                         style = MaterialTheme.typography.titleSmall,
-                                        color = MaterialTheme.colorScheme.primary
+                                        color = if (isInstalled) androidx.compose.ui.graphics.Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
                                     )
                                     Text(
-                                        text = "Official MobileGlues APK release on GitHub. Required to enable MobileGlues rendering engine.",
+                                        text = if (isInstalled) "Tap to open MobileGlues configuration and companion app." else "Official MobileGlues APK release on GitHub. Required to enable MobileGlues rendering engine.",
                                         style = MaterialTheme.typography.bodySmall,
                                         modifier = Modifier.alpha(0.75f)
                                     )
                                 }
                                 Icon(
-                                    painter = painterResource(R.drawable.ic_download_2_filled),
-                                    contentDescription = "Download MobileGlues",
-                                    tint = MaterialTheme.colorScheme.primary
+                                    painter = painterResource(if (isInstalled) R.drawable.ic_settings_filled else R.drawable.ic_download_2_filled),
+                                    contentDescription = if (isInstalled) "Settings" else "Download MobileGlues",
+                                    tint = if (isInstalled) androidx.compose.ui.graphics.Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
                                 )
                             }
                         }
