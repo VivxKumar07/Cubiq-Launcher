@@ -460,6 +460,17 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
 
     envMap["POJAV_RENDERER"] = rendererId
 
+    if (renderer == LTWRenderer || renderer == MobileGluesRenderer) {
+        envMap["LIBGL_NOERROR"] = "1"
+        envMap["force_glsl_extensions_warn"] = "true"
+        envMap["allow_higher_compat_version"] = "true"
+        envMap["allow_glsl_extension_directive_midshader"] = "true"
+    }
+
+    getRendererLibrary()?.let { lib ->
+        envMap["POJAV_RENDERER_LIB"] = lib
+    }
+
     if (RendererPluginManager.selectedRendererPlugin != null) return
 
     if (renderer != GL4ESRenderer && renderer != NGGL4ESRenderer && renderer != LTWRenderer && renderer != MobileGluesRenderer) {

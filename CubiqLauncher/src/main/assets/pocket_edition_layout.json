@@ -430,8 +430,8 @@
               "key": "GLFW_MOUSE_BUTTON_LEFT"
             }
           ],
-          "isSwipple": true,
-          "isPenetrable": false,
+          "isSwipple": false,
+          "isPenetrable": true,
           "isToggleable": false
         },
         {
@@ -462,8 +462,8 @@
               "key": "GLFW_MOUSE_BUTTON_RIGHT"
             }
           ],
-          "isSwipple": true,
-          "isPenetrable": false,
+          "isSwipple": false,
+          "isPenetrable": true,
           "isToggleable": false
         },
         {

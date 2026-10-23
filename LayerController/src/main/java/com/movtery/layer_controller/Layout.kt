@@ -59,6 +59,7 @@ import com.movtery.layer_controller.observable.ObservableJoystickStyle
 import com.movtery.layer_controller.observable.ObservableWidget
 import com.movtery.layer_controller.observable.PointerEventBus
 import com.movtery.layer_controller.observable.TouchProcessor
+import com.movtery.layer_controller.utils.LocalButtonScale
 import com.movtery.layer_controller.utils.getWidgetPosition
 
 /**
@@ -78,6 +79,7 @@ fun ControlBoxLayout(
     isCursorGrabbing: Boolean,
     checkOccupiedPointers: (PointerId) -> Boolean,
     @FloatRange(0.0, 1.0) opacity: Float = 1f,
+    buttonScale: Float = 1f,
     markPointerAsMoveOnly: (PointerId) -> Unit = {},
     onOccupiedPointer: (PointerId) -> Unit = {},
     onReleasePointer: (PointerId) -> Unit = {},
@@ -108,6 +110,7 @@ fun ControlBoxLayout(
                             eventHandler = eventHandler,
                             checkOccupiedPointers = checkOccupiedPointers,
                             opacity = opacity,
+                            buttonScale = buttonScale,
                             markPointerAsMoveOnly = markPointerAsMoveOnly,
                             onOccupiedPointer = onOccupiedPointer,
                             onReleasePointer = onReleasePointer,
@@ -133,6 +136,7 @@ private fun BoxWithConstraintsScope.BaseControlBoxLayout(
     eventHandler: EventHandler,
     checkOccupiedPointers: (PointerId) -> Boolean,
     @FloatRange(0.0, 1.0) opacity: Float,
+    buttonScale: Float = 1f,
     markPointerAsMoveOnly: (PointerId) -> Unit,
     onOccupiedPointer: (PointerId) -> Unit,
     onReleasePointer: (PointerId) -> Unit,
@@ -174,9 +178,10 @@ private fun BoxWithConstraintsScope.BaseControlBoxLayout(
     val currentTouchProcessor by rememberUpdatedState(touchProcessor)
     val currentMarkPointerAsMoveOnly by rememberUpdatedState(markPointerAsMoveOnly)
 
-    Box(
-        modifier = modifier
-            .pointerInput(reversedLayers, hideLayerWhen) {
+    CompositionLocalProvider(LocalButtonScale provides buttonScale) {
+        Box(
+            modifier = modifier
+                .pointerInput(reversedLayers, hideLayerWhen) {
                 awaitPointerEventScope {
                     while (true) {
                         val event = awaitPointerEvent(pass = PointerEventPass.Initial)
@@ -233,6 +238,7 @@ private fun BoxWithConstraintsScope.BaseControlBoxLayout(
             onReleasePointer = onReleasePointer
         )
     }
+}
 }
 
 @Composable

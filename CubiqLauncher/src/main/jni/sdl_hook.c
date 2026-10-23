@@ -182,6 +182,8 @@ static bool isMobileGluesEgl(void) {
     return strcmp(base != NULL ? base + 1 : egl, "libmobileglues.so") == 0;
 }
 
+extern void* maybe_load_vulkan(void);
+
 // GLES 兼容层（强制 ES profile、RENDERABLE_TYPE 归一化、CV=2 兜底）
 // 仅对移动 ES 渲染器生效，桌面/OSMesa 路径不得被 ES 化
 static bool sdlGlesCompatEnabled(void) {
@@ -190,7 +192,7 @@ static bool sdlGlesCompatEnabled(void) {
     if (strstr(renderer, "desktopgl") != NULL) return false;
     if (strncmp(renderer, "gallium_", 8) == 0) return false; // OSMesa 系
     if (strcmp(renderer, "custom_gallium") == 0 || strcmp(renderer, "vulkan_zink") == 0) return false;
-    if (strncmp(renderer, "opengles", 8) == 0) return true; // 内置 GL4ES/NGGL4ES
+    if (strncmp(renderer, "opengles", 8) == 0) return true; // 内置 GL4ES/NGGL4ES/LTW
     return isMobileGluesEgl(); // MobileGlues
 }
 
@@ -224,7 +226,9 @@ static void *proxyEglCreateContext(EGLDisplay dpy, EGLConfig config, void *share
 
     LOG_TO_W("SDL_Hook: retrying eglCreateContext without KHR version attrs (CV=%d)", version);
     ctx = sOrigEglCreateContext(dpy, config, share, fixed);
-    if (ctx != NULL || !esSemantics || version <= 2) return ctx; // CV=2 为移动端最后兜底
+    const char *renderer = getenv("POJAV_RENDERER");
+    bool isLtw = (renderer != NULL && strcmp(renderer, "opengles3_ltw") == 0);
+    if (ctx != NULL || !esSemantics || version <= 2 || isLtw) return ctx; // CV=2 兜底不适用于 LTW (需要 ES 3+)
 
     LOG_TO_W("SDL_Hook: retrying eglCreateContext with CV=2 after CV=%d failed", version);
     EGLint es2[3] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
@@ -310,11 +314,8 @@ static void *custom_SDL_EGLGetProcAddress_Func(const char *proc) {
 // 句柄；对应句柄的引用计数由启动器持有，忽略 SDL 侧的卸载。
 static void *custom_SDL_LoadObject_Func(const char *path) {
     if (path != NULL && strstr(path, "libvulkan") != NULL) {
-        const char *vkptr = getenv("VULKAN_PTR");
-        if (vkptr != NULL && vkptr[0] != '\0') {
-            void *handle = (void *) (uintptr_t) strtoull(vkptr, NULL, 16);
-            if (handle != NULL) return handle;
-        }
+        void *handle = maybe_load_vulkan();
+        if (handle != NULL) return handle;
     }
     void *r = BYTEHOOK_CALL_PREV(custom_SDL_LoadObject_Func, SDL_LoadObject_t, path);
     BYTEHOOK_POP_STACK();
@@ -416,6 +417,10 @@ static void forceEglProfileEs(void) {
     SET_DLSYM_PTR(dlopen("libSDL3.so", RTLD_NOLOAD), SDL_GL_SetAttribute);
     if (SDL_GL_SetAttribute_p) {
         SDL_GL_SetAttribute_p(20 /* SDL_GL_CONTEXT_PROFILE_MASK */, 4 /* SDL_GL_CONTEXT_PROFILE_ES */);
+        const char *renderer = getenv("POJAV_RENDERER");
+        if (renderer != NULL && (strstr(renderer, "opengles3") != NULL || strstr(renderer, "ltw") != NULL)) {
+            SDL_GL_SetAttribute_p(17 /* SDL_GL_CONTEXT_MAJOR_VERSION */, 3);
+        }
         sForcedEsProfile = true;
     }
 }
@@ -558,11 +563,8 @@ static SDL_Window *proxy_SDL_GetWindowFromID(uint32_t id) {
 
 static void *proxy_SDL_LoadObject(const char *path) {
     if (path != NULL && strstr(path, "libvulkan") != NULL) {
-        const char *vkptr = getenv("VULKAN_PTR");
-        if (vkptr != NULL && vkptr[0] != '\0') {
-            void *handle = (void *) (uintptr_t) strtoull(vkptr, NULL, 16);
-            if (handle != NULL) return handle;
-        }
+        void *handle = maybe_load_vulkan();
+        if (handle != NULL) return handle;
     }
     return realSdlLoadObject(path);
 }

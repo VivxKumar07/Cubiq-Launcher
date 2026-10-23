@@ -33,6 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -287,6 +288,8 @@ private fun calculateSnapPosition(
     }
 }
 
+val LocalButtonScale = compositionLocalOf { 1f }
+
 /**
  * 自动处理按钮大小
  */
@@ -296,12 +299,13 @@ internal fun Modifier.buttonSize(
     screenSize: IntSize
 ): Modifier {
     val size = data.widgetSize
+    val scale = LocalButtonScale.current
 
     return this.then(
         when (size.type) {
             ButtonSize.Type.Dp -> Modifier.size(
-                width = size.widthDp.dp,
-                height = size.heightDp.dp
+                width = (size.widthDp * scale).dp,
+                height = (size.heightDp * scale).dp
             )
 
             //百分比计算方式，根据屏幕的高宽来计算按钮的大小尺寸
@@ -320,8 +324,8 @@ internal fun Modifier.buttonSize(
 
                 val density = LocalDensity.current
                 with(density) {
-                    val buttonWidth = (widthReference * (size.widthPercentage / 10000f)).toDp()
-                    val buttonHeight = (heightReference * (size.heightPercentage / 10000f)).toDp()
+                    val buttonWidth = (widthReference * (size.widthPercentage / 10000f) * scale).toDp()
+                    val buttonHeight = (heightReference * (size.heightPercentage / 10000f) * scale).toDp()
                     Modifier.size(width = buttonWidth, height = buttonHeight)
                 }
             }

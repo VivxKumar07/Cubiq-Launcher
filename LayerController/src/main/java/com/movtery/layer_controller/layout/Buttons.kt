@@ -55,6 +55,7 @@ import com.movtery.layer_controller.observable.ObservableNormalData
 import com.movtery.layer_controller.observable.ObservableTextData
 import com.movtery.layer_controller.observable.ObservableTranslatableString
 import com.movtery.layer_controller.observable.ObservableWidget
+import com.movtery.layer_controller.utils.LocalButtonScale
 import com.movtery.layer_controller.utils.buttonContentColorAsState
 import com.movtery.layer_controller.utils.buttonFontSizeAsState
 import com.movtery.layer_controller.utils.buttonSize
@@ -266,16 +267,18 @@ internal fun TextButton(
                     contentScale = ContentScale.FillBounds
                 )
             } else {
+                val scale = LocalButtonScale.current
+                val scaledFontSize = (fontSize * scale).sp
                 RtLText(
                     text = buttonTextStyle.text.translate(locale),
                     color = color,
-                    fontSize = fontSize.sp,
+                    fontSize = scaledFontSize,
                     textAlign = buttonTextStyle.textAlignment.textAlign,
                     fontWeight = if (buttonTextStyle.textBold) FontWeight.Bold else null,
                     fontStyle = if (buttonTextStyle.textItalic) FontStyle.Italic else null,
                     textDecoration = if (buttonTextStyle.textUnderline) TextDecoration.Underline else null,
                     style = LocalTextStyle.current.copy(
-                        lineHeight = (fontSize * 1.1).sp
+                        lineHeight = (fontSize * scale * 1.1).sp
                     )
                 )
             }

@@ -182,7 +182,7 @@ object AllSettings : SettingsRegistry() {
     /**
      * 隐藏虚拟鼠标
      */
-    val hideMouse = boolSetting("hideMouse", false)
+    val hideMouse = boolSetting("hideMouse", true)
 
     /**
      * 虚拟鼠标大小（Dp）
@@ -242,7 +242,7 @@ object AllSettings : SettingsRegistry() {
     /**
      * 虚拟鼠标控制模式
      */
-    val mouseControlMode = enumSetting("mouseControlMode", MouseControlMode.SLIDE)
+    val mouseControlMode = enumSetting("mouseControlMode", MouseControlMode.CLICK)
 
     /**
      * 鼠标控制长按延迟
@@ -544,6 +544,11 @@ object AllSettings : SettingsRegistry() {
      * 游戏内控制布局的整体不透明度
      */
     val controlsOpacity = intSetting("controlsOpacity", 100, 0..100)
+
+    /**
+     * 控制布局按钮整体缩放比例 (50% - 200%)
+     */
+    val controlsButtonScale = intSetting("controlsButtonScale", 100, 50..200)
 
     /**
      * 控制布局编辑器：是否开启控件吸附功能

@@ -354,6 +354,8 @@ fun MinecraftProfileScreen(
 
     var controlsOpacity by remember { mutableIntStateOf(AllSettings.controlsOpacity.state) }
 
+    var controlsButtonScale by remember { mutableIntStateOf(AllSettings.controlsButtonScale.state) }
+
     var gestureControl by remember { mutableStateOf(AllSettings.gestureControl.state) }
 
     var gestureTapAction by remember { mutableStateOf(AllSettings.gestureTapMouseAction.state) }
@@ -1291,6 +1293,10 @@ fun MinecraftProfileScreen(
                         controlsOpacity = controlsOpacity,
 
                         onControlsOpacityChange = { controlsOpacity = it },
+
+                        controlsButtonScale = controlsButtonScale,
+
+                        onControlsButtonScaleChange = { controlsButtonScale = it },
 
                         onSelectLayout = { name ->
 
@@ -7468,6 +7474,10 @@ private fun LayoutsSettingsTab(
 
     onControlsOpacityChange: (Int) -> Unit,
 
+    controlsButtonScale: Int,
+
+    onControlsButtonScaleChange: (Int) -> Unit,
+
     onSelectLayout: (String) -> Unit,
 
     onLaunchEditor: () -> Unit,
@@ -7588,7 +7598,35 @@ private fun LayoutsSettingsTab(
 
         }
 
+        // Overall Controls Button Size Slider
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
+                .padding(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Overall Controls Button Size", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text("${controlsButtonScale}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+            }
 
+            Slider(
+                value = controlsButtonScale.toFloat(),
+                onValueChange = { onControlsButtonScaleChange(it.toInt()) },
+                onValueChangeFinished = {
+                    AllSettings.controlsButtonScale.save(controlsButtonScale)
+                },
+                valueRange = 50f..200f,
+                colors = SliderDefaults.colors(
+                    thumbColor = Color(0xFF55FF55),
+                    activeTrackColor = Color(0xFF3C8527),
+                    inactiveTrackColor = Color(0xFF333333)
+                )
+            )
+        }
 
         // Layout Actions Header: + NEW LAYOUT | IMPORT CONTROLS | EXPORT ACTIVE
 

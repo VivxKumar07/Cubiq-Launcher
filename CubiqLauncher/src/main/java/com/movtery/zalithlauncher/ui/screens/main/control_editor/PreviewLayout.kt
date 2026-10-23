@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.IntSize
 import com.movtery.layer_controller.ControlBoxLayout
 import com.movtery.layer_controller.data.HideLayerWhen
 import com.movtery.layer_controller.observable.ObservableControlLayout
+import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.setting.enums.isLauncherInDarkTheme
 import com.movtery.zalithlauncher.ui.components.rememberBoxSize
 import com.movtery.zalithlauncher.ui.control.mouse.SwitchableMouseLayout
@@ -61,6 +62,7 @@ fun BoxWithConstraintsScope.PreviewControlBox(
         onOccupiedPointer = { occupiedPointers.add(it) },
         onReleasePointer = { occupiedPointers.remove(it) },
         isCursorGrabbing = previewScenario.isCursorGrabbing,
+        buttonScale = (AllSettings.controlsButtonScale.state.toFloat() / 100f).coerceIn(0.5f, 2.0f),
         hideLayerWhen = previewHideLayerWhen,
         isDark = isLauncherInDarkTheme()
     ) {

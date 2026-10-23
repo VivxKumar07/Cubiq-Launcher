@@ -25,10 +25,21 @@ static jlong ndlopen_bugfix(__attribute__((unused)) JNIEnv *env,
                             jint jmode) {
     const char* filename = (const char*) filename_ptr;
 
-    // Oveeride vulkan loading to let us load vulkan ourselves
+    // Override vulkan loading to let us load vulkan ourselves
     if(strstr(filename, "libvulkan.so") == filename) {
         printf("LWJGL linkerhook: replacing load for libvulkan.so with custom driver\n");
         return (jlong) maybe_load_vulkan();
+    }
+
+    // Intercept OpenGL library loads to point to active renderer
+    if(strstr(filename, "libGL.so") != NULL ||
+       strstr(filename, "libGLMojo.so") != NULL ||
+       strcmp(filename, "libGL.so.1") == 0) {
+        const char *rendererLib = getenv("POJAV_RENDERER_LIB");
+        if (rendererLib != NULL && rendererLib[0] != '\0') {
+            void *h = dlopen(rendererLib, (int)jmode);
+            if (h != NULL) return (jlong) h;
+        }
     }
 
     // This hook also serves the task of mitigating a bug: the idea is that since, on Android 10 and
@@ -39,7 +50,16 @@ static jlong ndlopen_bugfix(__attribute__((unused)) JNIEnv *env,
     // This method fixes the issue by being in libpojavexec, and thus being in the classloader namespace
 
     int mode = (int)jmode;
-    return (jlong) dlopen(filename, mode);
+    void *handle = dlopen(filename, mode);
+    if (!handle && strchr(filename, '/') == NULL) {
+        const char *nativeDir = getenv("POJAV_NATIVEDIR");
+        if (nativeDir != NULL && nativeDir[0] != '\0') {
+            char fullPath[1024];
+            snprintf(fullPath, sizeof(fullPath), "%s/%s", nativeDir, filename);
+            handle = dlopen(fullPath, mode);
+        }
+    }
+    return (jlong) handle;
 }
 
 /**

@@ -66,10 +66,7 @@ object MobileGluesRenderer : RendererInterface, Plugin {
         return if (path != null) "$path/libmobileglues.so" else "libmobileglues.so"
     }
 
-    override fun getRendererEGL(): String {
-        val path = getInstalledPluginNativePath()
-        return if (path != null) "$path/libmobileglues.so" else "libmobileglues.so"
-    }
+    override fun getRendererEGL(): String? = null
 
     @JvmStatic
     fun isInstalled(context: Context = GlobalContext): Boolean {

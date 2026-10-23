@@ -68,11 +68,7 @@ fun FloatingBall(
     val currentOnClick by rememberUpdatedState(onClick)
     val currentOnSavePos by rememberUpdatedState(onSavePos)
 
-    //在首次启动时，将悬浮球放到屏幕的 TopCenter
-    //确保这个行为只触发一次
-    var isInitialized by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) { isInitialized = true }
-
+    //在首次启动时，将悬浮球放到顶部居右（暂停按钮右侧，与所有控制风格一致）
     //检查是否是RTL布局，需要做初始位置适配
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     BoxWithConstraints(
@@ -100,20 +96,11 @@ fun FloatingBall(
             modifier = Modifier
                 .onSizeChanged { size ->
                     ballSize = size
-                    if (isInitialized || currentPosition != Offset.Zero) return@onSizeChanged
-                    val x = if (isPocketEdition) {
-                        (parentWidth * 0.605f)
-                    } else {
-                        ((parentWidth - ballSize.width) / 2f) //默认位置 TopCenter
-                    }
-                    val positionX = x.coerceIn(0f, (parentWidth - ballSize.width).toFloat().coerceAtLeast(0f))
-                    val y = if (isPocketEdition) {
-                        (parentHeight * 0.012f)
-                    } else {
-                        0f
-                    }
-                    val positionY = y.coerceIn(0f, (parentHeight - ballSize.height).toFloat().coerceAtLeast(0f))
+                    if (currentPosition != Offset.Zero || parentWidth <= 0 || parentHeight <= 0) return@onSizeChanged
+                    val positionX = (parentWidth * 0.62f).coerceIn(0f, (parentWidth - ballSize.width).toFloat().coerceAtLeast(0f))
+                    val positionY = (parentHeight * 0.015f).coerceIn(0f, (parentHeight - ballSize.height).toFloat().coerceAtLeast(0f))
                     onPositionChanged(Offset(positionX, positionY))
+                    currentOnSavePos()
                 }
                 .offset {
                     val maxX = (parentWidth - ballSize.width).coerceAtLeast(0)

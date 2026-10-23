@@ -564,6 +564,20 @@ private fun ControlOverview(
                 contentColor = contentColor,
             )
         }
+        //控制布局大小
+        item {
+            MenuSliderLayout(
+                modifier = Modifier.fillMaxWidth(),
+                title = "Overall Controls Button Size",
+                value = AllSettings.controlsButtonScale.state,
+                valueRange = AllSettings.controlsButtonScale.floatRange,
+                onValueChange = { AllSettings.controlsButtonScale.updateState(it) },
+                onValueChangeFinished = { AllSettings.controlsButtonScale.save(it) },
+                suffix = "%",
+                color = color,
+                contentColor = contentColor,
+            )
+        }
     }
 }
 

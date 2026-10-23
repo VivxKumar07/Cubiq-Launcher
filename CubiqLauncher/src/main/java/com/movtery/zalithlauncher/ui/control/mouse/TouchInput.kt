@@ -116,7 +116,7 @@ private val SCROLL_GESTURE_SCROLL_DISTANCE = 6.dp
 @Composable
 fun TouchpadLayout(
     modifier: Modifier = Modifier,
-    controlMode: MouseControlMode = MouseControlMode.SLIDE,
+    controlMode: MouseControlMode = MouseControlMode.CLICK,
     enableMouseClick: Boolean = true,
     longPressTimeoutMillis: Long = -1L,
     requestPointerCapture: Boolean = true,

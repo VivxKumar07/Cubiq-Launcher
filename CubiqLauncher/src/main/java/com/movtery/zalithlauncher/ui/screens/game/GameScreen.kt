@@ -610,6 +610,7 @@ fun GameScreen(
                 eventHandler = viewModel.eventHandler,
                 checkOccupiedPointers = { viewModel.occupiedPointers.contains(it) },
                 opacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f),
+                buttonScale = (AllSettings.controlsButtonScale.state.toFloat() / 100f).coerceIn(0.5f, 2.0f),
                 markPointerAsMoveOnly = { viewModel.moveOnlyPointers.add(it) },
                 onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
                 onReleasePointer = { viewModel.occupiedPointers.remove(it) },

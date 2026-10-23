@@ -2147,29 +2147,35 @@ fun CompactBackgroundDownloadBar(
                         }
                         Text(
                             text = headerText,
+                            modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            maxLines = 1
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     } else if (message != null) {
                         Text(
                             text = resolveAndroidString(message).text,
+                            modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            maxLines = 1
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     } else {
                         Text(
                             text = if (isPreparing) "PREPARING GAME INSTALLATION..." else "DOWNLOADING GAME FILES...",
+                            modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            maxLines = 1
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -2179,7 +2185,9 @@ fun CompactBackgroundDownloadBar(
                             text = "${formatFileSize(spd)}/s",
                             color = Color(0xFF55FF55),
                             fontFamily = MinecraftFontFamily,
-                            fontSize = 10.sp
+                            fontSize = 10.sp,
+                            softWrap = false,
+                            maxLines = 1
                         )
                     }
                 }
@@ -2188,8 +2196,8 @@ fun CompactBackgroundDownloadBar(
                 val progressFloat = progress.coerceIn(0f, 1f)
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(4.dp)
+                        .fillMaxWidth(0.98f)
+                        .height(3.5.dp)
                         .clip(RoundedCornerShape(2.dp))
                         .background(Color(0xFF2A2A2D))
                 ) {
