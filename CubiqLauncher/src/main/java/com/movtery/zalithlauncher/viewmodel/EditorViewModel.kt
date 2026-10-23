@@ -41,6 +41,7 @@ import com.movtery.layer_controller.observable.cloneNormal
 import com.movtery.layer_controller.observable.cloneText
 import com.movtery.layer_controller.utils.saveToFile
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.game.control.ControlManager
 import com.movtery.zalithlauncher.ui.components.MenuState
 import com.movtery.zalithlauncher.ui.screens.main.control_editor.EditorOperation
 import com.movtery.zalithlauncher.ui.screens.main.control_editor.EditorWarningOperation
@@ -275,6 +276,7 @@ class EditorViewModel : ViewModel() {
             }.onFailure { e ->
                 editorOperation = EditorOperation.SaveFailed(e)
             }.onSuccess {
+                ControlManager.refresh()
                 editorOperation = EditorOperation.None
                 withContext(Dispatchers.Main) {
                     onSaved()
@@ -285,6 +287,7 @@ class EditorViewModel : ViewModel() {
 
     fun onBackPressed(
         context: Context,
+        targetFile: File? = null,
         onExit: () -> Unit
     ) {
         //检查并退出编辑控件对话框、编辑控件样式对话框
@@ -293,6 +296,7 @@ class EditorViewModel : ViewModel() {
         } else {
             showExitEditorDialog(
                 context = context,
+                targetFile = targetFile,
                 onExit = onExit
             )
         }
@@ -309,6 +313,7 @@ class EditorViewModel : ViewModel() {
      */
     fun showExitEditorDialog(
         context: Context,
+        targetFile: File? = null,
         onExit: () -> Unit
     ) {
         viewModelScope.launch {
@@ -318,6 +323,7 @@ class EditorViewModel : ViewModel() {
             if (isModified) {
                 showExitEditorDialogSuspend(
                     context = context,
+                    targetFile = targetFile,
                     onExit = onExit
                 )
             } else {
@@ -329,18 +335,34 @@ class EditorViewModel : ViewModel() {
 
     private suspend fun showExitEditorDialogSuspend(
         context: Context,
+        targetFile: File?,
         onExit: () -> Unit
     ) = withContext(Dispatchers.Main) {
-        MaterialAlertDialogBuilder(context)
+        val builder = MaterialAlertDialogBuilder(context)
             .setTitle(R.string.generic_warning)
             .setMessage(R.string.control_editor_exit_message)
-            .setPositiveButton(R.string.generic_cancel) { dialog, _ ->
+
+        if (targetFile != null) {
+            builder.setPositiveButton(R.string.control_editor_menu_save_and_exit) { dialog, _ ->
                 dialog.dismiss()
+                save(targetFile, onSaved = onExit)
             }
-            .setNegativeButton(R.string.control_editor_exit_confirm) { dialog, _ ->
+            builder.setNegativeButton(R.string.control_editor_exit_confirm) { dialog, _ ->
                 dialog.dismiss()
                 onExit()
             }
-            .showThemed()
+            builder.setNeutralButton(R.string.generic_cancel) { dialog, _ ->
+                dialog.dismiss()
+            }
+        } else {
+            builder.setPositiveButton(R.string.generic_cancel) { dialog, _ ->
+                dialog.dismiss()
+            }
+            builder.setNegativeButton(R.string.control_editor_exit_confirm) { dialog, _ ->
+                dialog.dismiss()
+                onExit()
+            }
+        }
+        builder.showThemed()
     }
 }

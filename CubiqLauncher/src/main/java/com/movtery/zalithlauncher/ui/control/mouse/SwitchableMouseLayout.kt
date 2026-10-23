@@ -155,10 +155,8 @@ fun SwitchableMouseLayout(
                 when {
                     //物理鼠标已连接 && 当前为物理鼠标模式：是否为抓获控制模式
                     PhysicalMouseChecker.physicalMouseConnected && isPhysicalMouseMode -> requestPointerCapture
-                    //点击控制模式：由隐藏虚拟鼠标设置决定
-                    controlMode == MouseControlMode.CLICK -> !hideMouseInClickMode
-                    //滑动控制始终显示
-                    else -> controlMode == MouseControlMode.SLIDE
+                    hideMouseInClickMode -> false
+                    else -> true
                 }
             } else false
         )
@@ -301,7 +299,7 @@ fun SwitchableMouseLayout(
                     }
                     CURSOR_ENABLED -> {
                         pointerPosition = if (isMoveOnly || controlMode == MouseControlMode.SLIDE) {
-                            updateMousePointer(true)
+                            updateMousePointer(!hideMouseInClickMode)
                             Offset(
                                 x = (pointerPosition.x + offset.x * speedFactor).coerceIn(0f, screenWidth),
                                 y = (pointerPosition.y + offset.y * speedFactor).coerceIn(0f, screenHeight)

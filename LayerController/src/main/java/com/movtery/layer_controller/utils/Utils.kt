@@ -79,9 +79,12 @@ suspend fun ControlLayout.saveToFile(file: File) {
         parentDir.mkdirs()
 
         // 先写入临时文件再替换目标文件
-        val tempFile = File(parentDir, "${file.name}.tmp")
+        val tempFile = File(parentDir, "${file.name}.tmp_${System.currentTimeMillis()}")
         try {
-            tempFile.writeText(jsonString)
+            tempFile.writeText(jsonString, Charsets.UTF_8)
+            if (file.exists()) {
+                file.delete()
+            }
             if (!tempFile.renameTo(file)) {
                 tempFile.copyTo(file, overwrite = true)
                 tempFile.delete()

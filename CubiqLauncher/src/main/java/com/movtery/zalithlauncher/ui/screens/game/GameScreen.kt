@@ -238,7 +238,10 @@ private class GameViewModel(
                     onLongScrollUp = { mouseScrollUpEvent.scrollLongPress() },
                     onLongScrollUpCancel = { mouseScrollUpEvent.cancel() },
                     onLongScrollDown = { mouseScrollDownEvent.scrollLongPress() },
-                    onLongScrollDownCancel = { mouseScrollDownEvent.cancel() }
+                    onLongScrollDownCancel = { mouseScrollDownEvent.cancel() },
+                    onSwitchMouse = {
+                        AllSettings.hideMouse.save(!AllSettings.hideMouse.getValue())
+                    }
                 )
             }
             ClickEvent.Type.SendText -> {
@@ -270,7 +273,7 @@ private class GameViewModel(
                     currentControlFile = layoutFile
                     var l = getLayout(layoutFile)
                     if (l === EmptyControlLayout || l.layers.isEmpty()) {
-                        val fallback: File? = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+                        val fallback: File? = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
                             .takeIf { it.exists() && it != layoutFile }
                         if (fallback != null) {
                             currentControlFile = fallback
@@ -651,17 +654,7 @@ fun GameScreen(
             )
         }
 
-        // In-game aim crosshair when cursor is grabbed
-        if (isGrabbing && !viewModel.isEditingLayout) {
-            Image(
-                painter = painterResource(R.drawable.crosshair),
-                contentDescription = "In-game Crosshair",
-                modifier = Modifier
-                    .size(20.dp)
-                    .align(Alignment.Center),
-                alpha = 0.9f
-            )
-        }
+
 
         //陀螺仪控制
         val isGyroscopeAvailable = remember(context) {
@@ -752,6 +745,7 @@ fun GameScreen(
                     menuExit = {
                         editorViewModel.showExitEditorDialog(
                             context = context,
+                            targetFile = it,
                             onExit = {
                                 viewModel.exitControlEditor()
                             }
@@ -776,17 +770,22 @@ fun GameScreen(
                     null
                 }
 
+                val isPocket = AllSettings.controlLayout.state.contains("pocket", ignoreCase = true) ||
+                        viewModel.currentControlFile?.name?.contains("pocket", ignoreCase = true) == true
+                val ballPosSetting = if (isPocket) AllSettings.menuBallPosPocket else AllSettings.menuBallPos
+
                 DraggableGameBall(
-                    position = AllSettings.menuBallPos.state,
+                    position = ballPosSetting.state,
                     onPositionChanged = {
-                        AllSettings.menuBallPos.updateState(it)
+                        ballPosSetting.updateState(it)
                     },
                     onSavePos = {
-                        AllSettings.menuBallPos.save()
+                        ballPosSetting.save()
                     },
                     gameFps = gameFps,
                     showMemory = AllSettings.showMemory.state,
                     opened = viewModel.gameMenuState == MenuState.SHOW,
+                    isPocketEdition = isPocket,
                     alpha = AllSettings.menuBallOpacity.state / 100f,
                     onClick = {
                         viewModel.switchMenu()

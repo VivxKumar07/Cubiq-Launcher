@@ -2081,11 +2081,15 @@ fun CompactBackgroundDownloadBar(
         val tasks by activeInstaller!!.tasksFlow.collectAsStateWithLifecycle()
         tasks.find { it.task.stage.value == com.movtery.zalithlauncher.coroutine.TaskStage.RUNNING }?.task
             ?: tasks.firstOrNull()?.task
+    } else if (isPreparing) {
+        val tasks by InstallationDownloadManager.preparingTasksFlow.collectAsStateWithLifecycle()
+        tasks.find { it.task.stage.value == com.movtery.zalithlauncher.coroutine.TaskStage.RUNNING }?.task
+            ?: tasks.firstOrNull()?.task
     } else {
         relevantTasks.firstOrNull()
     }
 
-    val progress = currentTask?.progress?.collectAsStateWithLifecycle()?.value ?: if (isPreparing) 0.15f else 0f
+    val progress = currentTask?.progress?.collectAsStateWithLifecycle()?.value ?: if (isPreparing) -1f else 0f
     val message = currentTask?.message?.collectAsStateWithLifecycle()?.value
     val speed = currentTask?.rateBytesPerSec?.collectAsStateWithLifecycle()?.value
 
@@ -2132,8 +2136,17 @@ fun CompactBackgroundDownloadBar(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (activeInstallName != null) {
+                        val headerText = if (isPreparing) {
+                            val msgText = message?.let { resolveAndroidString(it).text }
+                            if (!msgText.isNullOrBlank()) "PREPARING ${activeInstallName!!.uppercase()} • $msgText"
+                            else "PREPARING ${activeInstallName!!.uppercase()}..."
+                        } else {
+                            val msgText = message?.let { resolveAndroidString(it).text }
+                            if (!msgText.isNullOrBlank()) "DOWNLOADING ${activeInstallName!!.uppercase()} • $msgText"
+                            else "DOWNLOADING ${activeInstallName!!.uppercase()}"
+                        }
                         Text(
-                            text = if (isPreparing) "PREPARING ${activeInstallName!!.uppercase()}..." else "DOWNLOADING ${activeInstallName!!.uppercase()}",
+                            text = headerText,
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontSize = 11.sp,
@@ -2142,7 +2155,7 @@ fun CompactBackgroundDownloadBar(
                         )
                     } else if (message != null) {
                         Text(
-                            text = resolveAndroidString(message!!).text,
+                            text = resolveAndroidString(message).text,
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontSize = 11.sp,
@@ -2398,24 +2411,18 @@ fun InstallationDownloadForegroundDialog() {
             )
         }
     } else if (isPreparing) {
-        val preparingTask = remember(activeInstallName) {
-            val task = com.movtery.zalithlauncher.coroutine.Task.runTask(id = "preparing_task", task = { })
-            listOf(
-                com.movtery.zalithlauncher.coroutine.TitledTask(
-                    title = com.movtery.zalithlauncher.ui.androidText("Preparing components & resolving loaders..."),
-                    task = task
-                )
+        val preparingTasks by InstallationDownloadManager.preparingTasksFlow.collectAsStateWithLifecycle()
+        if (preparingTasks.isNotEmpty()) {
+            com.movtery.zalithlauncher.ui.screens.content.elements.TitleTaskFlowDialog(
+                title = "INSTALLING ${activeInstallName?.uppercase() ?: "MINECRAFT"}",
+                tasks = preparingTasks,
+                onCancel = {
+                    InstallationDownloadManager.cancelActiveInstallation()
+                },
+                onBackground = {
+                    InstallationDownloadManager.dismissToBackground()
+                }
             )
         }
-        com.movtery.zalithlauncher.ui.screens.content.elements.TitleTaskFlowDialog(
-            title = "INSTALLING ${activeInstallName?.uppercase() ?: "MINECRAFT"}",
-            tasks = preparingTask,
-            onCancel = {
-                InstallationDownloadManager.cancelActiveInstallation()
-            },
-            onBackground = {
-                InstallationDownloadManager.dismissToBackground()
-            }
-        )
     }
 }

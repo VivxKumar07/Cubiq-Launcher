@@ -15,6 +15,9 @@ local.properties
 .curseforge_api.txt
 LWJGL/build/
 LWJGL/*/build/
+LWJGL/*/bin/
+LWJGL/**/bin/
+release-apks/
 
 # AI agent
 .zcode/
@@ -48,3 +51,4 @@ generate_asset_pack.py
 # IDE
 .vs/
 .zcodeignore
+release-apks/

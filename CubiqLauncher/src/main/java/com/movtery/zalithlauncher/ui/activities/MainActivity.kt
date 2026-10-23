@@ -113,6 +113,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import android.content.Context
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 
@@ -120,6 +121,23 @@ private const val TAG = "MainActivity"
 
 @AndroidEntryPoint
 class MainActivity : BaseAppCompatActivity() {
+    private fun isTabletOrEmulator(context: Context): Boolean {
+        val config = context.resources.configuration
+        val isTablet = config.smallestScreenWidthDp >= 600 ||
+            (config.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE
+        val isEmulator = Build.FINGERPRINT.startsWith("generic") ||
+            Build.FINGERPRINT.startsWith("unknown") ||
+            Build.MODEL.contains("google_sdk", ignoreCase = true) ||
+            Build.MODEL.contains("Emulator", ignoreCase = true) ||
+            Build.MODEL.contains("Android SDK", ignoreCase = true) ||
+            Build.MANUFACTURER.contains("Genymotion", ignoreCase = true) ||
+            Build.HARDWARE.contains("goldfish", ignoreCase = true) ||
+            Build.HARDWARE.contains("ranchu", ignoreCase = true) ||
+            Build.PRODUCT.contains("sdk", ignoreCase = true) ||
+            Build.PRODUCT.contains("emulator", ignoreCase = true)
+        return isTablet || isEmulator
+    }
+
     override fun isFullScreenActivity(): Boolean {
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         return isLandscape
@@ -211,9 +229,10 @@ class MainActivity : BaseAppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Apply saved orientation lock
+        // Apply saved orientation lock, automatically defaulting to landscape on tablets and emulators
         val savedOrientation = AllSettings.launcherOrientationLock.getValue()
-        if (savedOrientation == "landscape") {
+        val isTabletOrEmu = isTabletOrEmulator(this)
+        if (savedOrientation == "landscape" || (savedOrientation == "unspecified" && isTabletOrEmu)) {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         } else if (savedOrientation == "portrait") {
             requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT

@@ -356,7 +356,7 @@ fun BoxWithConstraintsScope.ControlEditor(
             val assetName = if (targetFile.name.contains("pocket", ignoreCase = true) || targetFile.name.contains("bedrock", ignoreCase = true)) {
                 "pocket_edition_layout.json"
             } else {
-                "default_layout.json"
+                "mojo_layout.json"
             }
             runCatching {
                 val jsonString = context.assets.open(assetName).bufferedReader().use { it.readText() }

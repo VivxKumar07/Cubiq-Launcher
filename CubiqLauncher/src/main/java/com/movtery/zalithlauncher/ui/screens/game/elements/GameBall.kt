@@ -59,6 +59,7 @@ fun DraggableGameBall(
     gameFps: Int?,
     showMemory: Boolean,
     opened: Boolean,
+    isPocketEdition: Boolean = false,
     alpha: Float = 1f,
     onClick: () -> Unit = {}
 ) {
@@ -68,6 +69,7 @@ fun DraggableGameBall(
         },
         position = position,
         onPositionChanged = onPositionChanged,
+        isPocketEdition = isPocketEdition,
         onSavePos = onSavePos,
         onClick = onClick,
         alpha = alpha

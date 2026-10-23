@@ -6,19 +6,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/gpl-3.0.txt>.
  */
 
 package com.movtery.zalithlauncher.keepalive
 
 import android.app.Notification
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
@@ -30,13 +23,18 @@ import com.movtery.zalithlauncher.notification.NOTIFICATION_ID_TASK_SERVICE
 import com.movtery.zalithlauncher.notification.NotificationChannelData
 import com.movtery.zalithlauncher.notification.NotificationManager
 import com.movtery.zalithlauncher.utils.logging.Logger
+import kotlin.system.exitProcess
 
 private const val TAG = "TaskKeepAliveService"
 
 /**
- * 任务保活服务
+ * ?????? (Task Keep Alive Foreground Service)
  */
 class TaskKeepAliveService : Service() {
+    companion object {
+        const val ACTION_TERMINATE = "com.cubiq.app.action.TERMINATE_TASKS"
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -46,19 +44,51 @@ class TaskKeepAliveService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        //确保服务处于前台
+        if (intent?.action == ACTION_TERMINATE) {
+            Logger.info(TAG, "Terminate action received from notification. Stopping all tasks and exiting...")
+            TaskKeepAlive.reset()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_REMOVE)
+            } else {
+                @Suppress("DEPRECATION")
+                stopForeground(true)
+            }
+            stopSelf()
+            android.os.Process.killProcess(android.os.Process.myPid())
+            exitProcess(0)
+        }
         startForegroundNotification()
         return START_NOT_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        // User swiped launcher away from recents: cancel active tasks cleanly
+        Logger.info(TAG, "Launcher task removed from recents by user. Stopping background tasks.")
+        TaskKeepAlive.reset()
+        stopSelf()
     }
 
     private fun startForegroundNotification() {
         val data = NotificationChannelData.TASK_SERVICE_CHANNEL
 
+        val terminateIntent = Intent(this, TaskKeepAliveService::class.java).apply {
+            action = ACTION_TERMINATE
+        }
+        val terminatePendingIntent = PendingIntent.getService(
+            this,
+            1001,
+            terminateIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification: Notification = NotificationCompat.Builder(this, data.channelId)
-            .setContentTitle(getString(R.string.notification_task_service_running))
+            .setContentTitle("Minecraft is downloading...")
+            .setContentText("Cubiq Launcher is downloading game files and components.")
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSmallIcon(R.mipmap.ic_launcher)
+            .addAction(R.drawable.ic_close, "Terminate", terminatePendingIntent)
             .build()
 
         try {
@@ -72,8 +102,6 @@ class TaskKeepAliveService : Service() {
                 startForeground(NOTIFICATION_ID_TASK_SERVICE, notification)
             }
         } catch (e: Exception) {
-            //应用退至后台等受限状态下系统会拒绝前台身份，此时保活已无意义
-            //必须停止服务，否则系统会因服务未按时进入前台而崩溃
             Logger.error(TAG, "Failed to start foreground notification", e)
             stopSelf()
         }

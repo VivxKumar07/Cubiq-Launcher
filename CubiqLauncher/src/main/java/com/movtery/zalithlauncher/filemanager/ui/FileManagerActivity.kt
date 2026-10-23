@@ -85,6 +85,13 @@ class FileManagerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         loadAllSettings(this, true)
+        val savedOrientation = com.movtery.zalithlauncher.setting.AllSettings.launcherOrientationLock.getValue()
+        val isLandscapeExtra = intent.getBooleanExtra(com.movtery.zalithlauncher.filemanager.FileManagerLauncher.EXTRA_IS_LANDSCAPE, false)
+        if (savedOrientation == "landscape" || (savedOrientation == "unspecified" && isLandscapeExtra)) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        } else if (savedOrientation == "portrait") {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
         initializeFromIntent()
 
         setContent {
@@ -107,6 +114,13 @@ class FileManagerActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         loadAllSettings(this, true)
+        val savedOrientation = com.movtery.zalithlauncher.setting.AllSettings.launcherOrientationLock.getValue()
+        val isLandscapeExtra = intent.getBooleanExtra(com.movtery.zalithlauncher.filemanager.FileManagerLauncher.EXTRA_IS_LANDSCAPE, false)
+        if (savedOrientation == "landscape" || (savedOrientation == "unspecified" && isLandscapeExtra)) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        } else if (savedOrientation == "portrait") {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
         initializeFromIntent()
     }
 

@@ -50,9 +50,9 @@ object Renderers {
         }
 
         addRenderers(
+            NGGL4ESRenderer,
             LTWRenderer,
             GL4ESRenderer,
-            NGGL4ESRenderer,
             MobileGluesRenderer,
             KopperZinkRenderer,
             VirGLRenderer,

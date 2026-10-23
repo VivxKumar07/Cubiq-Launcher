@@ -47,4 +47,6 @@ object LTWRenderer : RendererInterface {
     override fun getDlopenLibrary(): Lazy<List<String>> = lazy { emptyList() }
 
     override fun getRendererLibrary(): String = "libltw.so"
+
+    override fun getRendererEGL(): String = "libltw.so"
 }

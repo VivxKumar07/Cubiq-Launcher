@@ -124,7 +124,7 @@ class JvmService : Service() {
         val data = NotificationChannelData.JVM_SERVICE_CHANNEL
 
         val notification: Notification = NotificationCompat.Builder(this, data.channelId)
-            .setContentTitle(getString(R.string.notification_data_jvm_service_running))
+            .setContentTitle("Minecraft is running")
             .setContentText(postSummary)
             .also { notification ->
                 postProgress?.let { progress ->

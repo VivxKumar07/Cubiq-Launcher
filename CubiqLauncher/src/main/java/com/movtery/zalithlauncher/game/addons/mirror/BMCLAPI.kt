@@ -69,6 +69,10 @@ fun String.mapBMCLMirrorUrls(): List<String> {
     val source = AllSettings.gameDownloadSource.getValue()
     return when (source) {
         com.movtery.zalithlauncher.setting.enums.MirrorSourceType.OFFICIAL -> listOfNotNull(this, mirrorUrl)
+        com.movtery.zalithlauncher.setting.enums.MirrorSourceType.AUTO -> {
+            if (isChinaMainland()) listOfNotNull(mirrorUrl, this)
+            else listOfNotNull(this, mirrorUrl)
+        }
         else -> listOfNotNull(mirrorUrl, this)
     }
 }

@@ -114,6 +114,7 @@ suspend fun runJvmRetryRuntimes(
         val nextJava: Jre? = when (jre) {
             Jre.JRE_8 -> Jre.JRE_17
             Jre.JRE_17 -> Jre.JRE_21
+            Jre.JRE_21 -> Jre.JRE_25
             else -> null
         }
 

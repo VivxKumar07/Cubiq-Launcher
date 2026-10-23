@@ -94,10 +94,10 @@ class ControlEditorActivity : BaseAppCompatActivity() {
         var controlFile: File? = controlPath?.let { File(it) }?.takeIf { it.isFile && it.exists() }
 
         if (controlFile == null) {
-            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
             if (!defaultFile.exists()) {
                 runCatching {
-                    copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = false)
+                    copyAssetFile(fileName = "mojo_layout.json", output = defaultFile, overwrite = false)
                 }
             }
             controlFile = defaultFile
@@ -109,10 +109,10 @@ class ControlEditorActivity : BaseAppCompatActivity() {
             loadLayoutFromFileUncheck(controlFile)
         }.getOrElse { e ->
             Logger.warning("ControlEditorActivity", "Failed to load layout from $controlFile", e)
-            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
             runCatching {
                 if (!defaultFile.exists()) {
-                    copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = false)
+                    copyAssetFile(fileName = "mojo_layout.json", output = defaultFile, overwrite = false)
                 }
                 loadLayoutFromFile(defaultFile)
             }.getOrNull() ?: return runFinish()
@@ -125,7 +125,10 @@ class ControlEditorActivity : BaseAppCompatActivity() {
         //提醒用户保存并退出
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                editorViewModel.onBackPressed(context = this@ControlEditorActivity) {
+                editorViewModel.onBackPressed(
+                    context = this@ControlEditorActivity,
+                    targetFile = controlFile
+                ) {
                     this@ControlEditorActivity.finish()
                 }
             }
@@ -160,6 +163,7 @@ class ControlEditorActivity : BaseAppCompatActivity() {
                                 //菜单要求的直接退出，使用对话框让用户确认
                                 editorViewModel.showExitEditorDialog(
                                     context = this@ControlEditorActivity,
+                                    targetFile = controlFile,
                                     onExit = {
                                         this@ControlEditorActivity.finish()
                                     }

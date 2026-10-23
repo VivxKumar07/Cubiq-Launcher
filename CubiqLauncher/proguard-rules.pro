@@ -59,3 +59,12 @@
 
 # SoraEditor language-textmate
 -keep class org.jcodings.** { *; }
+# Gson / Data models
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepclassmembers enum * { *; }
+-keep class com.google.gson.** { *; }
+-keep class com.movtery.zalithlauncher.game.versioninfo.** { *; }
+-keep class com.movtery.zalithlauncher.game.version.** { *; }
+-keep class com.movtery.layer_controller.layout.** { *; }
+-keep class com.movtery.layer_controller.data.** { *; }

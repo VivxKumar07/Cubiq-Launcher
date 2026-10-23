@@ -235,7 +235,7 @@ fun ControlManageScreen(
         operation = viewModel.operation,
         changeOperation = { viewModel.operation = it },
         onCreate = { name, author, versionName, templateType ->
-            val assetName = if (templateType == "Pocket Edition Controls") "pocket_edition_layout.json" else "default_layout.json"
+            val assetName = if (templateType == "Pocket Edition Controls") "pocket_edition_layout.json" else "mojo_layout.json"
             val layout = runCatching {
                 val jsonStr = context.assets.open(assetName).bufferedReader().use { it.readText() }
                 val base = loadLayoutFromString(jsonStr)

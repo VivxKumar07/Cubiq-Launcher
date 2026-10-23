@@ -42,6 +42,10 @@ enum class Components(
         "lwjgl/3.3.3", "LWJGL 3.3.3", R.string.unpack_screen_lwjgl,
         assetsDir = "app_runtime/lwjgl/3.3.3"
     ),
+    LWJGL341(
+        "lwjgl/3.4.1", "LWJGL 3.4.1", R.string.unpack_screen_lwjgl,
+        assetsDir = "app_runtime/lwjgl/3.4.1"
+    ),
     LAUNCHER(
         "launcher", "Launcher Components", R.string.unpack_screen_launcher,
         assetsDir = "components/launcher"

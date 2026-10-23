@@ -54,6 +54,7 @@ fun FloatingBall(
     position: Offset,
     onPositionChanged: (Offset) -> Unit,
     modifier: Modifier = Modifier,
+    isPocketEdition: Boolean = false,
     onSavePos: () -> Unit = {},
     onClick: () -> Unit = {},
     alpha: Float = 1f,
@@ -100,9 +101,18 @@ fun FloatingBall(
                 .onSizeChanged { size ->
                     ballSize = size
                     if (isInitialized || currentPosition != Offset.Zero) return@onSizeChanged
-                    val x = ((parentWidth - ballSize.width) / 2f) //默认位置 TopCenter
-                    val positionX = x.coerceIn(0f, (parentWidth - ballSize.width).toFloat())
-                    val positionY = 0f.coerceIn(0f, (parentHeight - ballSize.height).toFloat())
+                    val x = if (isPocketEdition) {
+                        (parentWidth * 0.605f)
+                    } else {
+                        ((parentWidth - ballSize.width) / 2f) //默认位置 TopCenter
+                    }
+                    val positionX = x.coerceIn(0f, (parentWidth - ballSize.width).toFloat().coerceAtLeast(0f))
+                    val y = if (isPocketEdition) {
+                        (parentHeight * 0.012f)
+                    } else {
+                        0f
+                    }
+                    val positionY = y.coerceIn(0f, (parentHeight - ballSize.height).toFloat().coerceAtLeast(0f))
                     onPositionChanged(Offset(positionX, positionY))
                 }
                 .offset {

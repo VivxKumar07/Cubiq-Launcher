@@ -78,21 +78,18 @@ class ObservableNormalData(data: NormalData) : ObservableWidget() {
             }
         }
 
-        // GUI Button: clicking a button labeled "GUI" toggles visibility for all other controls
+        // GUI Button: clicking a button labeled "GUI" toggles visibility for all other controls without touching layer definitions
         val isGuiButton = text.default.equals("GUI", ignoreCase = true) ||
                 text.matchQueue.any { it.value.equals("GUI", ignoreCase = true) } ||
                 icon.equals("gui", ignoreCase = true)
         if (isGuiButton && isPressed) {
-            val otherLayers = allLayers.filter { layer ->
-                !layer.name.equals("gui", ignoreCase = true) &&
-                        layer.normalButtons.value.none { it.uuid == this.uuid }
+            val isAnyWidgetVisible = allLayers.filter { !it.hide }.any { layer ->
+                layer.normalButtons.value.any { it.uuid != this.uuid && !it.isTemporarilyHidden } ||
+                layer.joystickButtons.value.any { !it.isTemporarilyHidden } ||
+                layer.textBoxes.value.any { !it.isTemporarilyHidden }
             }
-            val shouldHide = otherLayers.any { !it.hide } ||
-                    allLayers.any { l -> l.normalButtons.value.any { b -> b.uuid != this.uuid && !b.isTemporarilyHidden } }
+            val shouldHide = isAnyWidgetVisible
 
-            otherLayers.forEach { layer ->
-                layer.hide = shouldHide
-            }
             allLayers.forEach { layer ->
                 layer.normalButtons.value.forEach { b ->
                     if (b.uuid != this.uuid) b.isTemporarilyHidden = shouldHide
@@ -103,39 +100,6 @@ class ObservableNormalData(data: NormalData) : ObservableWidget() {
                 layer.joystickButtons.value.forEach { j ->
                     j.isTemporarilyHidden = shouldHide
                 }
-            }
-        }
-
-        // Inventory Button: clicking three dots / INV hides overlapping movement controls while inventory is open,
-        // and restores them when closing inventory.
-        val isInvButton = text.default.equals("INV", ignoreCase = true) ||
-                text.default == "..." ||
-                text.default.equals("INVENTORY", ignoreCase = true)
-        if (isInvButton && isPressed) {
-            val movementLayers = allLayers.filter { layer ->
-                layer.name.equals("move", ignoreCase = true) ||
-                        layer.name.contains("joystick", ignoreCase = true) ||
-                        layer.name.contains("dpad", ignoreCase = true)
-            }
-            if (movementLayers.isNotEmpty()) {
-                val shouldHide = movementLayers.any { !it.hide }
-                movementLayers.forEach { layer ->
-                    layer.hide = shouldHide
-                }
-            }
-        }
-
-        // Esc button: closes inventory / pause menu in MC, so restore movement layers
-        val isEscButton = text.default.equals("ESC", ignoreCase = true) ||
-                clickEvents.any { it.key == "GLFW_KEY_ESCAPE" }
-        if (isEscButton && isPressed) {
-            val movementLayers = allLayers.filter { layer ->
-                layer.name.equals("move", ignoreCase = true) ||
-                        layer.name.contains("joystick", ignoreCase = true) ||
-                        layer.name.contains("dpad", ignoreCase = true)
-            }
-            movementLayers.forEach { layer ->
-                layer.hide = false
             }
         }
 

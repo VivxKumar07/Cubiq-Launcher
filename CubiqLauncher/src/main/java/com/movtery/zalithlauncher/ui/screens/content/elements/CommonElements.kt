@@ -566,72 +566,51 @@ private fun InstallingTaskItem(
                         )
                     )
                 }
-                @Composable
-                fun RateBytesPerSecText() {
-                    rateBytesPerSec?.let { bytes ->
-                        val text = remember(bytes) { "${formatFileSize(bytes)}/s" }
-                        Text(
-                            text = text,
-                            color = Color(0xFF777777),
-                            fontFamily = MinecraftFontFamily,
-                            fontSize = 10.sp
-                        )
-                    }
+                Spacer(modifier = Modifier.height(5.dp))
+                // Full-width progress bar
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(7.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(Color(0xFF141414))
+                        .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(2.dp))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(if (taskProgress < 0) 0.5f else taskProgress.coerceIn(0f, 1f))
+                            .background(Color(0xFF55FF55))
+                    )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                if (taskProgress < 0) { // Indeterminate
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(Color(0xFF141414))
-                                .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(2.dp))
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .fillMaxWidth(0.5f)
-                                    .background(Color(0xFF55FF55))
-                            )
-                        }
-                        RateBytesPerSecText()
-                    }
-                } else {
-                    val progressText = "${(taskProgress * 100).toInt()}%"
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(8.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(Color(0xFF141414))
-                                .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(2.dp))
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .fillMaxWidth(taskProgress.coerceIn(0f, 1f))
-                                    .background(Color(0xFF55FF55))
-                            )
-                        }
-                        RateBytesPerSecText()
+                // Dedicated, spacious status and speed text row beneath progress bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 3.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (rateBytesPerSec != null && rateBytesPerSec!! > 0L) {
                         Text(
-                            text = progressText,
+                            text = "Speed: ${formatFileSize(rateBytesPerSec!!)}/s",
                             color = Color(0xFF55FF55),
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp
+                            fontSize = 10.sp
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.width(1.dp))
+                    }
+
+                    if (taskProgress >= 0) {
+                        Text(
+                            text = "${(taskProgress * 100).toInt()}%",
+                            color = Color(0xFF55FF55),
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.5.sp
                         )
                     }
                 }

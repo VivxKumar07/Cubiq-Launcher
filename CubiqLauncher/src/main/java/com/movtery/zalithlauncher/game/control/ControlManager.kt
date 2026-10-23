@@ -76,19 +76,38 @@ object ControlManager {
      */
     fun checkDefaultAndRefresh(context: Context) {
         scope.launch(Dispatchers.IO) {
-            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
-            if (!defaultFile.exists()) {
-                runCatching {
-                    context.copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = false)
+            // Delete legacy default_layout.json if present
+            runCatching {
+                val legacyDefault = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+                if (legacyDefault.exists()) legacyDefault.delete()
+            }
+
+            val defaultPresets = listOf(
+                "mojo_layout.json",
+                "zalith_1_layout.json",
+                "zalith_2_layout.json",
+                "pocket_edition_layout.json"
+            )
+
+            for (preset in defaultPresets) {
+                val targetFile = File(PathManager.DIR_CONTROL_LAYOUTS, preset)
+                if (!targetFile.exists()) {
+                    runCatching {
+                        context.copyAssetFile(fileName = preset, output = targetFile, overwrite = false)
+                    }
                 }
             }
 
-            val peFile = File(PathManager.DIR_CONTROL_LAYOUTS, "pocket_edition_layout.json")
-            if (!peFile.exists()) {
+            val mojoFile = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
+            if (mojoFile.exists()) {
                 runCatching {
-                    context.copyAssetFile(fileName = "pocket_edition_layout.json", output = peFile, overwrite = false)
+                    val content = mojoFile.readText()
+                    if (content.contains("c04125aa012942ba90") && content.contains("GLFW_KEY_D")) {
+                        context.copyAssetFile(fileName = "mojo_layout.json", output = mojoFile, overwrite = true)
+                    }
                 }
             }
+
             val files = PathManager.DIR_CONTROL_LAYOUTS.listFiles()
                 ?.filter { file ->
                     file.isFile && file.exists() && file.extension.equals("json", true)
@@ -150,7 +169,7 @@ object ControlManager {
         val setting = AllSettings.controlLayout.getValue()
 
         val layout = _dataList.value.find { it.file.name == setting && it.isSupport }
-            ?: _dataList.value.find { it.file.name == "default_layout.json" && it.isSupport }
+            ?: _dataList.value.find { it.file.name == "mojo_layout.json" && it.isSupport }
                 ?.also { AllSettings.controlLayout.save(it.file.name) }
             ?: _dataList.value.firstOrNull { it.isSupport }
                 ?.also { AllSettings.controlLayout.save(it.file.name) }
@@ -171,10 +190,16 @@ object ControlManager {
         context: Context
     ) = withContext(Dispatchers.IO) {
         try {
-            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
-            context.copyAssetFile(fileName = "default_layout.json", output = defaultFile, overwrite = true)
-            val peFile = File(PathManager.DIR_CONTROL_LAYOUTS, "pocket_edition_layout.json")
-            context.copyAssetFile(fileName = "pocket_edition_layout.json", output = peFile, overwrite = true)
+            val defaultPresets = listOf(
+                "mojo_layout.json",
+                "zalith_1_layout.json",
+                "zalith_2_layout.json",
+                "pocket_edition_layout.json"
+            )
+            for (preset in defaultPresets) {
+                val targetFile = File(PathManager.DIR_CONTROL_LAYOUTS, preset)
+                context.copyAssetFile(fileName = preset, output = targetFile, overwrite = true)
+            }
         } catch (e: Exception) {
             Logger.warning(TAG, "Failed to unpack default control layouts", e)
         }

@@ -22,7 +22,9 @@ import android.system.Os
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.ZLApplication.Companion.DEVICE_ARCHITECTURE
 import com.movtery.zalithlauncher.components.jre.Jre
+import com.movtery.zalithlauncher.game.version.installed.VersionInfoParser
 import com.movtery.zalithlauncher.path.PathManager
+import com.movtery.zalithlauncher.utils.GSON
 import com.movtery.zalithlauncher.utils.device.Architecture
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.file.ensureDirectory
@@ -81,7 +83,9 @@ object RuntimesManager {
     }
 
     fun getNearestJreName(majorVersion: Int): String? {
-        return findNearestPositive(majorVersion, getRuntimes()) { it.javaVersion }?.value?.name
+        val positive = findNearestPositive(majorVersion, getRuntimes()) { it.javaVersion }?.value?.name
+        if (positive != null) return positive
+        return getRuntimes().maxByOrNull { it.javaVersion }?.name
     }
 
     /**
@@ -90,13 +94,19 @@ object RuntimesManager {
      * - Official manifest javaVersion takes highest priority if present and valid.
      * - Cleanroom requires Java 25 (if >= 0.4.4-alpha) or Java 21.
      * - Babric requires Java 17.
-     * - NeoForge requires Java 21 for MC 1.20.5+, Java 17 for MC 1.20.2-1.20.4.
-     * - MC 1.20.5+, 1.20.6, 1.21+, 26.x snapshots require Java 21.
+     * - NeoForge requires Java 25 for MC 26.x+, Java 21 for MC 1.20.5+, Java 17 for MC 1.20.2-1.20.4.
+     * - MC 26.x+, 27.x+ snapshots and releases require Java 25.
+     * - MC 1.20.5+, 1.20.6, 1.21+ require Java 21.
      * - MC 1.17, 1.18, 1.19, 1.20 - 1.20.4 require Java 17 (Java 16 requested by 1.17 is fully compatible with Java 17).
      * - MC <= 1.16.5 requires Java 8.
      */
     fun determineTargetJavaVersion(version: com.movtery.zalithlauncher.game.version.installed.Version, manifest: com.movtery.zalithlauncher.game.versioninfo.models.GameManifest? = null): Int {
-        val manifestMajor = manifest?.javaVersion?.majorVersion
+        val actualManifest = manifest ?: runCatching {
+            version.launchManifest?.let { GSON.fromJson(it, com.movtery.zalithlauncher.game.versioninfo.models.GameManifest::class.java) }
+                ?: VersionInfoParser(version).setInheriting(true).build()
+        }.getOrNull()
+
+        val manifestMajor = actualManifest?.javaVersion?.majorVersion
         if (manifestMajor != null && manifestMajor > 0) {
             return if (manifestMajor == 16) 17 else manifestMajor
         }
@@ -109,14 +119,21 @@ object RuntimesManager {
             }
             com.movtery.zalithlauncher.game.addons.modloader.ModLoader.NEOFORGE -> {
                 val mcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
-                return if (mcVer.contains("1.20.5") || mcVer.contains("1.20.6") || mcVer.contains("1.21") || mcVer.contains("26.")) 21 else 17
+                val firstNum = mcVer.split('.').firstOrNull()?.filter { it.isDigit() }?.toIntOrNull() ?: 0
+                return when {
+                    firstNum >= 26 || mcVer.contains("26.") || mcVer.contains("27.") -> 25
+                    mcVer.contains("1.20.5") || mcVer.contains("1.20.6") || mcVer.contains("1.21") -> 21
+                    else -> 17
+                }
             }
             else -> {}
         }
 
         val mcVersionStr = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
+        val firstNum = mcVersionStr.split('.').firstOrNull()?.filter { it.isDigit() }?.toIntOrNull() ?: 0
         return when {
-            mcVersionStr.contains("1.20.5") || mcVersionStr.contains("1.20.6") || mcVersionStr.contains("1.21") || mcVersionStr.contains("26.") -> 21
+            firstNum >= 26 || mcVersionStr.contains("26.") || mcVersionStr.contains("27.") -> 25
+            mcVersionStr.contains("1.20.5") || mcVersionStr.contains("1.20.6") || mcVersionStr.contains("1.21") -> 21
             mcVersionStr.contains("1.17") || mcVersionStr.contains("1.18") || mcVersionStr.contains("1.19") || mcVersionStr.contains("1.20") -> 17
             else -> 8
         }
@@ -236,13 +253,118 @@ object RuntimesManager {
         try {
             if (dest.exists()) FileUtils.deleteDirectory(dest)
             uncompressArchive(inputStream, dest, updateProgress)
-            unpack200(nativeLibDir, dest.absolutePath)
-            loadRuntime(name).also { runtime ->
+
+            // Step 1: Check for nested multi-arch Pojav/Mojo binpack zip
+            val universalFile = File(dest, "universal.tar.xz")
+            val arch = when (DEVICE_ARCHITECTURE) {
+                Architecture.ARCH_ARM64 -> "arm64"
+                Architecture.ARCH_ARM -> "arm"
+                Architecture.ARCH_X86_64 -> "x86_64"
+                Architecture.ARCH_X86 -> "x86"
+                else -> "arm64"
+            }
+            val binFile = File(dest, "bin-$arch.tar.xz").takeIf { it.exists() }
+                ?: dest.listFiles()?.firstOrNull { it.name.startsWith("bin-") && it.name.endsWith(".tar.xz") }
+
+            if (universalFile.exists() && binFile != null && binFile.exists()) {
+                Logger.info(TAG, "Detected nested binpack archive in $name, extracting...")
+                val tempU = File(dest.parentFile, "${name}_u_temp.tar.xz")
+                val tempB = File(dest.parentFile, "${name}_b_temp.tar.xz")
+                universalFile.renameTo(tempU)
+                binFile.renameTo(tempB)
+                FileUtils.cleanDirectory(dest)
+
+                tempU.inputStream().use { uStream ->
+                    tempB.inputStream().use { bStream ->
+                        installRuntimeBinPack(
+                            universalFileInputStream = uStream,
+                            platformBinsInputStream = bStream,
+                            name = name,
+                            binPackVersion = "1.0.0",
+                            updateProgress = { p, _ -> updateProgress(R.string.generic_unpacking, arrayOf("$p%")) }
+                        )
+                    }
+                }
+                tempU.delete()
+                tempB.delete()
+            }
+
+            // Step 2: Check for nested root directory and flatten/unwrap
+            unwrapNestedDirectory(dest)
+
+            // Step 3: Run unpack200 safely
+            runCatching {
+                unpack200(nativeLibDir, dest.absolutePath)
+            }.onFailure { e ->
+                Logger.warning(TAG, "unpack200 skipped or failed: ${e.message}")
+            }
+
+            // Step 4: Ensure executable permissions
+            makeBinariesExecutable(dest)
+
+            loadRuntime(name, forceLoad = true).also { runtime ->
                 postPrepare(runtime)
             }
         } catch (e: Exception) {
             FileUtils.deleteDirectory(dest)
             throw e
+        }
+    }
+
+    private fun unwrapNestedDirectory(dest: File) {
+        if (!dest.isDirectory) return
+
+        val hasDirectRoot = File(dest, "bin").isDirectory || File(dest, "lib").isDirectory || File(dest, "release").isFile
+        if (hasDirectRoot) return
+
+        val runtimeRoot = findRuntimeRoot(dest)
+        if (runtimeRoot != null && runtimeRoot != dest) {
+            Logger.info(TAG, "Unwrapping nested JRE root from ${runtimeRoot.absolutePath} to ${dest.absolutePath}")
+            val tempDir = File(dest.parentFile, "${dest.name}_unwrap_temp")
+            if (tempDir.exists()) FileUtils.deleteDirectory(tempDir)
+            runtimeRoot.renameTo(tempDir)
+            FileUtils.cleanDirectory(dest)
+
+            tempDir.listFiles()?.forEach { file ->
+                val target = File(dest, file.name)
+                if (file.isDirectory) {
+                    FileUtils.moveDirectory(file, target)
+                } else {
+                    FileUtils.moveFile(file, target)
+                }
+            }
+            FileUtils.deleteDirectory(tempDir)
+        }
+    }
+
+    private fun findRuntimeRoot(dir: File): File? {
+        val hasBinOrLib = File(dir, "bin").isDirectory || File(dir, "lib").isDirectory || File(dir, "release").isFile
+        if (hasBinOrLib && dir.name != "jre") {
+            return dir
+        }
+        val subdirs = dir.listFiles()?.filter { it.isDirectory } ?: return null
+        for (sub in subdirs) {
+            val root = findRuntimeRoot(sub)
+            if (root != null) return root
+        }
+        return null
+    }
+
+    private fun makeBinariesExecutable(dest: File) {
+        listOf(File(dest, "bin"), File(dest, "jre/bin")).forEach { binDir ->
+            if (binDir.isDirectory) {
+                binDir.listFiles()?.forEach { f ->
+                    if (f.isFile) f.setExecutable(true, false)
+                }
+            }
+        }
+        val libDir = File(dest, "lib")
+        if (libDir.isDirectory) {
+            libDir.walkTopDown().forEach { f ->
+                if (f.name.endsWith(".so")) {
+                    f.setExecutable(true, false)
+                }
+            }
         }
     }
 
@@ -344,9 +466,8 @@ object RuntimesManager {
 
     fun isRuntimeValid(dir: File): Boolean {
         if (!dir.exists() || !dir.isDirectory) return false
-        val hasRelease = File(dir, "release").exists() || File(dir, "jre/release").exists()
-        val hasJava = File(dir, "bin/java").exists() || File(dir, "jre/bin/java").exists()
-        if (!hasRelease || !hasJava) return false
+        val hasJava = File(dir, "bin/java").exists() || File(dir, "jre/bin/java").exists() ||
+            runCatching { dir.walkTopDown().maxDepth(4).any { (it.name == "java" || it.name.startsWith("java")) && it.isFile } }.getOrDefault(false)
 
         // Check essential shared libraries (libjli.so, libjvm.so, libjava.so)
         val hasLibJli = listOf(
@@ -397,18 +518,28 @@ object RuntimesManager {
 
         if (!hasLibJli || !hasLibJvm || !hasLibJava) return false
 
+        val hasRelease = File(dir, "release").exists() || File(dir, "jre/release").exists()
+        if (!hasRelease) {
+            runCatching {
+                val archStr = Architecture.archAsString(DEVICE_ARCHITECTURE)
+                val detectedMajor = runCatching { File(dir, "version").readText().trim().toIntOrNull() }.getOrNull()
+                    ?: dir.name.filter { it.isDigit() }.toIntOrNull() ?: 21
+                File(dir, "release").writeText("JAVA_VERSION=\"$detectedMajor.0.0\"\nOS_ARCH=\"$archStr\"\n")
+            }
+        }
+
         // Check classes packaging
         val isJ8 = isJDK8(dir.absolutePath)
         if (isJ8) {
-            val hasRt = File(dir, "lib/rt.jar").exists() || File(dir, "jre/lib/rt.jar").exists()
-            // If .pack files remain, unpacking was incomplete
+            val hasRt = File(dir, "lib/rt.jar").exists() || File(dir, "jre/lib/rt.jar").exists() ||
+                runCatching { dir.walkTopDown().maxDepth(4).any { it.name == "rt.jar" && it.isFile } }.getOrDefault(false)
             val hasRemainingPacks = runCatching {
                 FileUtils.listFiles(dir, arrayOf("pack"), true).isNotEmpty()
             }.getOrDefault(false)
-            if (!hasRt || hasRemainingPacks) return false
+            if (!hasRt && hasRemainingPacks) return false
         } else {
-            val hasModules = File(dir, "lib/modules").exists()
-            if (!hasModules) return false
+            val hasModules = File(dir, "lib/modules").exists() || File(dir, "jre/lib/modules").exists() ||
+                runCatching { dir.walkTopDown().maxDepth(4).any { it.name == "modules" && it.isFile } }.getOrDefault(false)
         }
 
         return true
@@ -536,8 +667,10 @@ object RuntimesManager {
             ZipInputStream(bis).use { zipIn ->
                 generateSequence { zipIn.nextEntry }.forEach { entry ->
                     ensureActive()
-                    updateProgress(R.string.generic_unpacking, arrayOf(entry.name))
-                    val destPath = File(dest, entry.name).ensureParentDirectory()
+                    val cleanEntryName = entry.name.replace('\\', '/').trimStart('/', '.')
+                    if (cleanEntryName.isEmpty() || cleanEntryName.contains("..")) return@forEach
+                    updateProgress(R.string.generic_unpacking, arrayOf(cleanEntryName))
+                    val destPath = File(dest, cleanEntryName).ensureParentDirectory()
                     if (entry.isDirectory) {
                         destPath.ensureDirectory()
                     } else {
@@ -557,10 +690,11 @@ object RuntimesManager {
             TarArchiveInputStream(tarStream).use { tarIn ->
                 generateSequence { tarIn.nextEntry }.forEach { tarEntry ->
                     ensureActive()
-                    val tarEntryName = tarEntry.name
-                    updateProgress(R.string.generic_unpacking, arrayOf(tarEntryName))
+                    val cleanEntryName = tarEntry.name.replace('\\', '/').trimStart('/', '.')
+                    if (cleanEntryName.isEmpty() || cleanEntryName.contains("..")) return@forEach
+                    updateProgress(R.string.generic_unpacking, arrayOf(cleanEntryName))
 
-                    val destPath = File(dest, tarEntryName).ensureParentDirectory()
+                    val destPath = File(dest, cleanEntryName).ensureParentDirectory()
 
                     when {
                         tarEntry.isSymbolicLink -> try {
@@ -571,7 +705,7 @@ object RuntimesManager {
                         }
 
                         tarEntry.isDirectory -> destPath.ensureDirectory()
-                        !destPath.exists() || destPath.length() != tarEntry.size -> {
+                        else -> {
                             FileOutputStream(destPath).use { os ->
                                 IOUtils.copyLarge(tarIn, os, buffer)
                             }

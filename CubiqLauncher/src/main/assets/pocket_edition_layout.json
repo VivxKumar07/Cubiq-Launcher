@@ -31,19 +31,20 @@
           },
           "uuid": "btn_pe_keyboard",
           "position": {
-            "x": 300,
-            "y": 200
+            "x": 876,
+            "y": 19
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 50.0,
             "heightDp": 50.0,
-            "widthPercentage": 824,
-            "heightPercentage": 824,
+            "widthPercentage": 1014,
+            "heightPercentage": 1014,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "keyboard",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -53,8 +54,7 @@
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "keyboard"
+          "isToggleable": false
         },
         {
           "text": {
@@ -63,19 +63,20 @@
           },
           "uuid": "btn_pe_f5",
           "position": {
-            "x": 3700,
-            "y": 200
+            "x": 4467,
+            "y": 19
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 50.0,
             "heightDp": 50.0,
-            "widthPercentage": 824,
-            "heightPercentage": 824,
+            "widthPercentage": 1056,
+            "heightPercentage": 1056,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "perspective",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -85,8 +86,7 @@
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "perspective"
+          "isToggleable": false
         },
         {
           "text": {
@@ -95,19 +95,20 @@
           },
           "uuid": "btn_pe_pause",
           "position": {
-            "x": 4600,
-            "y": 200
+            "x": 5541,
+            "y": 19
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 50.0,
             "heightDp": 50.0,
-            "widthPercentage": 824,
-            "heightPercentage": 824,
+            "widthPercentage": 1083,
+            "heightPercentage": 1083,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "pause",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -117,8 +118,7 @@
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "pause"
+          "isToggleable": false
         },
         {
           "text": {
@@ -127,19 +127,20 @@
           },
           "uuid": "btn_pe_chat",
           "position": {
-            "x": 5500,
-            "y": 200
+            "x": 5000,
+            "y": 19
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 50.0,
             "heightDp": 50.0,
-            "widthPercentage": 824,
-            "heightPercentage": 824,
+            "widthPercentage": 1083,
+            "heightPercentage": 1083,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "chat",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -149,137 +150,81 @@
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "chat"
+          "isToggleable": false
         },
         {
           "text": {
-            "default": "MENU",
+            "default": "Button",
             "matchQueue": []
           },
-          "uuid": "btn_pe_menu",
+          "uuid": "549dd236f75246f598",
           "position": {
-            "x": 6400,
-            "y": 200
+            "x": 2103,
+            "y": 2007
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 50.0,
             "heightDp": 50.0,
-            "widthPercentage": 824,
-            "heightPercentage": 824,
+            "widthPercentage": 100,
+            "heightPercentage": 100,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "gui",
           "visibilityType": "always",
-          "clickEvents": [
-            {
-              "type": "launcher_event",
-              "key": "launcher.event.open_menu"
-            }
-          ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "menu_button"
+          "isToggleable": false
+        },
+        {
+          "text": {
+            "default": "Button",
+            "matchQueue": []
+          },
+          "uuid": "5b5e189f969647e69d",
+          "position": {
+            "x": 1382,
+            "y": 19
+          },
+          "buttonSize": {
+            "type": "percentage",
+            "widthDp": 50.0,
+            "heightDp": 50.0,
+            "widthPercentage": 1028,
+            "heightPercentage": 1028,
+            "widthReference": "screen_height",
+            "heightReference": "screen_height"
+          },
+          "buttonStyle": "bedrock_button_style",
+          "icon": "gui",
+          "visibilityType": "always",
+          "isSwipple": false,
+          "isPenetrable": false,
+          "isToggleable": false
         }
-      ],
-      "textBoxes": [],
-      "joystickButtons": []
+      ]
     },
     {
       "name": "move_joystick",
       "uuid": "layer_move_joystick",
       "hide": false,
-      "hideWhenMouse": true,
-      "hideWhenGamepad": true,
       "visibilityType": "always",
-      "normalButtons": [],
-      "textBoxes": [],
       "joystickButtons": [
         {
           "uuid": "pe_bedrock_joystick",
           "position": {
-            "x": 1000,
-            "y": 5600
+            "x": 933,
+            "y": 7084
           },
-          "sizeType": "percentage",
           "sizeDp": 140.0,
-          "sizePercentage": 3964,
-          "visibilityType": "always",
+          "sizePercentage": 4375,
           "joystickStyleId": "bedrock_joystick_style",
           "deadZoneRatio": 0.15,
           "lockThreshold": 0.85,
-          "canLock": true,
-          "triggerMode": "drag",
-          "directionEvents": {
-            "north": [
-              {
-                "type": "key",
-                "key": "GLFW_KEY_W"
-              }
-            ],
-            "north_east": [
-              {
-                "type": "key",
-                "key": "GLFW_KEY_W"
-              },
-              {
-                "type": "key",
-                "key": "GLFW_KEY_D"
-              }
-            ],
-            "north_west": [
-              {
-                "type": "key",
-                "key": "GLFW_KEY_W"
-              },
-              {
-                "type": "key",
-                "key": "GLFW_KEY_A"
-              }
-            ],
-            "south": [
-              {
-                "type": "key",
-                "key": "GLFW_KEY_S"
-              }
-            ],
-            "south_east": [
-              {
-                "type": "key",
-                "key": "GLFW_KEY_S"
-              },
-              {
-                "type": "key",
-                "key": "GLFW_KEY_D"
-              }
-            ],
-            "south_west": [
-              {
-                "type": "key",
-                "key": "GLFW_KEY_S"
-              },
-              {
-                "type": "key",
-                "key": "GLFW_KEY_A"
-              }
-            ],
-            "east": [
-              {
-                "type": "key",
-                "key": "GLFW_KEY_D"
-              }
-            ],
-            "west": [
-              {
-                "type": "key",
-                "key": "GLFW_KEY_A"
-              }
-            ]
-          },
-          "lockEvents": []
+          "lockEvents": [],
+          "visibilityType": "always"
         }
       ]
     },
@@ -287,8 +232,6 @@
       "name": "move_dpad",
       "uuid": "layer_move_dpad",
       "hide": true,
-      "hideWhenMouse": true,
-      "hideWhenGamepad": true,
       "visibilityType": "always",
       "normalButtons": [
         {
@@ -298,19 +241,20 @@
           },
           "uuid": "btn_pe_dpad_up",
           "position": {
-            "x": 1600,
-            "y": 5650
+            "x": 1467,
+            "y": 4684
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 44.0,
             "heightDp": 44.0,
-            "widthPercentage": 1150,
-            "heightPercentage": 1150,
+            "widthPercentage": 1708,
+            "heightPercentage": 1708,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "forward_button_be2",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -320,8 +264,7 @@
           ],
           "isSwipple": true,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "forward_button_be2"
+          "isToggleable": false
         },
         {
           "text": {
@@ -330,19 +273,20 @@
           },
           "uuid": "btn_pe_dpad_down",
           "position": {
-            "x": 1600,
-            "y": 7950
+            "x": 1465,
+            "y": 8792
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 44.0,
             "heightDp": 44.0,
-            "widthPercentage": 1150,
-            "heightPercentage": 1150,
+            "widthPercentage": 1681,
+            "heightPercentage": 1681,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "backward_button_be2",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -352,8 +296,7 @@
           ],
           "isSwipple": true,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "backward_button_be2"
+          "isToggleable": false
         },
         {
           "text": {
@@ -362,19 +305,20 @@
           },
           "uuid": "btn_pe_dpad_left",
           "position": {
-            "x": 450,
-            "y": 6800
+            "x": 577,
+            "y": 6749
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 44.0,
             "heightDp": 44.0,
-            "widthPercentage": 1150,
-            "heightPercentage": 1150,
+            "widthPercentage": 1722,
+            "heightPercentage": 1722,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "left_button_be2",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -384,8 +328,7 @@
           ],
           "isSwipple": true,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "left_button_be2"
+          "isToggleable": false
         },
         {
           "text": {
@@ -394,19 +337,20 @@
           },
           "uuid": "btn_pe_dpad_right",
           "position": {
-            "x": 2750,
-            "y": 6800
+            "x": 2355,
+            "y": 6761
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 44.0,
             "heightDp": 44.0,
-            "widthPercentage": 1150,
-            "heightPercentage": 1150,
+            "widthPercentage": 1708,
+            "heightPercentage": 1708,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "right_button_be2",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -416,8 +360,7 @@
           ],
           "isSwipple": true,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "right_button_be2"
+          "isToggleable": false
         },
         {
           "text": {
@@ -426,19 +369,20 @@
           },
           "uuid": "btn_pe_dpad_center",
           "position": {
-            "x": 1600,
-            "y": 6800
+            "x": 1468,
+            "y": 6756
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 44.0,
             "heightDp": 44.0,
-            "widthPercentage": 1150,
-            "heightPercentage": 1150,
+            "widthPercentage": 1722,
+            "heightPercentage": 1722,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "sneak_button_be2",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -448,19 +392,14 @@
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": true,
-          "icon": "sneak_button_be2"
+          "isToggleable": true
         }
-      ],
-      "textBoxes": [],
-      "joystickButtons": []
+      ]
     },
     {
       "name": "actions",
       "uuid": "layer_actions",
       "hide": false,
-      "hideWhenMouse": true,
-      "hideWhenGamepad": true,
       "visibilityType": "always",
       "normalButtons": [
         {
@@ -470,19 +409,20 @@
           },
           "uuid": "btn_pe_attack",
           "position": {
-            "x": 7200,
-            "y": 7000
+            "x": 8219,
+            "y": 6884
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 54.0,
             "heightDp": 54.0,
-            "widthPercentage": 1800,
-            "heightPercentage": 1800,
+            "widthPercentage": 1903,
+            "heightPercentage": 1903,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "attack",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -492,8 +432,7 @@
           ],
           "isSwipple": true,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "attack"
+          "isToggleable": false
         },
         {
           "text": {
@@ -502,19 +441,20 @@
           },
           "uuid": "btn_pe_use",
           "position": {
-            "x": 7200,
-            "y": 5000
+            "x": 9429,
+            "y": 8501
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 54.0,
             "heightDp": 54.0,
-            "widthPercentage": 1800,
-            "heightPercentage": 1800,
+            "widthPercentage": 1722,
+            "heightPercentage": 1722,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "interact_button",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -524,8 +464,7 @@
           ],
           "isSwipple": true,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "use_item"
+          "isToggleable": false
         },
         {
           "text": {
@@ -534,19 +473,20 @@
           },
           "uuid": "btn_pe_sprint",
           "position": {
-            "x": 1000,
-            "y": 3800
+            "x": 8218,
+            "y": 4061
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 46.0,
             "heightDp": 46.0,
-            "widthPercentage": 1500,
-            "heightPercentage": 1500,
+            "widthPercentage": 1986,
+            "heightPercentage": 1986,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "sprint",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -556,8 +496,7 @@
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": true,
-          "icon": "sprint"
+          "isToggleable": true
         },
         {
           "text": {
@@ -566,19 +505,20 @@
           },
           "uuid": "btn_pe_jump",
           "position": {
-            "x": 8600,
-            "y": 7000
+            "x": 9480,
+            "y": 2792
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 54.0,
             "heightDp": 54.0,
-            "widthPercentage": 1800,
-            "heightPercentage": 1800,
+            "widthPercentage": 1972,
+            "heightPercentage": 1972,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "jump",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -588,8 +528,7 @@
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "jump"
+          "isToggleable": false
         },
         {
           "text": {
@@ -598,19 +537,20 @@
           },
           "uuid": "btn_pe_sneak",
           "position": {
-            "x": 8600,
-            "y": 5000
+            "x": 9499,
+            "y": 5689
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 46.0,
             "heightDp": 46.0,
-            "widthPercentage": 1500,
-            "heightPercentage": 1500,
+            "widthPercentage": 1958,
+            "heightPercentage": 1958,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "sneak",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -620,8 +560,7 @@
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": true,
-          "icon": "sneak"
+          "isToggleable": true
         },
         {
           "text": {
@@ -630,19 +569,20 @@
           },
           "uuid": "btn_pe_inv",
           "position": {
-            "x": 7250,
-            "y": 8800
+            "x": 6785,
+            "y": 10000
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 46.0,
             "heightDp": 46.0,
-            "widthPercentage": 1500,
-            "heightPercentage": 1500,
+            "widthPercentage": 1014,
+            "heightPercentage": 1014,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "inventory",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -652,40 +592,7 @@
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "inventory"
-        },
-        {
-          "text": {
-            "default": "DISMOUNT",
-            "matchQueue": []
-          },
-          "uuid": "btn_pe_drop",
-          "position": {
-            "x": 8600,
-            "y": 3200
-          },
-          "buttonSize": {
-            "type": "percentage",
-            "widthDp": 46.0,
-            "heightDp": 46.0,
-            "widthPercentage": 1500,
-            "heightPercentage": 1500,
-            "widthReference": "screen_height",
-            "heightReference": "screen_height"
-          },
-          "buttonStyle": "bedrock_button_style",
-          "visibilityType": "always",
-          "clickEvents": [
-            {
-              "type": "key",
-              "key": "GLFW_KEY_LEFT_SHIFT"
-            }
-          ],
-          "isSwipple": false,
-          "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "dismount"
+          "isToggleable": false
         },
         {
           "text": {
@@ -694,19 +601,20 @@
           },
           "uuid": "btn_pe_swap",
           "position": {
-            "x": 5900,
-            "y": 7000
+            "x": 7850,
+            "y": 9985
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 46.0,
             "heightDp": 46.0,
-            "widthPercentage": 1500,
-            "heightPercentage": 1500,
+            "widthPercentage": 1000,
+            "heightPercentage": 1000,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "swap_hands",
           "visibilityType": "always",
           "clickEvents": [
             {
@@ -716,8 +624,7 @@
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "swap_hands"
+          "isToggleable": false
         },
         {
           "text": {
@@ -726,34 +633,36 @@
           },
           "uuid": "btn_pe_pick",
           "position": {
-            "x": 5900,
-            "y": 5000
+            "x": 317,
+            "y": 25
           },
           "buttonSize": {
             "type": "percentage",
             "widthDp": 46.0,
             "heightDp": 46.0,
-            "widthPercentage": 1500,
-            "heightPercentage": 1500,
+            "widthPercentage": 1028,
+            "heightPercentage": 1028,
             "widthReference": "screen_height",
             "heightReference": "screen_height"
           },
           "buttonStyle": "bedrock_button_style",
+          "icon": "f3_debug",
           "visibilityType": "always",
           "clickEvents": [
             {
               "type": "launcher_event",
               "key": "GLFW_MOUSE_BUTTON_MIDDLE"
+            },
+            {
+              "type": "key",
+              "key": "GLFW_KEY_F3"
             }
           ],
           "isSwipple": false,
           "isPenetrable": false,
-          "isToggleable": false,
-          "icon": "pick_block"
+          "isToggleable": false
         }
-      ],
-      "textBoxes": [],
-      "joystickButtons": []
+      ]
     }
   ],
   "styles": [
@@ -761,7 +670,6 @@
       "name": "Bedrock Style",
       "uuid": "bedrock_button_style",
       "animateSwap": false,
-      "commonStyle": true,
       "lightStyle": {
         "alpha": 0.38,
         "pressedAlpha": 0.65,
@@ -816,32 +724,31 @@
     {
       "name": "Bedrock Joystick",
       "uuid": "bedrock_joystick_style",
-      "commonStyle": true,
       "lightStyle": {
         "alpha": 0.4,
         "backgroundColor": 1713512994,
-        "borderColor": 2571387972,
-        "borderWidthRatio": 4,
-        "backgroundShape": 50,
         "joystickColor": 3431442568,
         "joystickCanLockColor": 3429223526,
         "joystickLockedColor": 3427010798,
+        "lockMarkColor": 4294967295,
+        "borderWidthRatio": 4,
+        "borderColor": 2571387972,
+        "backgroundShape": 50,
         "joystickShape": 50,
-        "joystickSize": 0.5,
-        "lockMarkColor": 4294967295
+        "joystickSize": 0.5
       },
       "darkStyle": {
         "alpha": 0.4,
         "backgroundColor": 1713512994,
-        "borderColor": 2571387972,
-        "borderWidthRatio": 4,
-        "backgroundShape": 50,
         "joystickColor": 3431442568,
         "joystickCanLockColor": 3429223526,
         "joystickLockedColor": 3427010798,
+        "lockMarkColor": 4294967295,
+        "borderWidthRatio": 4,
+        "borderColor": 2571387972,
+        "backgroundShape": 50,
         "joystickShape": 50,
-        "joystickSize": 0.5,
-        "lockMarkColor": 4294967295
+        "joystickSize": 0.5
       }
     }
   ],

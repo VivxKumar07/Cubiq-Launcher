@@ -424,9 +424,9 @@ private fun LandscapePlayScreen(
             contentDescription = "Minecraft Java Edition",
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 10.dp)
-                .height(56.dp)
-                .widthIn(max = 270.dp),
+                .padding(top = 52.dp)
+                .height(76.dp)
+                .widthIn(max = 340.dp),
             contentScale = ContentScale.Fit
         )
 

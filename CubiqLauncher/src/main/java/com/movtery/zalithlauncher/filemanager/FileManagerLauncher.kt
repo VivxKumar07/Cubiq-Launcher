@@ -45,6 +45,8 @@ object FileManagerLauncher {
      * @param currentPath “当前访问目录”，非法时回退根目录
      * @param logsDir 日志根目录
      */
+    const val EXTRA_IS_LANDSCAPE = "fm.extra.IS_LANDSCAPE"
+
     fun launch(
         context: Context,
         rootPath: String,
@@ -52,11 +54,13 @@ object FileManagerLauncher {
         logsDir: String? = null
     ) {
         require(rootPath.isNotBlank()) { "rootPath must not be blank" }
+        val isLandscape = context.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
         val intent = Intent(context, FileManagerActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
             putExtra(EXTRA_ROOT_PATH, rootPath)
+            putExtra(EXTRA_IS_LANDSCAPE, isLandscape)
             currentPath?.let { putExtra(EXTRA_CURRENT_PATH, it) }
             logsDir?.let { putExtra(EXTRA_LOGS_DIR, it) }
         }

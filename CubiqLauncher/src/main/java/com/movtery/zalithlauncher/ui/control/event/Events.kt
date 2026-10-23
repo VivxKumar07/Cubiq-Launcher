@@ -45,6 +45,8 @@ fun lwjglEvent(
 const val LAUNCHER_EVENT_SWITCH_IME = "launcher.event.switch_ime"
 /** 切换菜单 */
 const val LAUNCHER_EVENT_SWITCH_MENU = "launcher.event.switch_menu"
+/** 切换虚拟鼠标开启/关闭 */
+const val LAUNCHER_EVENT_SWITCH_MOUSE = "launcher.event.switch_mouse"
 /** 控制虚拟鼠标滚轮上-长按一直触发 */
 const val LAUNCHER_EVENT_SCROLL_UP = "launcher.event.scroll_up"
 /** 控制虚拟鼠标滚轮上-单次点击 */
@@ -67,7 +69,8 @@ fun launcherEvent(
     onLongScrollUp: () -> Unit,
     onLongScrollUpCancel: () -> Unit,
     onLongScrollDown: () -> Unit,
-    onLongScrollDownCancel: () -> Unit
+    onLongScrollDownCancel: () -> Unit,
+    onSwitchMouse: () -> Unit = {}
 ) {
     if (eventKey.startsWith("GLFW_MOUSE_", false)) {
         //处理鼠标事件
@@ -77,6 +80,7 @@ fun launcherEvent(
             when (eventKey) {
                 LAUNCHER_EVENT_SWITCH_IME -> onSwitchIME()
                 LAUNCHER_EVENT_SWITCH_MENU -> onSwitchMenu()
+                LAUNCHER_EVENT_SWITCH_MOUSE -> onSwitchMouse()
                 LAUNCHER_EVENT_SCROLL_UP_SINGLE -> onSingleScrollUp()
                 LAUNCHER_EVENT_SCROLL_DOWN_SINGLE -> onSingleScrollDown()
             }

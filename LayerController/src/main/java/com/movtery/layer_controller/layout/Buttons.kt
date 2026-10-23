@@ -70,7 +70,10 @@ private fun resolveIconDrawable(iconName: String?, isPressed: Boolean): Int? {
         clean == "attack" || clean == "attack_button" || clean == "sword" -> {
             if (isPressed) R.drawable.attack_pressed else R.drawable.attack
         }
-        clean == "use_item" || clean == "interact_button" || clean == "pickaxe" || clean == "place" || clean == "use" -> {
+        clean == "interact_button" || clean == "interact" || clean == "use_item" || clean == "place" || clean == "use" -> {
+            if (isPressed) R.drawable.interact_button_pressed else R.drawable.interact_button
+        }
+        clean == "pickaxe" -> {
             if (isPressed) R.drawable.use_item_pressed else R.drawable.use_item
         }
         clean == "jump" || clean == "jump_button" || clean == "jump_button_be2" -> {
@@ -196,17 +199,6 @@ internal fun TextButton(
 
         val locale = LocalConfiguration.current.locales[0]
 
-        val isToggled = (data is ObservableNormalData && data.isToggleable && isPressed) ||
-                (data is ObservableNormalData && data.text.default.equals("SPRINT", ignoreCase = true) && isPressed)
-
-        val toggleBorderModifier = if (isToggled) {
-            Modifier
-                .background(Color(0x3355FF55), RoundedCornerShape(8.dp))
-                .border(BorderStroke(2.dp, Color(0xFF55FF55)), RoundedCornerShape(8.dp))
-        } else {
-            Modifier
-        }
-
         val explicitIcon = (data as? ObservableNormalData)?.icon
         val resolvedIcon = resolveIconDrawable(explicitIcon, isPressed)
         val hasIcon = resolvedIcon != null
@@ -221,7 +213,6 @@ internal fun TextButton(
                     isDark = isDark,
                     isPressed = if (hasIcon) false else isPressed
                 )
-                .then(toggleBorderModifier)
                 .editMode(
                     isEditMode = isEditMode,
                     data = data,

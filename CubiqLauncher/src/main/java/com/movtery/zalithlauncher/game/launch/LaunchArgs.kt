@@ -415,6 +415,8 @@ fun detectLwjglVersion(manifest: GameManifest): Int {
         val versionPrefix = when {
             name.startsWith("org.lwjgl.lwjgl:lwjgl:") -> "org.lwjgl.lwjgl:lwjgl:"
             name.startsWith("org.lwjgl:lwjgl:") -> "org.lwjgl:lwjgl:"
+            name.startsWith("org.lwjgl:lwjgl-") -> name.substringBeforeLast(':') + ":"
+            name.startsWith("org.lwjgl:") -> name.substringBeforeLast(':') + ":"
             else -> continue
         }
         val intVersion = name.substring(versionPrefix.length)
@@ -425,6 +427,10 @@ fun detectLwjglVersion(manifest: GameManifest): Int {
             maxVersion = intVersion
         }
     }
+    val id = manifest.id ?: ""
+    if (maxVersion < 340 && (id.startsWith("26") || id.contains("26.") || id.contains("27."))) {
+        return 341
+    }
     return maxVersion
 }
 
@@ -432,4 +438,4 @@ fun detectLwjglVersion(manifest: GameManifest): Int {
  * LWJGL 版本整数 -> 组件目录名。
  * 版本 >= 3.4.1 -> 3.4.1 组件；否则（含 LWJGL2 桥接场景）-> 3.3.3 组件
  */
-fun lwjglVersionDir(lwjglVersion: Int): String = "3.3.3"
+fun lwjglVersionDir(lwjglVersion: Int): String = if (lwjglVersion >= 340) "3.4.1" else "3.3.3"

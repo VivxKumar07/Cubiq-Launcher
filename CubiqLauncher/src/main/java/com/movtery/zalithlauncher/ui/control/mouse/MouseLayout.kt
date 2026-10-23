@@ -159,10 +159,8 @@ fun VirtualPointerLayout(
             show = when {
                 //物理鼠标已连接：是否为抓获控制模式
                 PhysicalMouseChecker.physicalMouseConnected -> requestPointerCapture
-                //点击控制模式：由隐藏虚拟鼠标设置决定
-                controlMode == MouseControlMode.CLICK -> !hideMouseInClickMode
-                //滑动控制始终显示
-                else -> controlMode == MouseControlMode.SLIDE
+                hideMouseInClickMode -> false
+                else -> true
             }
         )
     }

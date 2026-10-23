@@ -50,7 +50,7 @@ object AllSettings : SettingsRegistry() {
     /**
      * 全局渲染器
      */
-    val renderer = stringSetting("renderer", "d2c1e8b4-55a1-4e78-9032-11cf4e87d3a1")
+    val renderer = stringSetting("renderer", "e7b90ed6-e518-4d4e-93dc-5c7133cd5b31")
 
     /**
      * Vulkan 驱动器
@@ -449,7 +449,7 @@ object AllSettings : SettingsRegistry() {
      */
     val gameDownloadSource = enumSetting(
         "gameDownloadSource",
-        MirrorSourceType.AUTO,
+        MirrorSourceType.OFFICIAL,
         MirrorSourceType.LEGACY_NAMES
     )
 
@@ -458,7 +458,7 @@ object AllSettings : SettingsRegistry() {
      */
     val assetPlatformSource = enumSetting(
         "assetPlatformSource",
-        MirrorSourceType.AUTO,
+        MirrorSourceType.OFFICIAL,
         MirrorSourceType.LEGACY_NAMES
     )
 
@@ -466,7 +466,7 @@ object AllSettings : SettingsRegistry() {
     /**
      * 全局默认控制布局文件名
      */
-    val controlLayout = stringSetting("controlLayout", "default_layout.json")
+    val controlLayout = stringSetting("controlLayout", "mojo_layout.json")
 
     //Other
     /**
@@ -503,6 +503,7 @@ object AllSettings : SettingsRegistry() {
      * 游戏菜单悬浮窗位置
      */
     val menuBallPos = offsetSetting("menuBallPos", Offset.Zero)
+    val menuBallPosPocket = offsetSetting("menuBallPosPocket", Offset.Zero)
 
     /**
      * 游戏菜单悬浮窗不透明度

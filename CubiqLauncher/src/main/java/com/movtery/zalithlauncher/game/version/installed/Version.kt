@@ -219,11 +219,11 @@ class Version(
     fun getControlPath(): File? {
         val configured = versionConfig.control
             .getValueOrDefault(AllSettings.controlLayout.getValue())
-            .ifEmpty { "default_layout.json" }
+            .ifEmpty { "mojo_layout.json" }
         val file = File(PathManager.DIR_CONTROL_LAYOUTS, configured)
         if (file.exists()) return file
 
-        val default = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
+        val default = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
         if (default.exists()) return default
 
         return null
