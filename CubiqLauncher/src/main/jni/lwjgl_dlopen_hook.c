@@ -42,6 +42,24 @@ static jlong ndlopen_bugfix(__attribute__((unused)) JNIEnv *env,
         }
     }
 
+    // Intercept EGL library loads in LWJGL
+    if(strstr(filename, "libEGL.so") != NULL ||
+       strstr(filename, "libEGL.so.1") != NULL) {
+        const char *sdlEgl = getenv("SDL_EGL_LIBRARY");
+        if (sdlEgl != NULL && sdlEgl[0] != '\0') {
+            void *h = dlopen(sdlEgl, (int)jmode);
+            if (h != NULL) return (jlong) h;
+        }
+        void *h = dlopen("libEGL.so", (int)jmode);
+        if (h != NULL) return (jlong) h;
+        #if defined(__aarch64__)
+        h = dlopen("/system/lib64/libEGL.so", (int)jmode);
+        #else
+        h = dlopen("/system/lib/libEGL.so", (int)jmode);
+        #endif
+        if (h != NULL) return (jlong) h;
+    }
+
     // This hook also serves the task of mitigating a bug: the idea is that since, on Android 10 and
     // earlier, the linker doesn't really do namespace nesting.
     // It is not a problem as most of the libraries are in the launcher path, but when you try to run

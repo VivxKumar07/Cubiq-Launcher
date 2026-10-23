@@ -458,6 +458,11 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
         envMap["SDL_EGL_LIBRARY"] = if (eglName.startsWith("/")) eglName else "$nativeLibPath/$eglName"
     }
 
+    if (!envMap.containsKey("SDL_EGL_LIBRARY")) {
+        val sysEgl = if (File("/system/lib64/libEGL.so").exists()) "/system/lib64/libEGL.so" else "/system/lib/libEGL.so"
+        envMap["SDL_EGL_LIBRARY"] = sysEgl
+    }
+
     envMap["POJAV_RENDERER"] = rendererId
 
     if (renderer == LTWRenderer || renderer == MobileGluesRenderer) {

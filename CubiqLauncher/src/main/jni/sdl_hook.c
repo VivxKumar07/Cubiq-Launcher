@@ -264,6 +264,41 @@ static EGLBoolean proxyEglSwapBuffers(EGLDisplay dpy, void *surface) {
     return sOrigEglSwapBuffers(dpy, surface);
 }
 
+// --- glGetError 接管与 RenderPearl 兼容 ---
+typedef unsigned int GLenum;
+#define GL_NO_ERROR 0
+
+static GLenum (*sRealGlGetError)(void) = NULL;
+static int sStartupGlGetErrorBypasses = 0;
+
+static GLenum glGetError_impl(GLenum (*real_func)(void)) {
+    GLenum (*target)(void) = real_func ? real_func : sRealGlGetError;
+    if (target != NULL) {
+        (void) target();
+    }
+    const char *noerr = getenv("LIBGL_NOERROR");
+    if (noerr != NULL && strcmp(noerr, "1") == 0) {
+        return GL_NO_ERROR;
+    }
+    if (sStartupGlGetErrorBypasses < 500) {
+        sStartupGlGetErrorBypasses++;
+        return GL_NO_ERROR;
+    }
+    if (target != NULL) return target();
+    return GL_NO_ERROR;
+}
+
+static GLenum custom_glGetError_Func(void) {
+    return glGetError_impl(NULL);
+}
+
+static GLenum custom_glGetError_Bytehook_Func(void) {
+    GLenum (*orig)(void) = (GLenum (*)(void)) BYTEHOOK_CALL_PREV(custom_glGetError_Bytehook_Func, GLenum (*)(void));
+    GLenum res = glGetError_impl(orig);
+    BYTEHOOK_POP_STACK();
+    return res;
+}
+
 // EGL 函数解析出口统一注入代理（bytehook 层与 dlsym 代理层共用）
 static void *injectEglProxy(const char *name, void *resolved) {
     if (name == NULL) return resolved;
@@ -276,6 +311,9 @@ static void *injectEglProxy(const char *name, void *resolved) {
     } else if (strcmp(name, "eglSwapBuffers") == 0) {
         if (resolved != NULL && sOrigEglSwapBuffers == NULL) sOrigEglSwapBuffers = (eglSwapBuffers_t) resolved;
         if (sOrigEglSwapBuffers != NULL && resolved != (void *) proxyEglSwapBuffers) resolved = (void *) proxyEglSwapBuffers;
+    } else if (strcmp(name, "glGetError") == 0) {
+        if (resolved != NULL && sRealGlGetError == NULL) sRealGlGetError = (GLenum (*)(void)) resolved;
+        return (void *) custom_glGetError_Func;
     }
     return resolved;
 }
@@ -301,6 +339,43 @@ static void *custom_SDL_EGLGetProcAddress_Func(const char *proc) {
     } else if (strcmp(proc, "eglSwapBuffers") == 0) {
         if (sOrigEglSwapBuffers == NULL) sOrigEglSwapBuffers = (eglSwapBuffers_t) r;
         if (r != (void *) proxyEglSwapBuffers) r = (void *) proxyEglSwapBuffers;
+    } else if (strcmp(proc, "glGetError") == 0) {
+        if (sRealGlGetError == NULL) sRealGlGetError = (GLenum (*)(void)) r;
+        return (void *) custom_glGetError_Func;
+    }
+    return r;
+}
+
+static void *try_egl_fallback_load(const char *path) {
+    if (path == NULL) return NULL;
+    if (strstr(path, "libEGL") == NULL && strstr(path, "egl") == NULL) return NULL;
+
+    const char *eglLib = getenv("SDL_EGL_LIBRARY");
+    void *r = NULL;
+    if (eglLib != NULL && eglLib[0] != '\0') {
+        r = dlopen(eglLib, RTLD_NOW | RTLD_LOCAL);
+    }
+    if (r == NULL) {
+        const char *nativeDir = getenv("POJAV_NATIVEDIR");
+        if (nativeDir != NULL && nativeDir[0] != '\0') {
+            char full[1024];
+            snprintf(full, sizeof(full), "%s/libltw.so", nativeDir);
+            r = dlopen(full, RTLD_NOW | RTLD_LOCAL);
+            if (r == NULL) {
+                snprintf(full, sizeof(full), "%s/libmobileglues.so", nativeDir);
+                r = dlopen(full, RTLD_NOW | RTLD_LOCAL);
+            }
+        }
+    }
+    if (r == NULL) {
+        r = dlopen("libEGL.so", RTLD_NOW | RTLD_LOCAL);
+    }
+    if (r == NULL) {
+        #if defined(__aarch64__)
+        r = dlopen("/system/lib64/libEGL.so", RTLD_NOW | RTLD_LOCAL);
+        #else
+        r = dlopen("/system/lib/libEGL.so", RTLD_NOW | RTLD_LOCAL);
+        #endif
     }
     return r;
 }
@@ -318,6 +393,9 @@ static void *custom_SDL_LoadObject_Func(const char *path) {
         if (handle != NULL) return handle;
     }
     void *r = BYTEHOOK_CALL_PREV(custom_SDL_LoadObject_Func, SDL_LoadObject_t, path);
+    if (r == NULL) {
+        r = try_egl_fallback_load(path);
+    }
     BYTEHOOK_POP_STACK();
     return r;
 }
@@ -566,7 +644,11 @@ static void *proxy_SDL_LoadObject(const char *path) {
         void *handle = maybe_load_vulkan();
         if (handle != NULL) return handle;
     }
-    return realSdlLoadObject(path);
+    void *r = realSdlLoadObject(path);
+    if (r == NULL) {
+        r = try_egl_fallback_load(path);
+    }
+    return r;
 }
 
 static void *proxy_SDL_LoadFunction(void *handle, const char *name) {
@@ -600,11 +682,17 @@ void create_sdl_hooks(bytehook_stub_t (*bytehook_hook_all_p)(const char *callee_
     bytehook_stub_t stub_SDL_UnloadObject = bytehook_hook_all_p(NULL, "SDL_UnloadObject", &custom_SDL_UnloadObject_Func, NULL, NULL);
     // 主窗口销毁跟踪，配合窗口复用（见 custom_SDL_DestroyWindow_Func）
     bytehook_stub_t stub_SDL_DestroyWindow = bytehook_hook_all_p(NULL, "SDL_DestroyWindow", &custom_SDL_DestroyWindow_Func, NULL, NULL);
-    LOG_TO_I("SDL_Hook: Successfully initialized SDL hooks, stubs: InitSubSystem=%p GetWindowFromEvent=%p GetWindowFromID=%p LoadFunction=%p CreateWindow=%p CreateWindowWithProps=%p LoadObject=%p UnloadObject=%p DestroyWindow=%p", stub_SDL_InitSubSystem, stub_SDL_GetWindowFromEvent, stub_SDL_GetWindowFromID, stub_SDL_LoadFunction, stub_SDL_CreateWindow, stub_SDL_CreateWindowWithProperties, stub_SDL_LoadObject, stub_SDL_UnloadObject, stub_SDL_DestroyWindow);
+    // RenderPearl glGetError 接管
+    bytehook_stub_t stub_glGetError = bytehook_hook_all_p(NULL, "glGetError", &custom_glGetError_Bytehook_Func, NULL, NULL);
+    LOG_TO_I("SDL_Hook: Successfully initialized SDL hooks, stubs: InitSubSystem=%p GetWindowFromEvent=%p GetWindowFromID=%p LoadFunction=%p CreateWindow=%p CreateWindowWithProps=%p LoadObject=%p UnloadObject=%p DestroyWindow=%p glGetError=%p", stub_SDL_InitSubSystem, stub_SDL_GetWindowFromEvent, stub_SDL_GetWindowFromID, stub_SDL_LoadFunction, stub_SDL_CreateWindow, stub_SDL_CreateWindowWithProperties, stub_SDL_LoadObject, stub_SDL_UnloadObject, stub_SDL_DestroyWindow, stub_glGetError);
 }
 
 /** customDlsym 出口：把 SDL 符号的解析结果换成 dlsym 层代理；返回 NULL 表示不拦截 */
 void *sdlDlsymProxy(const char *symbol, void *real) {
+    if (strcmp(symbol, "glGetError") == 0) {
+        if (sRealGlGetError == NULL) sRealGlGetError = (GLenum (*)(void)) real;
+        return (void *) custom_glGetError_Func;
+    }
     if (strcmp(symbol, "SDL_InitSubSystem") == 0) {
         if (realSdlInitSubSystem == NULL) realSdlInitSubSystem = (sdlInitSubSystem_t) real;
         return (void *) proxy_SDL_InitSubSystem;
