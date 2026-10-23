@@ -124,12 +124,20 @@ object Renderers {
      * 获取当前的渲染器
      */
     fun getCurrentRenderer(): RendererInterface {
-        if (!isInitialized) throw IllegalStateException("Uninitialized renderer!")
-        return currentRenderer ?: throw IllegalStateException("Current renderer not set")
+        if (!isInitialized) init()
+        return currentRenderer ?: (
+            renderers.find { it.getUniqueIdentifier() == LTWRenderer.getUniqueIdentifier() }
+                ?: renderers.find { it.getUniqueIdentifier() == GL4ESRenderer.getUniqueIdentifier() }
+                ?: renderers.firstOrNull()
+                ?: LTWRenderer
+        ).also { currentRenderer = it }
     }
 
     /**
      * 当前是否设置了渲染器
      */
-    fun isCurrentRendererValid(): Boolean = isInitialized && currentRenderer != null
+    fun isCurrentRendererValid(): Boolean {
+        if (!isInitialized) init()
+        return currentRenderer != null || renderers.isNotEmpty()
+    }
 }

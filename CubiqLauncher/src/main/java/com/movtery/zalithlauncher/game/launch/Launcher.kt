@@ -402,8 +402,8 @@ abstract class Launcher(
         val libName = if (is64BitsDevice) "lib64" else "lib"
         val paths = buildList {
             FFmpegPluginManager.takeIf { it.isAvailable }?.libraryPath?.let { add(it) }
-            val pluginPath = RendererPluginManager.selectedRendererPlugin?.path
-                ?: (if (Renderers.getCurrentRenderer().getUniqueIdentifier() == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.PACKAGE_NAME) com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.getInstalledPluginNativePath() else null)
+            val mobileGluesPath = if (com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.isInstalled()) com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.getInstalledPluginNativePath() else null
+            val pluginPath = RendererPluginManager.selectedRendererPlugin?.path ?: mobileGluesPath
             pluginPath?.let { add(it) }
             addAll(NativePluginManager.getPaths())
             add("$javaLibDir/jli")
@@ -449,8 +449,8 @@ abstract class Launcher(
 
     protected fun getLibraryPath(): String {
         val libDirName = if (is64BitsDevice) "lib64" else "lib"
-        val pluginPath = RendererPluginManager.selectedRendererPlugin?.path
-            ?: (if (Renderers.getCurrentRenderer().getUniqueIdentifier() == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.PACKAGE_NAME) com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.getInstalledPluginNativePath() else null)
+        val mobileGluesPath = if (com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.isInstalled()) com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.getInstalledPluginNativePath() else null
+        val pluginPath = RendererPluginManager.selectedRendererPlugin?.path ?: mobileGluesPath
         val path = listOfNotNull(
             // per-version LWJGL natives 优先，避免 APK 内旧版 native 抢占
             lwjglNativesDir,
