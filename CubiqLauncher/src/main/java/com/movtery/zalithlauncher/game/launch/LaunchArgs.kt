@@ -238,14 +238,6 @@ class LaunchArgs(
         argsList.add("-Dminecraft.launcher.brand=${BuildKeys.LAUNCHER_NAME}")
         argsList.add("-Dminecraft.launcher.version=${BuildConfig.VERSION_NAME}")
 
-        if (Architecture.is32BitsDevice) {
-            // OpenJDK's FFM native linker (JEP 454) is not supported on 32-bit platforms (arm32 / x86).
-            // LWJGL 3.4.1 includes Multi-Release classes for Java 22+ that call Linker.nativeLinker().
-            // Disabling Multi-Release JAR processing forces LWJGL 3.4.1 to use its base Java 8 JNI backend,
-            // preventing UnsupportedOperationException while still providing org.lwjgl.sdl.SDL for Minecraft 26+.
-            argsList.add("-Djdk.util.jar.enableMultiRelease=false")
-        }
-
         return argsList
     }
 
