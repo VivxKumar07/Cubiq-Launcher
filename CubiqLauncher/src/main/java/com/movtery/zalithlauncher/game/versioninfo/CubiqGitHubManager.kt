@@ -9,9 +9,11 @@ package com.movtery.zalithlauncher.game.versioninfo
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.movtery.zalithlauncher.BuildConfig
+import com.movtery.zalithlauncher.BuildKeys
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.utils.GSON
+import com.movtery.zalithlauncher.utils.device.Architecture
 import com.movtery.zalithlauncher.utils.logging.Logger
 import com.movtery.zalithlauncher.utils.network.fetchStringFromUrls
 import kotlinx.coroutines.CoroutineScope
@@ -90,14 +92,30 @@ object CubiqGitHubManager {
                 var downloadUrl: String? = null
                 val assets = obj.getAsJsonArray("assets")
                 if (assets != null) {
+                    val apkList = mutableListOf<Pair<String, String>>()
                     for (a in assets) {
                         val aObj = a.asJsonObject
                         val name = aObj.get("name")?.asString ?: ""
-                        if (name.endsWith(".apk", ignoreCase = true)) {
-                            downloadUrl = aObj.get("browser_download_url")?.asString
-                            break
+                        val url = aObj.get("browser_download_url")?.asString
+                        if (name.endsWith(".apk", ignoreCase = true) && !url.isNullOrBlank()) {
+                            apkList.add(name to url)
                         }
                     }
+
+                    val targetKeyword = getTargetApkKeyword()
+                    val matched = when (targetKeyword) {
+                        "arm64-v8a" -> apkList.firstOrNull { it.first.contains("arm64", ignoreCase = true) || it.first.contains("v8a", ignoreCase = true) }
+                        "armeabi-v7a" -> apkList.firstOrNull {
+                            (it.first.contains("v7a", ignoreCase = true) || it.first.contains("armeabi", ignoreCase = true) ||
+                             it.first.contains("-arm.", ignoreCase = true) || it.first.contains("-arm-", ignoreCase = true)) &&
+                            !it.first.contains("arm64", ignoreCase = true)
+                        }
+                        "x86_64" -> apkList.firstOrNull { it.first.contains("x86_64", ignoreCase = true) }
+                        "x86" -> apkList.firstOrNull { it.first.contains("x86", ignoreCase = true) && !it.first.contains("x86_64", ignoreCase = true) }
+                        else -> null
+                    }
+
+                    downloadUrl = matched?.second ?: apkList.firstOrNull()?.second
                 }
                 if (downloadUrl == null) {
                     downloadUrl = htmlUrl
@@ -112,6 +130,26 @@ object CubiqGitHubManager {
             }
         } catch (e: Exception) {
             Logger.warning(TAG, "Error parsing GitHub releases: ${e.message}")
+        }
+    }
+
+    private fun getTargetApkKeyword(): String {
+        val arch = runCatching { BuildKeys.BUILD_ARCH.lowercase().trim() }.getOrDefault("")
+        return when (arch) {
+            "arm", "armeabi-v7a", "v7a" -> "armeabi-v7a"
+            "arm64", "arm64-v8a", "aarch64" -> "arm64-v8a"
+            "x86" -> "x86"
+            "x86_64" -> "x86_64"
+            else -> {
+                val is64Bit = runCatching { android.os.Process.is64Bit() }.getOrDefault(true)
+                val isX86 = Architecture.isx86Device()
+                when {
+                    isX86 && is64Bit -> "x86_64"
+                    isX86 && !is64Bit -> "x86"
+                    !isX86 && is64Bit -> "arm64-v8a"
+                    else -> "armeabi-v7a"
+                }
+            }
         }
     }
 

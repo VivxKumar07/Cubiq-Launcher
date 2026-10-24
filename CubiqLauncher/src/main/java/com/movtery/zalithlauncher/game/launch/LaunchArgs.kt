@@ -238,6 +238,14 @@ class LaunchArgs(
         argsList.add("-Dminecraft.launcher.brand=${BuildKeys.LAUNCHER_NAME}")
         argsList.add("-Dminecraft.launcher.version=${BuildConfig.VERSION_NAME}")
 
+        if (Architecture.is32BitsDevice) {
+            // OpenJDK's FFM native linker (JEP 454) is not supported on 32-bit platforms (arm32 / x86).
+            // LWJGL 3.4.1 includes Multi-Release classes for Java 22+ that call Linker.nativeLinker().
+            // Disabling Multi-Release JAR processing forces LWJGL 3.4.1 to use its base Java 8 JNI backend,
+            // preventing UnsupportedOperationException while still providing org.lwjgl.sdl.SDL for Minecraft 26+.
+            argsList.add("-Djdk.util.jar.enableMultiRelease=false")
+        }
+
         return argsList
     }
 
@@ -430,12 +438,7 @@ fun detectLwjglVersion(manifest: GameManifest): Int {
     }
     val id = manifest.id ?: ""
     if (maxVersion < 340 && (id.startsWith("26") || id.contains("26.") || id.contains("27."))) {
-        // OpenJDK's FFM native linker (JEP 454) is not supported on 32-bit ARM (arm32 / armeabi-v7a).
-        // LWJGL 3.4.1 uses FFM downcalls on Java 22+, which throws UnsupportedOperationException on 32-bit ARM.
-        // Therefore, only use LWJGL 3.4.1 on 64-bit platforms; keep 32-bit devices on LWJGL 3.3.3 (pure JNI).
-        if (Architecture.is64BitsDevice) {
-            return 341
-        }
+        return 341
     }
     return maxVersion
 }
@@ -445,9 +448,5 @@ fun detectLwjglVersion(manifest: GameManifest): Int {
  * 版本 >= 3.4.1 -> 3.4.1 组件；否则（含 LWJGL2 桥接场景）-> 3.3.3 组件
  */
 fun lwjglVersionDir(lwjglVersion: Int): String {
-    // 32 位 ARM 设备强制退回 3.3.3 以规避 Java 22+ 下 FFM Linker.nativeLinker 不支持导致的崩溃
-    if (Architecture.is32BitsDevice && Architecture.getDeviceArchitecture() == Architecture.ARCH_ARM && lwjglVersion >= 340) {
-        return "3.3.3"
-    }
     return if (lwjglVersion >= 340) "3.4.1" else "3.3.3"
 }
