@@ -96,7 +96,7 @@ internal fun JoystickWidgetRenderer(
     snapMode: SnapMode = SnapMode.Local,
     localSnapRange: Dp = 20.dp,
     getOtherWidgets: () -> List<ObservableWidget> = { emptyList() },
-    snapThresholdValue: Dp = 4.dp,
+    snapThresholdValue: Dp = 10.dp,
     drawLine: (ObservableWidget, List<GuideLine>) -> Unit = { _, _ -> },
     onLineCancel: (ObservableWidget) -> Unit = {},
     onTapInEditMode: (() -> Unit)? = null

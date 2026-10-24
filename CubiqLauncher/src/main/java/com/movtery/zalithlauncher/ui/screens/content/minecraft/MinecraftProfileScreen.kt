@@ -23,6 +23,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 
 import com.movtery.zalithlauncher.context.getFileName
+import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 
 import com.movtery.zalithlauncher.utils.file.shareFile
 
@@ -4174,6 +4175,32 @@ private fun GameSettingsTab(
 
 
 
+        // Show Startup Loading Dialog
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Show Startup Loading Dialog", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Display a Minecraft-styled loading popup while the game initializes", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+            }
+            Switch(
+                checked = AllSettings.showGameLoadingDialog.state,
+                onCheckedChange = {
+                    AllSettings.showGameLoadingDialog.save(it)
+                },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF3C8527),
+                    uncheckedThumbColor = Color(0xFF888888),
+                    uncheckedTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+
+
+
         // 3. Version Isolation
 
         Row(
@@ -4790,6 +4817,45 @@ private fun VideoSettingsTab(
 
             Spacer(modifier = Modifier.height(6.dp))
 
+            var showCustomRendererDialog by remember { mutableStateOf(false) }
+
+            if (showCustomRendererDialog) {
+                SimpleAlertDialog(
+                    title = "Download Custom Renderers",
+                    text = "How to Install Custom Renderers:\n\n" +
+                            "1. Tap 'Go to GitHub' below to open the FCL Renderer Plugin releases page.\n\n" +
+                            "2. Download the renderer APK you need (such as LTW, Zink, MobileGlues, Angle, VirGL).\n\n" +
+                            "3. Install the APK on your device and launch it once to complete setup if needed.\n\n" +
+                            "4. Close and reopen Cubiq Launcher. The new renderer will automatically appear in your renderers list!",
+                    confirmText = "Go to GitHub",
+                    dismissText = androidx.compose.ui.res.stringResource(com.movtery.zalithlauncher.R.string.generic_cancel),
+                    onConfirm = {
+                        showCustomRendererDialog = false
+                        runCatching {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/ShirosakiMio/FCLRendererPlugin/releases")).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            context.startActivity(intent)
+                        }
+                    },
+                    onDismiss = {
+                        showCustomRendererDialog = false
+                    }
+                )
+            }
+
+            MinecraftButton(
+                onClick = { showCustomRendererDialog = true },
+                style = MinecraftButtonStyle.STONE,
+                text = "DOWNLOAD CUSTOM RENDERERS",
+                fontSize = 11.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(34.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             for (renderer in allRenderers) {
 
                 val isSel = selectedRendererId == renderer.getUniqueIdentifier()
@@ -4813,11 +4879,17 @@ private fun VideoSettingsTab(
                         )
 
                         .clickable {
-
                             onRendererChange(renderer.getUniqueIdentifier())
-
                             AllSettings.renderer.save(renderer.getUniqueIdentifier())
-
+                            com.movtery.zalithlauncher.game.renderer.Renderers.setCurrentRenderer(renderer.getUniqueIdentifier())
+                            com.movtery.zalithlauncher.game.version.installed.VersionsManager.currentVersion.value?.let { curVer ->
+                                runCatching {
+                                    curVer.getVersionConfig().apply {
+                                        this.renderer = renderer.getUniqueIdentifier()
+                                        saveWithThrowable()
+                                    }
+                                }
+                            }
                         }
 
                         .padding(horizontal = 10.dp, vertical = 8.dp),
@@ -4899,15 +4971,19 @@ private fun VideoSettingsTab(
                     }
 
                     RadioButton(
-
                         selected = isSel,
-
                         onClick = {
-
                             onRendererChange(renderer.getUniqueIdentifier())
-
                             AllSettings.renderer.save(renderer.getUniqueIdentifier())
-
+                            com.movtery.zalithlauncher.game.renderer.Renderers.setCurrentRenderer(renderer.getUniqueIdentifier())
+                            com.movtery.zalithlauncher.game.version.installed.VersionsManager.currentVersion.value?.let { curVer ->
+                                runCatching {
+                                    curVer.getVersionConfig().apply {
+                                        this.renderer = renderer.getUniqueIdentifier()
+                                        saveWithThrowable()
+                                    }
+                                }
+                            }
                         },
 
                         colors = RadioButtonDefaults.colors(

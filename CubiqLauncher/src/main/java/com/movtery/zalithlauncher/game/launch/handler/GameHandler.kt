@@ -78,7 +78,8 @@ class GameHandler(
     private val _inputArea = MutableStateFlow<IntRect?>(null)
     override val inputArea = _inputArea.asStateFlow()
 
-    private var isGameRendering = false
+    var isGameRendering by mutableStateOf(false)
+        private set
     private var showGameInfo by mutableStateOf(false)
 
     /**

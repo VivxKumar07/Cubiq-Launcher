@@ -56,6 +56,7 @@ fun FmBottomBar(
     onSelectAll: () -> Unit,
     onClearSelection: () -> Unit,
     onRangeSelectHelp: () -> Unit,
+    onBulkActions: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -86,6 +87,12 @@ fun FmBottomBar(
                     Icon(
                         painter = painterResource(R.drawable.ic_swipe),
                         contentDescription = stringResource(R.string.fm_range_select_help)
+                    )
+                }
+                IconButton(onClick = onBulkActions) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.generic_more)
                     )
                 }
             } else {
@@ -132,6 +139,7 @@ fun FmNavRail(
     onSelectAll: () -> Unit,
     onClearSelection: () -> Unit,
     onRangeSelectHelp: () -> Unit,
+    onBulkActions: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val listScroll = rememberScrollState()
@@ -158,6 +166,11 @@ fun FmNavRail(
                 icon = painterResource(R.drawable.ic_swipe),
                 labelRes = R.string.fm_range_select_help,
                 onClick = onRangeSelectHelp
+            )
+            RailItem(
+                icon = painterResource(R.drawable.ic_more_vert),
+                labelRes = R.string.generic_more,
+                onClick = onBulkActions
             )
         } else {
             RailItem(

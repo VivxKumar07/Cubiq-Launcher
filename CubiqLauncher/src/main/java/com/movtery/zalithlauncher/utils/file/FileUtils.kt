@@ -234,6 +234,36 @@ fun shareFile(
     }
 }
 
+fun shareFiles(
+    context: Context,
+    files: List<File>,
+    cantProcess: () -> Unit = {}
+) {
+    if (files.isEmpty()) return
+    if (files.size == 1) {
+        shareFile(context, files.first(), cantProcess)
+        return
+    }
+
+    val uris = ArrayList(files.map {
+        FileProvider.getUriForFile(context, "${context.packageName}.provider", it)
+    })
+
+    val shareIntent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+        type = "*/*"
+        putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+    val chooserIntent = Intent.createChooser(shareIntent, "${files.size} files")
+    chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    try {
+        context.startActivity(chooserIntent)
+    } catch (_: ActivityNotFoundException) {
+        cantProcess()
+    }
+}
+
 /**
  * 读取压缩包内文件的文本内容
  * @param readSource 使用指定方式读取文本，比如使用 UTF-8 读取

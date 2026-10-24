@@ -110,7 +110,7 @@ fun ControlEditorLayer(
     focusedLayer: ObservableControlLayer? = null,
     isDark: Boolean = isSystemInDarkTheme(),
     localSnapRange: Dp = 20.dp,
-    snapThresholdValue: Dp = 4.dp
+    snapThresholdValue: Dp = 10.dp
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
         val primaryColor = MaterialTheme.colorScheme.primary

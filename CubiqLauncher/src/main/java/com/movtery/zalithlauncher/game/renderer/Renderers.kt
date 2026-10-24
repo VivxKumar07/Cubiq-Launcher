@@ -36,7 +36,8 @@ private const val TAG = "Renderers"
 object Renderers {
     private val renderers: MutableList<RendererInterface> = mutableListOf()
     private var currentRenderer: RendererInterface? = null
-    private var isInitialized: Boolean = false
+    var isInitialized: Boolean = false
+        private set
 
     fun init(
         reset: Boolean = false
@@ -106,11 +107,12 @@ object Renderers {
      * @param retryToFirstOnFailure 如果未找到匹配的渲染器，是否跳回默认推荐渲染器
      */
     fun setCurrentRenderer(uniqueIdentifier: String, retryToFirstOnFailure: Boolean = true) {
-        if (!isInitialized) throw IllegalStateException("Uninitialized renderer!")
-        val targetId = uniqueIdentifier.ifBlank { LTWRenderer.getUniqueIdentifier() }
+        if (!isInitialized) init()
+        val defaultId = NGGL4ESRenderer.getUniqueIdentifier()
+        val targetId = if (uniqueIdentifier.isBlank() || uniqueIdentifier == "internal_ltw") defaultId else uniqueIdentifier
         currentRenderer = renderers.find { it.getUniqueIdentifier() == targetId } ?: run {
             if (retryToFirstOnFailure) {
-                val renderer = renderers.find { it.getUniqueIdentifier() == LTWRenderer.getUniqueIdentifier() }
+                val renderer = renderers.find { it.getUniqueIdentifier() == defaultId }
                     ?: renderers.find { it.getUniqueIdentifier() == GL4ESRenderer.getUniqueIdentifier() }
                     ?: renderers.firstOrNull()
                     ?: throw IllegalStateException("No renderers available!")
@@ -126,10 +128,10 @@ object Renderers {
     fun getCurrentRenderer(): RendererInterface {
         if (!isInitialized) init()
         return currentRenderer ?: (
-            renderers.find { it.getUniqueIdentifier() == LTWRenderer.getUniqueIdentifier() }
+            renderers.find { it.getUniqueIdentifier() == NGGL4ESRenderer.getUniqueIdentifier() }
                 ?: renderers.find { it.getUniqueIdentifier() == GL4ESRenderer.getUniqueIdentifier() }
                 ?: renderers.firstOrNull()
-                ?: LTWRenderer
+                ?: NGGL4ESRenderer
         ).also { currentRenderer = it }
     }
 
@@ -138,6 +140,6 @@ object Renderers {
      */
     fun isCurrentRendererValid(): Boolean {
         if (!isInitialized) init()
-        return currentRenderer != null || renderers.isNotEmpty()
+        return currentRenderer != null
     }
 }

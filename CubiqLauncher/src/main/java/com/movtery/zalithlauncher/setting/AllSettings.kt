@@ -48,9 +48,9 @@ import com.movtery.zalithlauncher.utils.animation.TransitionAnimationType
 object AllSettings : SettingsRegistry() {
     //Renderer
     /**
-     * 全局渲染器
+     * 全局渲染器 (默认 Krypton Wrapper)
      */
-    val renderer = stringSetting("renderer", "internal_ltw")
+    val renderer = stringSetting("renderer", "e7b90ed6-e518-4d4e-93dc-5c7133cd5b31")
 
     /**
      * Vulkan 驱动器
@@ -90,7 +90,7 @@ object AllSettings : SettingsRegistry() {
     /**
      * 使用 SurfaceView 渲染
      */
-    val useSurfaceView = boolSetting("useSurfaceView", false)
+    val useSurfaceView = boolSetting("useSurfaceView", true)
 
     /**
      * 持续性能模式
@@ -122,6 +122,11 @@ object AllSettings : SettingsRegistry() {
      * 不检查游戏完整性
      */
     val skipGameIntegrityCheck = boolSetting("skipGameIntegrityCheck", false)
+
+    /**
+     * Show game loading dialog while Minecraft is booting up
+     */
+    val showGameLoadingDialog = boolSetting("showGameLoadingDialog", true)
 
     /**
      * 版本自定义信息

@@ -63,7 +63,8 @@ fun FmBulkActionsDialog(
     onCopy: () -> Unit,
     onCut: () -> Unit,
     onDelete: () -> Unit,
-    onCompress: () -> Unit
+    onCompress: () -> Unit,
+    onShare: () -> Unit = {}
 ) {
     val sheetState = rememberBottomSheetState(
         initialValue = SheetValue.Hidden,
@@ -111,6 +112,14 @@ fun FmBulkActionsDialog(
                 onClick = {
                     onDismiss()
                     onDelete()
+                }
+            )
+            FmBulkActionItem(
+                text = stringResource(R.string.generic_share),
+                icon = painterResource(R.drawable.ic_share_filled),
+                onClick = {
+                    onDismiss()
+                    onShare()
                 }
             )
             FmBulkActionItem(

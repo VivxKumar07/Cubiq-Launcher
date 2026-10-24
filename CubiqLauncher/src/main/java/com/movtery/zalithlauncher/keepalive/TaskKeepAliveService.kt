@@ -83,8 +83,8 @@ class TaskKeepAliveService : Service() {
         )
 
         val notification: Notification = NotificationCompat.Builder(this, data.channelId)
-            .setContentTitle("Minecraft is downloading...")
-            .setContentText("Cubiq Launcher is downloading game files and components.")
+            .setContentTitle("Cubiq Download Service")
+            .setContentText("Game Files Are Being Downloaded")
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSmallIcon(R.mipmap.ic_launcher)

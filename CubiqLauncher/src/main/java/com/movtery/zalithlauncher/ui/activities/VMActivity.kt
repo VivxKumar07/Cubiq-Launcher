@@ -23,7 +23,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.graphics.PixelFormat
 import android.graphics.SurfaceTexture
+import com.movtery.zalithlauncher.game.renderer.renderers.LTWRenderer
 import android.os.Build
 import android.os.Bundle
 import android.view.InputDevice
@@ -899,9 +901,15 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
                         IntOffset(0, -bottomPadding)
                     },
                 factory = { context ->
-                    val view = if (AllSettings.useSurfaceView.getValue()) {
-                        //使用 SurfaceView 渲染
+                    val isLtw = runCatching {
+                        val r = Renderers.getCurrentRenderer()
+                        r == LTWRenderer || r.getRendererId().contains("ltw")
+                    }.getOrDefault(false)
+                    val shouldUseSurfaceView = AllSettings.useSurfaceView.getValue() || isLtw
+                    val view = if (shouldUseSurfaceView) {
+                        //使用 SurfaceView 渲染 (RGBX_8888 强制完全不透明，消除透明混合导致的白色发灰遮罩)
                         SurfaceView(context).apply {
+                            holder.setFormat(PixelFormat.RGBX_8888)
                             holder.addCallback(this@VMActivity)
                             // SDL 模式需要父 ViewGroup（输入法 EditText 附加用）
                             gameSurfaceView = this

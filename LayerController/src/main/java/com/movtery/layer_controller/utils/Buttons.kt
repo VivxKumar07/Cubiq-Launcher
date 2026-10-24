@@ -101,11 +101,13 @@ internal fun Modifier.editMode(
     val density = LocalDensity.current
     val snapThreshold = with(density) { snapThresholdValue.toPx() }
     val localSnapRangePx = with(density) { localSnapRange.toPx() }
+    val gapPx = with(density) { 2.dp.toPx() }
+    val axisThreshold = with(density) { 8.dp.toPx() }
 
     return this.then(
         if (isEditMode) {
             Modifier
-                .pointerInput(data, snapThreshold, localSnapRangePx) {
+                .pointerInput(data, snapThreshold, localSnapRangePx, gapPx, axisThreshold) {
                     detectDragGestures(
                         onDragStart = {
                             data.isEditingPos = false
@@ -144,6 +146,8 @@ internal fun Modifier.editMode(
                                     snapThreshold = snapThreshold,
                                     snapMode = snapMode1,
                                     localSnapRange = localSnapRangePx,
+                                    gapPx = gapPx,
+                                    axisThreshold = axisThreshold,
                                     drawLine = { lines ->
                                         drawLine1(data, lines)
                                     },
@@ -180,10 +184,12 @@ internal fun Modifier.editMode(
 }
 
 /**
- * 计算吸附位置
- * @param snapThreshold 吸附参考距离
+ * 计算吸附位置（含 2dp 间隙吸附与垂直轴对其吸附）
+ * @param snapThreshold 吸附参考距离（8dp~10dp）
  * @param snapMode 吸附模式
  * @param localSnapRange 局部吸附范围（像素）
+ * @param gapPx 边缘吸附间隙（2dp）
+ * @param axisThreshold 垂直轴对齐阈值（8dp）
  * @param drawLine 通知绘制参考线
  * @param onLineCancel 通知取消绘制参考线
  */
@@ -195,16 +201,20 @@ private fun calculateSnapPosition(
     snapThreshold: Float,
     snapMode: SnapMode,
     localSnapRange: Float,
+    gapPx: Float,
+    axisThreshold: Float,
     drawLine: (List<GuideLine>) -> Unit,
     onLineCancel: () -> Unit,
 ): ButtonPosition {
     val currentOffset = getWidgetPosition(currentPosition, widgetSize, screenSize)
 
-    //当前控件的边界
+    // 当前控件的边界与中心
     val currentLeft = currentOffset.x
     val currentRight = currentOffset.x + widgetSize.width
     val currentTop = currentOffset.y
     val currentBottom = currentOffset.y + widgetSize.height
+    val currentCenterX = currentOffset.x + widgetSize.width / 2f
+    val currentCenterY = currentOffset.y + widgetSize.height / 2f
 
     val newXWithLines = mutableMapOf<Float, GuideLine>()
     val newYWithLines = mutableMapOf<Float, GuideLine>()
@@ -216,8 +226,10 @@ private fun calculateSnapPosition(
         val otherRight = otherPosition.x + otherSize.width
         val otherTop = otherPosition.y
         val otherBottom = otherPosition.y + otherSize.height
+        val otherCenterX = otherPosition.x + otherSize.width / 2f
+        val otherCenterY = otherPosition.y + otherSize.height / 2f
 
-        //在局部模式下，检查是否在吸附范围内
+        // 在局部模式下，检查是否在吸附范围内
         if (snapMode == SnapMode.Local) {
             val minDistance = calculateMinDistanceBetweenRects(
                 currentLeft, currentTop, currentRight, currentBottom,
@@ -229,61 +241,104 @@ private fun calculateSnapPosition(
             }
         }
 
-        //左/右
-        val rightToLeft = abs(currentRight - otherLeft)
-        val leftToRight = abs(currentLeft - otherRight)
-
-        //顶/底
-        val bottomToTop = abs(currentBottom - otherTop)
-        val topToBottom = abs(currentTop - otherBottom)
-
-        //同侧
-        val leftToLeft = abs(currentLeft - otherLeft)
-        val rightToRight = abs(currentRight - otherRight)
-        val topToTop = abs(currentTop - otherTop)
-        val bottomToBottom = abs(currentBottom - otherBottom)
-
-        if (rightToLeft < snapThreshold) {
-            newXWithLines[otherLeft - widgetSize.width] = GuideLine(LineDirection.Vertical, otherLeft)
-        } else if (leftToRight < snapThreshold) {
-            newXWithLines[otherRight] = GuideLine(LineDirection.Vertical, otherRight)
+        // --- 1. 边缘自动吸附（保持 2dp 均匀间距） ---
+        // 拖动按钮位于目标右侧：dragged.left = target.right + 2dp
+        val distLeftToRightGap = abs(currentLeft - (otherRight + gapPx))
+        val distLeftToRightDirect = abs(currentLeft - otherRight)
+        if (distLeftToRightGap < snapThreshold || distLeftToRightDirect < snapThreshold) {
+            newXWithLines[otherRight + gapPx] = GuideLine(LineDirection.Vertical, otherRight)
+            // 垂直轴关联对齐（Top / CenterY / Bottom）
+            if (abs(currentTop - otherTop) < axisThreshold) {
+                newYWithLines[otherTop] = GuideLine(LineDirection.Horizontal, otherTop)
+            } else if (abs(currentCenterY - otherCenterY) < axisThreshold) {
+                newYWithLines[otherCenterY - widgetSize.height / 2f] = GuideLine(LineDirection.Horizontal, otherCenterY)
+            } else if (abs(currentBottom - otherBottom) < axisThreshold) {
+                newYWithLines[otherBottom - widgetSize.height] = GuideLine(LineDirection.Horizontal, otherBottom)
+            }
         }
 
-        if (bottomToTop < snapThreshold) {
-            newYWithLines[otherTop - widgetSize.height] = GuideLine(LineDirection.Horizontal, otherTop)
-        } else if (topToBottom < snapThreshold) {
-            newYWithLines[otherBottom] = GuideLine(LineDirection.Horizontal, otherBottom)
+        // 拖动按钮位于目标左侧：dragged.right = target.left - 2dp -> dragged.left = target.left - width - 2dp
+        val distRightToLeftGap = abs(currentRight - (otherLeft - gapPx))
+        val distRightToLeftDirect = abs(currentRight - otherLeft)
+        if (distRightToLeftGap < snapThreshold || distRightToLeftDirect < snapThreshold) {
+            newXWithLines[otherLeft - widgetSize.width - gapPx] = GuideLine(LineDirection.Vertical, otherLeft)
+            // 垂直轴关联对齐（Top / CenterY / Bottom）
+            if (abs(currentTop - otherTop) < axisThreshold) {
+                newYWithLines[otherTop] = GuideLine(LineDirection.Horizontal, otherTop)
+            } else if (abs(currentCenterY - otherCenterY) < axisThreshold) {
+                newYWithLines[otherCenterY - widgetSize.height / 2f] = GuideLine(LineDirection.Horizontal, otherCenterY)
+            } else if (abs(currentBottom - otherBottom) < axisThreshold) {
+                newYWithLines[otherBottom - widgetSize.height] = GuideLine(LineDirection.Horizontal, otherBottom)
+            }
         }
 
-        if (leftToLeft < snapThreshold) {
+        // 拖动按钮位于目标下方：dragged.top = target.bottom + 2dp
+        val distTopToBottomGap = abs(currentTop - (otherBottom + gapPx))
+        val distTopToBottomDirect = abs(currentTop - otherBottom)
+        if (distTopToBottomGap < snapThreshold || distTopToBottomDirect < snapThreshold) {
+            newYWithLines[otherBottom + gapPx] = GuideLine(LineDirection.Horizontal, otherBottom)
+            // 水平轴关联对齐（Left / CenterX / Right）
+            if (abs(currentLeft - otherLeft) < axisThreshold) {
+                newXWithLines[otherLeft] = GuideLine(LineDirection.Vertical, otherLeft)
+            } else if (abs(currentCenterX - otherCenterX) < axisThreshold) {
+                newXWithLines[otherCenterX - widgetSize.width / 2f] = GuideLine(LineDirection.Vertical, otherCenterX)
+            } else if (abs(currentRight - otherRight) < axisThreshold) {
+                newXWithLines[otherRight - widgetSize.width] = GuideLine(LineDirection.Vertical, otherRight)
+            }
+        }
+
+        // 拖动按钮位于目标上方：dragged.bottom = target.top - 2dp -> dragged.top = target.top - height - 2dp
+        val distBottomToTopGap = abs(currentBottom - (otherTop - gapPx))
+        val distBottomToTopDirect = abs(currentBottom - otherTop)
+        if (distBottomToTopGap < snapThreshold || distBottomToTopDirect < snapThreshold) {
+            newYWithLines[otherTop - widgetSize.height - gapPx] = GuideLine(LineDirection.Horizontal, otherTop)
+            // 水平轴关联对齐（Left / CenterX / Right）
+            if (abs(currentLeft - otherLeft) < axisThreshold) {
+                newXWithLines[otherLeft] = GuideLine(LineDirection.Vertical, otherLeft)
+            } else if (abs(currentCenterX - otherCenterX) < axisThreshold) {
+                newXWithLines[otherCenterX - widgetSize.width / 2f] = GuideLine(LineDirection.Vertical, otherCenterX)
+            } else if (abs(currentRight - otherRight) < axisThreshold) {
+                newXWithLines[otherRight - widgetSize.width] = GuideLine(LineDirection.Vertical, otherRight)
+            }
+        }
+
+        // --- 2. 同向平齐对齐（Flush Edge Alignment） ---
+        if (abs(currentLeft - otherLeft) < snapThreshold) {
             newXWithLines[otherLeft] = GuideLine(LineDirection.Vertical, otherLeft)
-        } else if (rightToRight < snapThreshold) {
+        } else if (abs(currentRight - otherRight) < snapThreshold) {
             newXWithLines[otherRight - widgetSize.width] = GuideLine(LineDirection.Vertical, otherRight)
+        } else if (abs(currentCenterX - otherCenterX) < snapThreshold) {
+            newXWithLines[otherCenterX - widgetSize.width / 2f] = GuideLine(LineDirection.Vertical, otherCenterX)
         }
 
-        if (topToTop < snapThreshold) {
+        if (abs(currentTop - otherTop) < snapThreshold) {
             newYWithLines[otherTop] = GuideLine(LineDirection.Horizontal, otherTop)
-        } else if (bottomToBottom < snapThreshold) {
+        } else if (abs(currentBottom - otherBottom) < snapThreshold) {
             newYWithLines[otherBottom - widgetSize.height] = GuideLine(LineDirection.Horizontal, otherBottom)
+        } else if (abs(currentCenterY - otherCenterY) < snapThreshold) {
+            newYWithLines[otherCenterY - widgetSize.height / 2f] = GuideLine(LineDirection.Horizontal, otherCenterY)
         }
     }
 
-    val newX = newXWithLines.minByOrNull { abs(it.key - currentOffset.x) }
-    val newY = newYWithLines.minByOrNull { abs(it.key - currentOffset.y) }
+    // 寻找最近的吸附点；若超出 snapThreshold 则平滑脱离吸附
+    val bestX = newXWithLines.minByOrNull { abs(it.key - currentOffset.x) }
+        ?.takeIf { abs(it.key - currentOffset.x) <= snapThreshold }
+    val bestY = newYWithLines.minByOrNull { abs(it.key - currentOffset.y) }
+        ?.takeIf { abs(it.key - currentOffset.y) <= snapThreshold }
 
-    if (newX == null && newY == null) {
-        //未找到距离最短的坐标
+    if (bestX == null && bestY == null) {
+        // 超出吸附范围，平滑脱离吸附
         onLineCancel()
         return currentPosition
     } else {
-        listOfNotNull(newX?.value, newY?.value).let { guideLines ->
+        listOfNotNull(bestX?.value, bestY?.value).let { guideLines ->
             if (guideLines.isNotEmpty()) {
                 drawLine(guideLines)
             } else {
                 onLineCancel()
             }
         }
-        return Offset(newX?.key ?: currentOffset.x, newY?.key ?: currentOffset.y)
+        return Offset(bestX?.key ?: currentOffset.x, bestY?.key ?: currentOffset.y)
             .toPercentagePosition(widgetSize, screenSize)
     }
 }

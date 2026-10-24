@@ -280,7 +280,7 @@ private fun ControlsRendererLayer(
                         isDark = isDark,
                         visible = layerVisibility && checkVisibility(isCursorGrabbing, data.visibilityType),
                         getOtherWidgets = { emptyList() }, //不需要计算吸附
-                        snapThresholdValue = 4.dp,
+                        snapThresholdValue = 10.dp,
                         eventHandler = eventHandler,
                         isPressed = false //文本框不需要按压状态
                     )
@@ -295,7 +295,7 @@ private fun ControlsRendererLayer(
                         isDark = isDark,
                         visible = layerVisibility && checkVisibility(isCursorGrabbing, data.visibilityType),
                         getOtherWidgets = { emptyList() }, //不需要计算吸附
-                        snapThresholdValue = 4.dp,
+                        snapThresholdValue = 10.dp,
                         eventHandler = eventHandler,
                         isPressed = data.isPressed
                     )

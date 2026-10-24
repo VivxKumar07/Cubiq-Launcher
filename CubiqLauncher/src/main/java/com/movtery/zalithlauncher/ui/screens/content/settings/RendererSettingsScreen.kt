@@ -123,10 +123,71 @@ fun RendererSettingsScreen(
                             ?.env?.getConfigurableUnits()?.takeIf { it.isNotEmpty() }
                     }
                     var showV2ConfigDialog by remember { mutableStateOf(false) }
+                    var showCustomRendererDialog by remember { mutableStateOf(false) }
+
+                    if (showCustomRendererDialog) {
+                        val ctx = LocalContext.current
+                        SimpleAlertDialog(
+                            title = "Download Custom Renderers",
+                            text = "How to Install Custom Renderers:\n\n" +
+                                    "1. Tap 'Go to GitHub' below to open the FCL Renderer Plugin releases page.\n\n" +
+                                    "2. Download the renderer APK you need (such as LTW, Zink, MobileGlues, Angle, VirGL).\n\n" +
+                                    "3. Install the APK on your device and launch it once to complete setup if needed.\n\n" +
+                                    "4. Close and reopen Cubiq Launcher. The new renderer will automatically appear in your renderers list!",
+                            confirmText = "Go to GitHub",
+                            dismissText = stringResource(R.string.generic_cancel),
+                            onConfirm = {
+                                showCustomRendererDialog = false
+                                runCatching {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/ShirosakiMio/FCLRendererPlugin/releases")).apply {
+                                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                    }
+                                    ctx.startActivity(intent)
+                                }
+                            },
+                            onDismiss = {
+                                showCustomRendererDialog = false
+                            }
+                        )
+                    }
+
+                    SettingsCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 4.dp),
+                        position = CardPosition.Top,
+                        onClick = { showCustomRendererDialog = true }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "Download Custom Renderers",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = "Install external renderer plugins (LTW, Zink, Angle, VirGL) via companion APKs from GitHub.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.alpha(0.75f)
+                                )
+                            }
+                            Icon(
+                                painter = painterResource(R.drawable.ic_download_2_filled),
+                                contentDescription = "Download Custom Renderers",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
 
                     ListSettingsCard(
                         modifier = Modifier.fillMaxWidth(),
-                        position = CardPosition.Top,
+                        position = CardPosition.Middle,
                         unit = AllSettings.renderer,
                         items = Renderers.getRenderers(),
                         title = stringResource(R.string.settings_renderer_global_renderer_title),
@@ -135,6 +196,18 @@ fun RendererSettingsScreen(
                         getItemId = { it.getUniqueIdentifier() },
                         getItemSummary = {
                             RendererSummaryLayout(it)
+                        },
+                        onValueChange = { selectedRenderer ->
+                            val id = selectedRenderer.getUniqueIdentifier()
+                            Renderers.setCurrentRenderer(id)
+                            com.movtery.zalithlauncher.game.version.installed.VersionsManager.currentVersion.value?.let { curVer ->
+                                runCatching {
+                                    curVer.getVersionConfig().apply {
+                                        this.renderer = id
+                                        saveWithThrowable()
+                                    }
+                                }
+                            }
                         },
                         trailingIcon = {
                             //选中新一代渲染器插件且存在可配置项时，提供配置入口
@@ -150,15 +223,7 @@ fun RendererSettingsScreen(
                             }
                             IconButton(
                                 onClick = {
-                                    eventViewModel.sendDLPlugin(
-                                        githubLink = URL_GITHUB_RENDERER_PLUGINS,
-                                        cloudDrives = listOf(
-                                            EventViewModel.Event.DownloadPlugins.CloudDrive(
-                                                language = "zh",
-                                                link = URL_CLOUD_RENDERER_PLUGINS
-                                            )
-                                        )
-                                    )
+                                    showCustomRendererDialog = true
                                 }
                             ) {
                                 Icon(

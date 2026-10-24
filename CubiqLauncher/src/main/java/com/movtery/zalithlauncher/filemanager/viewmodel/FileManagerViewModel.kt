@@ -184,6 +184,7 @@ class FileManagerViewModel @Inject constructor(
     fun toggleHidden() = browseCtr.toggleHidden()
 
     // ---------------- 选择 / 多选 ----------------
+    fun enterMultiSelectWith(entry: FmEntry) = selectionCtr.enterMultiSelectWith(entry)
     fun toggleSelection(entry: FmEntry) = selectionCtr.toggleSelection(entry)
     fun swipeRangeSelect(entry: FmEntry) = selectionCtr.swipeRangeSelect(entry)
     fun selectAll() = selectionCtr.selectAll()
@@ -296,6 +297,7 @@ class FileManagerViewModel @Inject constructor(
     fun submitRename(entry: FmEntry, newName: String, onSuccess: () -> Unit) = entryCtr.submitRename(entry, newName, onSuccess)
     fun validateRename(entry: FmEntry, newName: String): String? = entryCtr.validateRename(entry, newName)
     fun showShare(entry: FmEntry) = entryCtr.showShare(entry)
+    fun bulkShare() = entryCtr.bulkShare()
 
     // ---------------- 回收站 ----------------
 

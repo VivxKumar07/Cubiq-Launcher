@@ -21,15 +21,30 @@ package com.movtery.zalithlauncher.ui.screens.game
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import com.movtery.zalithlauncher.ui.components.MinecraftButton
+import com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle
+import com.movtery.zalithlauncher.ui.components.MinecraftPixelDonutSpinner
+import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -240,7 +255,15 @@ private class GameViewModel(
                     onLongScrollDown = { mouseScrollDownEvent.scrollLongPress() },
                     onLongScrollDownCancel = { mouseScrollDownEvent.cancel() },
                     onSwitchMouse = {
-                        AllSettings.hideMouse.save(!AllSettings.hideMouse.getValue())
+                        val currentHidden = AllSettings.hideMouse.getValue()
+                        if (currentHidden) {
+                            val layoutName = currentControlFile?.name ?: ""
+                            val isTargetLayout = layoutName.contains("mojo", ignoreCase = true) || layoutName.contains("zalith_1", ignoreCase = true)
+                            if (isTargetLayout) {
+                                AllSettings.mouseControlMode.save(com.movtery.zalithlauncher.setting.enums.MouseControlMode.SLIDE)
+                            }
+                        }
+                        AllSettings.hideMouse.save(!currentHidden)
                     }
                 )
             }
@@ -792,6 +815,101 @@ fun GameScreen(
                         viewModel.switchMenu()
                     }
                 )
+            }
+        }
+
+        var userDismissedLoadingDialog by remember { mutableStateOf(false) }
+
+        AnimatedVisibility(
+            visible = AllSettings.showGameLoadingDialog.state && !gameHandler.isGameRendering && !userDismissedLoadingDialog && !viewModel.isEditingLayout,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            androidx.compose.material3.Surface(
+                modifier = Modifier
+                    .widthIn(max = 280.dp)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(10.dp),
+                color = Color(0xEE222224),
+                border = BorderStroke(2.dp, Color(0xFF3C3F41)),
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Minecraft",
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 14.sp,
+                            color = Color.White
+                        )
+                        IconButton(
+                            onClick = { userDismissedLoadingDialog = true },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_close),
+                                contentDescription = "Close",
+                                tint = Color.LightGray,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    MinecraftPixelDonutSpinner(
+                        size = 38.dp
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "Minecraft is loading. Please wait",
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 12.sp,
+                        color = Color(0xFFE0E0E0),
+                        textAlign = TextAlign.Center
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        MinecraftButton(
+                            text = "CLOSE",
+                            style = MinecraftButtonStyle.STONE,
+                            onClick = { userDismissedLoadingDialog = true },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(32.dp),
+                            fontSize = 11.sp
+                        )
+                        MinecraftButton(
+                            text = "DON'T SHOW AGAIN",
+                            style = MinecraftButtonStyle.GREEN,
+                            onClick = {
+                                AllSettings.showGameLoadingDialog.save(false)
+                                userDismissedLoadingDialog = true
+                            },
+                            modifier = Modifier
+                                .weight(1.4f)
+                                .height(32.dp),
+                            fontSize = 10.sp
+                        )
+                    }
+                }
             }
         }
     }

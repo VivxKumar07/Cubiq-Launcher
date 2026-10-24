@@ -20,7 +20,9 @@ package com.movtery.zalithlauncher.game.version.installed
 
 import com.movtery.zalithlauncher.game.path.getGameHome
 import com.movtery.zalithlauncher.game.path.getVersionsHome
+import com.movtery.zalithlauncher.game.renderer.Renderers
 import com.movtery.zalithlauncher.game.version.installed.utils.parseJsonToVersionInfo
+import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.utils.logging.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -220,6 +222,15 @@ object VersionsManager {
      */
     fun saveVersion(version: Version, refresh: Boolean = true): Boolean {
         if (!version.isValid()) return false
+        runCatching {
+            val targetRenderer = version.getRenderer()
+            if (Renderers.isInitialized) {
+                Renderers.setCurrentRenderer(targetRenderer)
+            }
+            AllSettings.renderer.save(targetRenderer)
+        }.onFailure { e ->
+            Logger.error(TAG, "Failed to apply renderer for selected version ${version.getVersionName()}", e)
+        }
         saveCurrentVersion(version.getVersionName(), refresh)
         return true
     }

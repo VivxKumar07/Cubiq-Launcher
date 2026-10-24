@@ -31,6 +31,9 @@ import com.movtery.zalithlauncher.context.GlobalContext
 import com.movtery.zalithlauncher.game.launch.LogName
 import com.movtery.zalithlauncher.game.path.getVersionsHome
 import com.movtery.zalithlauncher.game.support.touch_controller.VibrationHandler
+import com.movtery.zalithlauncher.game.renderer.renderers.LTWRenderer
+import com.movtery.zalithlauncher.game.renderer.renderers.NGGL4ESRenderer
+import com.movtery.zalithlauncher.game.version.installed.utils.isBiggerVer
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.setting.unit.getOrMin
@@ -210,7 +213,19 @@ class Version(
 
     private fun String.getValueOrDefault(default: String): String = this.takeIf { it.isNotEmpty() } ?: default
 
-    fun getRenderer(): String = versionConfig.renderer.getValueOrDefault(AllSettings.renderer.getValue())
+    fun getRenderer(): String {
+        val configured = versionConfig.renderer
+        // If user explicitly configured a renderer for this version, always respect it
+        if (configured.isNotEmpty()) {
+            return configured
+        }
+        val mcVer = getVersionInfo()?.minecraftVersion ?: getVersionName()
+        // Auto-Default for Minecraft > 26.2 (e.g., 26.3+)
+        if (mcVer.isBiggerVer("26.2")) {
+            return LTWRenderer.getUniqueIdentifier()
+        }
+        return NGGL4ESRenderer.getUniqueIdentifier()
+    }
 
     fun getDriver(): String = versionConfig.driver.getValueOrDefault(AllSettings.vulkanDriver.getValue())
 

@@ -174,7 +174,7 @@
           "uuid": "cdc5a1325c034b96ae",
           "position": {
             "x": 0,
-            "y": 1412
+            "y": 1293
           },
           "buttonSize": {
             "type": "percentage",
@@ -204,7 +204,7 @@
           },
           "uuid": "fd8053d877dd412fbe",
           "position": {
-            "x": 3938,
+            "x": 3522,
             "y": 0
           },
           "buttonSize": {
@@ -235,7 +235,7 @@
           },
           "uuid": "eb95c5df997842539a",
           "position": {
-            "x": 1278,
+            "x": 1174,
             "y": 0
           },
           "buttonSize": {
@@ -275,7 +275,7 @@
           },
           "uuid": "bd02bca5cd894f0da5",
           "position": {
-            "x": 2587,
+            "x": 2348,
             "y": 0
           },
           "buttonSize": {
@@ -345,7 +345,7 @@
           },
           "uuid": "d164a1fc25fe4337a0",
           "position": {
-            "x": 2341,
+            "x": 2250,
             "y": 7441
           },
           "buttonSize": {
@@ -376,7 +376,7 @@
           },
           "uuid": "1da25f899126495084",
           "position": {
-            "x": 339,
+            "x": 438,
             "y": 7441
           },
           "buttonSize": {
@@ -408,7 +408,7 @@
           "uuid": "97cae7ec5ee04d1595",
           "position": {
             "x": 1344,
-            "y": 9832
+            "y": 9698
           },
           "buttonSize": {
             "type": "percentage",
@@ -439,7 +439,7 @@
           "uuid": "c04125aa012942ba90",
           "position": {
             "x": 1344,
-            "y": 5069
+            "y": 5184
           },
           "buttonSize": {
             "type": "percentage",
@@ -486,8 +486,8 @@
           },
           "uuid": "90dd63546ff14a92be",
           "position": {
-            "x": 340,
-            "y": 5077
+            "x": 438,
+            "y": 5184
           },
           "buttonSize": {
             "type": "percentage",
@@ -526,8 +526,8 @@
           },
           "uuid": "96e156843d754adda4",
           "position": {
-            "x": 2348,
-            "y": 5077
+            "x": 2250,
+            "y": 5184
           },
           "buttonSize": {
             "type": "percentage",

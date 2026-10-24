@@ -79,8 +79,48 @@ fun FmAppBar(
     onToggleHidden: () -> Unit,
     onOpenTrash: () -> Unit,
     onExit: () -> Unit,
-    onToggleOrientation: () -> Unit
+    onToggleOrientation: () -> Unit,
+    onSelectAll: () -> Unit = {},
+    onClearSelection: () -> Unit = {},
+    onBulkActions: () -> Unit = {}
 ) {
+    if (multiSelect) {
+        TopAppBar(
+            colors = fmTopbarColors(),
+            navigationIcon = {
+                IconButton(onClick = onClearSelection) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_close),
+                        contentDescription = stringResource(R.string.generic_cancel)
+                    )
+                }
+            },
+            title = {
+                Text(
+                    text = stringResource(R.string.fm_count_selected, selectedCount),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            actions = {
+                IconButton(onClick = onSelectAll) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_select_all),
+                        contentDescription = stringResource(R.string.fm_select_all)
+                    )
+                }
+                IconButton(onClick = onBulkActions) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_more_vert),
+                        contentDescription = stringResource(R.string.generic_more)
+                    )
+                }
+            }
+        )
+        return
+    }
     var menuExpanded by remember { mutableStateOf(false) }
     var sortExpanded by remember { mutableStateOf(false) }
 

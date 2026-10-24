@@ -142,8 +142,8 @@
           },
           "uuid": "8d52b73e45504bc291",
           "position": {
-            "x": 1280,
-            "y": 7
+            "x": 1174,
+            "y": 0
           },
           "buttonSize": {
             "type": "percentage",
@@ -173,8 +173,8 @@
           },
           "uuid": "cdc5a1325c034b96ae",
           "position": {
-            "x": 2560,
-            "y": 7
+            "x": 2348,
+            "y": 0
           },
           "buttonSize": {
             "type": "percentage",
@@ -205,7 +205,7 @@
           "uuid": "fd8053d877dd412fbe",
           "position": {
             "x": 0,
-            "y": 1364
+            "y": 1293
           },
           "buttonSize": {
             "type": "percentage",
@@ -235,8 +235,8 @@
           },
           "uuid": "eb95c5df997842539a",
           "position": {
-            "x": 1280,
-            "y": 1364
+            "x": 1174,
+            "y": 1293
           },
           "buttonSize": {
             "type": "percentage",
@@ -275,8 +275,8 @@
           },
           "uuid": "bd02bca5cd894f0da5",
           "position": {
-            "x": 2560,
-            "y": 1364
+            "x": 2348,
+            "y": 1293
           },
           "buttonSize": {
             "type": "percentage",
@@ -376,8 +376,8 @@
           },
           "uuid": "c95b5b1b25844c51ae",
           "position": {
-            "x": 379,
-            "y": 9138
+            "x": 453,
+            "y": 9022
           },
           "buttonSize": {
             "type": "percentage",
@@ -412,7 +412,7 @@
           "uuid": "7548a892ef6f435f91",
           "position": {
             "x": 1084,
-            "y": 5896
+            "y": 5992
           },
           "buttonSize": {
             "type": "percentage",
@@ -442,8 +442,8 @@
           },
           "uuid": "210909da77e44969b7",
           "position": {
-            "x": 379,
-            "y": 5896
+            "x": 453,
+            "y": 5992
           },
           "buttonSize": {
             "type": "percentage",
@@ -478,7 +478,7 @@
           "uuid": "d5f51983870640fcb7",
           "position": {
             "x": 1084,
-            "y": 9138
+            "y": 9022
           },
           "buttonSize": {
             "type": "percentage",
@@ -508,8 +508,8 @@
           },
           "uuid": "ee24324b8fdf4c309d",
           "position": {
-            "x": 1791,
-            "y": 9138
+            "x": 1715,
+            "y": 9022
           },
           "buttonSize": {
             "type": "percentage",
@@ -543,8 +543,8 @@
           },
           "uuid": "ad364979ccbc4a36a8",
           "position": {
-            "x": 1791,
-            "y": 5896
+            "x": 1715,
+            "y": 5992
           },
           "buttonSize": {
             "type": "percentage",
@@ -609,7 +609,7 @@
           },
           "uuid": "7a178f37e160491b86",
           "position": {
-            "x": 379,
+            "x": 453,
             "y": 7507
           },
           "buttonSize": {
@@ -640,7 +640,7 @@
           },
           "uuid": "054d65d545474e1781",
           "position": {
-            "x": 1791,
+            "x": 1715,
             "y": 7507
           },
           "buttonSize": {
@@ -775,7 +775,7 @@
           },
           "uuid": "96e156843d754adda4",
           "position": {
-            "x": 8817,
+            "x": 8711,
             "y": 5480
           },
           "buttonSize": {
@@ -807,7 +807,7 @@
           "uuid": "53bea7b9f6974f6b9a",
           "position": {
             "x": 7614,
-            "y": 7222
+            "y": 7139
           },
           "buttonSize": {
             "type": "percentage",
@@ -837,8 +837,8 @@
           },
           "uuid": "ece30bbe48204713ae",
           "position": {
-            "x": 8817,
-            "y": 7222
+            "x": 8711,
+            "y": 7139
           },
           "buttonSize": {
             "type": "percentage",

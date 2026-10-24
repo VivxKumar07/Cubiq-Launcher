@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -131,11 +132,7 @@ fun FmEntryItem(
                         }
                     },
                     onLongClick = {
-                        if (multiSelect) {
-                            onLongClick()
-                        } else {
-                            menuExpanded = true
-                        }
+                        onLongClick()
                     }
                 )
                 .padding(horizontal = 12.dp, vertical = 10.dp),
@@ -191,7 +188,12 @@ fun FmEntryItem(
                 }
             }
 
-            if (!multiSelect) {
+            if (multiSelect) {
+                Checkbox(
+                    checked = selected,
+                    onCheckedChange = { onClick() }
+                )
+            } else {
                 IconButton(
                     modifier = Modifier.size(36.dp),
                     onClick = { menuExpanded = true }

@@ -178,7 +178,10 @@ fun FmMainPage(
                 onToggleHidden = { vm.toggleHidden() },
                 onOpenTrash = onOpenTrash,
                 onExit = onExit,
-                onToggleOrientation = onToggleOrientation
+                onToggleOrientation = onToggleOrientation,
+                onSelectAll = { vm.selectAll() },
+                onClearSelection = { vm.clearSelection() },
+                onBulkActions = { updateOperation(FmOperation.BulkActions) }
             )
         },
         bottomBar = {
@@ -193,6 +196,7 @@ fun FmMainPage(
                     onSelectAll = { vm.selectAll() },
                     onClearSelection = { vm.clearSelection() },
                     onRangeSelectHelp = { updateOperation(FmOperation.RangeSelectHelp) },
+                    onBulkActions = { updateOperation(FmOperation.BulkActions) },
                     canBack = uiState.canNavigateBack,
                     canForward = uiState.canNavigateForward,
                     modifier = Modifier.fillMaxWidth()
@@ -220,6 +224,7 @@ fun FmMainPage(
                     onSelectAll = { vm.selectAll() },
                     onClearSelection = { vm.clearSelection() },
                     onRangeSelectHelp = { updateOperation(FmOperation.RangeSelectHelp) },
+                    onBulkActions = { updateOperation(FmOperation.BulkActions) },
                     canBack = uiState.canNavigateBack,
                     canForward = uiState.canNavigateForward
                 )
@@ -393,6 +398,8 @@ private fun EntryList(
     val onLongClick: (FmEntry) -> Unit = { entry ->
         if (uiState.multiSelect) {
             updateOperation(FmOperation.BulkActions)
+        } else {
+            vm.enterMultiSelectWith(entry)
         }
     }
     val onSwipeTrigger: (FmEntry) -> Unit = { vm.swipeRangeSelect(it) }
@@ -761,6 +768,10 @@ private fun FmMainDialogs(
             },
             onCompress = {
                 vm.bulkCompress()
+                updateOperation(FmOperation.None)
+            },
+            onShare = {
+                vm.bulkShare()
                 updateOperation(FmOperation.None)
             }
         )

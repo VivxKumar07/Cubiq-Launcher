@@ -103,9 +103,8 @@ class GameLauncher(
     }
 
     override suspend fun launch(screenSize: IntSize): Int {
-        if (!Renderers.isCurrentRendererValid()) {
-            Renderers.setCurrentRenderer(version.getRenderer())
-        }
+        // Always set the renderer according to the version's configuration
+        Renderers.setCurrentRenderer(version.getRenderer())
 
         val versionJsonFile = File(version.getVersionPath(), "${version.getVersionName()}.json")
         val manifestJsonText = when {
@@ -230,7 +229,14 @@ class GameLauncher(
     override fun progressFinalUserArgs(args: MutableList<String>, ramAllocation: Int) {
         super.progressFinalUserArgs(args, version.getRamAllocation(activity))
         if (Renderers.isCurrentRendererValid()) {
-            args.add("-Dorg.lwjgl.opengl.libname=${getRendererLibrary()}")
+            val renderer = Renderers.getCurrentRenderer()
+            val rendererLib = getRendererLibrary()
+            if (rendererLib != null) {
+                val nativeLibPath = if (renderer is Plugin) renderer.getNativeLibPath() else PathManager.DIR_NATIVE_LIB
+                val fullPath = if (rendererLib.startsWith("/")) rendererLib else "$nativeLibPath/$rendererLib"
+                args.add("-Dorg.lwjgl.opengl.libname=$fullPath")
+
+            }
         }
     }
 
@@ -433,48 +439,71 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
     val renderer = Renderers.getCurrentRenderer()
     val rendererId = renderer.getRendererId()
 
-    // SDL 环境变量
-    envMap["SDL_OPENGL_LIBRARY"] = rendererId
+    val rendererLib = getRendererLibrary()
+    val nativeLibPath = if (renderer is Plugin) renderer.getNativeLibPath() else PathManager.DIR_NATIVE_LIB
+    val rendererLibPath = rendererLib?.let { if (it.startsWith("/")) it else "$nativeLibPath/$it" }
+
+    if (rendererLibPath != null) {
+        envMap["LIBGL_NAME"] = rendererLibPath
+        envMap["POJAV_RENDERER_LIB"] = rendererLibPath
+        envMap["SDL_OPENGL_LIBRARY"] = rendererLibPath
+    }
 
     if (rendererId.startsWith("opengles2")) {
         envMap["LIBGL_ES"] = "2"
         envMap["LIBGL_MIPMAP"] = "3"
-        envMap["LIBGL_NOERROR"] = "1"
         envMap["LIBGL_NOINTOVLHACK"] = "1"
         envMap["LIBGL_NORMALIZE"] = "1"
     }
 
     envMap += renderer.getRendererEnv().value
 
-    renderer.getRendererEGL()?.let { eglName ->
-        envMap["POJAVEXEC_EGL"] = if (eglName.contains("/")) java.io.File(eglName).name else eglName
+    val sysEgl = if (File("/system/lib64/libEGL.so").exists()) "/system/lib64/libEGL.so" else "/system/lib/libEGL.so"
 
-        // 指定 SDL EGL
-        val nativeLibPath = if (renderer is Plugin) {
-            renderer.getNativeLibPath()
-        } else {
-            PathManager.DIR_NATIVE_LIB
+    if (renderer == LTWRenderer) {
+        if (rendererLibPath != null) {
+            envMap["POJAV_RENDERER_LIB"] = rendererLibPath
+            envMap["LIBGL_NAME"] = rendererLibPath
+            envMap["SDL_OPENGL_LIBRARY"] = rendererLibPath
+            envMap["POJAV_NATIVEDIR"] = nativeLibPath
         }
-        envMap["SDL_EGL_LIBRARY"] = if (eglName.startsWith("/")) eglName else "$nativeLibPath/$eglName"
-    }
-
-    if (!envMap.containsKey("SDL_EGL_LIBRARY")) {
-        val sysEgl = if (File("/system/lib64/libEGL.so").exists()) "/system/lib64/libEGL.so" else "/system/lib/libEGL.so"
+        envMap["LIBGL_EGL"] = sysEgl
+        envMap["POJAVEXEC_EGL"] = File(sysEgl).name
         envMap["SDL_EGL_LIBRARY"] = sysEgl
-    }
-
-    envMap["POJAV_RENDERER"] = rendererId
-
-    if (renderer == LTWRenderer || renderer == MobileGluesRenderer) {
         envMap["LIBGL_NOERROR"] = "1"
         envMap["force_glsl_extensions_warn"] = "true"
         envMap["allow_higher_compat_version"] = "true"
         envMap["allow_glsl_extension_directive_midshader"] = "true"
+        envMap["MESA_GLSL_CACHE_DIR"] = PathManager.DIR_CACHE.absolutePath
+        envMap["MESA_GLSL_VERSION_OVERRIDE"] = "460"
+        envMap["LIBGL_NORMALIZE"] = "1"
+        envMap["LIBGL_MIPMAP"] = "3"
+    } else {
+        renderer.getRendererEGL()?.let { eglName ->
+            envMap["POJAVEXEC_EGL"] = if (eglName.contains("/")) java.io.File(eglName).name else eglName
+
+            val nativePath = if (renderer is Plugin) {
+                renderer.getNativeLibPath()
+            } else {
+                PathManager.DIR_NATIVE_LIB
+            }
+            envMap["SDL_EGL_LIBRARY"] = if (eglName.startsWith("/")) eglName else "$nativePath/$eglName"
+        }
+
+        if (!envMap.containsKey("SDL_EGL_LIBRARY")) {
+            envMap["SDL_EGL_LIBRARY"] = sysEgl
+        }
+
+        if (renderer == MobileGluesRenderer) {
+            envMap["LIBGL_EGL"] = sysEgl
+            envMap["LIBGL_NOERROR"] = "1" 
+            envMap["force_glsl_extensions_warn"] = "true"
+            envMap["allow_higher_compat_version"] = "true"
+            envMap["allow_glsl_extension_directive_midshader"] = "true"
+        }
     }
 
-    getRendererLibrary()?.let { lib ->
-        envMap["POJAV_RENDERER_LIB"] = lib
-    }
+    envMap["POJAV_RENDERER"] = rendererId
 
     if (RendererPluginManager.selectedRendererPlugin != null) return
 

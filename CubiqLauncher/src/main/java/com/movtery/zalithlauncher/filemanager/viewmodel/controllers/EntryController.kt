@@ -30,6 +30,7 @@ import com.movtery.zalithlauncher.filemanager.viewmodel.FmSnackbar
 import com.movtery.zalithlauncher.filemanager.viewmodel.FmStateStore
 import com.movtery.zalithlauncher.filemanager.viewmodel.entryPathKey
 import com.movtery.zalithlauncher.utils.file.shareFile
+import com.movtery.zalithlauncher.utils.file.shareFiles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -47,6 +48,20 @@ class EntryController(
     private val browse: BrowseController,
     private val coroutineScope: CoroutineScope
 ) {
+
+    fun bulkShare() {
+        store.dismissDialog()
+        val files = store.selectedEntries().filter { it.isFile }.map { it.path.toFile() }
+        if (files.isEmpty()) return
+        coroutineScope.launch(Dispatchers.IO) {
+            runCatching {
+                shareFiles(context, files)
+            }.onFailure {
+                FmLog.warn(TAG, "Bulk share failed", it)
+                store.emitSnackbar(FmSnackbar(store.stringResolver(R.string.fm_error_share_failed)))
+            }
+        }
+    }
     fun showShare(entry: FmEntry) {
         store.dismissDialog()
         // 共享对单个文件生效；目录不提供共享入口，这里兜底
