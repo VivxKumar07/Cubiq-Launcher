@@ -777,7 +777,9 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
         withHandler { mIsSurfaceDestroyed = false }
         lifecycleScope.launch(Dispatchers.Default) {
             val screenSize = vmViewModel.screenSizeBridge.awaitData()
-            val currentSize = refreshWindowSize(screenSize = screenSize)
+            val currentSize = withContext(Dispatchers.Main) {
+                refreshWindowSize(screenSize = screenSize)
+            }
             withHandler {
                 execute(
                     surface = Surface(surface),
@@ -829,7 +831,9 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
         withHandler { mIsSurfaceDestroyed = false }
         lifecycleScope.launch(Dispatchers.Default) {
             val screenSize = vmViewModel.screenSizeBridge.awaitData()
-            val currentSize = refreshWindowSize(screenSize = screenSize)
+            val currentSize = withContext(Dispatchers.Main) {
+                refreshWindowSize(screenSize = screenSize)
+            }
             withHandler {
                 execute(
                     surface = surface,
@@ -915,7 +919,9 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
                             gameSurfaceView = this
                         }.also { surface ->
                             applySizeToSurface = { width, height ->
-                                surface.holder.setFixedSize(width, height)
+                                surface.post {
+                                    surface.holder.setFixedSize(width, height)
+                                }
                             }
                         }
                     } else {

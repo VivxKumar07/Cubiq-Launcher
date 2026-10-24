@@ -39,6 +39,7 @@ import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.path.LibPath
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.ui.screens.content.elements.QuickPlay
+import com.movtery.zalithlauncher.utils.device.Architecture
 import com.movtery.zalithlauncher.utils.file.child
 import com.movtery.zalithlauncher.utils.logging.Logger
 import com.movtery.zalithlauncher.utils.network.ServerAddress
@@ -429,7 +430,12 @@ fun detectLwjglVersion(manifest: GameManifest): Int {
     }
     val id = manifest.id ?: ""
     if (maxVersion < 340 && (id.startsWith("26") || id.contains("26.") || id.contains("27."))) {
-        return 341
+        // OpenJDK's FFM native linker (JEP 454) is not supported on 32-bit ARM (arm32 / armeabi-v7a).
+        // LWJGL 3.4.1 uses FFM downcalls on Java 22+, which throws UnsupportedOperationException on 32-bit ARM.
+        // Therefore, only use LWJGL 3.4.1 on 64-bit platforms; keep 32-bit devices on LWJGL 3.3.3 (pure JNI).
+        if (Architecture.is64BitsDevice) {
+            return 341
+        }
     }
     return maxVersion
 }
@@ -438,4 +444,10 @@ fun detectLwjglVersion(manifest: GameManifest): Int {
  * LWJGL 版本整数 -> 组件目录名。
  * 版本 >= 3.4.1 -> 3.4.1 组件；否则（含 LWJGL2 桥接场景）-> 3.3.3 组件
  */
-fun lwjglVersionDir(lwjglVersion: Int): String = if (lwjglVersion >= 340) "3.4.1" else "3.3.3"
+fun lwjglVersionDir(lwjglVersion: Int): String {
+    // 32 位 ARM 设备强制退回 3.3.3 以规避 Java 22+ 下 FFM Linker.nativeLinker 不支持导致的崩溃
+    if (Architecture.is32BitsDevice && Architecture.getDeviceArchitecture() == Architecture.ARCH_ARM && lwjglVersion >= 340) {
+        return "3.3.3"
+    }
+    return if (lwjglVersion >= 340) "3.4.1" else "3.3.3"
+}
