@@ -458,7 +458,14 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
 
     envMap += renderer.getRendererEnv().value
 
-    val sysEgl = if (File("/system/lib64/libEGL.so").exists()) "/system/lib64/libEGL.so" else "/system/lib/libEGL.so"
+    val is64Bit = runCatching { android.os.Process.is64Bit() }.getOrDefault(Architecture.is64BitsDevice)
+    val sysEgl = if (is64Bit && File("/system/lib64/libEGL.so").exists()) {
+        "/system/lib64/libEGL.so"
+    } else if (File("/system/lib/libEGL.so").exists()) {
+        "/system/lib/libEGL.so"
+    } else {
+        "libEGL.so"
+    }
 
     if (renderer == LTWRenderer) {
         if (rendererLibPath != null) {
