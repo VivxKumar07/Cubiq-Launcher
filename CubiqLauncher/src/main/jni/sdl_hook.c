@@ -34,8 +34,6 @@ SDL_Window *SDL_CreateWindow(const char *title, int w, int h, uint32_t flags);
 SDL_Window *SDL_CreateWindowWithProperties(uint32_t props);
 void SDL_DestroyWindow(SDL_Window *window);
 void *SDL_EGL_GetProcAddress(const char *proc);
-bool SDL_GL_LoadLibrary(const char *path);
-void *SDL_GL_GetProcAddress(const char *proc);
 
 // egl_bridge.c（libpojavexec.so），SDL 路径下经 EGL 交换代理计帧
 void calculateFPS(void);
@@ -58,18 +56,14 @@ DECL_DLSYM(SDL_CreateWindow)
 DECL_DLSYM(SDL_CreateWindowWithProperties)
 DECL_DLSYM(SDL_DestroyWindow)
 DECL_DLSYM(SDL_EGL_GetProcAddress)
-DECL_DLSYM(SDL_GL_LoadLibrary)
-DECL_DLSYM(SDL_GL_GetProcAddress)
 
 typedef void *EGLDisplay;
 typedef void *EGLConfig;
-typedef void *EGLSurface;
 typedef int EGLint;
 typedef int EGLBoolean;
 typedef EGLBoolean (*eglChooseConfig_t)(EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs,
                                         EGLint config_size, EGLint *num_config);
 typedef void *(*eglCreateContext_t)(EGLDisplay dpy, EGLConfig config, void *share, const EGLint *attrib_list);
-typedef EGLSurface (*eglCreateWindowSurface_t)(EGLDisplay dpy, EGLConfig config, void *win, const EGLint *attrib_list);
 typedef EGLBoolean (*eglSwapBuffers_t)(EGLDisplay dpy, void *surface);
 
 // EGL 常量（EGL/egl.h），避免引入完整 EGL 头
@@ -81,7 +75,6 @@ typedef EGLBoolean (*eglSwapBuffers_t)(EGLDisplay dpy, void *surface);
 #define EGL_CONTEXT_CLIENT_VERSION    0x3098
 #define EGL_CONTEXT_MAJOR_VERSION_KHR 0x30FB
 #define EGL_CONTEXT_MINOR_VERSION_KHR 0x30FC
-#define EGL_ALPHA_SIZE                0x3021
 
 
 
@@ -199,7 +192,7 @@ static bool sdlGlesCompatEnabled(void) {
     if (strstr(renderer, "desktopgl") != NULL) return false;
     if (strncmp(renderer, "gallium_", 8) == 0) return false; // OSMesa 系
     if (strcmp(renderer, "custom_gallium") == 0 || strcmp(renderer, "vulkan_zink") == 0) return false;
-    if (strncmp(renderer, "opengles", 8) == 0) return true; // 内置 GL4ES/NGGL4ES/LTW (opengles3_ltw)
+    if (strncmp(renderer, "opengles", 8) == 0) return true; // 内置 GL4ES/NGGL4ES/LTW
     return isMobileGluesEgl(); // MobileGlues
 }
 
@@ -213,33 +206,9 @@ static bool shouldReusePrimaryWindow(void) {
 
 // --- SDL 的 EGL 函数解析接管 ---
 // 原始指针首次解析成功后固定，避免重复解析不同 handle 时跨 loader 调用
-typedef EGLBoolean (*eglMakeCurrent_t)(EGLDisplay dpy, void *draw, void *read, void *ctx);
-typedef EGLBoolean (*eglDestroyContext_t)(EGLDisplay dpy, void *ctx);
-
-static void *getOrLoadRendererHandle(const char *path);
-
 static eglChooseConfig_t sOrigEglChooseConfig = NULL;
 static eglCreateContext_t sOrigEglCreateContext = NULL;
-static eglCreateWindowSurface_t sOrigEglCreateWindowSurface = NULL;
-static eglMakeCurrent_t sOrigEglMakeCurrent = NULL;
-static eglDestroyContext_t sOrigEglDestroyContext = NULL;
 static eglSwapBuffers_t sOrigEglSwapBuffers = NULL;
-
-static EGLSurface proxyEglCreateWindowSurface(EGLDisplay dpy, EGLConfig config, void *win, const EGLint *attrib_list) {
-    if (sOrigEglCreateWindowSurface == NULL) {
-        LOG_TO_E("SDL_Hook: eglCreateWindowSurface was not resolved");
-        return NULL;
-    }
-    const char *renderer = getenv("POJAV_RENDERER");
-    bool isLtw = (renderer != NULL && (strcmp(renderer, "opengles3_ltw") == 0 || strstr(renderer, "ltw") != NULL));
-    if (isLtw) {
-        // MojoSDL: pass NULL attributes on Android to prevent SurfaceFlinger / GPU from applying
-        // double sRGB gamma transform (which causes washed-out whitish overlay).
-        LOG_TO_I("SDL_Hook: proxyEglCreateWindowSurface passing NULL attributes for LTW");
-        return sOrigEglCreateWindowSurface(dpy, config, win, NULL);
-    }
-    return sOrigEglCreateWindowSurface(dpy, config, win, attrib_list);
-}
 
 static void *proxyEglCreateContext(EGLDisplay dpy, EGLConfig config, void *share, const EGLint *attrib_list) {
     if (sOrigEglCreateContext == NULL) {
@@ -266,20 +235,6 @@ static void *proxyEglCreateContext(EGLDisplay dpy, EGLConfig config, void *share
     return sOrigEglCreateContext(dpy, config, share, es2);
 }
 
-static EGLBoolean proxyEglMakeCurrent(EGLDisplay dpy, void *draw, void *read, void *ctx) {
-    if (sOrigEglMakeCurrent != NULL) {
-        return sOrigEglMakeCurrent(dpy, draw, read, ctx);
-    }
-    return 0;
-}
-
-static EGLBoolean proxyEglDestroyContext(EGLDisplay dpy, void *ctx) {
-    if (sOrigEglDestroyContext != NULL) {
-        return sOrigEglDestroyContext(dpy, ctx);
-    }
-    return 0;
-}
-
 static EGLBoolean proxyEglChooseConfig(EGLDisplay dpy, const EGLint *attrib_list, EGLConfig *configs,
                                        EGLint config_size, EGLint *num_config) {
     if (sOrigEglChooseConfig == NULL) {
@@ -287,33 +242,12 @@ static EGLBoolean proxyEglChooseConfig(EGLDisplay dpy, const EGLint *attrib_list
         return 0;
     }
 
-    EGLint sanitized[64];
-    const EGLint *effectiveAttribs = attrib_list;
-    const char *renderer = getenv("POJAV_RENDERER");
-    bool isLtw = (renderer != NULL && (strcmp(renderer, "opengles3_ltw") == 0 || strstr(renderer, "ltw") != NULL));
-
-    if (isLtw && attrib_list != NULL) {
-        int n = 0;
-        for (int i = 0; attrib_list[i] != EGL_NONE && n < 60; i += 2) {
-            EGLint attr = attrib_list[i];
-            EGLint val = attrib_list[i + 1];
-            if (attr == EGL_ALPHA_SIZE) {
-                val = 0; // 强制 0-bit alpha，消除透明混合导致的白色/发灰遮罩
-            }
-            sanitized[n++] = attr;
-            sanitized[n++] = val;
-        }
-        sanitized[n++] = EGL_NONE;
-        sanitized[n++] = 0;
-        effectiveAttribs = sanitized;
-    }
-
-    EGLBoolean result = sOrigEglChooseConfig(dpy, effectiveAttribs, configs, config_size, num_config);
+    EGLBoolean result = sOrigEglChooseConfig(dpy, attrib_list, configs, config_size, num_config);
     if (result && num_config != NULL && *num_config > 0) return result;
     if (!sdlGlesCompatEnabled()) return result; // 兼容 fallback 仅限移动 ES 渲染器
 
     EGLint fixed[64];
-    if (!normalizeEglChooseConfigList(effectiveAttribs, fixed, 64)) return result;
+    if (!normalizeEglChooseConfigList(attrib_list, fixed, 64)) return result;
     EGLint fallbackCount = 0;
     EGLBoolean fallbackResult = sOrigEglChooseConfig(dpy, fixed, configs, config_size, &fallbackCount);
     if (fallbackResult && num_config != NULL) *num_config = fallbackCount;
@@ -330,47 +264,56 @@ static EGLBoolean proxyEglSwapBuffers(EGLDisplay dpy, void *surface) {
     return sOrigEglSwapBuffers(dpy, surface);
 }
 
+// --- glGetError 接管与 RenderPearl 兼容 ---
+typedef unsigned int GLenum;
+#define GL_NO_ERROR 0
+
+static GLenum (*sRealGlGetError)(void) = NULL;
+static int sStartupGlGetErrorBypasses = 0;
+
+static GLenum glGetError_impl(GLenum (*real_func)(void)) {
+    GLenum (*target)(void) = real_func ? real_func : sRealGlGetError;
+    if (target != NULL) {
+        (void) target();
+    }
+    const char *noerr = getenv("LIBGL_NOERROR");
+    if (noerr != NULL && strcmp(noerr, "1") == 0) {
+        return GL_NO_ERROR;
+    }
+    if (sStartupGlGetErrorBypasses < 500) {
+        sStartupGlGetErrorBypasses++;
+        return GL_NO_ERROR;
+    }
+    if (target != NULL) return target();
+    return GL_NO_ERROR;
+}
+
+static GLenum custom_glGetError_Func(void) {
+    return glGetError_impl(NULL);
+}
+
+static GLenum custom_glGetError_Bytehook_Func(void) {
+    GLenum (*orig)(void) = (GLenum (*)(void)) BYTEHOOK_CALL_PREV(custom_glGetError_Bytehook_Func, GLenum (*)(void));
+    GLenum res = glGetError_impl(orig);
+    BYTEHOOK_POP_STACK();
+    return res;
+}
+
 // EGL 函数解析出口统一注入代理（bytehook 层与 dlsym 代理层共用）
 static void *injectEglProxy(const char *name, void *resolved) {
     if (name == NULL) return resolved;
-
-    const char *renderer = getenv("POJAV_RENDERER");
-    bool isLtw = (renderer != NULL && (strcmp(renderer, "opengles3_ltw") == 0 || strstr(renderer, "ltw") != NULL));
-
-    // 仅在 LTW 活跃时接管上下文 TLS 相关符号，防止干扰 Krypton Wrapper (NGGL4ES)、GL4ES 等原生渲染器
-    if (isLtw) {
-        void *rHandle = getOrLoadRendererHandle(NULL);
-        if (rHandle != NULL) {
-            if (strcmp(name, "eglCreateContext") == 0 ||
-                strcmp(name, "eglMakeCurrent") == 0 ||
-                strcmp(name, "eglDestroyContext") == 0) {
-                void *rendererSym = dlsym(rHandle, name);
-                if (rendererSym != NULL) {
-                    resolved = rendererSym;
-                    LOG_TO_I("SDL_Hook: resolved %s from renderer library: %p", name, resolved);
-                }
-            }
-        }
-    }
     if (strcmp(name, "eglChooseConfig") == 0) {
         if (resolved != NULL && sOrigEglChooseConfig == NULL) sOrigEglChooseConfig = (eglChooseConfig_t) resolved; // 首次解析后固定
         if (sOrigEglChooseConfig != NULL && resolved != (void *) proxyEglChooseConfig) resolved = (void *) proxyEglChooseConfig;
     } else if (strcmp(name, "eglCreateContext") == 0) {
         if (resolved != NULL && sOrigEglCreateContext == NULL) sOrigEglCreateContext = (eglCreateContext_t) resolved;
-        if (resolved != (void *) proxyEglCreateContext) resolved = (void *) proxyEglCreateContext;
-    } else if (strcmp(name, "eglMakeCurrent") == 0) {
-        if (resolved != NULL && sOrigEglMakeCurrent == NULL) sOrigEglMakeCurrent = (eglMakeCurrent_t) resolved;
-        if (resolved != (void *) proxyEglMakeCurrent) resolved = (void *) proxyEglMakeCurrent;
-    } else if (strcmp(name, "eglDestroyContext") == 0) {
-        if (resolved != NULL && sOrigEglDestroyContext == NULL) sOrigEglDestroyContext = (eglDestroyContext_t) resolved;
-        if (resolved != (void *) proxyEglDestroyContext) resolved = (void *) proxyEglDestroyContext;
-    } else if (strcmp(name, "eglCreateWindowSurface") == 0) {
-        if (resolved != NULL && sOrigEglCreateWindowSurface == NULL) sOrigEglCreateWindowSurface = (eglCreateWindowSurface_t) resolved;
-        if (sOrigEglCreateWindowSurface != NULL && resolved != (void *) proxyEglCreateWindowSurface) resolved = (void *) proxyEglCreateWindowSurface;
+        if (sOrigEglCreateContext != NULL && resolved != (void *) proxyEglCreateContext) resolved = (void *) proxyEglCreateContext;
     } else if (strcmp(name, "eglSwapBuffers") == 0) {
         if (resolved != NULL && sOrigEglSwapBuffers == NULL) sOrigEglSwapBuffers = (eglSwapBuffers_t) resolved;
         if (sOrigEglSwapBuffers != NULL && resolved != (void *) proxyEglSwapBuffers) resolved = (void *) proxyEglSwapBuffers;
-
+    } else if (strcmp(name, "glGetError") == 0) {
+        if (resolved != NULL && sRealGlGetError == NULL) sRealGlGetError = (GLenum (*)(void)) resolved;
+        return (void *) custom_glGetError_Func;
     }
     return resolved;
 }
@@ -382,156 +325,25 @@ static void *custom_SDL_LoadFunction_Func(void *handle, const char *name) {
     return injectEglProxy(name, r);
 }
 
-static void *sRendererGlHandle = NULL;
-static void *(*sRendererEglGetProcAddress)(const char *proc) = NULL;
-
-static void *getOrLoadRendererHandle(const char *path) {
-    if (sRendererGlHandle != NULL) return sRendererGlHandle;
-    const char *candidates[4] = {
-        path,
-        getenv("POJAV_RENDERER_LIB"),
-        getenv("SDL_OPENGL_LIBRARY"),
-        getenv("LIBGL_NAME")
-    };
-    const char *nativeDir = getenv("POJAV_NATIVEDIR");
-    for (int i = 0; i < 4; i++) {
-        const char *p = candidates[i];
-        if (p != NULL && p[0] != '\0' && strncmp(p, "opengles", 8) != 0) {
-            void *h = dlopen(p, RTLD_LAZY | RTLD_GLOBAL);
-            if (h == NULL && p[0] != '/' && nativeDir != NULL && nativeDir[0] != '\0') {
-                char full[1024];
-                snprintf(full, sizeof(full), "%s/%s", nativeDir, p);
-                h = dlopen(full, RTLD_LAZY | RTLD_GLOBAL);
-            }
-            if (h != NULL) {
-                LOG_TO_I("SDL_Hook: opened renderer GL handle from %s: %p", p, h);
-                sRendererGlHandle = h;
-                sRendererEglGetProcAddress = (void *(*)(const char *)) dlsym(h, "eglGetProcAddress");
-                return h;
-            }
-        }
-    }
-    if (nativeDir != NULL && nativeDir[0] != '\0') {
-        char full[1024];
-        snprintf(full, sizeof(full), "%s/libltw.so", nativeDir);
-        void *h = dlopen(full, RTLD_LAZY | RTLD_GLOBAL);
-        if (h != NULL) {
-            LOG_TO_I("SDL_Hook: opened renderer GL handle from fallback %s: %p", full, h);
-            sRendererGlHandle = h;
-            sRendererEglGetProcAddress = (void *(*)(const char *)) dlsym(h, "eglGetProcAddress");
-            return h;
-        }
-    }
-    return NULL;
-}
-
-static bool custom_SDL_GL_LoadLibrary_Func(const char *path) {
-    getOrLoadRendererHandle(path);
-    bool r = BYTEHOOK_CALL_PREV(custom_SDL_GL_LoadLibrary_Func, SDL_GL_LoadLibrary_t, path);
-    BYTEHOOK_POP_STACK();
-    return r;
-}
-
-static void *custom_SDL_GL_GetProcAddress_Func(const char *proc) {
-    if (proc != NULL) {
-        void *handle = getOrLoadRendererHandle(NULL);
-        if (handle != NULL) {
-            void *sym = dlsym(handle, proc);
-            if (sym != NULL) {
-                return sym;
-            }
-            if (sRendererEglGetProcAddress != NULL) {
-                sym = sRendererEglGetProcAddress(proc);
-                if (sym != NULL) {
-                    return sym;
-                }
-            }
-        }
-    }
-    void *r = BYTEHOOK_CALL_PREV(custom_SDL_GL_GetProcAddress_Func, SDL_GL_GetProcAddress_t, proc);
-    BYTEHOOK_POP_STACK();
-    return r;
-}
-
-static SDL_GL_LoadLibrary_t realSdlGL_LoadLibrary = NULL;
-static SDL_GL_GetProcAddress_t realSdlGL_GetProcAddress = NULL;
-static SDL_EGL_GetProcAddress_t realSdlEGL_GetProcAddress = NULL;
-
-static bool proxy_SDL_GL_LoadLibrary(const char *path) {
-    getOrLoadRendererHandle(path);
-    if (realSdlGL_LoadLibrary != NULL) {
-        return realSdlGL_LoadLibrary(path);
-    }
-    return true;
-}
-
-static void *proxy_SDL_GL_GetProcAddress(const char *proc) {
-    if (proc != NULL) {
-        void *handle = getOrLoadRendererHandle(NULL);
-        if (handle != NULL) {
-            void *sym = dlsym(handle, proc);
-            if (sym != NULL) {
-                return sym;
-            }
-            if (sRendererEglGetProcAddress != NULL) {
-                sym = sRendererEglGetProcAddress(proc);
-                if (sym != NULL) {
-                    return sym;
-                }
-            }
-        }
-    }
-    if (realSdlGL_GetProcAddress != NULL) {
-        return realSdlGL_GetProcAddress(proc);
-    }
-    return NULL;
-}
-
-static void *proxy_SDL_EGLGetProcAddress(const char *proc) {
-    if (proc != NULL) {
-        void *handle = getOrLoadRendererHandle(NULL);
-        if (handle != NULL) {
-            void *sym = dlsym(handle, proc);
-            if (sym != NULL) {
-                return injectEglProxy(proc, sym);
-            }
-            if (sRendererEglGetProcAddress != NULL) {
-                sym = sRendererEglGetProcAddress(proc);
-                if (sym != NULL) {
-                    return injectEglProxy(proc, sym);
-                }
-            }
-        }
-    }
-    if (realSdlEGL_GetProcAddress != NULL) {
-        void *r = realSdlEGL_GetProcAddress(proc);
-        if (proc == NULL || r == NULL) return r;
-        return injectEglProxy(proc, r);
-    }
-    return NULL;
-}
-
 // SDL 公共 EGL 解析入口，可绕过 SDL_LoadFunction；补齐同样的代理
 static void *custom_SDL_EGLGetProcAddress_Func(const char *proc) {
-    if (proc != NULL) {
-        void *handle = getOrLoadRendererHandle(NULL);
-        if (handle != NULL) {
-            void *sym = dlsym(handle, proc);
-            if (sym != NULL) {
-                return injectEglProxy(proc, sym);
-            }
-            if (sRendererEglGetProcAddress != NULL) {
-                sym = sRendererEglGetProcAddress(proc);
-                if (sym != NULL) {
-                    return injectEglProxy(proc, sym);
-                }
-            }
-        }
-    }
     void *r = BYTEHOOK_CALL_PREV(custom_SDL_EGLGetProcAddress_Func, SDL_EGL_GetProcAddress_t, proc);
     BYTEHOOK_POP_STACK();
     if (proc == NULL || r == NULL) return r;
-    return injectEglProxy(proc, r);
+    if (strcmp(proc, "eglChooseConfig") == 0) {
+        if (sOrigEglChooseConfig == NULL) sOrigEglChooseConfig = (eglChooseConfig_t) r;
+        if (r != (void *) proxyEglChooseConfig) r = (void *) proxyEglChooseConfig;
+    } else if (strcmp(proc, "eglCreateContext") == 0) {
+        if (sOrigEglCreateContext == NULL) sOrigEglCreateContext = (eglCreateContext_t) r;
+        if (r != (void *) proxyEglCreateContext) r = (void *) proxyEglCreateContext;
+    } else if (strcmp(proc, "eglSwapBuffers") == 0) {
+        if (sOrigEglSwapBuffers == NULL) sOrigEglSwapBuffers = (eglSwapBuffers_t) r;
+        if (r != (void *) proxyEglSwapBuffers) r = (void *) proxyEglSwapBuffers;
+    } else if (strcmp(proc, "glGetError") == 0) {
+        if (sRealGlGetError == NULL) sRealGlGetError = (GLenum (*)(void)) r;
+        return (void *) custom_glGetError_Func;
+    }
+    return r;
 }
 
 static void *try_egl_fallback_load(const char *path) {
@@ -542,6 +354,18 @@ static void *try_egl_fallback_load(const char *path) {
     void *r = NULL;
     if (eglLib != NULL && eglLib[0] != '\0') {
         r = dlopen(eglLib, RTLD_NOW | RTLD_LOCAL);
+    }
+    if (r == NULL) {
+        const char *nativeDir = getenv("POJAV_NATIVEDIR");
+        if (nativeDir != NULL && nativeDir[0] != '\0') {
+            char full[1024];
+            snprintf(full, sizeof(full), "%s/libltw.so", nativeDir);
+            r = dlopen(full, RTLD_NOW | RTLD_LOCAL);
+            if (r == NULL) {
+                snprintf(full, sizeof(full), "%s/libmobileglues.so", nativeDir);
+                r = dlopen(full, RTLD_NOW | RTLD_LOCAL);
+            }
+        }
     }
     if (r == NULL) {
         r = dlopen("libEGL.so", RTLD_NOW | RTLD_LOCAL);
@@ -640,10 +464,8 @@ static bool sdlInitSubSystemPrepare(SDL_InitFlags flags) {
     SET_DLSYM_PTR(dlopen("libSDL3.so", RTLD_NOLOAD), SDL_SetHint);
     if (SDL_SetHint_p) SDL_SetHint_p("SDL_RETURN_KEY_HIDES_IME", "true");
     // FIXME: MobileGlues has issues with passing in the proper EGL params to make this work
-    const char *subSystemRenderer = getenv("POJAV_RENDERER");
-    bool subSystemLtw = (subSystemRenderer != NULL && (strcmp(subSystemRenderer, "opengles3_ltw") == 0 || strstr(subSystemRenderer, "ltw") != NULL));
-    if (isMobileGluesEgl() || subSystemLtw) {
-        SDL_SetHint_p("SDL_OPENGL_FORCE_SRGB_FRAMEBUFFER", "skip");
+    if (isMobileGluesEgl()) {
+        SDL_SetHint_p("SDL_OPENGL_FORCE_SRGB_FRAMEBUFFER", "0");
     }
     // MC 按桌面惯例设置 SDL_ENABLE_SCREEN_KEYBOARD=0 来禁用平台软键盘（改用自绘 IME UI），
     // 但移动端依赖 SDL 唤起输入法；MC 在 SDL_Init 之前设置此 hint，
@@ -676,16 +498,8 @@ static void forceEglProfileEs(void) {
         const char *renderer = getenv("POJAV_RENDERER");
         if (renderer != NULL && (strstr(renderer, "opengles3") != NULL || strstr(renderer, "ltw") != NULL)) {
             SDL_GL_SetAttribute_p(17 /* SDL_GL_CONTEXT_MAJOR_VERSION */, 3);
-            SDL_GL_SetAttribute_p(3  /* SDL_GL_ALPHA_SIZE */, 0);
-            SDL_GL_SetAttribute_p(23 /* SDL_GL_FRAMEBUFFER_SRGB_CAPABLE */, 0);
         }
         sForcedEsProfile = true;
-    }
-    SET_DLSYM_PTR(dlopen("libSDL3.so", RTLD_NOLOAD), SDL_SetHint);
-    if (SDL_SetHint_p) {
-        SDL_SetHint_p("SDL_OPENGL_FORCE_SRGB_FRAMEBUFFER", "skip");
-        SDL_SetHint_p("SDL_OPENGL_FORCE_SRGB_CAPABLE", "0");
-        SDL_SetHint_p("SDL_FRAMEBUFFER_ACCELERATION", "1");
     }
 }
 
@@ -861,9 +675,6 @@ void create_sdl_hooks(bytehook_stub_t (*bytehook_hook_all_p)(const char *callee_
     bytehook_stub_t stub_SDL_CreateWindowWithProperties = bytehook_hook_all_p(NULL, "SDL_CreateWindowWithProperties", &custom_SDL_CreateWindowWithProperties_Func, NULL, NULL);
     // 接管 SDL 的 EGL 函数解析，注入归一化代理
     bytehook_stub_t stub_SDL_LoadFunction = bytehook_hook_all_p(NULL, "SDL_LoadFunction", &custom_SDL_LoadFunction_Func, NULL, NULL);
-    // 接管 SDL_GL_LoadLibrary 和 SDL_GL_GetProcAddress，保证与 LWJGL 统一渲染器符号
-    bytehook_stub_t stub_SDL_GL_LoadLibrary = bytehook_hook_all_p(NULL, "SDL_GL_LoadLibrary", (void *) custom_SDL_GL_LoadLibrary_Func, NULL, NULL);
-    bytehook_stub_t stub_SDL_GL_GetProcAddress = bytehook_hook_all_p(NULL, "SDL_GL_GetProcAddress", (void *) custom_SDL_GL_GetProcAddress_Func, NULL, NULL);
     // SDL 公共 EGL 解析入口补齐同样的代理（backend callback 可绕过 LoadFunction）
     bytehook_stub_t stub_SDL_EGLGetProcAddress = bytehook_hook_all_p(NULL, "SDL_EGL_GetProcAddress", &custom_SDL_EGLGetProcAddress_Func, NULL, NULL);
     // Vulkan 加载器一致性：SDL 侧改用启动器重定向的加载器句柄
@@ -871,12 +682,17 @@ void create_sdl_hooks(bytehook_stub_t (*bytehook_hook_all_p)(const char *callee_
     bytehook_stub_t stub_SDL_UnloadObject = bytehook_hook_all_p(NULL, "SDL_UnloadObject", &custom_SDL_UnloadObject_Func, NULL, NULL);
     // 主窗口销毁跟踪，配合窗口复用（见 custom_SDL_DestroyWindow_Func）
     bytehook_stub_t stub_SDL_DestroyWindow = bytehook_hook_all_p(NULL, "SDL_DestroyWindow", &custom_SDL_DestroyWindow_Func, NULL, NULL);
-    LOG_TO_I("SDL_Hook: Successfully initialized SDL hooks, stubs: InitSubSystem=%p GetWindowFromEvent=%p GetWindowFromID=%p LoadFunction=%p CreateWindow=%p CreateWindowWithProps=%p LoadObject=%p UnloadObject=%p DestroyWindow=%p", stub_SDL_InitSubSystem, stub_SDL_GetWindowFromEvent, stub_SDL_GetWindowFromID, stub_SDL_LoadFunction, stub_SDL_CreateWindow, stub_SDL_CreateWindowWithProperties, stub_SDL_LoadObject, stub_SDL_UnloadObject, stub_SDL_DestroyWindow);
+    // RenderPearl glGetError 接管
+    bytehook_stub_t stub_glGetError = bytehook_hook_all_p(NULL, "glGetError", &custom_glGetError_Bytehook_Func, NULL, NULL);
+    LOG_TO_I("SDL_Hook: Successfully initialized SDL hooks, stubs: InitSubSystem=%p GetWindowFromEvent=%p GetWindowFromID=%p LoadFunction=%p CreateWindow=%p CreateWindowWithProps=%p LoadObject=%p UnloadObject=%p DestroyWindow=%p glGetError=%p", stub_SDL_InitSubSystem, stub_SDL_GetWindowFromEvent, stub_SDL_GetWindowFromID, stub_SDL_LoadFunction, stub_SDL_CreateWindow, stub_SDL_CreateWindowWithProperties, stub_SDL_LoadObject, stub_SDL_UnloadObject, stub_SDL_DestroyWindow, stub_glGetError);
 }
 
 /** customDlsym 出口：把 SDL 符号的解析结果换成 dlsym 层代理；返回 NULL 表示不拦截 */
 void *sdlDlsymProxy(const char *symbol, void *real) {
-    if (symbol == NULL) return NULL;
+    if (strcmp(symbol, "glGetError") == 0) {
+        if (sRealGlGetError == NULL) sRealGlGetError = (GLenum (*)(void)) real;
+        return (void *) custom_glGetError_Func;
+    }
     if (strcmp(symbol, "SDL_InitSubSystem") == 0) {
         if (realSdlInitSubSystem == NULL) realSdlInitSubSystem = (sdlInitSubSystem_t) real;
         return (void *) proxy_SDL_InitSubSystem;
@@ -912,18 +728,6 @@ void *sdlDlsymProxy(const char *symbol, void *real) {
     if (strcmp(symbol, "SDL_UnloadObject") == 0) {
         if (realSdlUnloadObject == NULL) realSdlUnloadObject = (sdlUnloadObject_t) real;
         return (void *) proxy_SDL_UnloadObject;
-    }
-    if (strcmp(symbol, "SDL_GL_LoadLibrary") == 0) {
-        if (realSdlGL_LoadLibrary == NULL) realSdlGL_LoadLibrary = (SDL_GL_LoadLibrary_t) real;
-        return (void *) proxy_SDL_GL_LoadLibrary;
-    }
-    if (strcmp(symbol, "SDL_GL_GetProcAddress") == 0) {
-        if (realSdlGL_GetProcAddress == NULL) realSdlGL_GetProcAddress = (SDL_GL_GetProcAddress_t) real;
-        return (void *) proxy_SDL_GL_GetProcAddress;
-    }
-    if (strcmp(symbol, "SDL_EGL_GetProcAddress") == 0) {
-        if (realSdlEGL_GetProcAddress == NULL) realSdlEGL_GetProcAddress = (SDL_EGL_GetProcAddress_t) real;
-        return (void *) proxy_SDL_EGLGetProcAddress;
     }
     return NULL;
 }

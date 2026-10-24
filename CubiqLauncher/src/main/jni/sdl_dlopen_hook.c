@@ -40,8 +40,7 @@ static void *customDlsym(void *handle, const char *symbol) {
     }
     // LWJGL 的 org.lwjgl.sdl 绑定等消费方经 dlsym 解析 SDL 函数指针后直接调用，
     // hook_all 的 GOT 导入补丁拦截不到；在解析出口统一换成 sdl_hook 的 dlsym 层代理
-    // 严格限制仅代理 SDL_ 前缀符号，绝不篡改 OpenGL、EGL、Vulkan 或其它非 SDL 符号
-    if (result != NULL && symbol != NULL && strncmp(symbol, "SDL_", 4) == 0) {
+    if (result != NULL && symbol != NULL) {
         void *proxy = sdlDlsymProxy(symbol, result);
         if (proxy != NULL) {
             LOG_TO_I("SDL_Hook: dlsym proxy for %s", symbol);
