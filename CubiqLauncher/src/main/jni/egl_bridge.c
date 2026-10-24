@@ -110,7 +110,12 @@ static void set_vulkan_ptr(void* ptr) {
 void load_vulkan() {
     const char* zinkPreferSystemDriver = getenv("POJAV_ZINK_PREFER_SYSTEM_DRIVER");
     int deviceApiLevel = android_get_device_api_level();
-    if (zinkPreferSystemDriver == NULL && deviceApiLevel >= 28) {
+    const char *renderer = getenv("POJAV_RENDERER");
+    // 诊断与架构隔离：当活跃渲染器为 LTW 或移动 GLES（非 Vulkan/Zink）时，
+    // 游戏仅执行驱动探测，直接使用系统 libvulkan.so，避免无谓触发 Turnip probe 与 checkAdrenoGraphics()。
+    // 当选择 Zink/Turnip 系列渲染器时，仍完整保留 Turnip 加载与校验路径。
+    bool isZink = (renderer != NULL && (strstr(renderer, "zink") != NULL || strstr(renderer, "gallium") != NULL || strcmp(renderer, "custom_gallium") == 0));
+    if (isZink && zinkPreferSystemDriver == NULL && deviceApiLevel >= 28) {
 #ifdef ADRENO_POSSIBLE
         const char* native_dir = getenv("DRIVER_PATH");
         const char* cache_dir = getenv("TMPDIR");

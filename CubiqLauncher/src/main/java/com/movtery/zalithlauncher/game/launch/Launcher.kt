@@ -89,52 +89,6 @@ abstract class Launcher(
             "lwjgl/${lwjglVersionDir(version)}/natives/${Architecture.archAsStringAndroid(Architecture.getDeviceArchitecture())}"
         ).absolutePath
         verifyLwjglNatives(context)
-        sanitizeLwjglJarIfNeeded()
-    }
-
-    private fun sanitizeLwjglJarIfNeeded() {
-        val versionDir = lwjglVersionDir(lwjglVersion)
-        val jarFile = File(PathManager.DIR_COMPONENTS, "lwjgl/$versionDir/lwjgl.jar")
-        if (!jarFile.isFile) return
-
-        runCatching {
-            var hasV25 = false
-            java.util.zip.ZipFile(jarFile).use { zf ->
-                val entries = zf.entries()
-                while (entries.hasMoreElements()) {
-                    if (entries.nextElement().name.startsWith("META-INF/versions/25")) {
-                        hasV25 = true
-                        break
-                    }
-                }
-            }
-            if (!hasV25) return
-
-            LoggerBridge.appendInfo("LWJGL: Sanitizing $jarFile (removing incompatible FFM v25 classes)")
-            val tempJar = File(jarFile.parentFile, jarFile.name + ".tmp")
-            java.util.zip.ZipFile(jarFile).use { zin ->
-                java.util.zip.ZipOutputStream(java.io.FileOutputStream(tempJar)).use { zout ->
-                    val entries = zin.entries()
-                    while (entries.hasMoreElements()) {
-                        val entry = entries.nextElement()
-                        if (!entry.name.startsWith("META-INF/versions/25")) {
-                            val newEntry = java.util.zip.ZipEntry(entry.name)
-                            newEntry.time = entry.time
-                            zout.putNextEntry(newEntry)
-                            zin.getInputStream(entry).use { it.copyTo(zout) }
-                            zout.closeEntry()
-                        }
-                    }
-                }
-            }
-            if (tempJar.isFile && tempJar.length() > 0) {
-                jarFile.delete()
-                tempJar.renameTo(jarFile)
-                LoggerBridge.appendInfo("LWJGL: Sanitized $jarFile successfully")
-            }
-        }.onFailure {
-            Logger.warning(TAG, "Failed to sanitize lwjgl.jar", it)
-        }
     }
 
     private suspend fun verifyLwjglNatives(context: Context) {

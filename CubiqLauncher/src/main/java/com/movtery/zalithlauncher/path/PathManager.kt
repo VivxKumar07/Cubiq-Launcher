@@ -21,7 +21,6 @@ package com.movtery.zalithlauncher.path
 import android.content.Context
 import android.os.Environment
 import com.movtery.zalithlauncher.game.launch.LogName
-import com.movtery.zalithlauncher.utils.device.Architecture
 import com.movtery.zalithlauncher.utils.file.ensureDirectorySilently
 import com.movtery.zalithlauncher.utils.logging.Logger
 import org.apache.commons.io.FileUtils
@@ -124,20 +123,6 @@ class PathManager {
                 if (!dir.exists() && !dir.mkdirs()) {
                     Logger.warning(TAG, "Failed to create directory: ${dir.absolutePath}")
                 }
-            }
-
-            // Create libc.so.6 symlink for mods using JNA or glibc lookups (e.g. C2ME)
-            runCatching {
-                DIR_RUNTIME_MOD?.let { dir ->
-                    val libc6 = File(dir, "libc.so.6")
-                    runCatching { libc6.delete() }
-                    val targetLib = if (Architecture.is64BitsDevice) "/system/lib64/libc.so" else "/system/lib/libc.so"
-                    if (File(targetLib).exists()) {
-                        android.system.Os.symlink(targetLib, libc6.absolutePath)
-                    }
-                }
-            }.onFailure {
-                Logger.warning(TAG, "Failed to create libc.so.6 symlink", it)
             }
         }
 
