@@ -10,6 +10,8 @@
 
 <br/>
 
+**Official Website of Cubiq Launcher :** https://cubiq.antideploy.app/
+
 **Cubiq Launcher** is a modern, high-performance, open-source **Minecraft: Java Edition launcher for Android** designed from the ground up with an authentic, pixel-accurate PC Minecraft Launcher interface built natively in **Jetpack Compose**.
 
 Experience seamless desktop Minecraft Java on mobile with hardware-accelerated Vulkan & OpenGL ES renderers, customizable touch controls, physical gamepad support, peer-to-peer LAN multiplayer, and one-click modding.
