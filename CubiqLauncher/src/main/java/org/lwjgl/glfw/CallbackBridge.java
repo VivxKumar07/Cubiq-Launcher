@@ -17,6 +17,8 @@ import android.view.MotionEvent;
 import androidx.annotation.Keep;
 import androidx.annotation.Nullable;
 
+import net.kdt.pojavlaunch.GrabListener;
+import java.util.ArrayList;
 import com.movtery.inputmap.keycodes.LwjglGlfwKeycode;
 import com.movtery.zalithlauncher.BuildKeys;
 import com.movtery.zalithlauncher.bridge.CursorShape;
@@ -58,6 +60,18 @@ public class CallbackBridge {
     private static volatile boolean isGrabbing = false;
     private static final Consumer<Boolean> grabListener = isGrabbing ->
             ZLBridgeStates.changeCursorMode(isGrabbing ? CURSOR_DISABLED : CURSOR_ENABLED);
+    private static final ArrayList<GrabListener> grabListeners = new ArrayList<>();
+    public static void addGrabListener(GrabListener listener) {
+        synchronized (grabListeners) {
+            listener.onGrabState(isGrabbing);
+            grabListeners.add(listener);
+        }
+    }
+    public static void removeGrabListener(GrabListener listener) {
+        synchronized (grabListeners) {
+            grabListeners.remove(listener);
+        }
+    }
 
     private static int cursorShape = GLFW_ARROW_CURSOR;
     private static final Consumer<CursorShape> cursorShapeListener = ZLBridgeStates::changeCursorShape;
@@ -448,6 +462,9 @@ public class CallbackBridge {
             System.out.println("Grab changed : " + grabbing);
             synchronized (grabListener) {
                 grabListener.accept(isGrabbing);
+            }
+            synchronized (grabListeners) {
+                for (GrabListener g : grabListeners) g.onGrabState(isGrabbing);
             }
 
         }, 16);

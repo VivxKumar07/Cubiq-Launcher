@@ -18,6 +18,14 @@
 
 package com.movtery.zalithlauncher.ui.screens.game
 
+import net.kdt.pojavlaunch.CustomControlsActivity
+import android.content.Intent
+import androidx.compose.runtime.key
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.movtery.zalithlauncher.bridge.CURSOR_ENABLED
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,6 +34,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -201,6 +210,9 @@ private class GameViewModel(
 
     var editorRefresh by mutableIntStateOf(0)
         private set
+    /** 是否使用 ZL1 控制引擎 */
+    var isZalith1Backend by mutableStateOf(false)
+        private set
     /** 可观察的控制布局 */
     var observableLayout by mutableStateOf<ObservableControlLayout?>(null)
         private set
@@ -291,22 +303,28 @@ private class GameViewModel(
         layoutMutex.withLock {
             withContext(Dispatchers.Main) {
                 observableLayout = null
-                val layout = withContext(Dispatchers.IO) {
-                    delay(10L.milliseconds) //刻意等待一会再加载
+                val isZl1 = layoutFile != null && (layoutFile.name == "zalith_1_layout.json" || runCatching { layoutFile.readText().contains("mControlDataList") }.getOrDefault(false))
+                isZalith1Backend = isZl1
+                if (isZl1) {
                     currentControlFile = layoutFile
-                    var l = getLayout(layoutFile)
-                    if (l === EmptyControlLayout || l.layers.isEmpty()) {
-                        val fallback: File? = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
-                            .takeIf { it.exists() && it != layoutFile }
-                        if (fallback != null) {
-                            currentControlFile = fallback
-                            l = getLayout(fallback)
+                } else {
+                    val layout = withContext(Dispatchers.IO) {
+                        delay(10L.milliseconds) //刻意等待一会再加载
+                        currentControlFile = layoutFile
+                        var l = getLayout(layoutFile)
+                        if (l === EmptyControlLayout || l.layers.isEmpty()) {
+                            val fallback: File? = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
+                                .takeIf { it.exists() && it != layoutFile }
+                            if (fallback != null) {
+                                currentControlFile = fallback
+                                l = getLayout(fallback)
+                            }
                         }
+                        l
                     }
-                    l
+                    //将控制布局加载为可供Compose加载的形式
+                    observableLayout = ObservableControlLayout(layout)
                 }
-                //将控制布局加载为可供Compose加载的形式
-                observableLayout = ObservableControlLayout(layout)
             }
         }
     }
@@ -553,6 +571,21 @@ fun GameScreen(
         getUserName = getAccountName
     )
 
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                if (viewModel.isZalith1Backend) {
+                    viewModel.currentControlFile?.let { viewModel.replaceControlLayout(it) }
+                }
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     LaunchedEffect(viewModel.isEditingLayout, viewModel.gameMenuState) {
         //向VMActivity同步状态，编辑控制布局或打开游戏菜单时，不会继续处理按键事件
         val allowKeyHandle = !viewModel.isEditingLayout && viewModel.gameMenuState != MenuState.SHOW
@@ -626,39 +659,95 @@ fun GameScreen(
                 )
             }
 
-            //控制布局层
-            ControlBoxLayout(
-                modifier = Modifier.fillMaxSize(),
-                observedLayout = viewModel.observableLayout,
-                eventHandler = viewModel.eventHandler,
-                checkOccupiedPointers = { viewModel.occupiedPointers.contains(it) },
-                opacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f),
-                buttonScale = (AllSettings.controlsButtonScale.state.toFloat() / 100f).coerceIn(0.5f, 2.0f),
-                markPointerAsMoveOnly = { viewModel.moveOnlyPointers.add(it) },
-                onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
-                onReleasePointer = { viewModel.occupiedPointers.remove(it) },
-                isCursorGrabbing = isGrabbing,
-                hideLayerWhen = viewModel.controlLayerHideState,
-                isDark = isLauncherInDarkTheme()
-            ) {
-                //虚拟鼠标控制层
-                MouseControlLayout(
-                    isTouchProxyEnabled = isTouchProxyEnabled,
+            if (viewModel.isZalith1Backend) {
+                // Zalith Launcher 1 Authentic Engine
+                Box(modifier = Modifier.fillMaxSize()) {
+                    MouseControlLayout(
+                        isTouchProxyEnabled = isTouchProxyEnabled,
+                        modifier = Modifier.fillMaxSize(),
+                        cursorMode = cursorMode,
+                        screenSize = screenSize,
+                        onInputAreaRectUpdated = onInputAreaRectUpdated,
+                        textInputMode = textInputMode,
+                        isMoveOnlyPointer = { viewModel.moveOnlyPointers.contains(it) },
+                        onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
+                        onReleasePointer = {
+                            viewModel.occupiedPointers.remove(it)
+                            viewModel.moveOnlyPointers.remove(it)
+                        },
+                        onMouseMoved = { viewModel.switchControlLayer(HideLayerWhen.WhenMouse) },
+                        onTouch = { viewModel.switchControlLayer(HideLayerWhen.None) },
+                        gamepadViewModel = gamepadViewModel.takeIf { AllSettings.gamepadControl.state }
+                    )
+                    key(viewModel.editorRefresh, viewModel.currentControlFile?.absolutePath) {
+                        AndroidView(
+                            modifier = Modifier.fillMaxSize(),
+                            factory = { ctx ->
+                                net.kdt.pojavlaunch.customcontrols.ControlLayout(ctx).apply {
+                                    setModifiable(false)
+                                    setActionListener(object : net.kdt.pojavlaunch.customcontrols.ControlActionListener {
+                                        override fun onToggleKeyboard() {
+                                            eventViewModel.sendEvent(EventViewModel.Event.Game.SwitchIme(null))
+                                        }
+                                        override fun onToggleMouse() {
+                                            ZLBridgeStates.changeCursorMode(if (cursorMode == CURSOR_DISABLED) CURSOR_ENABLED else CURSOR_DISABLED)
+                                        }
+                                        override fun onOpenMenu() {
+                                            viewModel.switchMenu()
+                                        }
+                                    })
+                                    runCatching {
+                                        loadLayout(viewModel.currentControlFile?.absolutePath)
+                                    }.onFailure { e ->
+                                        Logger.warning(TAG, "Failed to load ZL1 layout in game", e)
+                                    }
+                                }
+                            },
+                            update = { zl1Layout ->
+                                val opacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f)
+                                zl1Layout.alpha = opacity
+                            },
+                            onRelease = { zl1Layout ->
+                                zl1Layout.releaseAllKeys()
+                            }
+                        )
+                    }
+                }
+            } else {
+                //控制布局层
+                ControlBoxLayout(
                     modifier = Modifier.fillMaxSize(),
-                    cursorMode = cursorMode,
-                    screenSize = screenSize,
-                    onInputAreaRectUpdated = onInputAreaRectUpdated,
-                    textInputMode = textInputMode,
-                    isMoveOnlyPointer = { viewModel.moveOnlyPointers.contains(it) },
+                    observedLayout = viewModel.observableLayout,
+                    eventHandler = viewModel.eventHandler,
+                    checkOccupiedPointers = { viewModel.occupiedPointers.contains(it) },
+                    opacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f),
+                    buttonScale = (AllSettings.controlsButtonScale.state.toFloat() / 100f).coerceIn(0.5f, 2.0f),
+                    markPointerAsMoveOnly = { viewModel.moveOnlyPointers.add(it) },
                     onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
-                    onReleasePointer = {
-                        viewModel.occupiedPointers.remove(it)
-                        viewModel.moveOnlyPointers.remove(it)
-                    },
-                    onMouseMoved = { viewModel.switchControlLayer(HideLayerWhen.WhenMouse) },
-                    onTouch = { viewModel.switchControlLayer(HideLayerWhen.None) },
-                    gamepadViewModel = gamepadViewModel.takeIf { AllSettings.gamepadControl.state }
-                )
+                    onReleasePointer = { viewModel.occupiedPointers.remove(it) },
+                    isCursorGrabbing = isGrabbing,
+                    hideLayerWhen = viewModel.controlLayerHideState,
+                    isDark = isLauncherInDarkTheme()
+                ) {
+                    //虚拟鼠标控制层
+                    MouseControlLayout(
+                        isTouchProxyEnabled = isTouchProxyEnabled,
+                        modifier = Modifier.fillMaxSize(),
+                        cursorMode = cursorMode,
+                        screenSize = screenSize,
+                        onInputAreaRectUpdated = onInputAreaRectUpdated,
+                        textInputMode = textInputMode,
+                        isMoveOnlyPointer = { viewModel.moveOnlyPointers.contains(it) },
+                        onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
+                        onReleasePointer = {
+                            viewModel.occupiedPointers.remove(it)
+                            viewModel.moveOnlyPointers.remove(it)
+                        },
+                        onMouseMoved = { viewModel.switchControlLayer(HideLayerWhen.WhenMouse) },
+                        onTouch = { viewModel.switchControlLayer(HideLayerWhen.None) },
+                        gamepadViewModel = gamepadViewModel.takeIf { AllSettings.gamepadControl.state }
+                    )
+                }
             }
 
             //物品栏触发层
@@ -734,9 +823,20 @@ fun GameScreen(
             onSendKeycode = { viewModel.sendKeycodeState = SendKeycodeState.ShowDialog },
             onReplacementControl = { viewModel.replacementControlState = ReplacementControlState.Show },
             onEditLayout = {
-                viewModel.startControlEditor(
-                    editorVM = editorViewModel
-                )
+                if (viewModel.isZalith1Backend) {
+                    val file = viewModel.currentControlFile
+                    context.startActivity(
+                        Intent(context, CustomControlsActivity::class.java).apply {
+                            if (file != null) {
+                                putExtra(CustomControlsActivity.BUNDLE_CONTROL_PATH, file.absolutePath)
+                            }
+                        }
+                    )
+                } else {
+                    viewModel.startControlEditor(
+                        editorVM = editorViewModel
+                    )
+                }
             },
             onShowToast = { text, duration ->
                 eventViewModel.sendToast(text, duration)

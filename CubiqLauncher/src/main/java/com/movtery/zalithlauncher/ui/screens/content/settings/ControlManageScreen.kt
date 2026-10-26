@@ -104,6 +104,8 @@ import com.movtery.zalithlauncher.game.control.ControlManager
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.ui.activities.startEditorActivity
+import android.content.Intent
+import net.kdt.pojavlaunch.CustomControlsActivity
 import com.movtery.zalithlauncher.ui.androidText
 import com.movtery.zalithlauncher.ui.base.BaseScreen
 import com.movtery.zalithlauncher.ui.components.AnimatedRow
@@ -235,44 +237,82 @@ fun ControlManageScreen(
         operation = viewModel.operation,
         changeOperation = { viewModel.operation = it },
         onCreate = { name, author, versionName, templateType ->
-            val assetName = if (templateType == "Pocket Edition Controls") "pocket_edition_layout.json" else "mojo_layout.json"
-            val layout = runCatching {
-                val jsonStr = context.assets.open(assetName).bufferedReader().use { it.readText() }
-                val base = loadLayoutFromString(jsonStr)
-                base.copy(
-                    info = base.info.copy(
-                        name = createTranslatable(default = name),
-                        author = createTranslatable(default = author),
-                        versionName = versionName
+            if (templateType == "Zalith Launcher 1 Controls") {
+                runCatching {
+                    val assetJson = context.assets.open("zalith_1_layout.json").bufferedReader().use { it.readText() }
+                    val jobj = org.json.JSONObject(assetJson)
+                    val infoObj = org.json.JSONObject()
+                    infoObj.put("name", name)
+                    infoObj.put("author", author)
+                    infoObj.put("desc", "Zalith Launcher 1 Controls")
+                    infoObj.put("version", versionName)
+                    jobj.put("mControlInfoDataList", infoObj)
+                    val newFile = java.io.File(com.movtery.zalithlauncher.path.PathManager.DIR_CONTROL_LAYOUTS, "${com.movtery.layer_controller.utils.newRandomFileName()}.json")
+                    newFile.writeText(jobj.toString(2))
+                    com.movtery.zalithlauncher.game.control.ControlManager.refresh()
+                }.onFailure { e ->
+                    submitError(
+                        ErrorViewModel.ThrowableMessage(
+                            title = androidText(R.string.control_manage_failed_to_save),
+                            message = androidText(e.getMessageOrToString())
+                        )
                     )
-                )
-            }.getOrElse {
-                EmptyControlLayout.copy(
-                    info = EmptyLayoutInfo.copy(
-                        name = createTranslatable(default = name),
-                        author = createTranslatable(default = author),
-                        versionName = versionName
+                }
+            } else {
+                val assetName = if (templateType == "Pocket Edition Controls") "pocket_edition_layout.json" else "mojo_layout.json"
+                val layout = runCatching {
+                    val jsonStr = context.assets.open(assetName).bufferedReader().use { it.readText() }
+                    val base = loadLayoutFromString(jsonStr)
+                    base.copy(
+                        info = base.info.copy(
+                            name = createTranslatable(default = name),
+                            author = createTranslatable(default = author),
+                            versionName = versionName
+                        )
                     )
-                )
-            }
-            viewModel.createNew(layout) { e ->
-                submitError(
-                    ErrorViewModel.ThrowableMessage(
-                        title = androidText(R.string.control_manage_failed_to_save),
-                        message = androidText(e.getMessageOrToString())
+                }.getOrElse {
+                    EmptyControlLayout.copy(
+                        info = EmptyLayoutInfo.copy(
+                            name = createTranslatable(default = name),
+                            author = createTranslatable(default = author),
+                            versionName = versionName
+                        )
                     )
-                )
+                }
+                viewModel.createNew(layout) { e ->
+                    submitError(
+                        ErrorViewModel.ThrowableMessage(
+                            title = androidText(R.string.control_manage_failed_to_save),
+                            message = androidText(e.getMessageOrToString())
+                        )
+                    )
+                }
             }
         },
         onDelete = { data ->
             ControlManager.deleteControl(data)
         },
         onSave = { data ->
-            ControlManager.saveControl(data) { e ->
-                ErrorViewModel.ThrowableMessage(
-                    title = androidText(R.string.control_manage_failed_to_save),
-                    message = androidText(e.getMessageOrToString())
-                )
+            if (data.isZalith1) {
+                runCatching {
+                    val content = data.file.readText()
+                    val jobj = org.json.JSONObject(content)
+                    val infoObj = if (jobj.has("mControlInfoDataList")) jobj.getJSONObject("mControlInfoDataList") else org.json.JSONObject()
+                    infoObj.put("name", data.controlLayout.info.name.default)
+                    infoObj.put("author", data.controlLayout.info.author.default)
+                    infoObj.put("desc", data.controlLayout.info.description.default)
+                    infoObj.put("version", data.controlLayout.info.versionName)
+                    jobj.put("mControlInfoDataList", infoObj)
+                    data.file.writeText(jobj.toString(2))
+                    ControlManager.refresh()
+                }
+            } else {
+                ControlManager.saveControl(data) { e ->
+                    ErrorViewModel.ThrowableMessage(
+                        title = androidText(R.string.control_manage_failed_to_save),
+                        message = androidText(e.getMessageOrToString())
+                    )
+                }
             }
         }
     )
@@ -305,13 +345,29 @@ fun ControlManageScreen(
                         viewModel.operation = ControlOperation.CreateNew
                     },
                     onCopy = { data ->
-                        viewModel.copyNew(data.controlLayout) { e ->
-                            submitError(
-                                ErrorViewModel.ThrowableMessage(
-                                    title = androidText(R.string.control_manage_failed_to_save),
-                                    message = androidText(e.getMessageOrToString())
+                        if (data.isZalith1) {
+                            runCatching {
+                                val content = data.file.readText()
+                                val newFile = java.io.File(com.movtery.zalithlauncher.path.PathManager.DIR_CONTROL_LAYOUTS, "${com.movtery.layer_controller.utils.newRandomFileName()}.json")
+                                newFile.writeText(content)
+                                ControlManager.refresh()
+                            }.onFailure { e ->
+                                submitError(
+                                    ErrorViewModel.ThrowableMessage(
+                                        title = androidText(R.string.control_manage_failed_to_save),
+                                        message = androidText(e.getMessageOrToString())
+                                    )
                                 )
-                            )
+                            }
+                        } else {
+                            viewModel.copyNew(data.controlLayout) { e ->
+                                submitError(
+                                    ErrorViewModel.ThrowableMessage(
+                                        title = androidText(R.string.control_manage_failed_to_save),
+                                        message = androidText(e.getMessageOrToString())
+                                    )
+                                )
+                            }
                         }
                     },
                     onDelete = { data ->
@@ -333,7 +389,15 @@ fun ControlManageScreen(
                         shareFile(context, data.file)
                     },
                     onEditLayout = { data ->
-                        startEditorActivity(context, data.file)
+                        if (data.isZalith1 || data.file.name == "zalith_1_layout.json") {
+                            context.startActivity(
+                                Intent(context, CustomControlsActivity::class.java).apply {
+                                    putExtra(CustomControlsActivity.BUNDLE_CONTROL_PATH, data.file.absolutePath)
+                                }
+                            )
+                        } else {
+                            startEditorActivity(context, data.file)
+                        }
                     },
                     onEditText = { data, string, type ->
                         viewModel.operation = ControlOperation.EditText(data, string, type)
@@ -1083,7 +1147,7 @@ private fun CreateNewLayoutDialog(
                                 .padding(horizontal = 4.dp, vertical = 2.dp)
                         )
 
-                        listOf("Plain Java Controls", "Pocket Edition Controls").forEach { template ->
+                        listOf("Plain Java Controls", "Pocket Edition Controls", "Zalith Launcher 1 Controls").forEach { template ->
                             val isSel = selectedTemplate == template
                             Row(
                                 modifier = Modifier
@@ -1104,7 +1168,11 @@ private fun CreateNewLayoutDialog(
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                     Text(
-                                        text = if (template == "Pocket Edition Controls") "Bedrock mobile controls layout (~65% opacity)" else "Standard PC keyboard on-screen buttons",
+                                        text = when (template) {
+                                            "Pocket Edition Controls" -> "Bedrock mobile controls layout (~65% opacity)"
+                                            "Zalith Launcher 1 Controls" -> "Original ZL1 control engine and single-panel integrated editor"
+                                            else -> "Standard PC keyboard on-screen buttons"
+                                        },
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )

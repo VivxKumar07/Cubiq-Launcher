@@ -54,6 +54,7 @@ import com.movtery.zalithlauncher.viewmodel.BackgroundViewModel
 import com.movtery.zalithlauncher.viewmodel.EditorViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
+import net.kdt.pojavlaunch.CustomControlsActivity
 
 private const val BUNDLE_CONTROL = "BUNDLE_CONTROL"
 
@@ -178,11 +179,29 @@ class ControlEditorActivity : BaseAppCompatActivity() {
 }
 
 /**
- * 开启控制布局编辑器
+ * 检查是否为 Zalith Launcher 1 布局
+ */
+fun isZalith1Layout(file: File): Boolean {
+    if (file.name == "zalith_1_layout.json") return true
+    return runCatching {
+        val content = file.readText()
+        content.contains("mControlDataList")
+    }.getOrDefault(false)
+}
+
+/**
+ * 开启控制布局编辑器（根据布局类型自动分流至对应的独立编辑器后端）
  */
 fun startEditorActivity(context: Context, file: File) {
-    val intent = Intent(context, ControlEditorActivity::class.java).apply {
-        putExtra(BUNDLE_CONTROL, file.absolutePath)
+    if (isZalith1Layout(file)) {
+        val intent = Intent(context, CustomControlsActivity::class.java).apply {
+            putExtra(CustomControlsActivity.BUNDLE_CONTROL_PATH, file.absolutePath)
+        }
+        context.startActivity(intent)
+    } else {
+        val intent = Intent(context, ControlEditorActivity::class.java).apply {
+            putExtra(BUNDLE_CONTROL, file.absolutePath)
+        }
+        context.startActivity(intent)
     }
-    context.startActivity(intent)
 }

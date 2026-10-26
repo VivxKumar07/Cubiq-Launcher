@@ -18,10 +18,18 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
-    <style name="AppTheme.Fullscreen" parent="AppTheme.CubiqLauncher">
+    <style name="AppTheme.Fullscreen" parent="Theme.Material3.Dark.NoActionBar">
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowBackground">#000000</item>
-        <item name="android:colorBackground">#000000</item>
+        <item name="android:windowBackground">#141416</item>
+        <item name="android:colorBackground">#141416</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#9E9EA4</item>
+        <item name="android:editTextColor">#FFFFFF</item>
+        <item name="android:textColorHint">#666666</item>
         <item name="android:windowContentOverlay">@null</item>
+    </style>
+    <style name="CustomDialogStyle" parent="Theme.Material3.Dark.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 </resources>

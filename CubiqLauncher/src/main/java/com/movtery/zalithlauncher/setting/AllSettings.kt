@@ -652,4 +652,17 @@ object AllSettings : SettingsRegistry() {
      * Launcher Orientation Lock ("unspecified", "portrait", "landscape")
      */
     val launcherOrientationLock = stringSetting("launcherOrientationLock", "unspecified")
+
+    /**
+     * ZL1 Control Subsystem Settings
+     */
+    @JvmField
+    val buttonSnapping = boolSetting("buttonSnapping", true)
+    @JvmField
+    val buttonSnappingDistance = intSetting("buttonSnappingDistance", 16, 2..64)
+    @JvmField val buttonAllCaps = boolSetting("buttonAllCaps", true)
+ @JvmStatic fun getButtonAllCaps() = buttonAllCaps
+ @JvmStatic fun getButtonSnapping() = buttonSnapping
+ @JvmStatic fun getButtonSnappingDistance() = buttonSnappingDistance
+ @JvmStatic fun getButtonScale() = controlsButtonScale
 }

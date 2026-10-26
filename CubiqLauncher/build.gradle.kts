@@ -131,6 +131,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
+        viewBinding = true
         compose = true
         buildConfig = true
         prefab = true
@@ -231,6 +232,10 @@ buildKeys {
 }
 
 dependencies {
+    implementation("com.github.Mathias-Boulay:virtual-joystick-android:1.14")
+    implementation("com.intuit.sdp:sdp-android:1.1.1")
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
+    implementation("com.github.duanhong169:checkerboarddrawable:1.0.2")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)

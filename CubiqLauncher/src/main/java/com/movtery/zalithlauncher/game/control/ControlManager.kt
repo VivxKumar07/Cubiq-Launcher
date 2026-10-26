@@ -20,6 +20,7 @@ package com.movtery.zalithlauncher.game.control
 
 import android.content.Context
 import com.movtery.layer_controller.layout.ControlLayout
+import com.movtery.layer_controller.data.lang.TranslatableString
 import com.movtery.layer_controller.layout.loadLayoutFromFile
 import com.movtery.layer_controller.layout.loadLayoutFromFileUncheck
 import com.movtery.layer_controller.layout.loadLayoutFromString
@@ -98,6 +99,16 @@ object ControlManager {
                 }
             }
 
+            val zl1File = File(PathManager.DIR_CONTROL_LAYOUTS, "zalith_1_layout.json")
+            if (zl1File.exists()) {
+                runCatching {
+                    val content = zl1File.readText()
+                    if (!content.contains("mControlDataList")) {
+                        context.copyAssetFile(fileName = "zalith_1_layout.json", output = zl1File, overwrite = true)
+                    }
+                }
+            }
+
             val mojoFile = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
             if (mojoFile.exists()) {
                 runCatching {
@@ -128,6 +139,48 @@ object ControlManager {
             PathManager.DIR_CONTROL_LAYOUTS.listFiles()?.mapNotNull { file ->
                 if (!(file.isFile && file.exists() && file.extension.equals("json", true))) return@mapNotNull null
 
+                val fileContent = runCatching { file.readText() }.getOrNull() ?: return@mapNotNull null
+                val isZalith1 = file.name == "zalith_1_layout.json" || fileContent.contains("mControlDataList")
+
+                if (isZalith1) {
+                    var displayName = if (file.name == "zalith_1_layout.json") {
+                        "Zalith Launcher 1 Controls"
+                    } else {
+                        file.nameWithoutExtension.replace('_', ' ').split(" ").joinToString(" ") { part ->
+                            part.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+                        }
+                    }
+                    var authorName = "Zalith Launcher 1"
+                    runCatching {
+                        val jobj = org.json.JSONObject(fileContent)
+                        if (jobj.has("mControlInfoDataList")) {
+                            val info = jobj.getJSONObject("mControlInfoDataList")
+                            if (info.has("name") && !info.getString("name").isNullOrEmpty() && info.getString("name") != "null" && !info.getString("name").startsWith("control.")) {
+                                displayName = info.getString("name")
+                            }
+                            if (info.has("author") && !info.getString("author").isNullOrEmpty() && info.getString("author") != "null") {
+                                authorName = info.getString("author")
+                            }
+                        }
+                    }
+                    val zl1Layout = ControlLayout(
+                        info = ControlLayout.Info(
+                            name = TranslatableString(displayName, emptyList()),
+                            author = TranslatableString(authorName, emptyList()),
+                            description = TranslatableString("Original Zalith Launcher 1 Controls", emptyList()),
+                            versionCode = 1,
+                            versionName = "1.0"
+                        ),
+                        editorVersion = 1
+                    )
+                    return@mapNotNull ControlData(
+                        file = file,
+                        controlLayout = ObservableControlLayout(zl1Layout),
+                        isSupport = true,
+                        isZalith1 = true
+                    )
+                }
+
                 var isSupport = true
                 val layout: ControlLayout = try {
                     loadLayoutFromFile(file)
@@ -146,7 +199,8 @@ object ControlManager {
                 ControlData(
                     file = file,
                     controlLayout = ObservableControlLayout(layout),
-                    isSupport = isSupport
+                    isSupport = isSupport,
+                    isZalith1 = false
                 )
             }?.let { list ->
                 _dataList.update {
@@ -260,10 +314,17 @@ object ControlManager {
         val file = getNewRandomFile()
         try {
             inputStream.use { stream ->
-                val jsonString = stream.readString()
-                val layout = loadLayoutFromString(jsonString)
-                layout.saveToFile(file)
+                val rawString = stream.readString()
+                val jsonString = rawString.trim().removePrefix("﻿")
+                val jsonObj = org.json.JSONObject(jsonString)
+                if (jsonObj.optJSONArray("mControlDataList") != null) {
+                    file.writeText(jsonObj.toString(2))
+                } else {
+                    val layout = loadLayoutFromString(jsonString)
+                    layout.saveToFile(file)
+                }
             }
+            refresh()
             onFinished()
         } catch (e: SerializationException) {
             FileUtils.deleteQuietly(file)

@@ -3156,7 +3156,7 @@ private fun CreateTouchLayoutDialog(
 
 
 
-                listOf("Plain Java Controls", "Pocket Edition Controls").forEach { template ->
+                listOf("Plain Java Controls", "Pocket Edition Controls", "Zalith Launcher 1 Controls").forEach { template ->
 
                     val isSel = selectedTemplate == template
 
@@ -3206,7 +3206,7 @@ private fun CreateTouchLayoutDialog(
 
                             Text(
 
-                                text = if (template == "Pocket Edition Controls") "Bedrock mobile controls layout (~65% opacity)" else "Standard PC keyboard on-screen buttons",
+                                text = if (template == "Pocket Edition Controls") "Bedrock mobile controls layout (~65% opacity)" else if (template == "Zalith Launcher 1 Controls") "Original Zalith 1 PvP-focused control layout" else "Standard PC keyboard on-screen buttons",
 
                                 color = Color(0xFF888888),
 
@@ -3255,6 +3255,24 @@ private fun CreateTouchLayoutDialog(
                             val file = File(PathManager.DIR_CONTROL_LAYOUTS, "${newRandomFileName()}.json")
 
                             try {
+
+                                if (selectedTemplate == "Zalith Launcher 1 Controls") {
+                                    val zl1Json = context.assets.open("zalith_1_layout.json").bufferedReader().use { it.readText() }
+                                    val jobj = org.json.JSONObject(zl1Json)
+                                    val infoObj = org.json.JSONObject()
+                                    infoObj.put("name", layoutName.trim())
+                                    infoObj.put("author", "Player")
+                                    infoObj.put("desc", "Zalith Launcher 1 Controls")
+                                    infoObj.put("version", "1.0")
+                                    jobj.put("mControlInfoDataList", infoObj)
+                                    file.writeText(jobj.toString(2))
+                                    ControlManager.refresh()
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(context, "Layout '${layoutName.trim()}' created from $selectedTemplate!", Toast.LENGTH_SHORT).show()
+                                        onCreated()
+                                    }
+                                    return@launch
+                                }
 
                                 val assetName = if (selectedTemplate == "Pocket Edition Controls") "pocket_edition_layout.json" else "mojo_layout.json"
 

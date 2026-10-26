@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pressed state -->
+    <item android:state_pressed="true">
+        <layer-list>
+            <!-- 1. Outer border -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="3dp" />
+                    <solid android:color="#18181A" />
+                </shape>
+            </item>
+            <!-- 2. Inner gradient -->
+            <item android:top="2dp" android:bottom="2dp" android:left="2dp" android:right="2dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="2dp" />
+                    <gradient
+                        android:angle="270"
+                        android:startColor="#2D2D32"
+                        android:endColor="#242428" />
+                </shape>
+            </item>
+            <!-- 3. Bevel shadow for pressed feedback -->
+            <item android:top="2dp" android:left="2dp" android:right="2dp" android:height="3dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#50000000" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Normal state -->
+    <item>
+        <layer-list>
+            <!-- 1. Outer dark border -->
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="3dp" />
+                    <solid android:color="#18181A" />
+                </shape>
+            </item>
+            <!-- 2. Bottom 3D shadow shelf -->
+            <item android:top="2dp" android:bottom="0dp" android:left="2dp" android:right="2dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="2dp" />
+                    <solid android:color="#242428" />
+                </shape>
+            </item>
+            <!-- 3. Medium slate stone gradient body -->
+            <item android:top="2dp" android:bottom="3.5dp" android:left="2dp" android:right="2dp">
+                <shape android:shape="rectangle">
+                    <corners android:radius="2dp" />
+                    <gradient
+                        android:angle="270"
+                        android:startColor="#45454B"
+                        android:endColor="#36363B" />
+                </shape>
+            </item>
+            <!-- 4. Top crisp highlight line -->
+            <item android:top="2dp" android:left="2dp" android:right="2dp" android:height="2.5dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="#686870" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>
+

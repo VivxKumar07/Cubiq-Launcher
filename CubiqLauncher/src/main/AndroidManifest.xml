@@ -115,6 +115,11 @@
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
             android:screenOrientation="unspecified" />
         <activity
+            android:name="net.kdt.pojavlaunch.CustomControlsActivity"
+            android:theme="@style/AppTheme.Fullscreen"
+            android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
+            android:screenOrientation="sensorLandscape" />
+        <activity
             android:name=".ui.activities.ControlEditorActivity"
             android:theme="@style/AppTheme.Fullscreen"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"

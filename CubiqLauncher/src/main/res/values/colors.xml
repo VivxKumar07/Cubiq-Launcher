@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cubiq Dark Palette for Controls & Popups -->
+    <color name="black_or_white">#FFFFFF</color>
+    <color name="primary_text">#FFFFFF</color>
+    <color name="secondary_text">#9E9EA4</color>
+
+    <color name="background_app">#1E1E22</color>
+    <color name="background_app_error">#3A1C1C</color>
+    <color name="background_overlay">#80000000</color>
+    <color name="background_status_bar">#141416</color>
+    <color name="background_menu_top">#18181B</color>
+    <color name="background_menu_top_error">#9C2D2D</color>
+    <color name="background_menu_element">#26262B</color>
+    <color name="background_ripple_effect">#33FFFFFF</color>
+
+    <color name="button_background">#26262B</color>
+    <color name="button_background_selected">#383842</color>
+    <color name="dialog_background">#1E1E22</color>
+
+    <color name="menu_bar">#1E1E22</color>
+    <color name="menu_bar_text">#FFFFFF</color>
+    <color name="menu_overlay">#F21E1E22</color>
+    <color name="menu_progress">#55FF55</color>
+
+    <color name="background_item">#26262B</color>
+    <color name="background_item_selected">#383842</color>
+    <color name="background_item_disabled">#1A1A1E</color>
+    <color name="background_sponsor_intermediate">#CCFFCB8B</color>
+    <color name="background_sponsor_advanced">#CCFDA28A</color>
+
+    <color name="edit_box_fill">#18181B</color>
+    <color name="edit_box_fill_selected">#24242A</color>
+    <color name="edit_box_stroke">#383842</color>
+
+    <color name="mod_category_fill">#2E2E35</color>
+    <color name="text_background_fill">#2E2E35</color>
+
+    <color name="settings_category">#55FF55</color>
+    <color name="favorite_color">#FA7C7C</color>
+    <color name="icon_color">#FFFFFF</color>
+</resources>

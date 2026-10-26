@@ -27,5 +27,6 @@ import java.io.File
 data class ControlData(
     val file: File,
     val controlLayout: ObservableControlLayout,
-    val isSupport: Boolean = true
+    val isSupport: Boolean = true,
+    val isZalith1: Boolean = false
 )

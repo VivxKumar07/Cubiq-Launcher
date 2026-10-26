@@ -60,6 +60,7 @@ class ZLApplication : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         GlobalContext = this
         refreshContext(this)
+        net.kdt.pojavlaunch.Tools.currentDisplayMetrics = resources.displayMetrics
         //初始化任务保活控制器，需在任何任务开始前完成初始化
         TaskKeepAlive.initialize(this)
 
