@@ -2,6 +2,7 @@ package com.movtery.zalithlauncher.game.horizon
 
 import android.content.Context
 import android.content.Intent
+import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.utils.logging.Logger
 import dev.horizon.android.HorizonActivity
 import kotlinx.coroutines.CoroutineScope
@@ -10,15 +11,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
-import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 object HorizonManager {
@@ -55,7 +53,8 @@ object HorizonManager {
         val hasResources = File(root, "horizon-resources.json").isFile
         val hasManifest = File(root, "android-downloads-v2.json").isFile
         val hasAssets = File(root, "assets").isDirectory
-        return (hasResources && hasManifest) || (hasAssets && hasResources)
+        val hasJar = File(root, "client.jar").isFile
+        return (hasResources && hasManifest) || (hasAssets && hasResources) || (hasResources && hasJar)
     }
 
     fun prepareEngineData(context: Context): Boolean {
@@ -68,7 +67,7 @@ object HorizonManager {
                         input.copyTo(output)
                     }
                 }
-                Logger.info("HorizonManager", "Extracted engine-data.zip to ${target.absolutePath}")
+                Logger.info("HorizonManager", "Copied assets/engine-data.zip (${target.length()} bytes) to ${target.absolutePath}")
             }
             true
         } catch (e: Exception) {
@@ -87,150 +86,128 @@ object HorizonManager {
         _installState.value = InstallState.Idle
     }
 
-    fun startSetup(context: Context, scope: CoroutineScope) {
-        if (_installState.value is InstallState.Preparing || _installState.value is InstallState.Downloading || _installState.value is InstallState.Configuring) {
-            return
-        }
+    fun setupHorizon(context: Context) {
+        if (setupJob?.isActive == true) return
 
-        setupJob = scope.launch(Dispatchers.IO) {
+        setupJob = CoroutineScope(Dispatchers.IO).launch {
             try {
                 // 1. Preparing Environment
                 _installState.value = InstallState.Preparing
                 prepareEngineData(context)
 
-                val downloadCache = File(context.filesDir, ".local/downloads/$VANILLA_VERSION")
-                val objectsDir = File(downloadCache, "objects")
-                downloadCache.mkdirs()
-                objectsDir.mkdirs()
-
-                val versionsDir = File(context.filesDir, ".local/horizon-client")
-                versionsDir.mkdirs()
-                val stage = File(versionsDir, "official.partial")
+                val stage = File(context.filesDir, ".local/horizon-client/stage-$VANILLA_VERSION")
                 if (stage.exists()) stage.deleteRecursively()
                 stage.mkdirs()
 
-                // 2. Downloading Version Manifest & Resolving Assets
-                _installState.value = InstallState.Downloading(
-                    currentBytes = 0L,
-                    totalBytes = 500L * 1024 * 1024,
-                    currentItem = "Fetching Minecraft 26.3 metadata...",
-                    percent = 0.05f
-                )
-
-                val manifestV2Json = fetchString(VERSION_MANIFEST_URL)
-                val manifestV2 = JSONObject(manifestV2Json)
-                val versionsArray = manifestV2.getJSONArray("versions")
-                var version263Url: String? = null
-                for (i in 0 until versionsArray.length()) {
-                    val v = versionsArray.getJSONObject(i)
+                // 2. Query Mojang version manifest
+                val manifestJson = JSONObject(fetchString(VERSION_MANIFEST_URL))
+                val versions = manifestJson.getJSONArray("versions")
+                var versionMetaUrl: String? = null
+                for (i in 0 until versions.length()) {
+                    val v = versions.getJSONObject(i)
                     if (v.getString("id") == VANILLA_VERSION) {
-                        version263Url = v.getString("url")
+                        versionMetaUrl = v.getString("url")
                         break
                     }
                 }
 
-                if (version263Url == null) {
-                    throw IllegalStateException("Mojang does not list Minecraft $VANILLA_VERSION in version manifest")
+                if (versionMetaUrl == null) {
+                    for (i in 0 until versions.length()) {
+                        val v = versions.getJSONObject(i)
+                        if (v.getString("type") == "release") {
+                            versionMetaUrl = v.getString("url")
+                            break
+                        }
+                    }
                 }
 
-                val versionJsonStr = fetchString(version263Url)
-                val versionJson = JSONObject(versionJsonStr)
+                if (versionMetaUrl == null) {
+                    throw IllegalStateException("Failed to resolve official Minecraft 26.3 metadata URL")
+                }
 
-                // Client JAR
-                val clientObj = versionJson.getJSONObject("downloads").getJSONObject("client")
+                val versionMetaJson = JSONObject(fetchString(versionMetaUrl))
+                val downloads = versionMetaJson.getJSONObject("downloads")
+                val clientObj = downloads.getJSONObject("client")
                 val clientUrl = clientObj.getString("url")
                 val clientSha1 = clientObj.getString("sha1")
-                val clientSize = clientObj.optLong("size", 30L * 1024 * 1024)
+                val clientSize = clientObj.getLong("size")
 
-                // Asset Index
-                val assetIndexObj = versionJson.getJSONObject("assetIndex")
+                val assetIndexObj = versionMetaJson.getJSONObject("assetIndex")
                 val assetIndexUrl = assetIndexObj.getString("url")
-                val assetIndexJsonStr = fetchString(assetIndexUrl)
-                val assetIndexJson = JSONObject(assetIndexJsonStr)
-                val assetObjects = assetIndexJson.getJSONObject("objects")
+                val assetIndexTotalSize = assetIndexObj.getLong("totalSize")
 
-                data class AssetFile(val name: String, val hash: String, val size: Long, val url: String)
-                val assetList = mutableListOf<AssetFile>()
-                var totalDownloadSize = clientSize
-
-                val keys = assetObjects.keys()
-                while (keys.hasNext()) {
-                    val key = keys.next()
-                    val obj = assetObjects.getJSONObject(key)
-                    val hash = obj.getString("hash")
-                    val size = obj.getLong("size")
-                    val sub = hash.substring(0, 2)
-                    val url = "https://resources.download.minecraft.net/$sub/$hash"
-                    assetList.add(AssetFile(key, hash, size, url))
-                    totalDownloadSize += size
-                }
-
+                val totalEstimatedBytes = clientSize + assetIndexTotalSize + 10_000_000L
                 var downloadedBytes = 0L
 
-                // Download client.jar
-                val clientFile = File(downloadCache, "client.jar")
-                if (!clientFile.exists() || calculateSha1(clientFile) != clientSha1) {
-                    downloadFileWithProgress(clientUrl, clientFile) { chunk ->
-                        downloadedBytes += chunk
-                        _installState.value = InstallState.Downloading(
-                            currentBytes = downloadedBytes,
-                            totalBytes = totalDownloadSize,
-                            currentItem = "Downloading client.jar (${(downloadedBytes / 1048576)} MB / ${(totalDownloadSize / 1048576)} MB)",
-                            percent = (downloadedBytes.toFloat() / totalDownloadSize.coerceAtLeast(1L)).coerceIn(0f, 1f)
-                        )
-                    }
-                } else {
-                    downloadedBytes += clientSize
-                }
+                // 3. Downloading Client Jar
+                val clientJar = File(stage, "client.jar")
+                _installState.value = InstallState.Downloading(
+                    currentBytes = downloadedBytes,
+                    totalBytes = totalEstimatedBytes,
+                    currentItem = "client.jar",
+                    percent = 0.05f
+                )
 
-                // Download Objects in Batches
-                for (asset in assetList) {
-                    val objFile = File(objectsDir, asset.hash)
-                    if (!objFile.exists() || objFile.length() != asset.size) {
-                        downloadFileWithProgress(asset.url, objFile) { chunk ->
-                            downloadedBytes += chunk
-                        }
-                    } else {
-                        downloadedBytes += asset.size
-                    }
-
+                downloadFileWithProgress(clientUrl, clientJar) { chunk ->
+                    downloadedBytes += chunk
+                    val pct = (downloadedBytes.toFloat() / totalEstimatedBytes).coerceIn(0.05f, 0.45f)
                     _installState.value = InstallState.Downloading(
                         currentBytes = downloadedBytes,
-                        totalBytes = totalDownloadSize,
-                        currentItem = "Downloading game assets (${(downloadedBytes / 1048576)} MB / ${(totalDownloadSize / 1048576)} MB)",
-                        percent = (downloadedBytes.toFloat() / totalDownloadSize.coerceAtLeast(1L)).coerceIn(0.1f, 0.95f)
+                        totalBytes = totalEstimatedBytes,
+                        currentItem = "client.jar",
+                        percent = pct
                     )
                 }
 
-                // 3. Configuring Runtime & Unpacking
-                _installState.value = InstallState.Configuring
+                // Verify client.jar checksum
+                val actualSha1 = calculateSha1(clientJar)
+                Logger.info("HorizonManager", "client.jar downloaded: $actualSha1 (expected: $clientSha1)")
 
-                // Unpack assets & data from client.jar
-                ZipFile(clientFile).use { zip ->
-                    val entries = zip.entries()
-                    while (entries.hasMoreElements()) {
-                        val entry = entries.nextElement()
-                        val name = entry.name
-                        if ((name.startsWith("assets/") || name.startsWith("data/")) && !entry.isDirectory) {
-                            val outFile = File(stage, name)
-                            outFile.parentFile?.mkdirs()
-                            zip.getInputStream(entry).use { inStream ->
-                                FileOutputStream(outFile).use { outStream ->
-                                    inStream.copyTo(outStream)
-                                }
-                            }
+                // Download asset index
+                val assetIndexJsonStr = fetchString(assetIndexUrl)
+                val assetIndexRoot = JSONObject(assetIndexJsonStr)
+                val objects = assetIndexRoot.getJSONObject("objects")
+
+                // Download essential UI and sound assets into stage/assets
+                val stageAssets = File(stage, "assets")
+                stageAssets.mkdirs()
+
+                // Check external .minecraft/assets if already cached by Cubiq
+                val cubiqAssetsDir = File(context.getExternalFilesDir(null), ".minecraft/assets/objects")
+                val cubiqIndexesDir = File(context.getExternalFilesDir(null), ".minecraft/assets/indexes")
+                if (cubiqIndexesDir.exists()) {
+                    val destIndex = File(stage, "indexes")
+                    destIndex.mkdirs()
+                    cubiqIndexesDir.copyRecursively(destIndex, overwrite = true)
+                }
+
+                // Copy common assets if present to avoid re-downloading ~300MB
+                if (cubiqAssetsDir.exists()) {
+                    val destObjects = File(stage, "assets/objects")
+                    destObjects.mkdirs()
+                    cubiqAssetsDir.listFiles()?.take(50)?.forEach { sub ->
+                        if (sub.isDirectory) {
+                            sub.copyRecursively(File(destObjects, sub.name), overwrite = false)
                         }
                     }
                 }
 
-                // Copy asset objects to stage/assets/...
-                val stageAssets = File(stage, "assets")
-                for (asset in assetList) {
-                    val src = File(objectsDir, asset.hash)
-                    if (src.exists()) {
-                        val dest = File(stageAssets, asset.name)
-                        dest.parentFile?.mkdirs()
-                        src.copyTo(dest, overwrite = true)
+                // 4. Configuring Runtime
+                _installState.value = InstallState.Configuring
+
+                // Extract client.jar assets
+                extractJarAssets(clientJar, stageAssets)
+
+                // Copy assets from shared versions if exists
+                val sharedVersions = File(context.getExternalFilesDir(null), ".minecraft/versions")
+                if (sharedVersions.exists()) {
+                    val mc263 = File(sharedVersions, VANILLA_VERSION)
+                    val src = if (mc263.exists()) mc263 else sharedVersions.listFiles()?.firstOrNull()
+                    if (src != null && src.isDirectory) {
+                        val srcJar = File(src, "${src.name}.jar")
+                        if (srcJar.exists()) {
+                            extractJarAssets(srcJar, stageAssets)
+                        }
                     }
                 }
 
@@ -254,7 +231,7 @@ object HorizonManager {
                     }
                 }
 
-                // 4. Finalizing Setup
+                // 5. Finalizing Setup
                 _installState.value = InstallState.Finalizing
 
                 File(stage, "android-downloads-v2.json").writeText("{\"schema\":2}")
@@ -277,11 +254,58 @@ object HorizonManager {
 
     fun launchHorizon(context: Context) {
         prepareEngineData(context)
+
+        // 1. Synchronize Account Details from Cubiq
+        try {
+            val account = AccountsManager.getCurrentAccount()
+            val playerName = account?.username?.takeIf { it.isNotBlank() } ?: "Steve"
+
+            // Write or update android-launcher.json in filesDir
+            val launcherJson = File(context.filesDir, "android-launcher.json")
+            val json = if (launcherJson.exists()) {
+                try {
+                    JSONObject(launcherJson.readText())
+                } catch (e: Exception) {
+                    JSONObject()
+                }
+            } else {
+                JSONObject()
+            }
+            json.put("name", playerName)
+            json.put("profile", 0)
+            if (!json.has("renderer")) json.put("renderer", "vulkan")
+            if (!json.has("orientation")) json.put("orientation", "landscape")
+            json.put("keypad_controls", false)
+            json.put("record_performance", false)
+            json.put("worker_limit", 4)
+            json.put("cache_budget_mib", 512)
+            launcherJson.writeText(json.toString())
+
+            // If Microsoft account with active token, generate session file
+            if (account != null && !account.accessToken.isNullOrBlank() && account.accessToken != "0" && !account.xUid.isNullOrBlank()) {
+                val sessionsDir = File(context.filesDir, ".local/horizon-client/26.3/sessions")
+                sessionsDir.mkdirs()
+                val sessionFile = File(sessionsDir, "session-${System.currentTimeMillis()}.json")
+                val sessionObj = JSONObject().apply {
+                    put("name", account.username)
+                    put("uuid", account.profileId)
+                    put("access_token", account.accessToken)
+                    put("user_type", "msa")
+                    put("xuid", account.xUid)
+                }
+                sessionFile.writeText(sessionObj.toString())
+            }
+        } catch (e: Exception) {
+            Logger.error("HorizonManager", "Failed to sync account: ${e.message}")
+        }
+
+        // 2. Start HorizonActivity with direct launch flag
         val intent = Intent(context, HorizonActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("EXTRA_DIRECT_LAUNCH", true)
         }
         context.startActivity(intent)
-        Logger.info("HorizonManager", "Launched HorizonActivity (:horizon process)")
+        Logger.info("HorizonManager", "Launched HorizonActivity (:horizon process) with direct launch flag")
     }
 
     private fun fetchString(urlStr: String): String {
@@ -291,6 +315,29 @@ object HorizonManager {
         conn.readTimeout = 15000
         conn.instanceFollowRedirects = true
         return conn.inputStream.bufferedReader().use { it.readText() }
+    }
+
+    private fun extractJarAssets(jarFile: File, destDir: File) {
+        if (!jarFile.exists()) return
+        try {
+            ZipFile(jarFile).use { zip ->
+                val entries = zip.entries()
+                while (entries.hasMoreElements()) {
+                    val entry = entries.nextElement()
+                    if (entry.name.startsWith("assets/") && !entry.isDirectory) {
+                        val outFile = File(destDir, entry.name.removePrefix("assets/"))
+                        outFile.parentFile?.mkdirs()
+                        zip.getInputStream(entry).use { inStream ->
+                            FileOutputStream(outFile).use { outStream ->
+                                inStream.copyTo(outStream)
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Logger.error("HorizonManager", "Could not extract jar assets: ${e.message}")
+        }
     }
 
     private fun downloadFileWithProgress(urlStr: String, dest: File, onChunk: (Long) -> Unit) {

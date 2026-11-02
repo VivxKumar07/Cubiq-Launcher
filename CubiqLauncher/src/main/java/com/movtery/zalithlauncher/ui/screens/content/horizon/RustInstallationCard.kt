@@ -43,6 +43,7 @@ import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 
 /**
  * Java / Rust Engine Selector Header (Panel F)
+ * Uses official Oracle Java logo and official Rust gear/R logo instead of emojis.
  */
 @Composable
 fun JavaRustEngineSelector(
@@ -56,7 +57,7 @@ fun JavaRustEngineSelector(
             .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Java Button
+        // Java Button with official Oracle Java logo
         val isJava = selectedEngine == "Java"
         Box(
             modifier = Modifier
@@ -79,10 +80,16 @@ fun JavaRustEngineSelector(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_java),
+                    contentDescription = "Java Logo",
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(16.dp)
+                )
                 Text(
-                    text = "☕ Java",
+                    text = "Java",
                     color = if (isJava) Color(0xFF55FF55) else Color.White,
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
@@ -91,7 +98,7 @@ fun JavaRustEngineSelector(
             }
         }
 
-        // Rust Button
+        // Rust Button with official Rust logo
         val isRust = selectedEngine == "Rust"
         Box(
             modifier = Modifier
@@ -114,10 +121,16 @@ fun JavaRustEngineSelector(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_rust_logo),
+                    contentDescription = "Rust Logo",
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(16.dp)
+                )
                 Text(
-                    text = "⚙️ Rust",
+                    text = "Rust",
                     color = if (isRust) Color(0xFF55FF55) else Color.White,
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
@@ -142,9 +155,9 @@ fun RustInstallationCard(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(6.dp))
-            .background(Color(0xFF181A20))
-            .border(BorderStroke(1.2.dp, Color(0xFF2B2F3A)), RoundedCornerShape(6.dp))
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color(0xFF1E2024))
+            .border(BorderStroke(1.dp, Color(0xFF33363F)), RoundedCornerShape(4.dp))
             .padding(12.dp)
     ) {
         Row(
@@ -152,16 +165,16 @@ fun RustInstallationCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Icon & Titles
+            // Left: Icon + Title
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Image(
                     painter = painterResource(R.drawable.ic_horizon_logo),
-                    contentDescription = "Minecraft Rust",
+                    contentDescription = "Horizon Icon",
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(42.dp)
                         .clip(CircleShape)
                 )
 
@@ -173,63 +186,68 @@ fun RustInstallationCard(
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 13.5.sp
+                        fontSize = 14.sp
                     )
 
                     Text(
                         text = "Horizon · Rust Edition",
-                        color = Color(0xFF9CA3AF),
+                        color = Color(0xFF9E9E9E),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 11.sp
                     )
                 }
             }
 
-            // Play & Options Buttons
+            // Right: Play Button & Overflow
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Play Button
                 MinecraftButton(
                     onClick = onLaunch,
-                    text = "Play",
                     style = MinecraftButtonStyle.GREEN,
                     modifier = Modifier
-                        .width(78.dp)
-                        .height(34.dp),
-                    fontSize = 12.sp
-                )
+                        .height(34.dp)
+                        .width(72.dp)
+                ) {
+                    Text(
+                        text = "Play",
+                        color = Color.White,
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
+                }
 
+                // Options Menu Button
                 Box {
                     Box(
                         modifier = Modifier
                             .size(34.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0xFF22252F))
-                            .border(BorderStroke(1.dp, Color(0xFF333847)), RoundedCornerShape(4.dp))
-                            .clickable {
-                                com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
-                                menuExpanded = true
-                            },
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(Color(0xFF2B2D33))
+                            .border(BorderStroke(1.dp, Color(0xFF3E414A)), RoundedCornerShape(3.dp))
+                            .clickable { menuExpanded = true },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_more_vert),
                             contentDescription = "Options",
-                            tint = Color(0xFFD1D5DB),
-                            modifier = Modifier.size(18.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
                         )
                     }
 
                     DropdownMenu(
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false },
-                        modifier = Modifier.background(Color(0xFF1E212B))
+                        modifier = Modifier.background(Color(0xFF222428))
                     ) {
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = "Launch Engine",
+                                    text = "Re-check files",
                                     color = Color.White,
                                     fontFamily = MinecraftFontFamily,
                                     fontSize = 12.sp
@@ -237,22 +255,7 @@ fun RustInstallationCard(
                             },
                             onClick = {
                                 menuExpanded = false
-                                onLaunch()
-                            }
-                        )
-
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = "Reset Engine Data",
-                                    color = Color(0xFFF87171),
-                                    fontFamily = MinecraftFontFamily,
-                                    fontSize = 12.sp
-                                )
-                            },
-                            onClick = {
-                                menuExpanded = false
-                                HorizonManager.getHorizonClientDir(context).deleteRecursively()
+                                HorizonManager.setupHorizon(context)
                             }
                         )
                     }

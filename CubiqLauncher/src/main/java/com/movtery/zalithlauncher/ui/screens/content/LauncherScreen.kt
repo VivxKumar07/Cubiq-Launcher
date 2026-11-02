@@ -1976,11 +1976,17 @@ fun LauncherScreen(
 
                                                 // Horizon Promotional Banner (Panels B & C)
                                                 HorizonHomeBanner(
-                                                    onClick = { showHorizonSetup = true },
+                                                    onClick = {
+                                                        if (com.movtery.zalithlauncher.game.horizon.HorizonManager.isInstalled(context)) {
+                                                            com.movtery.zalithlauncher.game.horizon.HorizonManager.launchHorizon(context)
+                                                        } else {
+                                                            showHorizonSetup = true
+                                                        }
+                                                    },
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .padding(horizontal = 16.dp, vertical = 6.dp)
-                                                        .height(64.dp)
+                                                        .padding(horizontal = heroHorizontalPadding, vertical = 6.dp)
+                                                        .height(56.dp)
                                                 )
 
                                                 
@@ -5735,15 +5741,12 @@ private fun HeroMinecraftCard(
 
 
 
-            // Minecraft Java Edition Typography Logo positioned in upper area
-
-
-
-            Image(
-
-
-
-                painter = painterResource(R.drawable.img_mc_java_logo),
+            // Minecraft Java Edition Typography Logo positioned in upper area (Hidden only for Trails & Tales)
+            val isTrailsAndTales = customArtworkRes == R.drawable.img_mc_hero_1_20 ||
+                    version?.getVersionName()?.contains("1.20") == true
+            if (!isTrailsAndTales) {
+                Image(
+                    painter = painterResource(R.drawable.img_mc_java_logo),
 
 
 
@@ -5764,18 +5767,10 @@ private fun HeroMinecraftCard(
 
 
                     .fillMaxWidth(0.82f)
-
-
-
                     .height(68.dp),
-
-
-
                 contentScale = ContentScale.Fit
-
-
-
             )
+            }
 
 
 

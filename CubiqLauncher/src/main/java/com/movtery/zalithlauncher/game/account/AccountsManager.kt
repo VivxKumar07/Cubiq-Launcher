@@ -224,7 +224,7 @@ object AccountsManager {
     /**
      * 获取当前已登录的账号
      */
-    private fun getCurrentAccount(): Account? {
+    fun getCurrentAccount(): Account? {
         return _accounts.find {
             it.uniqueUUID == AllSettings.currentAccount.getValue()
         } ?: _accounts.firstOrNull()

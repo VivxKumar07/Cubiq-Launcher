@@ -1587,23 +1587,27 @@ fun LandscapePlayScreen(
                             alignment = Alignment.Center
                         )
 
-                        // Centered Minecraft Java Edition Logo
-                        Image(
-                            painter = painterResource(R.drawable.img_mc_java_logo),
-                            contentDescription = "Minecraft Java Edition",
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(top = 16.dp)
-                                .height(64.dp)
-                                .widthIn(max = 320.dp),
-                            contentScale = ContentScale.Fit
-                        )
+                        // Centered Minecraft Java Edition Logo (Hidden only for Trails & Tales)
+                        val isTrailsAndTales = pageArt == R.drawable.img_mc_hero_1_20 ||
+                                pageVersion?.getVersionName()?.contains("1.20") == true
+                        if (!isTrailsAndTales) {
+                            Image(
+                                painter = painterResource(R.drawable.img_mc_java_logo),
+                                contentDescription = "Minecraft Java Edition",
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                                    .padding(top = 16.dp)
+                                    .height(64.dp)
+                                    .widthIn(max = 320.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
 
                         // Bottom Gradient Shadow for Contrast
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(90.dp)
+                                .height(100.dp)
                                 .align(Alignment.BottomCenter)
                                 .background(
                                     Brush.verticalGradient(
@@ -1611,6 +1615,23 @@ fun LandscapePlayScreen(
                                         1.0f to Color(0xCC0B0C0E)
                                     )
                                 )
+                        )
+
+                        // Fixed inside each hero card at footer within card boundary
+                        val heroBannerContext = androidx.compose.ui.platform.LocalContext.current
+                        HorizonHomeBanner(
+                            onClick = {
+                                if (com.movtery.zalithlauncher.game.horizon.HorizonManager.isInstalled(heroBannerContext)) {
+                                    com.movtery.zalithlauncher.game.horizon.HorizonManager.launchHorizon(heroBannerContext)
+                                } else {
+                                    onOpenHorizonSetup()
+                                }
+                            },
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp, vertical = 12.dp)
+                                .height(48.dp)
                         )
                     }
                 }
@@ -1643,14 +1664,6 @@ fun LandscapePlayScreen(
                         onSelectTab(1, 0)
                         InstallationDownloadManager.showDialog()
                     }
-                )
-
-                // Horizon Home Promotional Banner (Panel A)
-                HorizonHomeBanner(
-                    onClick = onOpenHorizonSetup,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
                 )
 
                 // Dock Container
