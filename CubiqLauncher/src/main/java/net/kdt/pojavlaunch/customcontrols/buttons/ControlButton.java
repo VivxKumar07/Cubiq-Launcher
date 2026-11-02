@@ -201,8 +201,9 @@ public class ControlButton extends TextView implements ControlInterface {
     private void sendSpecialKey(int keycode, boolean isDown){
         switch (keycode) {
             case ControlData.SPECIALBTN_KEYBOARD:
-                if(isDown && getControlLayoutParent() != null && getControlLayoutParent().getActionListener() != null) {
-                    getControlLayoutParent().getActionListener().onToggleKeyboard();
+                if(isDown) {
+                    android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) imm.toggleSoftInput(android.view.inputmethod.InputMethodManager.SHOW_FORCED, 0);
                 }
                 break;
 
@@ -211,8 +212,8 @@ public class ControlButton extends TextView implements ControlInterface {
                 break;
 
             case ControlData.SPECIALBTN_VIRTUALMOUSE:
-                if(isDown && getControlLayoutParent() != null && getControlLayoutParent().getActionListener() != null) {
-                    getControlLayoutParent().getActionListener().onToggleMouse();
+                if(isDown) {
+                    net.kdt.pojavlaunch.Tools.customMouse = !net.kdt.pojavlaunch.Tools.customMouse;
                 }
                 break;
 
@@ -236,9 +237,6 @@ public class ControlButton extends TextView implements ControlInterface {
                 if (!isDown) CallbackBridge.sendScroll(0, -1d);
                 break;
             case ControlData.SPECIALBTN_MENU:
-                if(getControlLayoutParent() != null && getControlLayoutParent().getActionListener() != null) {
-                    getControlLayoutParent().getActionListener().onOpenMenu();
-                }
                 mControlLayout.notifyAppMenu();
                 break;
         }

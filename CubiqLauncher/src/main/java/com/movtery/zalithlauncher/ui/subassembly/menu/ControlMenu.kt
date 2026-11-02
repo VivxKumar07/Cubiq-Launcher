@@ -7,7 +7,7 @@ import android.widget.CompoundButton
 import android.widget.SeekBar
 import androidx.core.content.FileProvider
 import com.movtery.zalithlauncher.R
-import com.movtery.zalithlauncher.databinding.ViewControlMenuBinding
+import com.movtery.zalithlauncher.databinding.ViewZl1ControlMenuBinding
 import com.movtery.zalithlauncher.setting.AllSettings
 import net.kdt.pojavlaunch.Tools
 import net.kdt.pojavlaunch.customcontrols.ControlData
@@ -20,7 +20,7 @@ import java.io.File
 class ControlMenu(
     private val activity: Activity,
     private val exitListener: EditorExitable,
-    private val binding: ViewControlMenuBinding,
+    private val binding: ViewZl1ControlMenuBinding,
     private val controlLayout: ControlLayout,
     private val export: Boolean
 ) : View.OnClickListener, SeekBar.OnSeekBarChangeListener, CompoundButton.OnCheckedChangeListener {
@@ -45,10 +45,6 @@ class ControlMenu(
             snappingDistance.setOnSeekBarChangeListener(listener)
             snappingDistanceAdd.setOnClickListener(listener)
             snappingDistanceRemove.setOnClickListener(listener)
-            switchMovement.setOnClickListener(listener)
-            mirrorLayout.setOnClickListener(listener)
-            previewLayout.setOnClickListener(listener)
-            resetDefault.setOnClickListener(listener)
             selectDefault.setOnClickListener(listener)
             exit.setOnClickListener(listener)
             if (export) saveAndExport.visibility = View.VISIBLE
@@ -59,7 +55,7 @@ class ControlMenu(
     override fun onClick(v: View?) {
         binding.apply {
             when (v) {
-                addButton -> controlLayout.addControlButton(ControlData("BUTTON"))
+                addButton -> controlLayout.addControlButton(ControlData(activity.getString(R.string.controls_add_control_button)))
                 addDrawer -> controlLayout.addDrawer(ControlDrawerData())
                 addJoystick -> controlLayout.addJoystickButton(ControlJoystickData())
 
@@ -68,18 +64,16 @@ class ControlMenu(
                 saveAndExit -> controlLayout.openSaveAndExitDialog(exitListener)
                 saveAndExport -> {
                     try {
-                        val savedPath = controlLayout.saveToDirectory(controlLayout.mLayoutFileName)
-                        val file = File(savedPath)
-                        val contentUri = FileProvider.getUriForFile(activity, "${activity.packageName}.provider", file)
+                        val path = controlLayout.saveToDirectory(controlLayout.mLayoutFileName)
+                        val file = File(path)
+                        val contentUri = FileProvider.getUriForFile(activity, activity.packageName + ".provider", file)
 
                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/json"
                             putExtra(Intent.EXTRA_STREAM, contentUri)
                             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            type = "application/json"
                         }
-
-                        val sendIntent = Intent.createChooser(shareIntent, controlLayout.mLayoutFileName)
-                        activity.startActivity(sendIntent)
+                        activity.startActivity(Intent.createChooser(shareIntent, controlLayout.mLayoutFileName))
                     } catch (e: Exception) {
                         Tools.showError(activity, e)
                     }
@@ -88,11 +82,6 @@ class ControlMenu(
                 snappingLayout -> MenuUtils.toggleSwitchState(snapping)
                 snappingDistanceAdd -> MenuUtils.adjustSeekbar(snappingDistance, 1)
                 snappingDistanceRemove -> MenuUtils.adjustSeekbar(snappingDistance, -1)
-                switchMovement -> controlLayout.switchMovement()
-                mirrorLayout -> controlLayout.mirrorLayout()
-                previewLayout -> controlLayout.togglePreview()
-                resetDefault -> controlLayout.resetToDefault()
-
                 selectDefault -> controlLayout.openSetDefaultDialog()
 
                 exit -> controlLayout.openExitDialog(exitListener)

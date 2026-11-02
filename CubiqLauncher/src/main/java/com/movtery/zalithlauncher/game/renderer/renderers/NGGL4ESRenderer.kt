@@ -27,11 +27,13 @@ object NGGL4ESRenderer : RendererInterface {
 
     override fun getRendererName(): String = "Krypton Wrapper"
 
-    override fun getRendererSummary(): String = "High-performance OpenGL ES 3 wrapper. Best for older devices lacking Vulkan support."
+    override fun getRendererSummary(): String = "Lightweight for 1.17+. Best performance on low-end chips."
 
     override fun isRecommended(): Boolean = true
 
-    override fun getCompatibilityDescription(): String = "MC 1.7.10 – 1.21.4+ • Most compatible for all devices"
+    override fun getMinMCVersion(): String = "1.17"
+
+    override fun getCompatibilityDescription(): String = "MC 1.17+"
 
     override fun getMaxMCVersion(): String? = null
 

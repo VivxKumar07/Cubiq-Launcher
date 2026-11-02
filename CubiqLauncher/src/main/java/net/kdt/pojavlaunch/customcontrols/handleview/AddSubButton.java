@@ -2,7 +2,6 @@ package net.kdt.pojavlaunch.customcontrols.handleview;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Color;
 import android.util.AttributeSet;
 
 import androidx.annotation.Nullable;
@@ -22,8 +21,6 @@ public class AddSubButton extends AnimButton implements ActionButtonInterface {
     public void init() {
         setOnClickListener(this);
         setText(R.string.customctrl_addsubbutton);
-        setBackgroundResource(R.drawable.btn_minecraft_green);
-        setTextColor(Color.WHITE);
     }
 
     private ControlInterface mCurrentlySelectedButton = null;
@@ -47,4 +44,6 @@ public class AddSubButton extends AnimButton implements ActionButtonInterface {
             );
         }
     }
+
+
 }

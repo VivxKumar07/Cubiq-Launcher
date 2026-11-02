@@ -9,4 +9,7 @@
     <declare-styleable name="AnimTextView">
         <attr name="ripple_for_text" format="boolean"/>
     </declare-styleable>
+    <attr name="drawableEndIntegerScaling" format="boolean"/>
+    <attr name="drawableEndSize" format="dimension"/>
+    <attr name="drawableStartSize" format="dimension"/>
 </resources>

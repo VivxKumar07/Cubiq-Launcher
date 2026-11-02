@@ -25,11 +25,13 @@ object KopperZinkRenderer : RendererInterface {
 
     override fun getUniqueIdentifier(): String = "0fa435e2-46df-45c9-906c-b29606aaef00"
 
-    override fun getRendererName(): String = "Kopper Zink"
+    override fun getRendererName(): String = "KopperZink"
 
-    override fun getRendererSummary(): String = "Desktop OpenGL over Vulkan via Zink. Highest performance for Vulkan-capable devices."
+    override fun getRendererSummary(): String = "Desktop-grade Vulkan pipeline for 1.17+. Best for Sodium and shaders."
 
-    override fun getCompatibilityDescription(): String = "MC 1.17 – 1.21.4+ • Best performance (requires Vulkan)"
+    override fun getMinMCVersion(): String = "1.17"
+
+    override fun getCompatibilityDescription(): String = "MC 1.17+"
 
     override fun getMaxMCVersion(): String? = null
 
@@ -37,6 +39,8 @@ object KopperZinkRenderer : RendererInterface {
 
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
         mapOf(
+            "MESA_LOADER_DRIVER_OVERRIDE" to "zink",
+            "GALLIUM_DRIVER" to "zink",
             "LIBGL_ES" to "3"
         )
     }

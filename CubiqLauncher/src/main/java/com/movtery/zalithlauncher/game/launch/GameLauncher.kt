@@ -104,7 +104,8 @@ class GameLauncher(
 
     override suspend fun launch(screenSize: IntSize): Int {
         // Always set the renderer according to the version's configuration
-        Renderers.setCurrentRenderer(version.getRenderer())
+        val minecraftVersion = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
+        Renderers.setCurrentRendererForMinecraftVersion(version.getRenderer(), minecraftVersion)
 
         val versionJsonFile = File(version.getVersionPath(), "${version.getVersionName()}.json")
         val manifestJsonText = when {
@@ -468,7 +469,8 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
             envMap["POJAV_NATIVEDIR"] = nativeLibPath
         }
         envMap["LIBGL_EGL"] = sysEgl
-        envMap["POJAVEXEC_EGL"] = File(sysEgl).name
+        envMap["POJAVEXEC_EGL"] = "1"
+        envMap["LIBGL_ES"] = "3"
         envMap["SDL_EGL_LIBRARY"] = sysEgl
         envMap["LIBGL_NOERROR"] = "1"
         envMap["force_glsl_extensions_warn"] = "true"

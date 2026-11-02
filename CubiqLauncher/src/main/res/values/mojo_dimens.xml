@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="padding_tiny">1dp</dimen>
+    <dimen name="padding_extra_extra_large">32dp</dimen>
+    <dimen name="_1sdp">1dp</dimen>
+    <dimen name="_2sdp">2dp</dimen>
+    <dimen name="_5sdp">5dp</dimen>
+    <dimen name="_20sdp">20dp</dimen>
+    <dimen name="_22sdp">22dp</dimen>
+    <dimen name="_30sdp">30dp</dimen>
+    <dimen name="_35sdp">35dp</dimen>
+    <dimen name="_36sdp">36dp</dimen>
+    <dimen name="_40sdp">40dp</dimen>
+    <dimen name="_48sdp">48dp</dimen>
+    <dimen name="_94sdp">94dp</dimen>
+    <dimen name="_134sdp">134dp</dimen>
+    <dimen name="_150sdp">150dp</dimen>
+    <dimen name="_220sdp">220dp</dimen>
+    <dimen name="_280sdp">280dp</dimen>
+</resources>

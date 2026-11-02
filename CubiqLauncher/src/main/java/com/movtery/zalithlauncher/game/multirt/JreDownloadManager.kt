@@ -504,9 +504,11 @@ object JreDownloadManager {
         for (prefix in PROXY_PREFIXES) {
             if (prefix.isNotEmpty()) urls.add("$prefix$mainZip")
         }
-        // Pojav release fallback
-        val pojavTar = "https://github.com/PojavLauncherTeam/android-openjdk-build-multiarch/releases/download/jre8-40df388/jre8-$arch-20220811-release.tar.xz"
-        urls.add(pojavTar)
+        // Pojav release fallback (arm64 build)
+        if (arch == "arm64") {
+            val pojavTar = "https://github.com/PojavLauncherTeam/android-openjdk-build-multiarch/releases/download/jre8-40df388/jre8-arm64-20220811-release.tar.xz"
+            urls.add(pojavTar)
+        }
         return urls
     }
 

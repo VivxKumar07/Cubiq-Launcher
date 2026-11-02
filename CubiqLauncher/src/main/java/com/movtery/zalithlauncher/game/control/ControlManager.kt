@@ -19,8 +19,8 @@
 package com.movtery.zalithlauncher.game.control
 
 import android.content.Context
+import com.movtery.layer_controller.data.lang.createTranslatable
 import com.movtery.layer_controller.layout.ControlLayout
-import com.movtery.layer_controller.data.lang.TranslatableString
 import com.movtery.layer_controller.layout.loadLayoutFromFile
 import com.movtery.layer_controller.layout.loadLayoutFromFileUncheck
 import com.movtery.layer_controller.layout.loadLayoutFromString
@@ -51,6 +51,23 @@ private const val TAG = "ControlManager"
  * 控制布局管理者
  */
 object ControlManager {
+    private fun resolveCustomLayoutName(file: java.io.File): String {
+        return runCatching {
+            val content = file.readText()
+            val jobj = org.json.JSONObject(content)
+            if (jobj.has("mControlInfoDataList")) {
+                val infoObj = jobj.getJSONObject("mControlInfoDataList")
+                if (infoObj.has("name")) infoObj.getString("name") else null
+            } else if (jobj.has("name")) {
+                jobj.getString("name")
+            } else null
+        }.getOrNull()?.takeIf { it.isNotBlank() } ?: when (file.name) {
+            "mojo_layout.json" -> "Mojo Launcher Controls"
+            "zalith_1_layout.json" -> "Zalith Launcher 1 Controls"
+            else -> file.nameWithoutExtension.replace("_", " ")
+        }
+    }
+
     private val scope = CoroutineScope(Dispatchers.IO)
 
     private val _dataList = MutableStateFlow<List<ControlData>>(emptyList())
@@ -84,10 +101,9 @@ object ControlManager {
             }
 
             val defaultPresets = listOf(
+                "pocket_edition_layout.json",
                 "mojo_layout.json",
-                "zalith_1_layout.json",
-                "zalith_2_layout.json",
-                "pocket_edition_layout.json"
+                "zalith_2_layout.json"
             )
 
             for (preset in defaultPresets) {
@@ -99,25 +115,7 @@ object ControlManager {
                 }
             }
 
-            val zl1File = File(PathManager.DIR_CONTROL_LAYOUTS, "zalith_1_layout.json")
-            if (zl1File.exists()) {
-                runCatching {
-                    val content = zl1File.readText()
-                    if (!content.contains("mControlDataList")) {
-                        context.copyAssetFile(fileName = "zalith_1_layout.json", output = zl1File, overwrite = true)
-                    }
-                }
-            }
 
-            val mojoFile = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
-            if (mojoFile.exists()) {
-                runCatching {
-                    val content = mojoFile.readText()
-                    if (content.contains("c04125aa012942ba90") && content.contains("GLFW_KEY_D")) {
-                        context.copyAssetFile(fileName = "mojo_layout.json", output = mojoFile, overwrite = true)
-                    }
-                }
-            }
 
             val files = PathManager.DIR_CONTROL_LAYOUTS.listFiles()
                 ?.filter { file ->
@@ -139,48 +137,6 @@ object ControlManager {
             PathManager.DIR_CONTROL_LAYOUTS.listFiles()?.mapNotNull { file ->
                 if (!(file.isFile && file.exists() && file.extension.equals("json", true))) return@mapNotNull null
 
-                val fileContent = runCatching { file.readText() }.getOrNull() ?: return@mapNotNull null
-                val isZalith1 = file.name == "zalith_1_layout.json" || fileContent.contains("mControlDataList")
-
-                if (isZalith1) {
-                    var displayName = if (file.name == "zalith_1_layout.json") {
-                        "Zalith Launcher 1 Controls"
-                    } else {
-                        file.nameWithoutExtension.replace('_', ' ').split(" ").joinToString(" ") { part ->
-                            part.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-                        }
-                    }
-                    var authorName = "Zalith Launcher 1"
-                    runCatching {
-                        val jobj = org.json.JSONObject(fileContent)
-                        if (jobj.has("mControlInfoDataList")) {
-                            val info = jobj.getJSONObject("mControlInfoDataList")
-                            if (info.has("name") && !info.getString("name").isNullOrEmpty() && info.getString("name") != "null" && !info.getString("name").startsWith("control.")) {
-                                displayName = info.getString("name")
-                            }
-                            if (info.has("author") && !info.getString("author").isNullOrEmpty() && info.getString("author") != "null") {
-                                authorName = info.getString("author")
-                            }
-                        }
-                    }
-                    val zl1Layout = ControlLayout(
-                        info = ControlLayout.Info(
-                            name = TranslatableString(displayName, emptyList()),
-                            author = TranslatableString(authorName, emptyList()),
-                            description = TranslatableString("Original Zalith Launcher 1 Controls", emptyList()),
-                            versionCode = 1,
-                            versionName = "1.0"
-                        ),
-                        editorVersion = 1
-                    )
-                    return@mapNotNull ControlData(
-                        file = file,
-                        controlLayout = ObservableControlLayout(zl1Layout),
-                        isSupport = true,
-                        isZalith1 = true
-                    )
-                }
-
                 var isSupport = true
                 val layout: ControlLayout = try {
                     loadLayoutFromFile(file)
@@ -190,17 +146,37 @@ object ControlManager {
                         loadLayoutFromFileUncheck(file)
                     }.onFailure { e ->
                         Logger.warning(TAG, "Failed to load control layout! file = $file", e)
-                    }.getOrNull() ?: return@mapNotNull null
+                    }.getOrNull() ?: run {
+                        if (file.name.contains("mojo", ignoreCase = true) || runCatching { file.readText().contains("mControlDataList") }.getOrDefault(false)) {
+                            com.movtery.layer_controller.layout.EmptyControlLayout.copy(
+                                info = com.movtery.layer_controller.layout.EmptyLayoutInfo.copy(
+                                    name = com.movtery.layer_controller.data.lang.createTranslatable(default = resolveCustomLayoutName(file)),
+                                    author = com.movtery.layer_controller.data.lang.createTranslatable(default = "Mojo Launcher"),
+                                    versionName = "1.0"
+                                )
+                            )
+                        } else null
+                    } ?: return@mapNotNull null
                 } catch (e: Exception) {
-                    Logger.warning(TAG, "Failed to load control layout! file = $file", e)
-                    return@mapNotNull null
+                    if (file.name.contains("mojo", ignoreCase = true) || runCatching { file.readText().contains("mControlDataList") }.getOrDefault(false)) {
+                        isSupport = false
+                        com.movtery.layer_controller.layout.EmptyControlLayout.copy(
+                            info = com.movtery.layer_controller.layout.EmptyLayoutInfo.copy(
+                                name = com.movtery.layer_controller.data.lang.createTranslatable(default = resolveCustomLayoutName(file)),
+                                author = com.movtery.layer_controller.data.lang.createTranslatable(default = "Mojo Launcher"),
+                                versionName = "1.0"
+                            )
+                        )
+                    } else {
+                        Logger.warning(TAG, "Failed to load control layout! file = $file", e)
+                        return@mapNotNull null
+                    }
                 }
 
                 ControlData(
                     file = file,
                     controlLayout = ObservableControlLayout(layout),
-                    isSupport = isSupport,
-                    isZalith1 = false
+                    isSupport = isSupport
                 )
             }?.let { list ->
                 _dataList.update {
@@ -223,7 +199,7 @@ object ControlManager {
         val setting = AllSettings.controlLayout.getValue()
 
         val layout = _dataList.value.find { it.file.name == setting && it.isSupport }
-            ?: _dataList.value.find { it.file.name == "mojo_layout.json" && it.isSupport }
+            ?: _dataList.value.find { it.file.name == "pocket_edition_layout.json" && it.isSupport }
                 ?.also { AllSettings.controlLayout.save(it.file.name) }
             ?: _dataList.value.firstOrNull { it.isSupport }
                 ?.also { AllSettings.controlLayout.save(it.file.name) }
@@ -245,10 +221,9 @@ object ControlManager {
     ) = withContext(Dispatchers.IO) {
         try {
             val defaultPresets = listOf(
+                "pocket_edition_layout.json",
                 "mojo_layout.json",
-                "zalith_1_layout.json",
-                "zalith_2_layout.json",
-                "pocket_edition_layout.json"
+                "zalith_2_layout.json"
             )
             for (preset in defaultPresets) {
                 val targetFile = File(PathManager.DIR_CONTROL_LAYOUTS, preset)
@@ -314,17 +289,10 @@ object ControlManager {
         val file = getNewRandomFile()
         try {
             inputStream.use { stream ->
-                val rawString = stream.readString()
-                val jsonString = rawString.trim().removePrefix("﻿")
-                val jsonObj = org.json.JSONObject(jsonString)
-                if (jsonObj.optJSONArray("mControlDataList") != null) {
-                    file.writeText(jsonObj.toString(2))
-                } else {
-                    val layout = loadLayoutFromString(jsonString)
-                    layout.saveToFile(file)
-                }
+                val jsonString = stream.readString()
+                val layout = loadLayoutFromString(jsonString)
+                layout.saveToFile(file)
             }
-            refresh()
             onFinished()
         } catch (e: SerializationException) {
             FileUtils.deleteQuietly(file)

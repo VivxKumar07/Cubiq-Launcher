@@ -43,6 +43,8 @@ import com.movtery.zalithlauncher.game.version.installed.VersionFolders
 import com.movtery.zalithlauncher.game.version.installed.VersionInfoParser
 import com.movtery.zalithlauncher.game.version.mod.AllModReader
 import com.movtery.zalithlauncher.game.version.mod.isEnabled
+import com.movtery.zalithlauncher.utils.logging.Logger
+import java.io.File
 import com.movtery.zalithlauncher.game.versioninfo.models.GameManifest
 import com.movtery.zalithlauncher.ui.activities.runGame
 import com.movtery.zalithlauncher.ui.androidText
@@ -311,8 +313,34 @@ class GameLaunchFlow(scope: CoroutineScope) {
      * @return 经过补丁的游戏清单，为 null 则表示没什么补丁
      */
     private suspend fun checkMods(version: Version): GameManifest? {
-        val modsDir = VersionFolders.MOD.getDir(version.getGameDir())
+        val gameDir = version.getGameDir()
+        val modsDir = VersionFolders.MOD.getDir(gameDir)
+        modsDir.mkdirs()
+
+        if (version.isIsolation()) {
+            val rootModsDir = VersionFolders.MOD.getDir(File(version.getGameHome()))
+            if (rootModsDir.isDirectory && modsDir.listFiles()?.isEmpty() == true) {
+                val rootMods = rootModsDir.listFiles()?.filter { it.isFile && (it.name.endsWith(".jar") || it.name.endsWith(".disabled")) }
+                if (!rootMods.isNullOrEmpty()) {
+                    Logger.info(TAG, "Version isolation active for ${version.getVersionName()}. Copying ${rootMods.size} mods from root .minecraft/mods to ${modsDir.absolutePath}")
+                    rootMods.forEach { file ->
+                        runCatching {
+                            file.copyTo(File(modsDir, file.name), overwrite = false)
+                        }
+                    }
+                }
+            }
+        }
+
         val mods = AllModReader(modsDir).readAllLocals()
+
+        // Notebook Item 12: Warning when running Vanilla with mods installed
+        if (version.getVersionInfo()?.loaderInfo?.loader == null && mods.any { it.file.isEnabled() }) {
+            val count = mods.count { it.file.isEnabled() }
+            val warnMsg = "Notice: Vanilla profile '${version.getVersionName()}' launched with $count mod(s) present. Minecraft Vanilla does not load mods without Fabric/Forge/NeoForge."
+            com.movtery.zalithlauncher.bridge.LoggerBridge.append(warnMsg)
+            Logger.warning(TAG, warnMsg)
+        }
 
         if (mods.any { it.id == "touchcontroller" && it.file.isEnabled() }) {
             version.enableTouchProxy = true

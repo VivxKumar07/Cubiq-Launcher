@@ -10,6 +10,8 @@
     <string name="keycode_special_scrollup">Mouse Wheel - Scroll Up</string>
     <string name="keycode_special_scrolldown">Mouse Wheel - Scroll Down</string>
     <string name="keycode_special_menu">Main Menu</string>
+    <string name="keycode_special_screenshot">Screenshot (F2)</string>
+    <string name="keycode_special_screenrecorder">Screen Recorder</string>
     <string name="keycode_mouse_right">Right Mouse</string>
     <string name="keycode_mouse_middle">Middle Mouse</string>
     <string name="keycode_mouse_left">Left Mouse</string>

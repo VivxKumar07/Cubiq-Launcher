@@ -64,8 +64,11 @@ object LWJGLCharSender : CharacterSenderStrategy {
             return
         }
         val keycode = EfficientAndroidLWJGLKeycode.getValueByIndex(index).toInt()
-        CallbackBridge.sendKeycode(keycode, character, 0, CallbackBridge.getCurrentMods(), true)
-        CallbackBridge.sendKeycode(keycode, character, 0, CallbackBridge.getCurrentMods(), false)
+        // Strip GLFW_MOD_CONTROL so toggled Ctrl sprint does not corrupt chat input (e.g. /gamemode -> amemode)
+        val mods = CallbackBridge.getCurrentMods() and com.movtery.inputmap.keycodes.LwjglGlfwKeycode.GLFW_MOD_CONTROL.toInt().inv()
+        CallbackBridge.sendKeycode(keycode, character, 0, mods, true)
+        CallbackBridge.sendKeycode(keycode, character, 0, mods, false)
+        CallbackBridge.sendChar(character, 0)
     }
 
     override fun sendOther(key: KeyEvent) {

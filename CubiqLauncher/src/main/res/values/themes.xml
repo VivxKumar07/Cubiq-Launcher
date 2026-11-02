@@ -29,7 +29,39 @@
         <item name="android:textColorHint">#666666</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
+    <style name="Theme.ControlEditor" parent="AppTheme.Fullscreen">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#A0A0A5</item>
+        <item name="android:editTextColor">#FFFFFF</item>
+        <item name="android:textColorHint">#666666</item>
+        <item name="switchStyle">@style/CubiqRectangularSwitch</item>
+        <item name="android:switchStyle">@style/CubiqRectangularSwitch</item>
+        <item name="seekBarStyle">@style/CubiqBlockSeekBar</item>
+        <item name="android:seekBarStyle">@style/CubiqBlockSeekBar</item>
+    </style>
+    <style name="CubiqRectangularSwitch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:thumb">@drawable/switch_thumb_rectangular</item>
+        <item name="android:track">@drawable/switch_track_rectangular</item>
+        <item name="track">@drawable/switch_track_rectangular</item>
+        <item name="thumbTint">@null</item>
+        <item name="trackTint">@null</item>
+    </style>
+    <style name="CubiqBlockSeekBar" parent="Widget.AppCompat.SeekBar">
+        <item name="android:thumb">@drawable/seekbar_thumb_block</item>
+        <item name="android:progressDrawable">@drawable/seekbar_track_line</item>
+        <item name="android:splitTrack">false</item>
+        <item name="android:thumbOffset">9dp</item>
+    </style>
+    <style name="AppTheme.FileManager" parent="AppTheme.CubiqLauncher">
+        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="android:colorBackground">?attr/colorSurface</item>
+    </style>
     <style name="CustomDialogStyle" parent="Theme.Material3.Dark.Dialog">
         <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+    <style name="ThickDivider">
+        <item name="android:layout_height">2dp</item>
+        <item name="android:background">?android:attr/listDivider</item>
     </style>
 </resources>

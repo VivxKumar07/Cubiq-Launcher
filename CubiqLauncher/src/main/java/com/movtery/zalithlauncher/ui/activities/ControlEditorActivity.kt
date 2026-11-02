@@ -54,7 +54,6 @@ import com.movtery.zalithlauncher.viewmodel.BackgroundViewModel
 import com.movtery.zalithlauncher.viewmodel.EditorViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
-import net.kdt.pojavlaunch.CustomControlsActivity
 
 private const val BUNDLE_CONTROL = "BUNDLE_CONTROL"
 
@@ -179,29 +178,31 @@ class ControlEditorActivity : BaseAppCompatActivity() {
 }
 
 /**
- * 检查是否为 Zalith Launcher 1 布局
- */
-fun isZalith1Layout(file: File): Boolean {
-    if (file.name == "zalith_1_layout.json") return true
-    return runCatching {
-        val content = file.readText()
-        content.contains("mControlDataList")
-    }.getOrDefault(false)
-}
-
-/**
- * 开启控制布局编辑器（根据布局类型自动分流至对应的独立编辑器后端）
+ * 开启控制布局编辑器
  */
 fun startEditorActivity(context: Context, file: File) {
-    if (isZalith1Layout(file)) {
-        val intent = Intent(context, CustomControlsActivity::class.java).apply {
-            putExtra(CustomControlsActivity.BUNDLE_CONTROL_PATH, file.absolutePath)
-        }
+    val fileText = runCatching { file.readText() }.getOrDefault("")
+    val isMojo = file.name.contains("mojo", ignoreCase = true) || fileText.contains(""""version": 9""") || fileText.contains(""""version":9""")
+    if (isMojo) {
+        git.artdeell.mojo.prefs.LauncherPreferences.PREF_DEFAULTCTRL_PATH = file.absolutePath
+        val intent = Intent(context, git.artdeell.mojo.CustomControlsActivity::class.java)
         context.startActivity(intent)
-    } else {
-        val intent = Intent(context, ControlEditorActivity::class.java).apply {
-            putExtra(BUNDLE_CONTROL, file.absolutePath)
-        }
-        context.startActivity(intent)
+        return
     }
+
+    val isZl1 = file.name.contains("zalith_1", ignoreCase = true) || file.name.contains("zl1", ignoreCase = true)
+            || fileText.contains(""""version": 8""") || fileText.contains(""""version":8""")
+            || (fileText.contains("mControlDataList") && !isMojo)
+    if (isZl1) {
+        val intent = Intent(context, net.kdt.pojavlaunch.CustomControlsActivity::class.java).apply {
+            putExtra(net.kdt.pojavlaunch.CustomControlsActivity.BUNDLE_CONTROL_PATH, file.absolutePath)
+        }
+        context.startActivity(intent)
+        return
+    }
+
+    val intent = Intent(context, ControlEditorActivity::class.java).apply {
+        putExtra(BUNDLE_CONTROL, file.absolutePath)
+    }
+    context.startActivity(intent)
 }

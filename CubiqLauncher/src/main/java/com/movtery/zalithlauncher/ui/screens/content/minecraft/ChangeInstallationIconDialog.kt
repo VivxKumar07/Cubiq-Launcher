@@ -35,20 +35,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
+import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.ui.components.IsometricBlockIcons
 import com.movtery.zalithlauncher.ui.components.MinecraftButton
 import com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle
 import com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
+import com.movtery.zalithlauncher.utils.string.getMessageOrToString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangeInstallationIconDialog(
-    versionName: String,
+    version: Version,
     onDismiss: () -> Unit,
     onIconChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val versionName = version.getVersionName()
 
     Dialog(onDismissRequest = onDismiss) {
         Column(
@@ -93,11 +96,20 @@ fun ChangeInstallationIconDialog(
                             .border(BorderStroke(1.dp, Color(0xFF3C3C3E)), RoundedCornerShape(3.dp))
                             .clickable {
                                 MinecraftSoundHelper.playClickSound()
-                                saveIconToVersion(context, versionName, icon.drawableRes)
-                                VersionsManager.refresh("ChangeIcon")
-                                Toast.makeText(context, "Icon updated to ${icon.name}", Toast.LENGTH_SHORT).show()
-                                onIconChanged()
-                                onDismiss()
+                                runCatching {
+                                    saveIconToVersion(context, version, icon.drawableRes)
+                                }.onSuccess {
+                                    VersionsManager.refresh("ChangeIcon")
+                                    Toast.makeText(context, "Icon updated to ${icon.name}", Toast.LENGTH_SHORT).show()
+                                    onIconChanged()
+                                    onDismiss()
+                                }.onFailure { error ->
+                                    Toast.makeText(
+                                        context,
+                                        "Failed to update icon: ${error.getMessageOrToString()}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
                             }
                             .padding(6.dp),
                         contentAlignment = Alignment.Center
@@ -139,4 +151,3 @@ fun ChangeInstallationIconDialog(
         }
     }
 }
-

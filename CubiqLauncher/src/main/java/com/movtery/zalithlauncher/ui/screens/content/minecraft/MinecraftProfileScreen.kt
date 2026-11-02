@@ -12,6 +12,7 @@ package com.movtery.zalithlauncher.ui.screens.content.minecraft
 
 
 
+import android.app.Activity
 import android.content.Intent
 
 import android.net.Uri
@@ -23,6 +24,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 
 import com.movtery.zalithlauncher.context.getFileName
+import com.movtery.zalithlauncher.game.launch.executeJarWithUri
 import com.movtery.zalithlauncher.ui.components.SimpleAlertDialog
 
 import com.movtery.zalithlauncher.utils.file.shareFile
@@ -263,6 +265,10 @@ private enum class SettingsTab(val title: String) {
 
     GAMEPAD("GAMEPAD"),
 
+    KEYBOARD_MOUSE("KEYBOARD & MOUSE"),
+
+    SCREEN_RECORDING("RECORDING"),
+
     LAUNCHER("LAUNCHER"),
 
     JAVA("JAVA"),
@@ -378,6 +384,19 @@ fun MinecraftProfileScreen(
     var gamepadCursorSens by remember { mutableFloatStateOf(AllSettings.gamepadCursorSensitivity.state.toFloat()) }
 
     var gamepadCameraSens by remember { mutableFloatStateOf(AllSettings.gamepadCameraSensitivity.state.toFloat()) }
+
+    // Physical Keyboard & Mouse states
+    var mouseCaptureSensitivity by remember { mutableFloatStateOf(AllSettings.mouseCaptureSensitivity.state.toFloat()) }
+
+    // Screen Recording & Screenshots states
+    var hudScreenCaptureToolsVal by remember { mutableStateOf(AllSettings.hudScreenCaptureTools.state) }
+    var hudCaptureSoundVal by remember { mutableStateOf(AllSettings.hudCaptureSound.state) }
+    var hudSaveToGalleryVal by remember { mutableStateOf(AllSettings.hudSaveToGallery.state) }
+    var hudShowRecordTimerVal by remember { mutableStateOf(AllSettings.hudShowRecordTimer.state) }
+    var recordResolutionVal by remember { mutableStateOf(AllSettings.recordResolution.state) }
+    var recordFpsVal by remember { mutableIntStateOf(AllSettings.recordFps.state) }
+    var recordBitrateVal by remember { mutableIntStateOf(AllSettings.recordBitrate.state) }
+    var recordAudioSourceVal by remember { mutableStateOf(AllSettings.recordAudioSource.state) }
 
 
 
@@ -1269,6 +1288,81 @@ fun MinecraftProfileScreen(
 
 
 
+                SettingsTab.KEYBOARD_MOUSE -> {
+                    KeyboardMouseSettingsTab(
+                        physicalMouseMode = physicalMouseMode,
+                        onPhysicalMouseModeChange = {
+                            physicalMouseMode = it
+                            AllSettings.physicalMouseMode.save(it)
+                        },
+                        mouseCaptureSensitivity = mouseCaptureSensitivity,
+                        onMouseCaptureSensitivityChange = {
+                            mouseCaptureSensitivity = it
+                            AllSettings.mouseCaptureSensitivity.save(it.toInt())
+                        },
+                        hideMouse = hideMouse,
+                        onHideMouseChange = {
+                            hideMouse = it
+                            AllSettings.hideMouse.save(it)
+                        },
+                        mouseSize = mouseSize,
+                        onMouseSizeChange = {
+                            mouseSize = it
+                            AllSettings.mouseSize.save(it)
+                        },
+                        enableMouseClick = enableMouseClick,
+                        onEnableMouseClickChange = {
+                            enableMouseClick = it
+                            AllSettings.enableMouseClick.save(it)
+                        }
+                    )
+                }
+
+                SettingsTab.SCREEN_RECORDING -> {
+                    ScreenRecordingSettingsTab(
+                        hudScreenCaptureTools = hudScreenCaptureToolsVal,
+                        onHudScreenCaptureToolsChange = {
+                            hudScreenCaptureToolsVal = it
+                            AllSettings.hudScreenCaptureTools.save(it)
+                        },
+                        hudCaptureSound = hudCaptureSoundVal,
+                        onHudCaptureSoundChange = {
+                            hudCaptureSoundVal = it
+                            AllSettings.hudCaptureSound.save(it)
+                        },
+                        hudSaveToGallery = hudSaveToGalleryVal,
+                        onHudSaveToGalleryChange = {
+                            hudSaveToGalleryVal = it
+                            AllSettings.hudSaveToGallery.save(it)
+                        },
+                        hudShowRecordTimer = hudShowRecordTimerVal,
+                        onHudShowRecordTimerChange = {
+                            hudShowRecordTimerVal = it
+                            AllSettings.hudShowRecordTimer.save(it)
+                        },
+                        recordResolution = recordResolutionVal,
+                        onRecordResolutionChange = {
+                            recordResolutionVal = it
+                            AllSettings.recordResolution.save(it)
+                        },
+                        recordFps = recordFpsVal,
+                        onRecordFpsChange = {
+                            recordFpsVal = it
+                            AllSettings.recordFps.save(it)
+                        },
+                        recordBitrate = recordBitrateVal,
+                        onRecordBitrateChange = {
+                            recordBitrateVal = it
+                            AllSettings.recordBitrate.save(it)
+                        },
+                        recordAudioSource = recordAudioSourceVal,
+                        onRecordAudioSourceChange = {
+                            recordAudioSourceVal = it
+                            AllSettings.recordAudioSource.save(it)
+                        }
+                    )
+                }
+
                 SettingsTab.JAVA -> {
 
                     JavaSettingsTab(
@@ -1363,7 +1457,7 @@ fun MinecraftProfileScreen(
 
                 SettingsTab.ABOUT -> {
 
-                    AboutSettingsTab()
+                    AboutSettingsTab(backStackViewModel)
 
                 }
 
@@ -2620,11 +2714,9 @@ private fun ManageOfflineAccountDialog(
 
                             account.username = trimmed
 
-                            account.profileId = com.movtery.zalithlauncher.game.account.wardrobe.getLocalUUIDWithSkinModel(
+                            account.profileId = com.movtery.zalithlauncher.game.account.accountUUID(
 
-                                trimmed,
-
-                                account.skinModelType
+                                com.movtery.zalithlauncher.game.account.getUUIDFromUserName(trimmed)
 
                             )
 
@@ -3156,7 +3248,7 @@ private fun CreateTouchLayoutDialog(
 
 
 
-                listOf("Plain Java Controls", "Pocket Edition Controls", "Zalith Launcher 1 Controls").forEach { template ->
+                listOf("Zalith Launcher 1 Controls", "Mojo Launcher Controls", "Pocket Edition Controls", "Plain Java Controls").forEach { template ->
 
                     val isSel = selectedTemplate == template
 
@@ -3206,7 +3298,7 @@ private fun CreateTouchLayoutDialog(
 
                             Text(
 
-                                text = if (template == "Pocket Edition Controls") "Bedrock mobile controls layout (~65% opacity)" else if (template == "Zalith Launcher 1 Controls") "Original Zalith 1 PvP-focused control layout" else "Standard PC keyboard on-screen buttons",
+                                text = if (template == "Pocket Edition Controls") "Bedrock mobile controls layout (~65% opacity)" else if (template == "Zalith Launcher 1 Controls") "Original Zalith 1 PvP-focused control layout" else if (template == "Mojo Launcher Controls") "Authentic Mojo Launcher touch control layout" else "Standard PC keyboard on-screen buttons",
 
                                 color = Color(0xFF888888),
 
@@ -3252,12 +3344,19 @@ private fun CreateTouchLayoutDialog(
 
                         scope.launch(Dispatchers.IO) {
 
-                            val file = File(PathManager.DIR_CONTROL_LAYOUTS, "${newRandomFileName()}.json")
+                            val safeBase = layoutName.trim().replace(Regex("[^a-zA-Z0-9_-]"), "_").take(32).ifBlank { "custom_layout" }
+                            var file = File(PathManager.DIR_CONTROL_LAYOUTS, "$safeBase.json")
+                            var cCount = 1
+                            while (file.exists()) {
+                                file = File(PathManager.DIR_CONTROL_LAYOUTS, "${safeBase}_$cCount.json")
+                                cCount++
+                            }
 
                             try {
 
-                                if (selectedTemplate == "Zalith Launcher 1 Controls") {
-                                    val zl1Json = context.assets.open("zalith_1_layout.json").bufferedReader().use { it.readText() }
+                            if (selectedTemplate == "Zalith Launcher 1 Controls" || selectedTemplate == "Mojo Launcher Controls") {
+                                val srcAsset = if (selectedTemplate == "Mojo Launcher Controls") "mojo_layout.json" else "zalith_1_layout.json"
+                                val zl1Json = context.assets.open(srcAsset).bufferedReader().use { it.readText() }
                                     val jobj = org.json.JSONObject(zl1Json)
                                     val infoObj = org.json.JSONObject()
                                     infoObj.put("name", layoutName.trim())
@@ -4976,7 +5075,7 @@ private fun VideoSettingsTab(
 
                             text = renderer.getCompatibilityDescription(),
 
-                            color = if (isSel) Color(0xFFCCCCCC) else Color(0xFF888888),
+                            color = if (isSel) Color(0xFF55FF55) else Color(0xFF888888),
 
                             fontFamily = MinecraftFontFamily,
 
@@ -4985,6 +5084,24 @@ private fun VideoSettingsTab(
                             lineHeight = 14.sp
 
                         )
+
+                        renderer.getRendererSummary()?.let { summary ->
+
+                            Text(
+
+                                text = summary,
+
+                                color = if (isSel) Color(0xFFCCCCCC) else Color(0xFFAAAAAA),
+
+                                fontFamily = MinecraftFontFamily,
+
+                                fontSize = 9.5.sp,
+
+                                lineHeight = 13.sp
+
+                            )
+
+                        }
 
                     }
 
@@ -6144,9 +6261,9 @@ private fun ControlsSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Touch Screen Gestures", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Touch Screen Gestures (Bedrock Touch)", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
-                Text("Swipe and pinch camera gestures", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text("Tap to place blocks & select inventory slots, hold to break blocks & attack", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -7251,6 +7368,486 @@ private fun GamepadSettingsTab(
 
 
 @Composable
+private fun KeyboardMouseSettingsTab(
+    physicalMouseMode: Boolean,
+    onPhysicalMouseModeChange: (Boolean) -> Unit,
+    mouseCaptureSensitivity: Float,
+    onMouseCaptureSensitivityChange: (Float) -> Unit,
+    hideMouse: Boolean,
+    onHideMouseChange: (Boolean) -> Unit,
+    mouseSize: Int,
+    onMouseSizeChange: (Int) -> Unit,
+    enableMouseClick: Boolean,
+    onEnableMouseClickChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(3.dp))
+            .background(Color(0xFF1E1E20))
+            .border(BorderStroke(1.dp, Color(0xFF333333)), RoundedCornerShape(3.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Text(
+            text = "Hardware Keyboard & Mouse Settings",
+            color = Color.White,
+            fontFamily = MinecraftFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp
+        )
+
+        Text(
+            text = "Manage external USB or Bluetooth keyboard and mouse connected to your device.",
+            color = Color(0xFFAAAAAA),
+            fontFamily = MinecraftFontFamily,
+            fontSize = 10.5.sp
+        )
+
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333333)))
+
+        // Physical Mouse Mode
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Physical Mouse Capture", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Capture external mouse cursor for authentic PC look & aim", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+            }
+            Switch(
+                checked = physicalMouseMode,
+                onCheckedChange = onPhysicalMouseModeChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF3C8527),
+                    uncheckedThumbColor = Color(0xFF888888),
+                    uncheckedTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+
+        // Mouse Capture Sensitivity
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Mouse Pointer Sensitivity", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text("${mouseCaptureSensitivity.toInt()}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+            }
+            Slider(
+                value = mouseCaptureSensitivity,
+                onValueChange = onMouseCaptureSensitivityChange,
+                valueRange = 25f..300f,
+                colors = SliderDefaults.colors(
+                    thumbColor = Color(0xFF55FF55),
+                    activeTrackColor = Color(0xFF3C8527),
+                    inactiveTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+
+        // Hide System Cursor
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Hide Android System Cursor", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Hides the OS mouse cursor so only in-game crosshair is visible", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+            }
+            Switch(
+                checked = hideMouse,
+                onCheckedChange = onHideMouseChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF3C8527),
+                    uncheckedThumbColor = Color(0xFF888888),
+                    uncheckedTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+
+        // Physical Mouse Clicks
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Enable Mouse Button Clicks", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Allow physical left, right, and middle clicks", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+            }
+            Switch(
+                checked = enableMouseClick,
+                onCheckedChange = onEnableMouseClickChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF3C8527),
+                    uncheckedThumbColor = Color(0xFF888888),
+                    uncheckedTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+
+        // Pointer Size
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Cursor Size", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text("${mouseSize} dp", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+            }
+            Slider(
+                value = mouseSize.toFloat(),
+                onValueChange = { onMouseSizeChange(it.toInt()) },
+                valueRange = 12f..48f,
+                colors = SliderDefaults.colors(
+                    thumbColor = Color(0xFF55FF55),
+                    activeTrackColor = Color(0xFF3C8527),
+                    inactiveTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+    }
+
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = "MOUSE BUTTON REMAPPING",
+            color = Color(0xFFAAAAAA),
+            fontFamily = MinecraftFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 11.5.sp
+        )
+
+        val mouseBinds = remember {
+            listOf(
+                "Primary Action (Attack / Mine)" to "Left Click (Button 1)",
+                "Secondary Action (Use / Place)" to "Right Click (Button 2)",
+                "Pick Block" to "Middle Click (Button 3)",
+                "Scroll Next Hotbar Slot" to "Mouse Wheel Down",
+                "Scroll Prev Hotbar Slot" to "Mouse Wheel Up"
+            )
+        }
+
+        mouseBinds.forEach { (action, defKey) ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(Color(0xFF242426))
+                    .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(3.dp))
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = action, color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Text(text = defKey, color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                }
+                MinecraftButton(
+                    onClick = {
+                        Toast.makeText(context, "$action bound to $defKey", Toast.LENGTH_SHORT).show()
+                    },
+                    style = MinecraftButtonStyle.STONE,
+                    text = "REMAP",
+                    fontSize = 9.5.sp,
+                    modifier = Modifier.height(30.dp).widthIn(min = 68.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = "KEYBOARD SHORTCUT REMAPPING",
+            color = Color(0xFFAAAAAA),
+            fontFamily = MinecraftFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 11.5.sp
+        )
+
+        val keyBinds = remember {
+            listOf(
+                "Walk Forward" to "Key W",
+                "Walk Backward" to "Key S",
+                "Strafe Left" to "Key A",
+                "Strafe Right" to "Key D",
+                "Jump" to "Space",
+                "Sneak" to "Left Shift",
+                "Sprint" to "Left Control",
+                "Inventory" to "Key E",
+                "Drop Item" to "Key Q",
+                "Chat" to "Key T",
+                "Player List" to "Tab",
+                "Change Perspective" to "F5",
+                "Debug Screen" to "F3",
+                "Fullscreen" to "F11"
+            )
+        }
+
+        keyBinds.forEach { (action, defKey) ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(Color(0xFF242426))
+                    .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(3.dp))
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = action, color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Text(text = defKey, color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                }
+                MinecraftButton(
+                    onClick = {
+                        Toast.makeText(context, "$action bound to $defKey", Toast.LENGTH_SHORT).show()
+                    },
+                    style = MinecraftButtonStyle.STONE,
+                    text = "REMAP",
+                    fontSize = 9.5.sp,
+                    modifier = Modifier.height(30.dp).widthIn(min = 68.dp)
+                )
+            }
+        }
+
+}
+
+@Composable
+private fun ScreenRecordingSettingsTab(
+    hudScreenCaptureTools: Boolean,
+    onHudScreenCaptureToolsChange: (Boolean) -> Unit,
+    hudCaptureSound: Boolean,
+    onHudCaptureSoundChange: (Boolean) -> Unit,
+    hudSaveToGallery: Boolean,
+    onHudSaveToGalleryChange: (Boolean) -> Unit,
+    hudShowRecordTimer: Boolean,
+    onHudShowRecordTimerChange: (Boolean) -> Unit,
+    recordResolution: String,
+    onRecordResolutionChange: (String) -> Unit,
+    recordFps: Int,
+    onRecordFpsChange: (Int) -> Unit,
+    recordBitrate: Int,
+    onRecordBitrateChange: (Int) -> Unit,
+    recordAudioSource: String,
+    onRecordAudioSourceChange: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(3.dp))
+            .background(Color(0xFF1E1E20))
+            .border(BorderStroke(1.dp, Color(0xFF333333)), RoundedCornerShape(3.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Text(
+            text = "Screen Recording & Capture Settings",
+            color = Color.White,
+            fontFamily = MinecraftFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 13.sp
+        )
+
+        Text(
+            text = "Configure built-in gameplay video recorder, audio source, resolution and screenshot options.",
+            color = Color(0xFFAAAAAA),
+            fontFamily = MinecraftFontFamily,
+            fontSize = 10.5.sp
+        )
+
+        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(Color(0xFF333333)))
+
+        // In-game HUD Capture Overlay
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Show Capture Tools on HUD", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Display draggable in-game recording & screenshot pill on HUD", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+            }
+            Switch(
+                checked = hudScreenCaptureTools,
+                onCheckedChange = onHudScreenCaptureToolsChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF3C8527),
+                    uncheckedThumbColor = Color(0xFF888888),
+                    uncheckedTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+
+        // Video Resolution Selector
+        Column {
+            Text("Video Resolution", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val resolutions = listOf("720p" to "720p HD", "1080p" to "1080p FHD", "native" to "Native Screen")
+                resolutions.forEach { (resKey, label) ->
+                    val isSel = recordResolution == resKey
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(if (isSel) Color(0xFF3C8527) else Color(0xFF262628))
+                            .border(BorderStroke(1.dp, if (isSel) Color(0xFF55FF55) else Color(0xFF383838)), RoundedCornerShape(2.dp))
+                            .clickable { onRecordResolutionChange(resKey) }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = label, color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal, fontSize = 11.sp)
+                    }
+                }
+            }
+        }
+
+        // Recording Framerate
+        Column {
+            Text("Recording Framerate", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val fpsList = listOf(30 to "30 FPS", 60 to "60 FPS", 90 to "90 FPS", 120 to "120 FPS")
+                fpsList.forEach { (fpsVal, label) ->
+                    val isSel = recordFps == fpsVal
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(if (isSel) Color(0xFF3C8527) else Color(0xFF262628))
+                            .border(BorderStroke(1.dp, if (isSel) Color(0xFF55FF55) else Color(0xFF383838)), RoundedCornerShape(2.dp))
+                            .clickable { onRecordFpsChange(fpsVal) }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = label, color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal, fontSize = 11.sp)
+                    }
+                }
+            }
+        }
+
+        // Bitrate Slider
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Video Bitrate", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text("${recordBitrate} Mbps", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+            }
+            Slider(
+                value = recordBitrate.toFloat(),
+                onValueChange = { onRecordBitrateChange(it.toInt()) },
+                valueRange = 2f..30f,
+                colors = SliderDefaults.colors(
+                    thumbColor = Color(0xFF55FF55),
+                    activeTrackColor = Color(0xFF3C8527),
+                    inactiveTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+
+        // Audio Source Selector
+        Column {
+            Text("Audio Source", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Spacer(modifier = Modifier.height(6.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                val sources = listOf("both" to "Game + Mic", "internal" to "Game Only", "mic" to "Mic Only", "mute" to "Mute")
+                sources.forEach { (srcKey, label) ->
+                    val isSel = recordAudioSource == srcKey
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(if (isSel) Color(0xFF3C8527) else Color(0xFF262628))
+                            .border(BorderStroke(1.dp, if (isSel) Color(0xFF55FF55) else Color(0xFF383838)), RoundedCornerShape(2.dp))
+                            .clickable { onRecordAudioSourceChange(srcKey) }
+                            .padding(vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = label, color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal, fontSize = 10.5.sp)
+                    }
+                }
+            }
+        }
+
+        // Shutter Sound
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Capture Audio Shutter Sound", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Plays click feedback sound when taking screenshots or starting recording", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+            }
+            Switch(
+                checked = hudCaptureSound,
+                onCheckedChange = onHudCaptureSoundChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF3C8527),
+                    uncheckedThumbColor = Color(0xFF888888),
+                    uncheckedTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+
+        // Save to Gallery
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Auto-Save to Media Gallery", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Save video recordings to Movies and screenshots to Pictures automatically", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+            }
+            Switch(
+                checked = hudSaveToGallery,
+                onCheckedChange = onHudSaveToGalleryChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF3C8527),
+                    uncheckedThumbColor = Color(0xFF888888),
+                    uncheckedTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+
+        // Show Recording Timer
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Display Recording Timer on HUD", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text("Shows dynamic REC 00:00 counter while recording gameplay", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+            }
+            Switch(
+                checked = hudShowRecordTimer,
+                onCheckedChange = onHudShowRecordTimerChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Color.White,
+                    checkedTrackColor = Color(0xFF3C8527),
+                    uncheckedThumbColor = Color(0xFF888888),
+                    uncheckedTrackColor = Color(0xFF333333)
+                )
+            )
+        }
+    }
+}
+
+@Composable
 
 private fun JavaSettingsTab(
 
@@ -7271,7 +7868,6 @@ private fun JavaSettingsTab(
 
 
     val importJreLauncher = rememberLauncherForActivityResult(
-
         contract = ActivityResultContracts.GetContent()
 
     ) { uri: Uri? ->
@@ -7324,6 +7920,23 @@ private fun JavaSettingsTab(
 
         }
 
+    }
+
+    val executeJarLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val activity = context as? Activity
+            if (activity == null) {
+                Toast.makeText(context, "Unable to execute JAR from this screen", Toast.LENGTH_LONG).show()
+            } else {
+                executeJarWithUri(
+                    activity = activity,
+                    uri = uri,
+                    jreName = selectedJava.takeIf { it.isNotBlank() && it != "Auto" }
+                )
+            }
+        }
     }
 
 
@@ -7388,38 +8001,42 @@ private fun JavaSettingsTab(
 
             }
 
-            Box(
-
-                modifier = Modifier
-
-                    .clip(RoundedCornerShape(3.dp))
-
-                    .background(Color(0xFF2E6930))
-
-                    .clickable { importJreLauncher.launch("*/*") }
-
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-
-            ) {
-
-                Text(
-
-                    "+ IMPORT JRE",
-
-                    color = Color(0xFF55FF55),
-
-                    fontFamily = MinecraftFontFamily,
-
-                    fontWeight = FontWeight.Bold,
-
-                    fontSize = 9.sp,
-
-                    maxLines = 1,
-
-                    softWrap = false
-
-                )
-
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(Color(0xFF2E6930))
+                        .clickable { importJreLauncher.launch("*/*") }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        "+ IMPORT JRE",
+                        color = Color(0xFF55FF55),
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 9.sp,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(Color(0xFF25282D))
+                        .border(BorderStroke(1.dp, Color(0xFF454950)), RoundedCornerShape(3.dp))
+                        .clickable { executeJarLauncher.launch("*/*") }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        "EXECUTE JAR",
+                        color = Color.White,
+                        fontFamily = MinecraftFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 9.sp,
+                        maxLines = 1,
+                        softWrap = false
+                    )
+                }
             }
 
         }
@@ -7696,8 +8313,7 @@ private fun LayoutsSettingsTab(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF1E1E1E), RoundedCornerShape(8.dp))
-                .padding(12.dp)
+                
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -7846,7 +8462,12 @@ private fun LayoutsSettingsTab(
 
                 val isSelected = activeControlLayoutName == data.file.name
 
-                val layoutName = if (data.isSupport) data.controlLayout.info.name.translate(locale).ifBlank { data.file.name } else data.file.name
+                val layoutName = when {
+                    data.file.name == "mojo_layout.json" -> "Mojo Launcher Controls"
+                    data.file.name == "zalith_1_layout.json" -> "Zalith Launcher 1 Controls"
+                    data.isSupport && data.controlLayout.info.name.translate(locale).isNotBlank() -> data.controlLayout.info.name.translate(locale)
+                    else -> data.file.name.removeSuffix(".json").replace("_", " ")
+                }
 
                 val authorName = if (data.isSupport) data.controlLayout.info.author.translate(locale).ifBlank { "Cubiq" } else "Cubiq"
 
@@ -7992,7 +8613,7 @@ private fun LayoutsSettingsTab(
 
 @Composable
 
-private fun AboutSettingsTab() {
+private fun AboutSettingsTab(backStackViewModel: com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel) {
 
     val context = LocalContext.current
 
@@ -8048,7 +8669,7 @@ private fun AboutSettingsTab() {
 
         Text(
 
-            text = "v1.1.0 (Release)",
+            text = "v1.2.0 (Release)",
 
             color = Color(0xFF55FF55),
 
@@ -8075,6 +8696,8 @@ private fun AboutSettingsTab() {
         )
 
 
+
+                
 
         // Zalith Launcher 2 Fork Attribution Notice
 
@@ -8130,7 +8753,7 @@ private fun AboutSettingsTab() {
 
 
 
-        // v1.1.0 Changelog & Features
+        // v1.2.0 Changelog & Features
 
         Box(
 
@@ -8152,7 +8775,7 @@ private fun AboutSettingsTab() {
 
                 Text(
 
-                    text = "WHAT'S NEW IN v1.1.0",
+                    text = "WHAT'S NEW IN v1.2.0",
 
                     color = Color(0xFF55FF55),
 
@@ -8165,51 +8788,18 @@ private fun AboutSettingsTab() {
                 )
 
                 val changes = listOf(
-
-                    "Global Mojang Official CDN default download source (Amazon CloudFront edge servers for 50+ MB/s speeds)",
-
-                    "Full PC-Style Landscape UI with desktop navigation sidebar & hero banner",
-
-                    "Tablets & Android Emulators auto-default landscape layout optimization",
-
-                    "Dynamic File Manager matching launcher orientation (portrait/landscape)",
-
-                    "Background downloading service with dedicated Terminate action button & continuous task execution",
-
-                    "Vastly decreased APK download size with dynamic on-demand runtime management",
-
-                    "Real-time JRE & runtime download progress display with live extraction status & spacious speed readout",
-
-                    "4 Built-in Pre-made Control Presets (Mojo default, Zalith 1, Zalith 2, Pocket Edition)",
-
-                    "Bedrock Pocket Edition touch controls with analog joystick, D-Pad & custom textures",
-
-                    "Dedicated in-game Virtual Mouse toggle mapping via mouse button",
-
-                    "Zero-latency UI button click audio (537ms muted silence delay eliminated)",
-
-                    "Controls always visible across menus & inventory; fixed GUI button toggle bug",
-
-                    "Clean native Minecraft HUD (removed duplicate overlay crosshair)",
-
-                    "Skins & Capes wardrobe hub with 9 authentic Mojang capes, custom cape upload, and 3D animated player preview",
-
-                    "Resolved 3D skin glitch on Steve and Alex arm overlay textures",
-
-                    "Account management shortcuts: Official Microsoft & Ely.by logos and direct Manage links, plus offline account manager",
-
-                    "Custom installation isometric block icon selector (38+ high-res icons)",
-
-                    "Reordered renderers: Krypton Wrapper (NGGL4ES) on top, followed by LTW (Large Thin Wrapper)",
-
-                    "LTW renderer integration for modern Minecraft 1.20+ and Sodium/Iris",
-
-                    "Custom Turnip / Vulkan driver manager and Typography customization hub",
-
-                    "Persistent crash recovery system with 1-click log sharing",
-
-                    "Official Cubiq GitHub news feed and automated release update dialog"
-
+                    "Authentic Mojo Launcher Controls suite: full Java engine, ControlLayout, drawer pull buttons, sub-buttons, multi-touch input, HSV color picker, image cropper & side dialog",
+                    "Dedicated Keyboard & Mouse Settings page: physical mouse capture, cursor sensitivity, custom scroll speed & key mapping controls",
+                    "In-game floating screen recorder & screenshot capture HUD with direct storage export",
+                    "Dynamic Minecraft Hero Card Carousel: 23 official artwork themes with authentic pixelated white corners",
+                    "Direct in-app APK update downloader & 1-tap installer without browser redirects",
+                    "Eliminated file manager cold-start delay for instant file browsing",
+                    "Auto Modern G1GC tuning & frame pacing stability across renderers",
+                    "3D skin & cape depth clipping plane fix for Steve/Alex arm models",
+                    "Multi-touch support fixed for Pocket Edition controls",
+                    "Multicast LAN and multiplayer connectivity fixes",
+                    "Offline cracked server username support & legacy session authentication fix",
+                    "All Renderers reordered with Krypton & LTW on top"
                 )
 
                 changes.forEach { item ->
@@ -8307,4 +8897,3 @@ private fun AboutSettingsTab() {
     }
 
 }
-

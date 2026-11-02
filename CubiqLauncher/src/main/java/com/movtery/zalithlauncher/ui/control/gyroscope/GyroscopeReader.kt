@@ -36,6 +36,7 @@ import kotlin.math.abs
 fun isGyroscopeAvailable(context: Context): Boolean {
     val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     val gyroscopeSensor: Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+        ?: sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
     return gyroscopeSensor != null
 }
 

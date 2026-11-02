@@ -368,12 +368,12 @@ fun MinecraftBlockCard(
 
 /**
  * 1:1 Replica of the Minecraft PC Mobile Launcher Bottom Navigation Bar
- * Options: News | Versions | Mods | Profile
+ * Options: News | Versions | Mods | Settings
  * Matches Image 1: Light Grey PC Launcher tabs with 3D bottom bevels and Green active tab
  */
 @Composable
 fun MinecraftPCBottomNavBar(
-    selectedItem: Int, // 0: News, 1: Versions, 2: Mods, 3: Profile
+    selectedItem: Int, // 0: News, 1: Versions, 2: Mods, 3: Settings
     onItemSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
     barHeight: Dp = 58.dp,
@@ -447,7 +447,7 @@ fun MinecraftPCBottomNavBar(
                 onClick = { onItemSelected(2) }
             )
 
-            // 3: Profile
+            // 3: Settings
             MinecraftPCNavItem(
                 modifier = Modifier
                     .weight(1f)
@@ -455,13 +455,13 @@ fun MinecraftPCBottomNavBar(
                 icon = { isSel ->
                     Image(
                         painter = painterResource(R.drawable.ic_mc_pc_profile),
-                        contentDescription = "Profile",
+                        contentDescription = "Settings",
                         modifier = Modifier
                             .size(26.dp)
                             .clip(RoundedCornerShape(2.dp))
                     )
                 },
-                label = "Profile",
+                label = "Settings",
                 isSelected = selectedItem == 3,
                 onClick = { onItemSelected(3) }
             )

@@ -40,7 +40,7 @@ public class ColorSelector implements HueSelectionListener, RectangleSelectionLi
      */
     public ColorSelector(Context context, ViewGroup parent, @Nullable ColorSelectionListener colorSelectionListener) {
 
-        mRootView = LayoutInflater.from(context).inflate(R.layout.dialog_color_selector,parent, false);
+        mRootView = LayoutInflater.from(context).inflate(R.layout.dialog_zl1_color_selector,parent, false);
         mHueView = mRootView.findViewById(R.id.color_selector_hue_view);
         mLuminosityIntensityView = mRootView.findViewById(R.id.color_selector_rectangle_view);
         mAlphaView = mRootView.findViewById(R.id.color_selector_alpha_view);

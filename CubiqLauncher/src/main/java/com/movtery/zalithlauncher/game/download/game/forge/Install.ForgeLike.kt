@@ -259,7 +259,6 @@ private suspend fun installOldForge(
             if (!versionInfo.has("inheritsFrom")) {
                 versionInfo.addProperty("inheritsFrom", inherit)
             }
-            tempVersionJson.writeText(GSON.toJson(versionInfo))
 
             versionInfo.apply {
                 get("libraries").asJsonArray.removeAll {
@@ -268,10 +267,12 @@ private suspend fun installOldForge(
                         val name = lib["name"].asString
                         //过滤掉 path 对应的 library (这个是需要解压出去的，没法下载)
                         //比如 net.minecraftforge:forge:1.7.10-10.13.4.1614-1.7.10
-                        name == artifact
+                        name == artifact || name.startsWith("net.minecraftforge:forge:")
                     } else false //保留
                 }
             }
+            tempVersionJson.writeText(GSON.toJson(versionInfo))
+            versionInfo
         }
     }
     task.updateProgress(1f)

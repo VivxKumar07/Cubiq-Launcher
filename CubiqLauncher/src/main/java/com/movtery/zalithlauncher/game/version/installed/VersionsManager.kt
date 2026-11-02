@@ -240,7 +240,8 @@ object VersionsManager {
      */
     fun saveCurrentVersion(versionName: String, refresh: Boolean = true) {
         runCatching {
-            gameInfo!!.apply {
+            val info = gameInfo ?: refreshCurrentInfo(getGameHome()).also { gameInfo = it }
+            info.apply {
                 version = versionName
                 saveCurrentInfo(getGameHome())
             }

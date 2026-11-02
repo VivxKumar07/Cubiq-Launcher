@@ -909,9 +909,11 @@ fun CommonVersionInfoLayout(
         ) {
             //版本名称
             Text(
-                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
+                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 3500),
                 maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                 text = versionName,
+                color = androidx.compose.ui.graphics.Color.White,
                 style = MaterialTheme.typography.labelLarge
             )
             //版本描述
@@ -924,6 +926,7 @@ fun CommonVersionInfoLayout(
                     modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
                     maxLines = 1,
                     text = versionSummary,
+                    color = androidx.compose.ui.graphics.Color(0xFFAAAAAA),
                     style = MaterialTheme.typography.labelMedium
                 )
             }

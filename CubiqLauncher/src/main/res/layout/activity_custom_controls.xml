@@ -1,51 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/customctrl_drawerlayout"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_alignParentEnd="true">
+<androidx.drawerlayout.widget.DrawerLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:id="@+id/customctrl_drawerlayout"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:background="@color/background_status_bar">
 
-    <ImageView
-        android:id="@+id/background_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+	<androidx.constraintlayout.widget.ConstraintLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+		<git.artdeell.mojo.input.ControlLayout
+			android:id="@+id/customctrl_controllayout"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent" />
 
-        <net.kdt.pojavlaunch.customcontrols.ControlLayout
-            android:id="@+id/customctrl_controllayout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+		<git.artdeell.mojo.input.handleview.DrawerPullButton
+			android:id="@+id/drawer_button"
+			android:layout_width="40dp"
+			android:layout_height="20dp"
+			android:padding="6dp"
+			android:elevation="10dp"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageButton
-            android:id="@+id/menu_button"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_margin="12dp"
-            android:elevation="12dp"
-            android:translationZ="12dp"
-            android:background="@drawable/button_background"
-            android:padding="10dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_menu"
-            app:tint="@android:color/white"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:contentDescription="@string/option_edit_controls" />
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_marginTop="8dp"
+			android:layout_marginEnd="68dp"
+			android:maxWidth="280dp"
+			android:gravity="end"
+			android:textAlignment="viewEnd"
+			android:textColor="#B0FFFFFF"
+			android:textSize="11.5sp"
+			android:text="@string/hint_control_mapping"
+			app:layout_constraintEnd_toEndOf="parent"
+			app:layout_constraintTop_toTopOf="parent" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+	</androidx.constraintlayout.widget.ConstraintLayout>
 
-    <FrameLayout
-        android:id="@+id/customctrl_navigation_view"
-        android:layout_width="@dimen/_260sdp"
-        android:layout_height="match_parent"
-        android:layout_margin="@dimen/_12sdp"
-        android:layout_gravity="end"
-        android:elevation="@dimen/_8sdp"
-        android:translationZ="4dp"
-        android:fitsSystemWindows="false" />
+	<ListView
+		android:id="@+id/customctrl_navigation_view"
+		android:layout_width="200dp"
+		android:layout_height="match_parent"
+		android:layout_gravity="end"
+		android:background="?attr/colorBackgroundFloating"
+		android:fitsSystemWindows="false" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -27,11 +27,13 @@ object GL4ESRenderer : RendererInterface {
 
     override fun getRendererName(): String = "GL4ES"
 
-    override fun getRendererSummary(): String = "Lightweight OpenGL ES 2 wrapper. Ideal for legacy versions on low-end hardware."
+    override fun getRendererSummary(): String = "Best for Minecraft 1.16.5 and below. Fast and battery efficient."
 
-    override fun getCompatibilityDescription(): String = "MC 1.7.10 – 1.16.5 • For older or low-end devices"
+    override fun getMinMCVersion(): String? = null
 
-    override fun getMaxMCVersion(): String = "1.21.4"
+    override fun getCompatibilityDescription(): String = "MC <= 1.16.5"
+
+    override fun getMaxMCVersion(): String = "1.16.5"
 
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy { emptyMap() }
 

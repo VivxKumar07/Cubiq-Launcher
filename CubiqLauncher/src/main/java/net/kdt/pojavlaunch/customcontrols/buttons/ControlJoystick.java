@@ -99,7 +99,7 @@ public class ControlJoystick extends JoystickView implements ControlInterface {
 
     @Override
     public void removeButton() {
-        getControlLayoutParent().getLayout().mJoystickDataList.remove(getProperties());
+        getControlLayoutParent().getLayout().mJoystickDataList.remove(mControlData);
         getControlLayoutParent().removeView(this);
     }
 

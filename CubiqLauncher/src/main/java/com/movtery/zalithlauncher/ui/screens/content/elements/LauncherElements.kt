@@ -261,13 +261,30 @@ fun LaunchGameOperation(
             val renderer = operation.renderer
             val version = operation.version
             val quickPlay = operation.quickPlay
+            val mcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
+            val fallback = com.movtery.zalithlauncher.game.renderer.Renderers.getRecommendedFallback(mcVer, activity)
+
+            val reason = if (renderer.getUniqueIdentifier() == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.PACKAGE_NAME &&
+                !com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.isInstalled(activity)
+            ) {
+                "MobileGlues renderer requires the companion standalone app to be installed on your device."
+            } else {
+                "The selected renderer '${renderer.getRendererName()}' is incompatible with Minecraft $mcVer (${renderer.getCompatibilityDescription()})."
+            }
+
             SimpleAlertDialog(
-                title = stringResource(R.string.generic_warning),
-                text = stringResource(R.string.renderer_version_unsupported_warning, renderer.getRendererName()),
-                confirmText = stringResource(R.string.generic_anyway),
+                title = "Incompatible Renderer Warning",
+                text = "$reason\n\nSuggested Fallback Renderer:\n• ${fallback.getRendererName()} (${fallback.getCompatibilityDescription()})\n\nWould you like to switch to ${fallback.getRendererName()} and launch?",
+                confirmText = "Switch & Launch",
                 onConfirm = {
+                    com.movtery.zalithlauncher.game.renderer.Renderers.setCurrentRenderer(fallback.getUniqueIdentifier())
+                    version.getVersionConfig().apply {
+                        this.renderer = fallback.getUniqueIdentifier()
+                        runCatching { saveWithThrowable() }
+                    }
                     launchGameViewModel.updateOperation(LaunchGameOperation.RealLaunch(version, quickPlay))
                 },
+                dismissText = stringResource(R.string.generic_cancel),
                 onDismiss = {
                     launchGameViewModel.updateOperation(LaunchGameOperation.None)
                 }
@@ -337,24 +354,13 @@ fun LaunchGameOperation(
                     Logger.warning("LaunchCheck", "Vulkan is not supported for renderer ${currentRenderer.getRendererName()}")
                 }
 
-                // 检查 MobileGlues 伴生应用是否已安装
-                if (currentRenderer.getUniqueIdentifier() == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.PACKAGE_NAME &&
-                    !com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.isInstalled(activity)
-                ) {
-                    android.widget.Toast.makeText(activity, "MobileGlues Companion App is not installed! Please install it first.", android.widget.Toast.LENGTH_LONG).show()
-                    launchGameViewModel.updateOperation(LaunchGameOperation.None)
+                // 检查渲染器与 Minecraft 版本的兼容性及硬件支持
+                val rendererType = com.movtery.zalithlauncher.game.renderer.RendererType.fromRendererInterface(currentRenderer)
+                val isHardwareUnsupported = !rendererType.isHardwareSupported(activity)
+                val isVersionUnsupported = !rendererType.isCompatibleWithVersion(mcVer)
+                if (isHardwareUnsupported || isVersionUnsupported || !currentRenderer.isCompatibleWith(mcVer, activity)) {
+                    launchGameViewModel.updateOperation(LaunchGameOperation.UnsupportedRenderer(currentRenderer, version, quickPlay))
                     return@LaunchedEffect
-                }
-
-                if (!hasVulkan || !isVulkanSupported) {
-                    val isRendererUnsupported =
-                        (currentRenderer.getMinMCVersion()?.let { mcVer.isLowerVer(it) } ?: false) ||
-                                (currentRenderer.getMaxMCVersion()?.let { mcVer.isBiggerVer(it) } ?: false)
-
-                    if (isRendererUnsupported) {
-                        launchGameViewModel.updateOperation(LaunchGameOperation.UnsupportedRenderer(currentRenderer, version, quickPlay))
-                        return@LaunchedEffect
-                    }
                 }
 
                 val unsupportedPlugins = NativePluginManager.getCheckedPlugins().filter { plugin ->

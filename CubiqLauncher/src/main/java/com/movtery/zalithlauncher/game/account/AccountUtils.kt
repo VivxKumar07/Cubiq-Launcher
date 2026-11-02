@@ -57,6 +57,7 @@ import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
 import java.net.ConnectException
+import java.net.URI
 import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
 import java.util.Locale
@@ -68,6 +69,18 @@ private const val TAG = "AccountUtils"
 
 fun Account.isAuthServerAccount(): Boolean {
     return !isLocalAccount() && !Objects.isNull(otherBaseUrl) && otherBaseUrl != "0"
+}
+
+fun Account.isElyByAccount(): Boolean {
+    if (!isAuthServerAccount()) return false
+    val host = runCatching { URI(otherBaseUrl).host?.lowercase(Locale.ROOT) }.getOrNull() ?: return false
+    return host == "ely.by" || host.endsWith(".ely.by")
+}
+
+fun Account.minecraftUserType(): String = when {
+    isLocalAccount() -> "legacy"
+    isElyByAccount() -> "mojang"
+    else -> "msa"
 }
 
 fun Account.isMicrosoftAccount(): Boolean {

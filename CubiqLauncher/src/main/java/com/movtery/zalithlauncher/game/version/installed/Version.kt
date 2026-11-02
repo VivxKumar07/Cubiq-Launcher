@@ -31,7 +31,9 @@ import com.movtery.zalithlauncher.context.GlobalContext
 import com.movtery.zalithlauncher.game.launch.LogName
 import com.movtery.zalithlauncher.game.path.getVersionsHome
 import com.movtery.zalithlauncher.game.support.touch_controller.VibrationHandler
+import com.movtery.zalithlauncher.game.renderer.renderers.GL4ESRenderer
 import com.movtery.zalithlauncher.game.renderer.renderers.LTWRenderer
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber
 import com.movtery.zalithlauncher.game.renderer.renderers.NGGL4ESRenderer
 import com.movtery.zalithlauncher.game.version.installed.utils.isBiggerVer
 import com.movtery.zalithlauncher.path.PathManager
@@ -220,6 +222,14 @@ class Version(
             return configured
         }
         val mcVer = getVersionInfo()?.minecraftVersion ?: getVersionName()
+        val parsedVersion = Regex("""^\s*(\d+(?:\.\d+){1,2})""")
+            .find(mcVer)
+            ?.groupValues
+            ?.getOrNull(1) ?: mcVer.trim()
+
+        if (GameVersionNumber.compare(parsedVersion, "1.16.5") <= 0) {
+            return GL4ESRenderer.getUniqueIdentifier()
+        }
         // Auto-Default for Minecraft > 26.2 (e.g., 26.3+)
         if (mcVer.isBiggerVer("26.2")) {
             return LTWRenderer.getUniqueIdentifier()

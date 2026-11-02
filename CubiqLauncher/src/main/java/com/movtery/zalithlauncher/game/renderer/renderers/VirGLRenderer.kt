@@ -29,17 +29,19 @@ object VirGLRenderer : RendererInterface {
 
     override fun getRendererName(): String = "VirGLRenderer"
 
-    override fun getRendererSummary(): String = "Gallium VirGL rasterizer. Fallback option for devices without Vulkan or Turnip support."
+    override fun getRendererSummary(): String = "Legacy virtualized renderer for 1.12.2–1.16.5 fallback only."
 
-    override fun getCompatibilityDescription(): String = "MC 1.17 – 1.20.4 • Compatibility fallback"
+    override fun getMinMCVersion(): String = "1.12.2"
 
-    override fun getMaxMCVersion(): String? = null
+    override fun getCompatibilityDescription(): String = "MC 1.12.2 – 1.16.5"
+
+    override fun getMaxMCVersion(): String = "1.16.5"
 
     override fun getDisplayMaxMCVersion(): String? = null
 
     override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
         mapOf(
-            "VTEST_SOCKET_NAME" to File(PathManager.DIR_CACHE, ".virgl_test").absolutePath
+            "VTEST_SOCKET_NAME" to File(runCatching { PathManager.DIR_CACHE }.getOrNull() ?: File(""), ".virgl_test").absolutePath
         )
     }
 

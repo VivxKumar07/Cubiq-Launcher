@@ -854,70 +854,72 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             List<LegacySnapshot> snapshots = new ArrayList<>(1024);
             List<Release> snapshotPrev = new ArrayList<>(1024);
 
-            //noinspection DataFlowIssue
-            try (var reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.US_ASCII))) {
-                Release currentRelease = null;
-                GameVersionNumber prev = null;
+            var stream = GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt");
+            if (stream != null) {
+                try (var reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.US_ASCII))) {
+                    Release currentRelease = null;
+                    GameVersionNumber prev = null;
 
-                for (String line; (line = reader.readLine()) != null; ) {
-                    if (line.isEmpty())
-                        continue;
+                    for (String line; (line = reader.readLine()) != null; ) {
+                        if (line.isEmpty())
+                            continue;
 
-                    GameVersionNumber version = GameVersionNumber.asGameVersion(line);
+                        GameVersionNumber version = GameVersionNumber.asGameVersion(line);
 
-                    if (currentRelease == null)
-                        currentRelease = (Release) version;
+                        if (currentRelease == null)
+                            currentRelease = (Release) version;
 
-                    if (version instanceof LegacySnapshot snapshot) {
-                        snapshots.add(snapshot);
-                        snapshotPrev.add(currentRelease);
-                    } else if (version instanceof Release release) {
-                        currentRelease = release;
+                        if (version instanceof LegacySnapshot snapshot) {
+                            snapshots.add(snapshot);
+                            snapshotPrev.add(currentRelease);
+                        } else if (version instanceof Release release) {
+                            currentRelease = release;
 
-                        if (currentRelease.eaType == Release.ReleaseType.GA
-                                && currentRelease.additional == Release.Additional.NONE) {
-                            defaultGameVersions.addFirst(currentRelease.value);
-                        }
-                    } else if (version instanceof Special special) {
-                        special.prev = prev;
-                        SPECIALS.put(special.value, special);
-                    } else
-                        throw new AssertionError("version: " + version);
+                            if (currentRelease.eaType == Release.ReleaseType.GA
+                                    && currentRelease.additional == Release.Additional.NONE) {
+                                defaultGameVersions.addFirst(currentRelease.value);
+                            }
+                        } else if (version instanceof Special special) {
+                            special.prev = prev;
+                            SPECIALS.put(special.value, special);
+                        } else
+                            throw new AssertionError("version: " + version);
 
-                    prev = version;
+                        prev = version;
+                    }
+                } catch (IOException e) {
+                    // Ignore resource read error
                 }
-            } catch (IOException e) {
-                throw new AssertionError(e);
             }
 
-            //noinspection DataFlowIssue
-            try (var reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/version-alias.csv"), StandardCharsets.US_ASCII))) {
-                for (String line; (line = reader.readLine()) != null; ) {
-                    if (line.isEmpty())
-                        continue;
+            var aliasStream = GameVersionNumber.class.getResourceAsStream("/assets/game/version-alias.csv");
+            if (aliasStream != null) {
+                try (var reader = new BufferedReader(new InputStreamReader(aliasStream, StandardCharsets.US_ASCII))) {
+                    for (String line; (line = reader.readLine()) != null; ) {
+                        if (line.isEmpty())
+                            continue;
 
-                    String[] parts = line.split(",");
-                    if (parts.length < 2) {
-                        Logger.INSTANCE.warning("GameVersionNumber", "Invalid line: " + line, null);
-                        continue;
-                    }
+                        String[] parts = line.split(",");
+                        if (parts.length < 2) {
+                            continue;
+                        }
 
-                    String normalized = parts[0];
-                    Special normalizedVersion = SPECIALS.get(normalized);
-                    if (normalizedVersion == null) {
-                        Logger.INSTANCE.warning("GameVersionNumber", "Unknown special version: " + normalized, null);
-                        continue;
-                    }
+                        String normalized = parts[0];
+                        Special normalizedVersion = SPECIALS.get(normalized);
+                        if (normalizedVersion == null) {
+                            continue;
+                        }
 
-                    for (int i = 1; i < parts.length; i++) {
-                        String version = parts[i];
-                        Special versionNumber = new Special(version, normalized);
-                        versionNumber.prev = normalizedVersion.prev;
-                        SPECIALS.put(version, versionNumber);
+                        for (int i = 1; i < parts.length; i++) {
+                            String version = parts[i];
+                            Special versionNumber = new Special(version, normalized);
+                            versionNumber.prev = normalizedVersion.prev;
+                            SPECIALS.put(version, versionNumber);
+                        }
                     }
+                } catch (IOException e) {
+                    // Ignore resource read error
                 }
-            } catch (IOException e) {
-                throw new AssertionError(e);
             }
 
             DEFAULT_GAME_VERSIONS = defaultGameVersions.toArray(new String[0]);

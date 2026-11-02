@@ -89,6 +89,10 @@ sealed interface NormalNavKey : TitledNavKey {
         @Serializable data object Gamepad : Settings {
             @Contextual override val title: AndroidStringText = androidText(R.string.settings_tab_gamepad)
         }
+        /** 键鼠设置屏幕 */
+        @Serializable data object KeyboardMouse : Settings {
+            @Contextual override val title: AndroidStringText = androidText(R.string.settings_tab_keyboard_mouse)
+        }
         /** 启动器设置屏幕 */
         @Serializable data object Launcher : Settings {
             @Contextual override val title: AndroidStringText = androidText(R.string.settings_tab_launcher)

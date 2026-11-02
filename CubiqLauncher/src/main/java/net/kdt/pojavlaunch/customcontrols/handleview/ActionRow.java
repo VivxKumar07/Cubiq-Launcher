@@ -57,7 +57,7 @@ public class ActionRow extends LinearLayout {
         setOrientation(HORIZONTAL);
         setLayoutParams(new LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
-                getResources().getDimensionPixelOffset(com.intuit.sdp.R.dimen._40sdp)
+                getResources().getDimensionPixelOffset(R.dimen._40sdp)
         ));
 
         actionButtons[0] = new DeleteButton(getContext());
@@ -67,10 +67,7 @@ public class ActionRow extends LinearLayout {
         // This is not pretty code, don't do this.
         for(ActionButtonInterface buttonInterface: actionButtons){
             View button = ((View)(buttonInterface));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1F);
-            lp.setMarginStart((int) net.kdt.pojavlaunch.Tools.dpToPx(4));
-            lp.setMarginEnd((int) net.kdt.pojavlaunch.Tools.dpToPx(4));
-            addView(button, lp);
+            addView(button, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1F));
         }
 
         setElevation(5F);

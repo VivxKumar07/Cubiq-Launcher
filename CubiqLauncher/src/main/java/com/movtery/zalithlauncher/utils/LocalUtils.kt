@@ -324,6 +324,57 @@ fun isAdrenoGPU(): Boolean {
     return isAdreno
 }
 
+
+fun isMaliGPU(): Boolean {
+    val hardware = android.os.Build.HARDWARE.lowercase()
+    val board = android.os.Build.BOARD.lowercase()
+    if (hardware.contains("mt") || hardware.contains("mali") || hardware.contains("kirin") || hardware.contains("exynos") ||
+        board.contains("mt") || board.contains("mali") || board.contains("kirin") || board.contains("exynos")) {
+        return true
+    }
+
+    val eglDisplay = android.opengl.EGL14.eglGetDisplay(android.opengl.EGL14.EGL_DEFAULT_DISPLAY)
+    if (eglDisplay == android.opengl.EGL14.EGL_NO_DISPLAY) return false
+    if (!android.opengl.EGL14.eglInitialize(eglDisplay, null, 0, null, 0)) return false
+
+    val eglAttributes = intArrayOf(
+        android.opengl.EGL14.EGL_RENDERABLE_TYPE, android.opengl.EGL14.EGL_OPENGL_ES2_BIT,
+        android.opengl.EGL14.EGL_NONE
+    )
+    val configs = arrayOfNulls<android.opengl.EGLConfig>(1)
+    val numConfigs = IntArray(1)
+    if (!android.opengl.EGL14.eglChooseConfig(eglDisplay, eglAttributes, 0, configs, 0, 1, numConfigs, 0) || numConfigs[0] == 0) {
+        android.opengl.EGL14.eglTerminate(eglDisplay)
+        return false
+    }
+
+    val contextAttributes = intArrayOf(
+        android.opengl.EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
+        android.opengl.EGL14.EGL_NONE
+    )
+    val context = android.opengl.EGL14.eglCreateContext(eglDisplay, configs[0]!!, android.opengl.EGL14.EGL_NO_CONTEXT, contextAttributes, 0)
+    if (context == android.opengl.EGL14.EGL_NO_CONTEXT) {
+        android.opengl.EGL14.eglTerminate(eglDisplay)
+        return false
+    }
+
+    if (!android.opengl.EGL14.eglMakeCurrent(eglDisplay, android.opengl.EGL14.EGL_NO_SURFACE, android.opengl.EGL14.EGL_NO_SURFACE, context)) {
+        android.opengl.EGL14.eglDestroyContext(eglDisplay, context)
+        android.opengl.EGL14.eglTerminate(eglDisplay)
+        return false
+    }
+
+    val vendor = android.opengl.GLES20.glGetString(android.opengl.GLES20.GL_VENDOR) ?: ""
+    val renderer = android.opengl.GLES20.glGetString(android.opengl.GLES20.GL_RENDERER) ?: ""
+    val isMali = vendor.contains("ARM", ignoreCase = true) || renderer.contains("Mali", ignoreCase = true)
+
+    android.opengl.EGL14.eglMakeCurrent(eglDisplay, android.opengl.EGL14.EGL_NO_SURFACE, android.opengl.EGL14.EGL_NO_SURFACE, android.opengl.EGL14.EGL_NO_CONTEXT)
+    android.opengl.EGL14.eglDestroyContext(eglDisplay, context)
+    android.opengl.EGL14.eglTerminate(eglDisplay)
+
+    return isMali
+}
+
 fun killProgress() {
     runCatching {
         Process.killProcess(Process.myPid())

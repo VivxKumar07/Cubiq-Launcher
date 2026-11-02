@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="controls_add_control_drawer">Drawer</string>
+    <string name="controls_in_game">In-Game</string>
+    <string name="controls_in_menu">In-Menu</string>
+    <string name="controls_load_failed">Load Failed!</string>
+    <string name="controls_orientation_down">Down</string>
+    <string name="controls_orientation_free">Free</string>
+    <string name="controls_orientation_left">Left</string>
+    <string name="controls_orientation_right">Right</string>
+    <string name="controls_orientation_up">Up</string>
+    <string name="controls_settings_button_snapping">Button Snapping</string>
+    <string name="controls_settings_button_snapping_distance">Button Snapping Distance</string>
+    <string name="controls_tip">Tap the gear icon to open the menu ⚙\nTap a button to customize: edit, resize, delete, or remap</string>
+    <string name="controls_unsupported_layout_version">Unsupported control layout version!</string>
+    <string name="controls_visibility">Visibility</string>
+    <string name="generic_clone">Clone</string>
+    <string name="generic_load">Load</string>
+    <string name="generic_name">Name</string>
+    <string name="option_edit_controls">Edit Control Layout</string>
+    <string name="pedit_control">Control Layout</string>
+</resources>

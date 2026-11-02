@@ -45,7 +45,7 @@ public class ControlHandleView extends View {
     };
 
     private void init(){
-        int size = getResources().getDimensionPixelOffset(com.intuit.sdp.R.dimen._22sdp);
+        int size = getResources().getDimensionPixelOffset(R.dimen._22sdp);
         mDrawable.setBounds(0,0,size,size);
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(size, size);
         setLayoutParams(params);

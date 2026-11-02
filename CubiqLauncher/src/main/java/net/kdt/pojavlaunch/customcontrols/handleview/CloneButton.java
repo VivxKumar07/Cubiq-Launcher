@@ -2,7 +2,6 @@ package net.kdt.pojavlaunch.customcontrols.handleview;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Color;
 import android.util.AttributeSet;
 
 import androidx.annotation.Nullable;
@@ -20,8 +19,6 @@ public class CloneButton extends AnimButton implements ActionButtonInterface {
     public void init() {
         setOnClickListener(this);
         setText(R.string.generic_clone);
-        setBackgroundResource(R.drawable.btn_minecraft_stone);
-        setTextColor(Color.WHITE);
     }
 
     private ControlInterface mCurrentlySelectedButton = null;

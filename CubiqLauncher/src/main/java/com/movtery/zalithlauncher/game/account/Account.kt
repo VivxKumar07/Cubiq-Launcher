@@ -52,7 +52,7 @@ data class Account(
     var expiresAt: Long = 0L,
     var clientToken: String = "0",
     var username: String = "Steve",
-    var profileId: String = getLocalUUIDWithSkinModel(username, SkinModelType.NONE),
+    var profileId: String = accountUUID(getUUIDFromUserName(username)),
     var refreshToken: String = "0",
     var xUid: String? = null,
     var otherBaseUrl: String? = null,

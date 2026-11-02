@@ -118,6 +118,7 @@ fun VersionConfigScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .offset { IntOffset(x = 0, y = yOffset.roundToPx()) },
+                    version = version,
                     config = config,
                     submitError = submitError
                 )
@@ -152,6 +153,7 @@ fun VersionConfigScreen(
 
 @Composable
 private fun VersionConfigs(
+    version: Version,
     config: VersionConfig,
     submitError: (ErrorViewModel.ThrowableMessage) -> Unit,
     modifier: Modifier = Modifier
@@ -207,7 +209,8 @@ private fun VersionConfigs(
             getItemId = { it.id },
             getItemSummary = { item ->
                 renderers.find { it.getUniqueIdentifier() == item.id }?.let { renderer ->
-                    RendererSummaryLayout(renderer)
+                    val mcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
+                    RendererSummaryLayout(renderer, mcVer)
                 }
             },
             onValueChange = { item ->

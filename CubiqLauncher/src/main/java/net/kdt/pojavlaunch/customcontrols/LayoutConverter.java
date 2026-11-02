@@ -21,10 +21,8 @@ import java.util.ArrayList;
 
 public class LayoutConverter {
     public static CustomControls loadAndConvertIfNecessary(Context ctx, String jsonPath) throws IOException, JsonSyntaxException {
+
         String jsonLayoutData = Tools.read(jsonPath);
-        if (jsonLayoutData == null || !jsonLayoutData.contains("mControlDataList")) {
-            return null;
-        }
         try {
             JSONObject layoutJobj = new JSONObject(jsonLayoutData);
             return loadAndConvertIfNecessary(ctx, layoutJobj, jsonLayoutData, jsonPath, true);
@@ -35,40 +33,14 @@ public class LayoutConverter {
     }
 
     public static CustomControls loadFromAssets(Context context, String jsonName) {
-        String cleanName = jsonName.contains("/") ? jsonName.substring(jsonName.lastIndexOf('/') + 1) : jsonName;
-        InputStream is = null;
-        try {
-            try {
-                is = context.getAssets().open(jsonName);
-            } catch (Exception e) {
-                is = context.getAssets().open(cleanName);
-            }
+        try (InputStream is = context.getAssets().open(jsonName)) {
             String string = IOUtils.toString(is, StandardCharsets.UTF_8);
+
             JSONObject layoutJobj = new JSONObject(string);
-            return loadAndConvertIfNecessary(context, layoutJobj, string, null, false);
+            return loadAndConvertIfNecessary(context, layoutJobj, string, null, true);
         } catch (Exception e) {
-            try {
-                if (is != null) is.close();
-                is = context.getAssets().open("zalith_1_layout.json");
-                String string = IOUtils.toString(is, StandardCharsets.UTF_8);
-                JSONObject layoutJobj = new JSONObject(string);
-                return loadAndConvertIfNecessary(context, layoutJobj, string, null, false);
-            } catch (Exception e2) {
-                try {
-                    if (is != null) is.close();
-                    is = context.getAssets().open("default.json");
-                    String string = IOUtils.toString(is, StandardCharsets.UTF_8);
-                    JSONObject layoutJobj = new JSONObject(string);
-                    return loadAndConvertIfNecessary(context, layoutJobj, string, null, false);
-                } catch (Exception e3) {
-                    Tools.showError(context, context.getString(R.string.controls_load_failed), e3);
-                    return null;
-                }
-            }
-        } finally {
-            if (is != null) {
-                try { is.close(); } catch (IOException ignored) {}
-            }
+            Tools.showError(context, context.getString(R.string.controls_load_failed), e);
+            return null;
         }
     }
 
@@ -82,27 +54,13 @@ public class LayoutConverter {
     }
 
     private static CustomControls loadAndConvertIfNecessary(Context ctx, JSONObject layoutJobj, String jsonLayoutData, String jsonPath, boolean showError) throws Exception {
-        if (!layoutJobj.has("version")) { // v1 layout
-            if (!layoutJobj.has("mControlDataList")) {
-                try {
-                    CustomControls direct = Tools.GLOBAL_GSON.fromJson(jsonLayoutData, CustomControls.class);
-                    if (direct != null && direct.mControlDataList != null) return direct;
-                } catch (Throwable ignored) {}
-                return null;
-            }
+        if (!layoutJobj.has("version")) { //v1 layout
             CustomControls layout = LayoutConverter.convertV1Layout(layoutJobj);
             if (jsonPath != null) layout.save(jsonPath);
             return layout;
         } else {
-            int version = layoutJobj.optInt("version", -1);
-            if (version == 1) {
-                if (!layoutJobj.has("mControlDataList")) return null;
-                CustomControls layout = LayoutConverter.convertV1Layout(layoutJobj);
-                if (jsonPath != null) layout.save(jsonPath);
-                return layout;
-            }
+            int version = layoutJobj.getInt("version");
             if (version == 2) {
-                if (!layoutJobj.has("mControlDataList")) return null;
                 CustomControls layout = LayoutConverter.convertV2Layout(layoutJobj);
                 if (jsonPath != null) layout.save(jsonPath);
                 return layout;
@@ -116,11 +74,6 @@ public class LayoutConverter {
             if (version == 8) {
                 return Tools.GLOBAL_GSON.fromJson(jsonLayoutData, CustomControls.class);
             }
-            try {
-                CustomControls direct = Tools.GLOBAL_GSON.fromJson(jsonLayoutData, CustomControls.class);
-                if (direct != null && direct.mControlDataList != null) return direct;
-            } catch (Throwable ignored) {}
-
             if (showError) {
                 IOException ioException = new IOException();
                 Tools.showError(ctx, ctx.getString(R.string.controls_unsupported_layout_version), ioException);
@@ -136,17 +89,16 @@ public class LayoutConverter {
      */
     public static CustomControls convertV6_7Layout(JSONObject oldLayoutJson) {
         CustomControls layout = Tools.GLOBAL_GSON.fromJson(oldLayoutJson.toString(), CustomControls.class);
-        if (layout != null && layout.mJoystickDataList != null) {
-            for (ControlJoystickData data : layout.mJoystickDataList) {
-                if (data.getHeight() > data.getWidth()) {
-                    float ratio = data.getHeight() / data.getWidth();
-                    data.dynamicX = data.dynamicX.replace("${height}", "(" + ratio + " * ${height})");
-                    data.dynamicY = data.dynamicY.replace("${height}", "(" + ratio + " * ${height})") +  " + (" + (ratio-1) + " * ${height})";
-                    data.setHeight(data.getWidth());
-                }
+        for (ControlJoystickData data : layout.mJoystickDataList) {
+            if (data.getHeight() > data.getWidth()) {
+                // Make the size square, adjust the dynamic position related to height
+                float ratio = data.getHeight() / data.getWidth();
+                data.dynamicX = data.dynamicX.replace("${height}", "(" + ratio + " * ${height})");
+                data.dynamicY = data.dynamicY.replace("${height}", "(" + ratio + " * ${height})") +  " + (" + (ratio-1) + " * ${height})";
+                data.setHeight(data.getWidth());
             }
-            layout.version = 8;
         }
+        layout.version = 8;
         return layout;
     }
 
@@ -155,134 +107,110 @@ public class LayoutConverter {
      */
     private static CustomControls convertV3_4Layout(JSONObject oldLayoutJson) {
         CustomControls layout = Tools.GLOBAL_GSON.fromJson(oldLayoutJson.toString(), CustomControls.class);
-        if (layout != null) {
-            convertStrokeWidth(layout);
-            layout.version = 6;
-        }
+        convertStrokeWidth(layout);
+        layout.version = 6;
         return layout;
     }
 
-    private static CustomControls convertV2Layout(JSONObject oldLayoutJson) throws JSONException {
-        CustomControls layout = null;
-        try {
-            layout = Tools.GLOBAL_GSON.fromJson(oldLayoutJson.toString(), CustomControls.class);
-        } catch (Throwable ignored) {}
-        if (layout == null) layout = new CustomControls();
 
-        JSONArray layoutMainArray = oldLayoutJson.optJSONArray("mControlDataList");
-        if (layoutMainArray != null) {
-            layout.mControlDataList = new ArrayList<>(layoutMainArray.length());
-            for (int i = 0; i < layoutMainArray.length(); i++) {
-                JSONObject button = layoutMainArray.optJSONObject(i);
-                if (button == null) continue;
-                ControlData n_button = null;
-                try {
-                    n_button = Tools.GLOBAL_GSON.fromJson(button.toString(), ControlData.class);
-                } catch (Throwable ignored) {}
-                if (n_button == null) n_button = new ControlData();
-                if (!Tools.isValidString(n_button.dynamicX) && button.has("x")) {
-                    double buttonC = button.optDouble("x", 0);
-                    double ratio = buttonC / (CallbackBridge.physicalWidth > 0 ? CallbackBridge.physicalWidth : 1);
-                    n_button.dynamicX = ratio + " * ${screen_width}";
-                }
-                if (!Tools.isValidString(n_button.dynamicY) && button.has("y")) {
-                    double buttonC = button.optDouble("y", 0);
-                    double ratio = buttonC / (CallbackBridge.physicalHeight > 0 ? CallbackBridge.physicalHeight : 1);
-                    n_button.dynamicY = ratio + " * ${screen_height}";
-                }
-                layout.mControlDataList.add(n_button);
+    private static CustomControls convertV2Layout(JSONObject oldLayoutJson) throws JSONException {
+        CustomControls layout = Tools.GLOBAL_GSON.fromJson(oldLayoutJson.toString(), CustomControls.class);
+        JSONArray layoutMainArray = oldLayoutJson.getJSONArray("mControlDataList");
+        layout.mControlDataList = new ArrayList<>(layoutMainArray.length());
+        for (int i = 0; i < layoutMainArray.length(); i++) {
+            JSONObject button = layoutMainArray.getJSONObject(i);
+            ControlData n_button = Tools.GLOBAL_GSON.fromJson(button.toString(), ControlData.class);
+            if (!Tools.isValidString(n_button.dynamicX) && button.has("x")) {
+                double buttonC = button.getDouble("x");
+                double ratio = buttonC / CallbackBridge.physicalWidth;
+                n_button.dynamicX = ratio + " * ${screen_width}";
             }
+            if (!Tools.isValidString(n_button.dynamicY) && button.has("y")) {
+                double buttonC = button.getDouble("y");
+                double ratio = buttonC / CallbackBridge.physicalHeight;
+                n_button.dynamicY = ratio + " * ${screen_height}";
+            }
+            layout.mControlDataList.add(n_button);
         }
-        JSONArray layoutDrawerArray = oldLayoutJson.optJSONArray("mDrawerDataList");
-        if (layoutDrawerArray != null) {
-            layout.mDrawerDataList = new ArrayList<>();
-            for (int i = 0; i < layoutDrawerArray.length(); i++) {
-                JSONObject button = layoutDrawerArray.optJSONObject(i);
-                if (button == null) continue;
-                JSONObject buttonProperties = button.optJSONObject("properties");
-                ControlDrawerData n_button = null;
-                try {
-                    n_button = Tools.GLOBAL_GSON.fromJson(button.toString(), ControlDrawerData.class);
-                } catch (Throwable ignored) {}
-                if (n_button != null) {
-                    if (buttonProperties != null && n_button.properties != null) {
-                        if (!Tools.isValidString(n_button.properties.dynamicX) && buttonProperties.has("x")) {
-                            double buttonC = buttonProperties.optDouble("x", 0);
-                            double ratio = buttonC / (CallbackBridge.physicalWidth > 0 ? CallbackBridge.physicalWidth : 1);
-                            n_button.properties.dynamicX = ratio + " * ${screen_width}";
-                        }
-                        if (!Tools.isValidString(n_button.properties.dynamicY) && buttonProperties.has("y")) {
-                            double buttonC = buttonProperties.optDouble("y", 0);
-                            double ratio = buttonC / (CallbackBridge.physicalHeight > 0 ? CallbackBridge.physicalHeight : 1);
-                            n_button.properties.dynamicY = ratio + " * ${screen_height}";
-                        }
-                    }
-                    layout.mDrawerDataList.add(n_button);
-                }
+        JSONArray layoutDrawerArray = oldLayoutJson.getJSONArray("mDrawerDataList");
+        layout.mDrawerDataList = new ArrayList<>();
+        for (int i = 0; i < layoutDrawerArray.length(); i++) {
+            JSONObject button = layoutDrawerArray.getJSONObject(i);
+            JSONObject buttonProperties = button.getJSONObject("properties");
+            ControlDrawerData n_button = Tools.GLOBAL_GSON.fromJson(button.toString(), ControlDrawerData.class);
+            if (!Tools.isValidString(n_button.properties.dynamicX) && buttonProperties.has("x")) {
+                double buttonC = buttonProperties.getDouble("x");
+                double ratio = buttonC / CallbackBridge.physicalWidth;
+                n_button.properties.dynamicX = ratio + " * ${screen_width}";
             }
+            if (!Tools.isValidString(n_button.properties.dynamicY) && buttonProperties.has("y")) {
+                double buttonC = buttonProperties.getDouble("y");
+                double ratio = buttonC / CallbackBridge.physicalHeight;
+                n_button.properties.dynamicY = ratio + " * ${screen_height}";
+            }
+            layout.mDrawerDataList.add(n_button);
         }
         convertStrokeWidth(layout);
+
         layout.version = 3;
         return layout;
     }
 
     private static CustomControls convertV1Layout(JSONObject oldLayoutJson) throws JSONException {
         CustomControls empty = new CustomControls();
-        JSONArray layoutMainArray = oldLayoutJson.optJSONArray("mControlDataList");
-        if (layoutMainArray == null) return empty;
-        empty.mControlDataList = new ArrayList<>(layoutMainArray.length());
+        JSONArray layoutMainArray = oldLayoutJson.getJSONArray("mControlDataList");
         for (int i = 0; i < layoutMainArray.length(); i++) {
-            JSONObject button = layoutMainArray.optJSONObject(i);
-            if (button == null) continue;
+            JSONObject button = layoutMainArray.getJSONObject(i);
             ControlData n_button = new ControlData();
             int[] keycodes = new int[]{LwjglGlfwKeycode.GLFW_KEY_UNKNOWN,
                     LwjglGlfwKeycode.GLFW_KEY_UNKNOWN,
                     LwjglGlfwKeycode.GLFW_KEY_UNKNOWN,
                     LwjglGlfwKeycode.GLFW_KEY_UNKNOWN};
-            n_button.dynamicX = button.optString("dynamicX", "0");
-            n_button.dynamicY = button.optString("dynamicY", "0");
+            n_button.dynamicX = button.getString("dynamicX");
+            n_button.dynamicY = button.getString("dynamicY");
             if (!Tools.isValidString(n_button.dynamicX) && button.has("x")) {
-                double buttonC = button.optDouble("x", 0);
-                double ratio = buttonC / (CallbackBridge.physicalWidth > 0 ? CallbackBridge.physicalWidth : 1);
+                double buttonC = button.getDouble("x");
+                double ratio = buttonC / CallbackBridge.physicalWidth;
                 n_button.dynamicX = ratio + " * ${screen_width}";
             }
             if (!Tools.isValidString(n_button.dynamicY) && button.has("y")) {
-                double buttonC = button.optDouble("y", 0);
-                double ratio = buttonC / (CallbackBridge.physicalHeight > 0 ? CallbackBridge.physicalHeight : 1);
+                double buttonC = button.getDouble("y");
+                double ratio = buttonC / CallbackBridge.physicalHeight;
                 n_button.dynamicY = ratio + " * ${screen_height}";
             }
-            n_button.name = button.optString("name", "Button");
-            n_button.opacity = ((float) ((button.optInt("transparency", 0) - 100) * -1)) / 100f;
-            n_button.passThruEnabled = button.optBoolean("passThruEnabled", false);
-            n_button.isToggle = button.optBoolean("isToggle", false);
-            n_button.setHeight(button.optInt("height", 50));
-            n_button.setWidth(button.optInt("width", 50));
+            n_button.name = button.getString("name");
+            n_button.opacity = ((float) ((button.getInt("transparency") - 100) * -1)) / 100f;
+            n_button.passThruEnabled = button.getBoolean("passThruEnabled");
+            n_button.isToggle = button.getBoolean("isToggle");
+            n_button.setHeight(button.getInt("height"));
+            n_button.setWidth(button.getInt("width"));
             n_button.bgColor = 0x4d000000;
             n_button.strokeWidth = 0;
-            if (button.optBoolean("isRound", false)) {
+            if (button.getBoolean("isRound")) {
                 n_button.cornerRadius = 35f;
             }
             int next_idx = 0;
-            if (button.optBoolean("holdShift", false)) {
+            if (button.getBoolean("holdShift")) {
                 keycodes[next_idx] = LwjglGlfwKeycode.GLFW_KEY_LEFT_SHIFT;
                 next_idx++;
             }
-            if (button.optBoolean("holdCtrl", false)) {
+            if (button.getBoolean("holdCtrl")) {
                 keycodes[next_idx] = LwjglGlfwKeycode.GLFW_KEY_LEFT_CONTROL;
                 next_idx++;
             }
-            if (button.optBoolean("holdAlt", false)) {
+            if (button.getBoolean("holdAlt")) {
                 keycodes[next_idx] = LwjglGlfwKeycode.GLFW_KEY_LEFT_ALT;
                 next_idx++;
             }
-            keycodes[next_idx] = button.optInt("keycode", 0);
+            keycodes[next_idx] = button.getInt("keycode");
             n_button.keycodes = keycodes;
             empty.mControlDataList.add(n_button);
         }
-        empty.scaledAt = (float) oldLayoutJson.optDouble("scaledAt", 100.0);
+        empty.scaledAt = (float) oldLayoutJson.getDouble("scaledAt");
         empty.version = 3;
         return empty;
     }
+
 
     /**
      * Convert the layout stroke width to the V5 form

@@ -25,15 +25,22 @@ object PanfrostRenderer : RendererInterface {
 
     override fun getUniqueIdentifier(): String = "9b2808c4-11af-4c72-a9c6-94c940396475"
 
-    override fun getRendererName(): String = "Panfrost (Mali)"
+    override fun getRendererName(): String = "Panfrost"
 
-    override fun getRendererSummary(): String = "Open-source Gallium driver for ARM Mali Midgard/Bifrost/Valhall GPUs."
+    override fun getRendererSummary(): String = "Open-source Mesa driver for ARM Mali GPUs only."
 
-    override fun getCompatibilityDescription(): String = "MC 1.17 – 1.21 (ARM Mali GPUs)"
+    override fun getMinMCVersion(): String = "1.12.2"
+
+    override fun getCompatibilityDescription(): String = "MC 1.12.2+"
 
     override fun getMaxMCVersion(): String = "1.21.4"
 
-    override fun getRendererEnv(): Lazy<Map<String, String>> = lazy { emptyMap() }
+    override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
+        mapOf(
+            "GALLIUM_DRIVER" to "panfrost",
+            "MESA_LOADER_DRIVER_OVERRIDE" to "panfrost"
+        )
+    }
 
     override fun getDlopenLibrary(): Lazy<List<String>> = lazy { emptyList() }
 

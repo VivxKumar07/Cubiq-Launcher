@@ -24,9 +24,41 @@ public final class Tools {
     static {
         try {
             currentDisplayMetrics = Resources.getSystem().getDisplayMetrics();
+            if (currentDisplayMetrics != null) {
+                org.lwjgl.glfw.CallbackBridge.physicalWidth = currentDisplayMetrics.widthPixels;
+                org.lwjgl.glfw.CallbackBridge.physicalHeight = currentDisplayMetrics.heightPixels;
+            }
         } catch (Throwable ignored) {}
     }
     public static boolean customMouse = false;
+
+    public static void updateWindowSize(android.app.Activity activity) {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            try {
+                if (activity.getDisplay() != null) {
+                    activity.getDisplay().getRealMetrics(displayMetrics);
+                } else {
+                    displayMetrics = activity.getResources().getDisplayMetrics();
+                }
+            } catch (Throwable e) {
+                displayMetrics = activity.getResources().getDisplayMetrics();
+            }
+        } else {
+            activity.getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
+        }
+        currentDisplayMetrics = displayMetrics;
+        int w = displayMetrics.widthPixels;
+        int h = displayMetrics.heightPixels;
+        // In landscape activities, ensure physicalWidth is the larger dimension
+        if (w < h) {
+            int tmp = w;
+            w = h;
+            h = tmp;
+        }
+        org.lwjgl.glfw.CallbackBridge.physicalWidth = w;
+        org.lwjgl.glfw.CallbackBridge.physicalHeight = h;
+    }
 
     public static float dpToPx(float dp) {
         if (currentDisplayMetrics != null) {

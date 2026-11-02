@@ -499,25 +499,41 @@ fun RendererSettingsScreen(
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
-fun RendererSummaryLayout(renderer: RendererInterface) {
+fun RendererSummaryLayout(renderer: RendererInterface, mcVersion: String? = null) {
+    val context = LocalContext.current
+    val rendererType = com.movtery.zalithlauncher.game.renderer.RendererType.fromRendererInterface(renderer)
+    val warningTag = remember(renderer, mcVersion) {
+        rendererType.getInlineWarningTag(mcVersion, context)
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-        with(renderer) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = getCompatibilityDescription(),
+                text = rendererType.category.title,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.secondary
             )
-            getRendererSummary()?.let { summary ->
+            if (warningTag != null) {
                 Text(
-                    text = summary,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.alpha(0.75f)
+                    text = warningTag,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
         }
+
+        Text(
+            text = rendererType.subtitle.ifEmpty { renderer.getRendererSummary() ?: "" },
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.alpha(if (warningTag != null) 0.5f else 0.85f)
+        )
     }
 }
 

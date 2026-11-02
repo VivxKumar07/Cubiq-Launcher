@@ -68,12 +68,7 @@ public class ControlDrawerData {
     }
 
     public ControlDrawerData(ArrayList<ControlData> buttonProperties){
-        this(buttonProperties, new ControlData(
-            "Drawer",
-            new int[] {},
-            Tools.currentDisplayMetrics != null ? Tools.currentDisplayMetrics.widthPixels / 2f : 100f,
-            Tools.currentDisplayMetrics != null ? Tools.currentDisplayMetrics.heightPixels / 2f : 100f
-        ));
+        this(buttonProperties, new ControlData(ContextExecutor.getString(R.string.controls_add_control_drawer), new int[] {}, Tools.currentDisplayMetrics.widthPixels/2f, Tools.currentDisplayMetrics.heightPixels/2f));
     }
 
     public ControlDrawerData(ArrayList<ControlData> buttonProperties, ControlData properties){

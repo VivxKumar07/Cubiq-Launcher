@@ -9,6 +9,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
@@ -24,6 +26,7 @@
     <uses-permission android:name="android.permission.HIGH_SAMPLING_RATE_SENSORS"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
         android:name=".ZLApplication"
@@ -76,12 +79,32 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <data android:scheme="file"/>
                 <data android:scheme="content"/>
-                <data android:mimeType="application/*"/>
+                <data android:mimeType="application/zip"/>
+                <data android:mimeType="application/x-zip-compressed"/>
             </intent-filter>
             <intent-filter>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <action android:name="android.intent.action.SEND"/>
-                <data android:mimeType="application/*"/>
+                <data android:mimeType="application/zip"/>
+                <data android:mimeType="application/x-zip-compressed"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:label="Import Mod (.jar)"
+            android:name="com.movtery.activity.ImportModActivity"
+            android:exported="true"
+            android:targetActivity=".ui.activities.SplashActivity">
+            <meta-data
+                android:name="import_type"
+                android:value="mod" />
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <action android:name="android.intent.action.VIEW"/>
+                <data android:scheme="file"/>
+                <data android:scheme="content"/>
+                <data android:mimeType="application/java-archive"/>
+                <data android:mimeType="application/x-java-archive"/>
             </intent-filter>
         </activity-alias>
 
@@ -115,13 +138,20 @@
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
             android:screenOrientation="unspecified" />
         <activity
-            android:name="net.kdt.pojavlaunch.CustomControlsActivity"
-            android:theme="@style/AppTheme.Fullscreen"
+            android:name="git.artdeell.mojo.CustomControlsActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
-            android:screenOrientation="sensorLandscape" />
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:windowSoftInputMode="adjustNothing" />
+        <activity
+            android:name="net.kdt.pojavlaunch.CustomControlsActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:windowSoftInputMode="adjustNothing" />
         <activity
             android:name=".ui.activities.ControlEditorActivity"
-            android:theme="@style/AppTheme.Fullscreen"
+            android:theme="@style/Theme.ControlEditor"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation"
             android:screenOrientation="sensorLandscape" />
         <activity
@@ -140,8 +170,7 @@
 
         <activity
             android:name=".filemanager.ui.FileManagerActivity"
-            android:process=":filemanager"
-            android:taskAffinity=":filemanager"
+            android:theme="@style/AppTheme.FileManager"
             android:configChanges="keyboardHidden|orientation|screenSize|smallestScreenSize|screenLayout|keyboard|navigation|uiMode|locale|layoutDirection"
             android:windowSoftInputMode="adjustResize"
             android:screenOrientation="unspecified"
@@ -150,7 +179,6 @@
 
         <service
             android:name=".filemanager.events.FileManagerEventService"
-            android:process=":filemanager"
             android:exported="false">
             <intent-filter>
                 <action android:name="com.movtery.zalithlauncher.filemanager.EVENT_SERVICE" />

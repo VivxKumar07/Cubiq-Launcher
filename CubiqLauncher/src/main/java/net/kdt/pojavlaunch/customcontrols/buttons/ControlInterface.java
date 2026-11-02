@@ -52,8 +52,15 @@ public interface ControlInterface extends View.OnLongClickListener, GrabListener
     void cloneButton();
 
     default void setVisible(boolean isVisible) {
-        if(getProperties().isHideable)
+        if(getControlLayoutParent() != null && getControlLayoutParent().getModifiable()) {
+            getControlView().setVisibility(VISIBLE);
+            return;
+        }
+        if(getProperties().isHideable) {
             getControlView().setVisibility(isVisible ? VISIBLE : GONE);
+        } else {
+            getControlView().setVisibility(VISIBLE);
+        }
     }
 
     void sendKeyPresses(boolean isDown);
@@ -310,7 +317,7 @@ public interface ControlInterface extends View.OnLongClickListener, GrabListener
      */
     default void injectGrabListenerBehavior() {
         if (getControlView() == null) {
-            Log.e(ControlInterface.class.toString(), "Failed to inject grab listener behavior !");
+            Log.e("ControlInterface", "Failed to inject grab listener behavior !");
             return;
         }
 

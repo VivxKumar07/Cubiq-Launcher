@@ -97,25 +97,26 @@ public class EditControlPopup {
     public EditControlPopup(Context context, ViewGroup parent) {
         this.context = context;
 
-        mScrollView = (DefocusableScrollView) LayoutInflater.from(context).inflate(R.layout.dialog_control_button_setting, parent, false);
+        mScrollView = (DefocusableScrollView) LayoutInflater.from(context).inflate(R.layout.dialog_zl1_control_button_setting, parent, false);
         parent.addView(mScrollView);
 
-        mMargin = context.getResources().getDimensionPixelOffset(com.intuit.sdp.R.dimen._20sdp);
+        mMargin = context.getResources().getDimensionPixelOffset(R.dimen._20sdp);
 
         mColorSelector = new ColorSelector(context, parent, null);
+        mColorSelector.getRootView().setVisibility(View.GONE);
         mColorSelector.getRootView().setElevation(11);
         mColorSelector.getRootView().setTranslationZ(11);
-        mColorSelector.getRootView().setX(-context.getResources().getDimensionPixelOffset(com.intuit.sdp.R.dimen._280sdp));
+        mColorSelector.getRootView().setX(-context.getResources().getDimensionPixelOffset(R.dimen._220sdp));
 
-        mEditPopupAnimator = ObjectAnimator.ofFloat(mScrollView, "x", 0).setDuration(600);
-        mColorEditorAnimator = ObjectAnimator.ofFloat(mColorSelector.getRootView(), "x", 0).setDuration(600);
-        Interpolator decelerate = new AccelerateDecelerateInterpolator();
+        mEditPopupAnimator = ObjectAnimator.ofFloat(mScrollView, "x", 0).setDuration(90);
+        mColorEditorAnimator = ObjectAnimator.ofFloat(mColorSelector.getRootView(), "x", 0).setDuration(90);
+        Interpolator decelerate = new android.view.animation.DecelerateInterpolator();
         mEditPopupAnimator.setInterpolator(decelerate);
         mColorEditorAnimator.setInterpolator(decelerate);
 
         mScrollView.setElevation(10);
         mScrollView.setTranslationZ(10);
-        mScrollView.setX(-context.getResources().getDimensionPixelOffset(com.intuit.sdp.R.dimen._280sdp));
+        mScrollView.setX(-context.getResources().getDimensionPixelOffset(R.dimen._220sdp));
 
         bindLayout();
         loadAdapter();
@@ -131,6 +132,7 @@ public class EditControlPopup {
      * Slide the layout into the visible screen area
      */
     public void appear(boolean fromRight) {
+        mColorSelector.getRootView().setVisibility(View.GONE);
         disappearColor(); // When someone jumps from a button to another
 
         if (fromRight) {
@@ -152,6 +154,8 @@ public class EditControlPopup {
      * Slide out the layout
      */
     public void disappear() {
+        mColorSelector.getRootView().setVisibility(View.GONE);
+        disappearColor();
         if (!mDisplaying) return;
 
         mDisplaying = false;
@@ -167,6 +171,7 @@ public class EditControlPopup {
      * Slide the layout into the visible screen area
      */
     public void appearColor(boolean fromRight, int color) {
+        mColorSelector.getRootView().setVisibility(View.VISIBLE);
         if (fromRight) {
             if (!mDisplayingColor || !isAtRight()) {
                 mColorEditorAnimator.setFloatValues(currentDisplayMetrics.widthPixels, currentDisplayMetrics.widthPixels - mScrollView.getWidth() - mMargin);
@@ -192,7 +197,10 @@ public class EditControlPopup {
      * Slide out the layout
      */
     public void disappearColor() {
-        if (!mDisplayingColor) return;
+        if (!mDisplayingColor) {
+            mColorSelector.getRootView().setVisibility(View.GONE);
+            return;
+        }
 
         mDisplayingColor = false;
         if (isAtRight())
@@ -201,6 +209,11 @@ public class EditControlPopup {
             mColorEditorAnimator.setFloatValues(mMargin, -mScrollView.getWidth());
 
         mColorEditorAnimator.start();
+        mColorSelector.getRootView().postDelayed(() -> {
+            if (!mDisplayingColor) {
+                mColorSelector.getRootView().setVisibility(View.GONE);
+            }
+        }, 90);
     }
 
     /**

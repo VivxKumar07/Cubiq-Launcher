@@ -156,6 +156,7 @@ class BaseMinecraftDownloader(
                 currentCoroutineContext().ensureActive()
 
                 if (library.name.startsWith("org.lwjgl")) return@forEach
+                if (library.filterLibrary()) return@forEach
 
                 val artifactPath: String = artifactToPath(library) ?: return@forEach
                 val (sha1: String?, url, size, isDownloadable) = library.downloads?.let { downloads ->

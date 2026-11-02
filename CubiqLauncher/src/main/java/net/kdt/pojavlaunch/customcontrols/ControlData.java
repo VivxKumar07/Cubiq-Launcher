@@ -1,5 +1,6 @@
 package net.kdt.pojavlaunch.customcontrols;
 
+import static com.movtery.zalithlauncher.context.ContextExecutor.getString;
 import static net.kdt.pojavlaunch.LwjglGlfwKeycode.GLFW_KEY_UNKNOWN;
 
 import android.content.Context;
@@ -72,19 +73,7 @@ public class ControlData {
     private float height;        //Dp instead of Px now
 
     public ControlData() {
-        this.name = "New Button";
-        this.keycodes = new int[4];
-        this.dynamicX = "0";
-        this.dynamicY = "0";
-        this.width = 50;
-        this.height = 50;
-        this.opacity = 1f;
-        this.bgColor = 0x4D000000;
-        this.strokeColor = -1;
-        this.strokeWidth = 0;
-        this.cornerRadius = 0;
-        this.displayInGame = true;
-        this.displayInMenu = true;
+        this(getString(R.string.controls_add_control_button));
     }
 
     public ControlData(String name) {
@@ -92,17 +81,7 @@ public class ControlData {
     }
 
     public ControlData(String name, int[] keycodes) {
-        this(name, keycodes, getDisplayCenterX(), getDisplayCenterY());
-    }
-
-    private static float getDisplayCenterX() {
-        android.util.DisplayMetrics metrics = Tools.currentDisplayMetrics;
-        return metrics != null ? metrics.widthPixels / 2f : 100f;
-    }
-
-    private static float getDisplayCenterY() {
-        android.util.DisplayMetrics metrics = Tools.currentDisplayMetrics;
-        return metrics != null ? metrics.heightPixels / 2f : 100f;
+        this(name, keycodes, Tools.currentDisplayMetrics.widthPixels / 2f, Tools.currentDisplayMetrics.heightPixels / 2f);
     }
 
     public ControlData(String name, int[] keycodes, float x, float y) {

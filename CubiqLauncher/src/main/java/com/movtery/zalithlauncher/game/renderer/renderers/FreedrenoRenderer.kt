@@ -25,17 +25,24 @@ object FreedrenoRenderer : RendererInterface {
 
     override fun getUniqueIdentifier(): String = "1ad7249f-5784-4f00-bc72-174b3578ee46"
 
-    override fun getRendererName(): String = "Freedreno (Adreno)"
+    override fun getRendererName(): String = "FreeDreno"
 
-    override fun getRendererSummary(): String = "Open-source Gallium driver optimized for Qualcomm Snapdragon Adreno GPUs."
+    override fun getRendererSummary(): String = "Native Mesa driver for Snapdragon (Adreno) GPUs only."
 
-    override fun getCompatibilityDescription(): String = "MC 1.17+ (Snapdragon / Adreno GPUs)"
+    override fun getMinMCVersion(): String = "1.12.2"
+
+    override fun getCompatibilityDescription(): String = "MC 1.12.2+"
 
     override fun getMaxMCVersion(): String? = null
 
     override fun getDisplayMaxMCVersion(): String? = null
 
-    override fun getRendererEnv(): Lazy<Map<String, String>> = lazy { emptyMap() }
+    override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
+        mapOf(
+            "GALLIUM_DRIVER" to "freedreno",
+            "MESA_LOADER_DRIVER_OVERRIDE" to "freedreno"
+        )
+    }
 
     override fun getDlopenLibrary(): Lazy<List<String>> = lazy { emptyList() }
 

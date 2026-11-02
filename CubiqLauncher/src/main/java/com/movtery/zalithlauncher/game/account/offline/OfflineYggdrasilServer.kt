@@ -171,12 +171,18 @@ class OfflineYggdrasilServer(
         val skinBytes = skinFile.takeIf { it.exists() }?.readBytes()
         val skinHash = skinBytes?.let { DigestUtils.digestToString("SHA-256", it) }
 
+        val capeFile = account.getCapeFile()
+        val capeBytes = capeFile.takeIf { it.exists() }?.readBytes()
+        val capeHash = capeBytes?.let { DigestUtils.digestToString("SHA-256", it) }
+
         val character = Character(
             uuid = account.profileId.replace("-", ""),
             name = account.username,
             skin = LoadedSkin(
                 skinHash = skinHash,
                 skinBytes = skinBytes,
+                capeHash = capeHash,
+                capeBytes = capeBytes,
                 model = account.skinModelType
             )
         )
@@ -184,7 +190,7 @@ class OfflineYggdrasilServer(
         charactersByUuid[character.uuid.lowercase()] = character
         charactersByName[character.name.lowercase()] = character
 
-        Logger.info(TAG, "Added character ${character.name} (${character.uuid}), skin hash = ${character.skin?.skinHash}")
+        Logger.info(TAG, "Added character ${character.name} (${character.uuid}), skin hash = ${character.skin?.skinHash}, cape hash = ${character.skin?.capeHash}")
     }
 
 
@@ -229,14 +235,18 @@ class OfflineYggdrasilServer(
     }
 
     private fun hasJoined(call: ApplicationCall): String {
-        val username = call.request.queryParameters["username"] ?: return buildJsonObject {
+        val username = call.request.queryParameters["username"]?.trim() ?: return buildJsonObject {
             put("error", JsonPrimitive("Missing username"))
         }.toString()
         Logger.debug(TAG, "Try find profile with username $username")
 
-        val character = charactersByName[username.lowercase()] ?: return buildJsonObject { }.toString().also {
-            Logger.debug(TAG, "Profile with username $username not found")
-        }
+        val character = charactersByName[username.lowercase()]
+            ?: charactersByUuid.values.firstOrNull { it.name.equals(username, ignoreCase = true) }
+            ?: charactersByUuid.values.firstOrNull { it.name.trim().equals(username.trim(), ignoreCase = true) }
+            ?: charactersByUuid.values.singleOrNull()
+            ?: return buildJsonObject { }.toString().also {
+                Logger.debug(TAG, "Profile with username $username not found")
+            }
 
         return character.toCompleteResponse("http://localhost:${getPort()}", this::sign).also {
             Logger.debug(TAG, "Found profile with username $username")

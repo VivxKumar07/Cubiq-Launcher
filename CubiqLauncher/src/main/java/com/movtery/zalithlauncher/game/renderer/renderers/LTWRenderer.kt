@@ -25,13 +25,15 @@ object LTWRenderer : RendererInterface {
 
     override fun getUniqueIdentifier(): String = "d2c1e8b4-55a1-4e78-9032-11cf4e87d3a1"
 
-    override fun getRendererName(): String = "LTW (Large Thin Wrapper)"
+    override fun getRendererName(): String = "LTW"
 
-    override fun getRendererSummary(): String = "High-performance OpenGL-to-ES wrapper optimized for modern Minecraft 1.20+ and optimization mods (Sodium/Iris)."
+    override fun getRendererSummary(): String = "Thin wrapper for 1.14–1.20+. Good for vanilla, limited mod support."
 
     override fun isRecommended(): Boolean = true
 
-    override fun getCompatibilityDescription(): String = "MC 1.17 – 1.21.4+ • Recommended for modern versions & Sodium"
+    override fun getMinMCVersion(): String = "1.14"
+
+    override fun getCompatibilityDescription(): String = "MC 1.14+"
 
     override fun getMaxMCVersion(): String? = null
 
@@ -47,6 +49,4 @@ object LTWRenderer : RendererInterface {
     override fun getDlopenLibrary(): Lazy<List<String>> = lazy { emptyList() }
 
     override fun getRendererLibrary(): String = "libltw.so"
-
-    override fun getRendererEGL(): String = "libltw.so"
 }

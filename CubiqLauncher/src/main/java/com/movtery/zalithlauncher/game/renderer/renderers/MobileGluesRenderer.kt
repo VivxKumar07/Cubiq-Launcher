@@ -41,9 +41,11 @@ object MobileGluesRenderer : RendererInterface, Plugin {
 
     override fun getRendererName(): String = "MobileGlues"
 
-    override fun getRendererSummary(): String = "Advanced mobile OpenGL ES translation layer with deep shader support (BSL/Iris/Create mod). Requires companion app."
+    override fun getRendererSummary(): String = "Modern 1.17–1.21+ renderer. Best for Mali/MediaTek devices."
 
-    override fun getCompatibilityDescription(): String = "MC 1.16.5 – 1.21.4+ • Shaders & Heavy Mods Support"
+    override fun getMinMCVersion(): String = "1.17"
+
+    override fun getCompatibilityDescription(): String = "MC 1.17+"
 
     override fun getMaxMCVersion(): String? = null
 

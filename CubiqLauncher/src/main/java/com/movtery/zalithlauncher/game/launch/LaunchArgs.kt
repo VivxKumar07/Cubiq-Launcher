@@ -25,6 +25,7 @@ import com.movtery.zalithlauncher.bridge.LoggerBridge
 import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.account.isAuthServerAccount
 import com.movtery.zalithlauncher.game.account.isLocalAccount
+import com.movtery.zalithlauncher.game.account.minecraftUserType
 import com.movtery.zalithlauncher.game.account.offline.OfflineYggdrasilServer
 import com.movtery.zalithlauncher.game.multirt.Runtime
 import com.movtery.zalithlauncher.game.path.getAssetsHome
@@ -184,7 +185,7 @@ class LaunchArgs(
         val argsList: MutableList<String> = ArrayList()
 
         if (account.isLocalAccount()) {
-            if (account.hasSkinFile) {
+            if (account.hasSkinFile || account.getCapeFile().exists()) {
                 //该离线账号拥有本地皮肤，启用离线yggdrasil服务器
                 offlineServer.start()
                 offlineServer.addCharacter(account)
@@ -366,7 +367,7 @@ class LaunchArgs(
         varArgMap["game_assets"] = getAssetsHome(version.getGameHome())
         varArgMap["game_directory"] = gameDirPath.absolutePath
         varArgMap["user_properties"] = "{}"
-        varArgMap["user_type"] = "msa"
+        varArgMap["user_type"] = account.minecraftUserType()
         varArgMap["version_name"] = gameManifest.id
 
         setLauncherInfo(varArgMap)

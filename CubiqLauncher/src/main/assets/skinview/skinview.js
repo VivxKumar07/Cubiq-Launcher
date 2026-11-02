@@ -9,6 +9,17 @@ const skinViewer = new skinview3d.SkinViewer({
     height: getHeight()
 });
 
+if (skinViewer.renderer) {
+    skinViewer.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+}
+if (skinViewer.camera) {
+    skinViewer.camera.near = 1;
+    skinViewer.camera.far = 500;
+    if (skinViewer.camera.updateProjectionMatrix) {
+        skinViewer.camera.updateProjectionMatrix();
+    }
+}
+
 container.appendChild(skinViewer.canvas);
 
 //参考 Modrinth 启动器默认的 idle 动画
@@ -280,7 +291,21 @@ setTimeout(resize, 100);
 setTimeout(resize, 500);
 
 function loadSkin(skinUrl, model = "auto-detect") {
-    skinViewer.loadSkin(skinUrl, { model: model });
+    const p = skinViewer.loadSkin(skinUrl, { model: model });
+    if (p && typeof p.then === 'function') {
+        p.then(() => {
+            if (skinViewer.playerObject) {
+                skinViewer.playerObject.traverse((obj) => {
+                    if (obj.isMesh && obj.material) {
+                        obj.material.depthWrite = true;
+                        obj.material.alphaTest = 0.1;
+                        obj.material.transparent = true;
+                        obj.material.needsUpdate = true;
+                    }
+                });
+            }
+        }).catch(err => console.warn('Skin load warning:', err));
+    }
 }
 
 function loadCape(capeUrl) {

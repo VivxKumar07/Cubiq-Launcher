@@ -18,6 +18,8 @@
 
 package com.movtery.zalithlauncher.game.renderer
 
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber
+
 /**
  * 启动器渲染器实现
  */
@@ -51,6 +53,34 @@ interface RendererInterface {
      * 获取渲染器最高兼容版本
      */
     fun getMaxMCVersion(): String? = null
+
+    /**
+     * Whether this renderer supports the selected Minecraft version.
+     * Versions without a recognizable numeric version remain unrestricted for plugin compatibility.
+     */
+    fun isCompatibleWith(minecraftVersion: String, context: android.content.Context? = null): Boolean {
+        val parsedVersion = Regex("""^\s*(\d+(?:\.\d+){1,2})""")
+            .find(minecraftVersion)
+            ?.groupValues
+            ?.getOrNull(1)
+            ?: return true
+
+        if (getUniqueIdentifier() == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.PACKAGE_NAME && context != null) {
+            if (!com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.isInstalled(context)) {
+                return false
+            }
+        }
+
+        val minVersion = getMinMCVersion()?.let {
+            Regex("""^\s*(\d+(?:\.\d+){1,2})""").find(it)?.groupValues?.getOrNull(1) ?: it
+        }
+        val maxVersion = getMaxMCVersion()?.let {
+            Regex("""^\s*(\d+(?:\.\d+){1,2})""").find(it)?.groupValues?.getOrNull(1) ?: it
+        }
+        val isAtLeastMin = minVersion == null || GameVersionNumber.compare(parsedVersion, minVersion) >= 0
+        val isAtMostMax = maxVersion == null || GameVersionNumber.compare(parsedVersion, maxVersion) <= 0
+        return isAtLeastMin && isAtMostMax
+    }
 
     /**
      * 获取渲染器最低兼容版本的展示用版本号

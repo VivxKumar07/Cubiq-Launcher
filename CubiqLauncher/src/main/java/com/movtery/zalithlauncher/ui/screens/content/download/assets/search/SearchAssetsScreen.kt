@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -50,6 +51,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -688,6 +690,59 @@ fun SearchAssetsScreen(
                                             onClick = {
                                                 viewModel.researchWithFilter(viewModel.searchFilter.copy(modloader = loader))
                                                 showLoaderMenu = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Category Filter Chip (if categories available)
+                    if (categories.isNotEmpty()) {
+                        item {
+                            var showCatMenu by remember { mutableStateOf(false) }
+                            val currentCategory = viewModel.searchFilter.categories.firstOrNull()
+                            val currentCategoryName = currentCategory?.let { stringResource(it.getDisplayName()) } ?: "All Categories"
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(if (currentCategory != null) Color(0xFF2A3D24) else Color(0xFF262628))
+                                    .border(
+                                        BorderStroke(1.dp, if (currentCategory != null) Color(0xFF55FF55) else Color(0xFF383838)),
+                                        RoundedCornerShape(2.dp)
+                                    )
+                                    .clickable { showCatMenu = true }
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Category: $currentCategoryName",
+                                    color = if (currentCategory != null) Color(0xFF55FF55) else Color(0xFFCCCCCC),
+                                    fontFamily = MinecraftFontFamily,
+                                    fontSize = 10.sp
+                                )
+
+                                androidx.compose.material3.DropdownMenu(
+                                    expanded = showCatMenu,
+                                    onDismissRequest = { showCatMenu = false },
+                                    modifier = Modifier
+                                        .background(Color(0xFF1E1E20))
+                                        .heightIn(max = 280.dp)
+                                ) {
+                                    androidx.compose.material3.DropdownMenuItem(
+                                        text = { Text("All Categories", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.sp) },
+                                        onClick = {
+                                            viewModel.researchWithFilter(viewModel.searchFilter.copy(categories = emptyList()))
+                                            showCatMenu = false
+                                        }
+                                    )
+                                    categories.forEach { cat ->
+                                        val catName = stringResource(cat.getDisplayName())
+                                        androidx.compose.material3.DropdownMenuItem(
+                                            text = { Text(catName, color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.sp) },
+                                            onClick = {
+                                                viewModel.researchWithFilter(viewModel.searchFilter.copy(categories = listOf(cat)))
+                                                showCatMenu = false
                                             }
                                         )
                                     }

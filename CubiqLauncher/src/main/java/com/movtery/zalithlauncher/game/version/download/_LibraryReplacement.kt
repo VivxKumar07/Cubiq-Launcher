@@ -79,6 +79,8 @@ fun GameManifest.Library.filterLibrary(): Boolean {
         name?.contains("org.lwjgl") == true -> true
         name?.contains("jinput-platform") == true -> true
         name?.contains("twitch-platform") == true -> true
+        name?.contains("tv.twitch") == true -> true
+        name?.startsWith("net.minecraftforge:forge:") == true -> true
         else -> false
     }
 }

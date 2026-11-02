@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import kotlin.math.roundToInt
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.account.AccountsManager
@@ -233,11 +234,14 @@ fun MinecraftSkinsScreen(
 
     val activeModelType = if (isSlimModel) SkinModelType.ALEX else SkinModelType.STEVE
     val previewSkinFile = if (selectedSkinPreset == "Current") activeSkinFile else null
+    val previewSkinAsset = when (selectedSkinPreset) {
+        "Steve" -> "steve.png"
+        "Alex" -> "alex.png"
+        else -> null
+    }
     val previewSkinUrl = when {
         selectedSkinPreset == "Current" && activeSkinFile == null && account != null && account.username.isNotBlank() -> "https://minotar.net/skin/${account.username}"
         selectedSkinPreset != "Current" && selectedSkinPreset != "Steve" && selectedSkinPreset != "Alex" -> "https://minotar.net/skin/$selectedSkinPreset"
-        selectedSkinPreset == "Alex" -> "https://minotar.net/skin/MHF_Alex"
-        selectedSkinPreset == "Steve" -> "https://minotar.net/skin/MHF_Steve"
         else -> null
     }
 
@@ -261,6 +265,7 @@ fun MinecraftSkinsScreen(
             SkinPreview3D(
                 skinFile = previewSkinFile,
                 skinUrl = previewSkinUrl,
+                skinAsset = previewSkinAsset,
                 capeFile = activeCapeFile,
                 modelType = activeModelType,
                 azimuth = if (selectedWardrobeTab == 1) 145 else -35,
@@ -268,7 +273,7 @@ fun MinecraftSkinsScreen(
                 modifier = Modifier.fillMaxSize(),
                 interactionEnabled = true,
                 refreshKey = remember(selectedSkinPreset, isSlimModel, activeSkinFile, activeCapeFile, previewSkinUrl, selectedCapeId, refreshWardrobe) {
-                    "$selectedSkinPreset-$isSlimModel-${activeSkinFile?.path}-${activeCapeFile?.path}-$previewSkinUrl-$selectedCapeId-$refreshWardrobe"
+                    "$selectedSkinPreset-$isSlimModel-${activeSkinFile?.path}-${activeCapeFile?.path}-$previewSkinUrl-$previewSkinAsset-$selectedCapeId-$refreshWardrobe"
                 }
             )
 
@@ -505,6 +510,11 @@ fun MinecraftSkinsScreen(
                                 .clickable {
                                     com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
                                     selectedSkinPreset = label
+                                    if (label == "Alex") {
+                                        isSlimModel = true
+                                    } else if (label == "Steve") {
+                                        isSlimModel = false
+                                    }
                                     if (label != "Current") {
                                         Toast.makeText(context, "$label skin selected", Toast.LENGTH_SHORT).show()
                                     }
@@ -610,7 +620,9 @@ fun MinecraftSkinsScreen(
                             preset.assetPath?.let { path ->
                                 runCatching {
                                     context.assets.open(path).use { stream ->
-                                        BitmapFactory.decodeStream(stream)?.asImageBitmap()
+                                        BitmapFactory.decodeStream(stream)?.let { fullBitmap ->
+                                            getCapeFront2DLayer(fullBitmap)
+                                        }
                                     }
                                 }.getOrNull()
                             }
@@ -661,7 +673,10 @@ fun MinecraftSkinsScreen(
                                             bitmap = capeBitmap,
                                             contentDescription = preset.name,
                                             contentScale = ContentScale.FillBounds,
-                                            modifier = Modifier.fillMaxSize()
+                                            filterQuality = androidx.compose.ui.graphics.FilterQuality.None,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(vertical = 2.dp, horizontal = 5.dp)
                                         )
                                     }
                                 }
@@ -776,4 +791,15 @@ fun MinecraftSkinsScreen(
             }
         }
     }
+}
+
+private fun getCapeFront2DLayer(cape: android.graphics.Bitmap): androidx.compose.ui.graphics.ImageBitmap {
+    val scaleFactor = cape.width / 64.0f
+    val startX = (1 * scaleFactor).roundToInt().coerceIn(0, cape.width - 1)
+    val startY = (1 * scaleFactor).roundToInt().coerceIn(0, cape.height - 1)
+    val capeWidth = (10 * scaleFactor).roundToInt().coerceAtMost(cape.width - startX)
+    val capeHeight = (16 * scaleFactor).roundToInt().coerceAtMost(cape.height - startY)
+
+    val frontBitmap = android.graphics.Bitmap.createBitmap(cape, startX, startY, capeWidth, capeHeight)
+    return frontBitmap.asImageBitmap()
 }

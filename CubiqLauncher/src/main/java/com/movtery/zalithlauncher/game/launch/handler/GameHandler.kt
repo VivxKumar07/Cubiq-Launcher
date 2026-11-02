@@ -147,7 +147,7 @@ class GameHandler(
     }
 
     override fun onPause() {
-    }
+            }
 
     override fun onResume() {
         refreshControls()
@@ -155,7 +155,7 @@ class GameHandler(
     }
 
     override fun onDestroy() {
-        Terracotta.setWaiting(false)
+                Terracotta.setWaiting(false)
     }
 
     override fun onGraphicOutput() {

@@ -123,6 +123,45 @@ object Renderers {
     }
 
     /**
+     * Get a recommended fallback renderer for a given Minecraft version.
+     */
+    fun getRecommendedFallback(minecraftVersion: String, context: android.content.Context? = null): RendererInterface {
+        if (!isInitialized) init()
+        val parsedVersion = Regex("""^\s*(\d+(?:\.\d+){1,2})""")
+            .find(minecraftVersion)
+            ?.groupValues
+            ?.getOrNull(1) ?: "1.16.5"
+
+        return if (org.jackhuang.hmcl.util.versioning.GameVersionNumber.compare(parsedVersion, "1.17") >= 0) {
+            renderers.find { it.getUniqueIdentifier() == NGGL4ESRenderer.getUniqueIdentifier() && it.isCompatibleWith(minecraftVersion, context) }
+                ?: renderers.find { it.getUniqueIdentifier() == LTWRenderer.getUniqueIdentifier() && it.isCompatibleWith(minecraftVersion, context) }
+                ?: renderers.firstOrNull { it.isCompatibleWith(minecraftVersion, context) }
+                ?: NGGL4ESRenderer
+        } else {
+            renderers.find { it.getUniqueIdentifier() == GL4ESRenderer.getUniqueIdentifier() && it.isCompatibleWith(minecraftVersion, context) }
+                ?: renderers.firstOrNull { it.isCompatibleWith(minecraftVersion, context) }
+                ?: GL4ESRenderer
+        }
+    }
+
+    /**
+     * Select a renderer for a Minecraft version, falling back when the configured renderer is outside its supported range.
+     */
+    fun setCurrentRendererForMinecraftVersion(uniqueIdentifier: String, minecraftVersion: String) {
+        setCurrentRenderer(uniqueIdentifier)
+        val selected = getCurrentRenderer()
+        if (selected.isCompatibleWith(minecraftVersion)) return
+
+        val fallback = getRecommendedFallback(minecraftVersion)
+
+        currentRenderer = fallback
+        Logger.warning(
+            TAG,
+            "Renderer ${selected.getRendererName()} does not support Minecraft $minecraftVersion; using ${fallback.getRendererName()} instead."
+        )
+    }
+
+    /**
      * 获取当前的渲染器
      */
     fun getCurrentRenderer(): RendererInterface {

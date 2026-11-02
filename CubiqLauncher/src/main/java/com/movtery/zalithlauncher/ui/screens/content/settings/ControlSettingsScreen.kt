@@ -524,6 +524,50 @@ fun ControlSettingsScreen(
                     )
                 }
             }
+
+            AnimatedItem(scope) { yOffset ->
+                SettingsCardColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .offset { IntOffset(x = 0, y = yOffset.roundToPx()) }
+                ) {
+                    LittleTextLabel(
+                        text = "Screen Capture & Recording"
+                    )
+
+                    SwitchSettingsCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        position = CardPosition.Top,
+                        unit = AllSettings.hudScreenCaptureTools,
+                        title = "Screen Recorder & Screenshot HUD",
+                        summary = "Display floating on-screen capture buttons (Screenshot & Record) during gameplay"
+                    )
+
+                    SwitchSettingsCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        position = CardPosition.Middle,
+                        unit = AllSettings.hudCaptureSound,
+                        title = "Screenshot Shutter Sound",
+                        summary = "Play authentic camera shutter click when a screenshot is captured"
+                    )
+
+                    SwitchSettingsCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        position = CardPosition.Middle,
+                        unit = AllSettings.hudSaveToGallery,
+                        title = "Auto-Export to Gallery",
+                        summary = "Automatically mirror captured screenshots to Android system Pictures/Screenshots gallery"
+                    )
+
+                    SwitchSettingsCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        position = CardPosition.Bottom,
+                        unit = AllSettings.hudShowRecordTimer,
+                        title = "Show Recording Timer",
+                        summary = "Display real-time elapsed timer indicator while screen recording is active"
+                    )
+                }
+            }
         }
     }
 }

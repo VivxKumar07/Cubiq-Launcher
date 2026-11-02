@@ -182,8 +182,12 @@ class ObservableNormalData(data: NormalData) : ObservableWidget() {
             //该控件允许被滑入，且活跃控件中无阻止滑动链的类型
             if (activeWidgets.none { it.behavior.blocksSwipeChain }) {
                 addThis()
+                consumeEvent(!isPenetrable)
                 pressStart(eventHandler, allLayers)
             }
+        } else if (this in activeWidgets) {
+            //持续按压状态：必须每帧消费事件，避免事件漏到底层鼠标/手势层造成多指触控锁死
+            consumeEvent(!isPenetrable)
         }
     }
 

@@ -368,6 +368,16 @@ abstract class Launcher(
 
         // Some phones are not using the right number of cores, fix that
         args.add("-XX:ActiveProcessorCount=${java.lang.Runtime.getRuntime().availableProcessors()}")
+
+        // Auto optimization & FPS stabilization: High performance GC tuning for modern runtimes
+        if (runtime.javaVersion > 8 && !args.any { it.contains("UseG1GC") || it.contains("UseZGC") || it.contains("UseSerialGC") }) {
+            args.add("-XX:+UseG1GC")
+            args.add("-XX:InitiatingHeapOccupancyPercent=45")
+            args.add("-XX:G1ReservePercent=15")
+            args.add("-XX:MaxGCPauseMillis=25")
+            args.add("-XX:+UnlockExperimentalVMOptions")
+            args.add("-XX:+ParallelRefProcEnabled")
+        }
     }
 
     protected fun MutableList<String>.purgeArg(argStart: String) {
@@ -614,6 +624,7 @@ abstract class Launcher(
                 ?: File("$baseDir/lib", lib).takeIf { it.exists() }
                 ?: File("$runtimeHome/lib", lib).takeIf { it.exists() }
                 ?: locateLibs(File(runtimeHome)).firstOrNull { it.name == lib }
+                ?: if (lib == "libfreetype.so") File(lwjglNativesDir, lib).takeIf { it.isFile } else null
             if (file != null && file.exists()) {
                 ZLBridge.dlopen(file.absolutePath)
             }
@@ -670,14 +681,12 @@ fun getCacioJavaArgs(
         argsList.add("--add-opens=java.base/java.net=ALL-UNNAMED")
     }
 
-    val cacioClassPath = StringBuilder()
-    cacioClassPath.append("-Xbootclasspath/").append(if (isJava8) "p" else "a")
     val cacioFiles = if (isJava8) LibPath.CACIO_8 else LibPath.CACIO_17
-    cacioFiles.listFiles()?.onEach {
-        if (it.name.endsWith(".jar")) cacioClassPath.append(":").append(it.absolutePath)
+    val jars = cacioFiles.listFiles()?.filter { it.name.endsWith(".jar") } ?: emptyList()
+    if (jars.isNotEmpty()) {
+        val option = if (isJava8) "-Xbootclasspath/p:" else "-Xbootclasspath/a:"
+        argsList.add(option + jars.joinToString(":") { it.absolutePath })
     }
-
-    argsList.add(cacioClassPath.toString())
 
     return argsList
 }
