@@ -324,6 +324,8 @@ import com.movtery.zalithlauncher.game.versioninfo.MinecraftOfficialContentManag
 
 
 import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
+import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonHomeBanner
+import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonSetupDialog
 
 
 
@@ -428,6 +430,7 @@ fun LandscapeLauncherLayout(
 
 
     var showVersionMenu by remember { mutableStateOf(false) }
+    var showHorizonSetup by remember { mutableStateOf(false) }
 
 
 
@@ -1094,10 +1097,8 @@ fun LandscapeLauncherLayout(
 
 
 
-                        onSelectTab = onSelectTab
-
-
-
+                        onSelectTab = onSelectTab,
+                    onOpenHorizonSetup = { showHorizonSetup = true }
                     )
 
 
@@ -1394,6 +1395,16 @@ fun LandscapeLauncherLayout(
 
 
 
+
+
+    if (showHorizonSetup) {
+        HorizonSetupDialog(
+            onDismiss = { showHorizonSetup = false },
+            onSetupComplete = {
+                onSelectTab(1, 0)
+            }
+        )
+    }
 }
 
 
@@ -1470,7 +1481,8 @@ fun LandscapePlayScreen(
     onManageInstallations: () -> Unit,
     onOpenFiles: () -> Unit,
     onOpenMultiplayer: () -> Unit,
-    onSelectTab: (bottomNav: Int, tab: Int) -> Unit
+    onSelectTab: (bottomNav: Int, tab: Int) -> Unit,
+    onOpenHorizonSetup: () -> Unit = {}
 ) {
     val featuredArtworks = remember {
         listOf(
@@ -1631,6 +1643,14 @@ fun LandscapePlayScreen(
                         onSelectTab(1, 0)
                         InstallationDownloadManager.showDialog()
                     }
+                )
+
+                // Horizon Home Promotional Banner (Panel A)
+                HorizonHomeBanner(
+                    onClick = onOpenHorizonSetup,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
                 )
 
                 // Dock Container
@@ -2059,6 +2079,9 @@ fun LandscapeTopRightActions(
 
 
     }
+
+
+
 
 
 

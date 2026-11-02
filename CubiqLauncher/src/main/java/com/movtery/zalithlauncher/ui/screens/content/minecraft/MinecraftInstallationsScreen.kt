@@ -10,6 +10,12 @@
 
 package com.movtery.zalithlauncher.ui.screens.content.minecraft
 
+import com.movtery.zalithlauncher.game.horizon.HorizonManager
+import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonInstallationsBanner
+import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonSetupDialog
+import com.movtery.zalithlauncher.ui.screens.content.horizon.JavaRustEngineSelector
+import com.movtery.zalithlauncher.ui.screens.content.horizon.RustInstallationCard
+
 
 
 import android.widget.Toast
@@ -195,6 +201,16 @@ fun MinecraftInstallationsScreen(
 
     var showNewInstallationDialog by remember { mutableStateOf(false) }
 
+    var selectedEngine by remember { mutableStateOf("Java") }
+
+    var showHorizonSetup by remember { mutableStateOf(false) }
+
+    val isHorizonInstalled = remember(showHorizonSetup) {
+        HorizonManager.isInstalled(context)
+    }
+
+    val isLandscape = androidx.compose.ui.platform.LocalConfiguration.current.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
     var createdInstallationName by remember { mutableStateOf<String?>(null) }
 
     var modSwitcherVersion by remember { mutableStateOf<Version?>(null) }
@@ -222,6 +238,44 @@ fun MinecraftInstallationsScreen(
                 .padding(horizontal = 14.dp, vertical = 8.dp)
 
         ) {
+
+            // Java / Rust Engine Selector Tab ([☕ Java] | [⚙️ Rust]) - Panel F
+            JavaRustEngineSelector(
+                selectedEngine = selectedEngine,
+                onSelectEngine = { selectedEngine = it },
+                modifier = Modifier.padding(bottom = 6.dp)
+            )
+
+            if (selectedEngine == "Rust") {
+                if (isHorizonInstalled) {
+                    RustInstallationCard(
+                        onLaunch = {
+                            HorizonManager.launchHorizon(context)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp)
+                    )
+                } else {
+                    HorizonInstallationsBanner(
+                        onClick = { showHorizonSetup = true },
+                        isLandscape = isLandscape,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(76.dp)
+                            .padding(vertical = 4.dp)
+                    )
+                }
+            } else {
+                // Java Mode: Promotional Banner (Panels D & E)
+                HorizonInstallationsBanner(
+                    onClick = { showHorizonSetup = true },
+                    isLandscape = isLandscape,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(76.dp)
+                        .padding(vertical = 4.dp)
+                )
 
             // Header Action Bar: Stone 3D New Installation Button | Search
 
@@ -804,9 +858,20 @@ fun MinecraftInstallationsScreen(
 
             }
 
+            } // end of Java else block
+
         }
 
 
+
+        if (showHorizonSetup) {
+            HorizonSetupDialog(
+                onDismiss = { showHorizonSetup = false },
+                onSetupComplete = {
+                    selectedEngine = "Rust"
+                }
+            )
+        }
 
         // New Installation Creation Dialog
 

@@ -20,6 +20,9 @@
 
 package com.movtery.zalithlauncher.ui.screens.content
 
+import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonHomeBanner
+import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonSetupDialog
+
 
 
 
@@ -691,6 +694,7 @@ fun LauncherScreen(
 
 
         var showVersionMenu by remember { mutableStateOf(false) }
+        var showHorizonSetup by remember { mutableStateOf(false) }
 
 
 
@@ -1105,6 +1109,16 @@ fun LauncherScreen(
         }
 
 
+
+        if (showHorizonSetup) {
+            HorizonSetupDialog(
+                onDismiss = { showHorizonSetup = false },
+                onSetupComplete = {
+                    LauncherNavState.selectedBottomNav = 1
+                    LauncherNavState.activeTab = 0
+                }
+            )
+        }
 
         if (showCrashDialog) {
 
@@ -1959,6 +1973,15 @@ fun LauncherScreen(
                                                         onVersionClick = { showVersionMenu = true }
                                                     )
                                                 }
+
+                                                // Horizon Promotional Banner (Panels B & C)
+                                                HorizonHomeBanner(
+                                                    onClick = { showHorizonSetup = true },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                                                        .height(64.dp)
+                                                )
 
                                                 
 

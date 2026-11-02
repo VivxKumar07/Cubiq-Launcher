@@ -258,6 +258,28 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
+        <!-- Horizon (Minecraft Rust Edition) Native Game Engine Activity -->
+        <activity
+            android:name="dev.horizon.android.HorizonActivity"
+            android:process=":horizon"
+            android:exported="false"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|density|screenLayout"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/HorizonGameTheme">
+            <meta-data android:name="android.app.lib_name" android:value="horizon_android" />
+        </activity>
+
+        <provider
+            android:name="dev.horizon.android.HorizonDocumentsProvider"
+            android:authorities="${packageName}.horizon.documents"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
     </application>
     <queries>
         <package android:name="net.kdt.pojavlaunch.ffmpeg"/>
