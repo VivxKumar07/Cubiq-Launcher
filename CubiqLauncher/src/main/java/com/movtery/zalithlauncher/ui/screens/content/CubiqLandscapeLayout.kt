@@ -1,5 +1,7 @@
 package com.movtery.zalithlauncher.ui.screens.content
 
+import com.movtery.zalithlauncher.setting.AllSettings
+
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -672,101 +674,53 @@ fun LandscapeLauncherLayout(
 
                 val skinFile = account?.getSkinFile()
 
-
-
                 if (account != null && skinFile != null && skinFile.exists()) {
-
-
 
                     PlayerFace(account = account, avatarSize = 34.dp)
 
-
-
                 } else {
-
-
 
                     Image(
 
-
-
-                        painter = painterResource(R.drawable.ic_mc_steve_head),
-
-
+                        painter = painterResource(if (account != null) R.drawable.ic_mc_steve_head else R.drawable.ic_mc_pc_profile),
 
                         contentDescription = "Player Face",
 
-
-
                         modifier = Modifier
-
-
 
                             .size(34.dp)
 
-
-
                             .clip(RoundedCornerShape(4.dp)),
-
-
 
                         contentScale = ContentScale.Fit
 
-
-
                     )
-
-
 
                 }
 
-
-
                 Column(modifier = Modifier.weight(1f)) {
-
-
 
                     Text(
 
-
-
-                        text = account?.username ?: "Cubiq",
-
-
+                        text = account?.username ?: "Player",
 
                         color = Color.White,
 
-
-
                         fontFamily = MinecraftFontFamily,
-
-
 
                         fontWeight = FontWeight.Bold,
 
-
-
                         fontSize = 12.5.sp,
-
-
 
                         maxLines = 1,
 
-
-
                         overflow = TextOverflow.Ellipsis
-
-
 
                     )
 
-
-
                     Text(
 
-
-
-                        text = account?.let { "(${getAccountTypeName(it)})" } ?: "(Offline)",
+                        text = account?.let { "(${getAccountTypeName(it)})" } ?: "(No Active Account)",
 
 
 
@@ -1484,95 +1438,31 @@ fun LandscapePlayScreen(
     onSelectTab: (bottomNav: Int, tab: Int) -> Unit,
     onOpenHorizonSetup: () -> Unit = {}
 ) {
-    val featuredArtworks = remember {
-        listOf(
-            R.drawable.img_mc_hero_1_21, // Tricky Trials
-            R.drawable.img_mc_hero_1_20, // Trails & Tales
-            R.drawable.img_mc_hero_1_19, // The Wild Update
-            R.drawable.img_mc_hero_1_18, // Caves & Cliffs
-            R.drawable.img_mc_hero_1_16, // Nether Update
-            R.drawable.img_mc_hero_1_14, // Village & Pillage
-            R.drawable.img_mc_hero_classic // Classic
-        )
-    }
-
-    val itemCount = if (allVersions.isNotEmpty()) allVersions.size else featuredArtworks.size
-
-    val landscapePagerState = rememberPagerState(
-        initialPage = 5000 - (5000 % itemCount)
-    ) { 10000 }
-
-    // Auto-scroll every 5 seconds ALWAYS forward
-    LaunchedEffect(landscapePagerState, itemCount) {
-        while (true) {
-            kotlinx.coroutines.delay(5000L)
-            if (!landscapePagerState.isScrollInProgress) {
-                landscapePagerState.animateScrollToPage(
-                    page = landscapePagerState.currentPage + 1,
-                    animationSpec = androidx.compose.animation.core.tween(
-                        durationMillis = 750,
-                        easing = androidx.compose.animation.core.FastOutSlowInEasing
-                    )
-                )
-            }
-        }
-    }
-
-    // Sync selected version when pager scrolls across actual versions
-    LaunchedEffect(landscapePagerState.currentPage) {
-        if (allVersions.isNotEmpty()) {
-            val actualIndex = landscapePagerState.currentPage % allVersions.size
-            if (actualIndex in allVersions.indices) {
-                val ver = allVersions[actualIndex]
-                if (ver.getVersionName() != currentVersion?.getVersionName()) {
-                    com.movtery.zalithlauncher.game.version.installed.VersionsManager.saveVersion(ver)
-                }
-            }
-        }
-    }
+    val hasMultipleVersions = allVersions.size > 1
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF0F1012))
     ) {
-        // Hero Card Carousel with Left and Right Peeking Edges & Green Highlighter Border
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 46.dp, bottom = 68.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            HorizontalPager(
-                state = landscapePagerState,
-                contentPadding = PaddingValues(horizontal = 46.dp),
-                pageSpacing = 16.dp,
+        if (!hasMultipleVersions) {
+            val singleVersion = allVersions.firstOrNull() ?: currentVersion
+            val pageArt = if (singleVersion != null) {
+                com.movtery.zalithlauncher.game.versioninfo.VersionArtworkResolver.getArtworkForVersion(singleVersion)
+            } else {
+                R.drawable.art_wilderness_bound
+            }
+
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
-            ) { virtualPage ->
-                val pageIndex = virtualPage % itemCount
-                val pageVersion = if (allVersions.isNotEmpty()) allVersions.getOrNull(pageIndex) else currentVersion
-                val pageArt = if (allVersions.isNotEmpty() && pageVersion != null) {
-                    com.movtery.zalithlauncher.game.versioninfo.VersionArtworkResolver.getArtworkForVersion(pageVersion)
-                } else {
-                    featuredArtworks[pageIndex % featuredArtworks.size]
-                }
-
-                val pageOffset = ((landscapePagerState.currentPage - virtualPage) + landscapePagerState.currentPageOffsetFraction).let { kotlin.math.abs(it) }
-                val fraction = (1f - pageOffset.coerceIn(0f, 1f))
-                val scale = 0.93f + 0.07f * fraction
-                val alpha = 0.65f + 0.35f * fraction
-
+                    .fillMaxSize()
+                    .padding(top = 46.dp, bottom = 68.dp, start = 46.dp, end = 46.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 MinecraftPixelBorderContainer(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight()
-                        .graphicsLayer {
-                            scaleX = scale
-                            scaleY = scale
-                            this.alpha = alpha
-                        },
+                        .fillMaxHeight(),
                     borderColor = Color(0xFF55FF55)
                 ) {
                     Box(modifier = Modifier.fillMaxSize()) {
@@ -1587,9 +1477,8 @@ fun LandscapePlayScreen(
                             alignment = Alignment.Center
                         )
 
-                        // Centered Minecraft Java Edition Logo (Hidden only for Trails & Tales)
                         val isTrailsAndTales = pageArt == R.drawable.img_mc_hero_1_20 ||
-                                pageVersion?.getVersionName()?.contains("1.20") == true
+                                singleVersion?.getVersionName()?.contains("1.20") == true
                         if (!isTrailsAndTales) {
                             Image(
                                 painter = painterResource(R.drawable.img_mc_java_logo),
@@ -1603,7 +1492,6 @@ fun LandscapePlayScreen(
                             )
                         }
 
-                        // Bottom Gradient Shadow for Contrast
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1617,7 +1505,6 @@ fun LandscapePlayScreen(
                                 )
                         )
 
-                        // Fixed inside each hero card at footer within card boundary
                         val heroBannerContext = androidx.compose.ui.platform.LocalContext.current
                         HorizonHomeBanner(
                             onClick = {
@@ -1633,6 +1520,131 @@ fun LandscapePlayScreen(
                                 .padding(horizontal = 24.dp, vertical = 12.dp)
                                 .height(48.dp)
                         )
+                    }
+                }
+            }
+        } else {
+            val landscapePagerState = rememberPagerState(
+                initialPage = 5000 - (5000 % allVersions.size)
+            ) { 10000 }
+
+            val autoScroll = AllSettings.heroCardAutoScroll.state
+            LaunchedEffect(landscapePagerState, allVersions.size, autoScroll) {
+                if (!autoScroll) return@LaunchedEffect
+                while (true) {
+                    kotlinx.coroutines.delay(5000L)
+                    if (!landscapePagerState.isScrollInProgress) {
+                        landscapePagerState.animateScrollToPage(
+                            page = landscapePagerState.currentPage + 1,
+                            animationSpec = androidx.compose.animation.core.tween(
+                                durationMillis = 750,
+                                easing = androidx.compose.animation.core.FastOutSlowInEasing
+                            )
+                        )
+                    }
+                }
+            }
+
+            LaunchedEffect(landscapePagerState.currentPage) {
+                val actualIndex = landscapePagerState.currentPage % allVersions.size
+                if (actualIndex in allVersions.indices) {
+                    val ver = allVersions[actualIndex]
+                    if (ver.getVersionName() != currentVersion?.getVersionName()) {
+                        com.movtery.zalithlauncher.game.version.installed.VersionsManager.saveVersion(ver)
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 46.dp, bottom = 68.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                HorizontalPager(
+                    state = landscapePagerState,
+                    contentPadding = PaddingValues(horizontal = 46.dp),
+                    pageSpacing = 16.dp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                ) { virtualPage ->
+                    val pageIndex = virtualPage % allVersions.size
+                    val pageVersion = allVersions[pageIndex]
+                    val pageArt = com.movtery.zalithlauncher.game.versioninfo.VersionArtworkResolver.getArtworkForVersion(pageVersion)
+
+                    val pageOffset = ((landscapePagerState.currentPage - virtualPage) + landscapePagerState.currentPageOffsetFraction).let { kotlin.math.abs(it) }
+                    val fraction = (1f - pageOffset.coerceIn(0f, 1f))
+                    val scale = 0.93f + 0.07f * fraction
+                    val alpha = 0.65f + 0.35f * fraction
+
+                    MinecraftPixelBorderContainer(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight()
+                            .graphicsLayer {
+                                scaleX = scale
+                                scaleY = scale
+                                this.alpha = alpha
+                            },
+                        borderColor = Color(0xFF55FF55)
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            coil3.compose.AsyncImage(
+                                model = coil3.request.ImageRequest.Builder(LocalContext.current)
+                                    .data(pageArt)
+                                    .size(1920, 1080)
+                                    .build(),
+                                contentDescription = "Minecraft Version Hero Artwork",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop,
+                                alignment = Alignment.Center
+                            )
+
+                            val isTrailsAndTales = pageArt == R.drawable.img_mc_hero_1_20 ||
+                                    pageVersion.getVersionName().contains("1.20")
+                            if (!isTrailsAndTales) {
+                                Image(
+                                    painter = painterResource(R.drawable.img_mc_java_logo),
+                                    contentDescription = "Minecraft Java Edition",
+                                    modifier = Modifier
+                                        .align(Alignment.TopCenter)
+                                        .padding(top = 16.dp)
+                                        .height(64.dp)
+                                        .widthIn(max = 320.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp)
+                                    .align(Alignment.BottomCenter)
+                                    .background(
+                                        Brush.verticalGradient(
+                                            0.0f to Color.Transparent,
+                                            1.0f to Color(0xCC0B0C0E)
+                                        )
+                                    )
+                            )
+
+                            val heroBannerContext = androidx.compose.ui.platform.LocalContext.current
+                            HorizonHomeBanner(
+                                onClick = {
+                                    if (com.movtery.zalithlauncher.game.horizon.HorizonManager.isInstalled(heroBannerContext)) {
+                                        com.movtery.zalithlauncher.game.horizon.HorizonManager.launchHorizon(heroBannerContext)
+                                    } else {
+                                        onOpenHorizonSetup()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                                    .height(48.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -1876,6 +1888,23 @@ fun LandscapeTopRightActions(
 
 
     ) {
+
+
+
+        // AUTO SCROLL Toggle Button (Left of FILES)
+        val autoScroll = AllSettings.heroCardAutoScroll.state
+        MinecraftButton(
+            onClick = {
+                com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                AllSettings.heroCardAutoScroll.save(!AllSettings.heroCardAutoScroll.getValue())
+            },
+            style = if (autoScroll) MinecraftButtonStyle.GREEN else MinecraftButtonStyle.STONE,
+            text = if (autoScroll) "AUTO: ON" else "AUTO: OFF",
+            fontSize = 11.sp,
+            modifier = Modifier
+                .height(32.dp)
+                .widthIn(min = 72.dp)
+        )
 
 
 

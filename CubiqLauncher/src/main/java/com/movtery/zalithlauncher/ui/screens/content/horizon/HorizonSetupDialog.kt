@@ -49,8 +49,8 @@ fun HorizonSetupDialog(
 ) {
     val context = LocalContext.current
     val installState by HorizonManager.installState.collectAsState()
-    val isAlreadyInstalled = remember { HorizonManager.isInstalled(context) }
     var forceReinstall by remember { mutableStateOf(false) }
+    val isAlreadyInstalled = remember(installState, forceReinstall) { HorizonManager.isInstalled(context) }
 
     Dialog(onDismissRequest = {
         if (installState !is HorizonManager.InstallState.Downloading && installState !is HorizonManager.InstallState.Configuring) {

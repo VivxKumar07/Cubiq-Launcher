@@ -233,7 +233,14 @@ public class ControlButton extends TextView implements ControlInterface {
                 break;
 
             case ControlData.SPECIALBTN_VIRTUALMOUSE:
-                if(isDown) // Toggle mouse
+                if(isDown) {
+                    int currentMode = com.movtery.zalithlauncher.bridge.ZLBridgeStates.INSTANCE.getCursorMode().getValue();
+                    int nextMode = (currentMode == com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_ENABLED)
+                            ? com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_DISABLED
+                            : com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_ENABLED;
+                    com.movtery.zalithlauncher.bridge.ZLBridgeStates.changeCursorMode(nextMode);
+                    net.kdt.pojavlaunch.Tools.customMouse = (nextMode == com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_ENABLED);
+                }
                 break;
 
             case ControlData.SPECIALBTN_MOUSEPRI:

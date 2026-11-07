@@ -241,6 +241,19 @@ abstract class Launcher(
             if (File("/system/lib64/libvulkan.so").exists() || File("/system/lib/libvulkan.so").exists() || File("/vendor/lib64/libvulkan.so").exists() || File("/vendor/lib/libvulkan.so").exists()) {
                 put("org.lwjgl.vulkan.libname", "libvulkan.so")
             }
+            val sdl3Lib = File(PathManager.DIR_NATIVE_LIB, "libSDL3.so")
+            if (sdl3Lib.exists()) {
+                put("org.lwjgl.sdl.libname", sdl3Lib.absolutePath)
+            }
+            val fullJavaLibPath = listOf(
+                PathManager.DIR_NATIVE_LIB,
+                lwjglNativesDir,
+                getRuntimeLibraryPath()
+            ).flatMap { it.split(":") }
+                .filter { it.isNotEmpty() && File(it).exists() }
+                .distinct()
+                .joinToString(":")
+            put("java.library.path", fullJavaLibPath)
             // LWJGL 3.4 的 Library.loadSystem 通过该属性定位 native 库。
             // 指向 per-version natives 目录，保证 3.4.x 游戏加载对应版本的 liblwjgl.so 等。
             put("org.lwjgl.librarypath", lwjglNativesDir)
@@ -256,6 +269,8 @@ abstract class Launcher(
 
             // fml
             put("fml.earlyprogresswindow", "false")
+            put("forge.earlyprogresswindow", "false")
+            put("neoforge.earlyprogresswindow", "false")
             put("fml.ignoreInvalidMinecraftCertificates", "true")
             put("fml.ignorePatchDiscrepancies", "true")
 
@@ -343,8 +358,8 @@ abstract class Launcher(
         args.purgeArg("-XX:+UseLargePagesInMetaspace")
         args.purgeArg("-XX:+UseLargePages")
         args.purgeArg("-Dorg.lwjgl.opengl.libname")
-        // Don't let the user specify a custom Freetype library (as the user is unlikely to specify a version compiled for Android)
         args.purgeArg("-Dorg.lwjgl.freetype.libname")
+        args.purgeArg("-Dorg.lwjgl.sdl.libname")
         // Overridden by us to specify the exact number of cores that the android system has
         args.purgeArg("-XX:ActiveProcessorCount")
 
@@ -359,6 +374,12 @@ abstract class Launcher(
         // that we ship with Java (since it may be older than what's needed).
         // 始终指向 LWJGL 组件 natives 目录内的库，禁止回退到应用原生 libs 目录（其中不含 LWJGL 系库）
         args.add("-Dorg.lwjgl.freetype.libname=${File(lwjglNativesDir, "libfreetype.so").absolutePath}")
+
+        // Configure SDL3 library path for modern SDL-based versions
+        val sdl3Lib = File(PathManager.DIR_NATIVE_LIB, "libSDL3.so")
+        if (sdl3Lib.exists()) {
+            args.add("-Dorg.lwjgl.sdl.libname=${sdl3Lib.absolutePath}")
+        }
 
         // Our spirv-cross is compiled shared, so it gets named shared.
         args.add("-Dorg.lwjgl.spvc.libname=spirv-cross-c-shared")

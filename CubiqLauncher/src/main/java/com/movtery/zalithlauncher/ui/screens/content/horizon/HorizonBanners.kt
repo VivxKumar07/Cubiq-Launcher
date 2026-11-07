@@ -118,18 +118,21 @@ fun HorizonHomeBanner(
                 )
 
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(1.dp)
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "Horizon",
+                            text = "Getting low FPS? Try Minecraft Rust Edition",
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            fontSize = 12.sp,
+                            maxLines = 2,
+                            lineHeight = 16.sp
                         )
 
                         // Green "NEW" Badge
@@ -152,13 +155,6 @@ fun HorizonHomeBanner(
                             )
                         }
                     }
-
-                    Text(
-                        text = "Try Minecraft Rust Edition",
-                        color = Color(0xFFBBBBBB),
-                        fontFamily = MinecraftFontFamily,
-                        fontSize = 11.sp
-                    )
                 }
             }
 
@@ -247,14 +243,14 @@ fun HorizonInstallationsBanner(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(horizontal = 14.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f, fill = false)
+                modifier = Modifier.weight(1f)
             ) {
                 // Circular Horizon Logo
                 Image(
@@ -266,6 +262,7 @@ fun HorizonInstallationsBanner(
                 )
 
                 Column(
+                    modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Row(
@@ -304,7 +301,9 @@ fun HorizonInstallationsBanner(
                         text = "Minecraft 26.3, rewritten from scratch in Rust.",
                         color = Color(0xFFCCCCCC),
                         fontFamily = MinecraftFontFamily,
-                        fontSize = 11.sp
+                        fontSize = if (isLandscape) 11.5.sp else 11.sp,
+                        maxLines = 3,
+                        lineHeight = if (isLandscape) 17.sp else 16.sp
                     )
 
                     // Powered by Rust pill

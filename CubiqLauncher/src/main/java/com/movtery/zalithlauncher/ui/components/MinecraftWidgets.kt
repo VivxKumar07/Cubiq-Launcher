@@ -672,3 +672,19 @@ fun MinecraftLoadingBlock(
 ) {
     MinecraftLoadingBlock(message = "LOADING...", modifier = modifier)
 }
+
+
+@Composable
+fun MinecraftPixelBorderContainer(
+    modifier: Modifier = Modifier,
+    borderColor: Color = Color(0xFF3C8527),
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(3.dp))
+            .border(BorderStroke(1.5.dp, borderColor), RoundedCornerShape(3.dp))
+    ) {
+        content()
+    }
+}

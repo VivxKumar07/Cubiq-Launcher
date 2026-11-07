@@ -140,12 +140,12 @@ class MainActivity : BaseAppCompatActivity() {
 
     override fun isFullScreenActivity(): Boolean {
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        return isLandscape
+        return isLandscape && AllSettings.launcherFullScreen.getValue()
     }
 
     override fun isIgnoreNotch(): Boolean {
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        return isLandscape
+        return isLandscape && AllSettings.launcherFullScreen.getValue()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

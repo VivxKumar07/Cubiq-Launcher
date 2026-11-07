@@ -20,14 +20,41 @@ package com.movtery.zalithlauncher.bridge;
 
 public class NativeLibraryLoader {
     public static void loadPojavLib() {
-        System.loadLibrary("pojavexec");
+        try {
+            System.loadLibrary("pojavexec");
+        } catch (UnsatisfiedLinkError e) {
+            String nativeDir = System.getenv("POJAV_NATIVEDIR");
+            if (nativeDir != null && new java.io.File(nativeDir, "libpojavexec.so").exists()) {
+                System.load(nativeDir + "/libpojavexec.so");
+            } else {
+                throw e;
+            }
+        }
     }
 
     public static void loadExitHookLib() {
-        System.loadLibrary("exithook");
+        try {
+            System.loadLibrary("exithook");
+        } catch (UnsatisfiedLinkError e) {
+            String nativeDir = System.getenv("POJAV_NATIVEDIR");
+            if (nativeDir != null && new java.io.File(nativeDir, "libexithook.so").exists()) {
+                System.load(nativeDir + "/libexithook.so");
+            } else {
+                throw e;
+            }
+        }
     }
 
     public static void loadPojavAWTLib() {
-        System.loadLibrary("pojavexec_awt");
+        try {
+            System.loadLibrary("pojavexec_awt");
+        } catch (UnsatisfiedLinkError e) {
+            String nativeDir = System.getenv("POJAV_NATIVEDIR");
+            if (nativeDir != null && new java.io.File(nativeDir, "libpojavexec_awt.so").exists()) {
+                System.load(nativeDir + "/libpojavexec_awt.so");
+            } else {
+                throw e;
+            }
+        }
     }
 }

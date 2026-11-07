@@ -74,7 +74,8 @@ import com.movtery.zalithlauncher.bridge.ZLBridgeStates
 import com.movtery.zalithlauncher.game.keycodes.mapToKeycode
 import com.movtery.zalithlauncher.game.launch.MCOptions
 import com.movtery.zalithlauncher.setting.AllSettings
-import com.movtery.zalithlauncher.utils.rememberGameRenderSize
+import com.movtery.zalithlauncher.utils.currentGameDisplayLayout
+import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -154,16 +155,22 @@ fun BoxScope.MinecraftHotbar(
         HotbarRule.Auto -> {
             val optionsChangeKey by MCOptions.refreshKey.collectAsStateWithLifecycle()
             val windowChangeKey by ZLBridgeStates.windowChangeKey.collectAsStateWithLifecycle()
-            val renderSize = rememberGameRenderSize(screenSize)
+            val displayLayout = currentGameDisplayLayout(screenSize)
+            val renderSize = displayLayout.renderSize
+            val displaySize = displayLayout.displaySize
             LaunchedEffect(
                 isGrabbing, optionsChangeKey, screenSize, density,
-                renderSize, windowChangeKey
+                renderSize, displaySize, windowChangeKey
             ) {
                 val guiScale = getMCGuiScale(renderSize.width, renderSize.height)
-                val slotSize = guiScale * 20
+                val baseSlotSize = guiScale * 20
+                val scaleX = if (renderSize.width > 0) displaySize.width.toFloat() / renderSize.width.toFloat() else 1f
+                val scaleY = if (renderSize.height > 0) displaySize.height.toFloat() / renderSize.height.toFloat() else 1f
+                val slotWidth = (baseSlotSize * scaleX).roundToInt()
+                val slotHeight = (baseSlotSize * scaleY).roundToInt()
 
                 with(density) {
-                    hotbarSize = DpSize((slotSize * hotbarList.size).toDp(), slotSize.toDp())
+                    hotbarSize = DpSize((slotWidth * hotbarList.size).toDp(), slotHeight.toDp())
                 }
             }
         }

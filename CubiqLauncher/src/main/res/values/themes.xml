@@ -69,6 +69,7 @@
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:windowNoTitle">true</item>
-        <item name="android:colorAccent">#9a86ff</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:colorAccent">#55FF55</item>
     </style>
 </resources>

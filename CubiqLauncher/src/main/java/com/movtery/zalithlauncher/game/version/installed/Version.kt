@@ -221,6 +221,10 @@ class Version(
         if (configured.isNotEmpty()) {
             return configured
         }
+        val global = AllSettings.renderer.getValue()
+        if (global.isNotEmpty()) {
+            return global
+        }
         val mcVer = getVersionInfo()?.minecraftVersion ?: getVersionName()
         val parsedVersion = Regex("""^\s*(\d+(?:\.\d+){1,2})""")
             .find(mcVer)

@@ -18,6 +18,9 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val sensor = sensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR)
+        ?: sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+        ?: sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+    private var lastGyroTimestamp: Long = 0L
     private val correctionListener = OrientationCorrectionListener(context)
     private val angleBuffer = Array(
         if (AllSettings.gyroscopeSmoothing.getValue()) 2 else 1
@@ -41,13 +44,17 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
     private var historyIndex = -1
     private var storedX = 0f
     private var storedY = 0f
+    var onDeltaListener: ((deltaX: Float, deltaY: Float) -> Unit)? = null
+    private var forceAlwaysHandle: Boolean = false
 
     init {
         updateOrientation()
     }
 
-    fun enable() {
+    @JvmOverloads
+    fun enable(alwaysHandle: Boolean = false) {
         val gyroSensor = sensor ?: return
+        forceAlwaysHandle = alwaysHandle
         warmup = ROTATION_VECTOR_WARMUP_PERIOD
         sensorManager.registerListener(
             this,
@@ -55,8 +62,8 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
             1_000 * AllSettings.gyroscopeSampleRate.getValue()
         )
         correctionListener.enable()
-        shouldHandleEvents = CallbackBridge.isGrabbing()
-        CallbackBridge.addGrabListener(this)
+        shouldHandleEvents = alwaysHandle || try { CallbackBridge.isGrabbing() } catch (_: Throwable) { true }
+        try { CallbackBridge.addGrabListener(this) } catch (_: Throwable) {}
     }
 
     fun disable() {
@@ -65,6 +72,7 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
         correctionListener.disable()
         storedX = 0f
         storedY = 0f
+        lastGyroTimestamp = 0L
         resetDamper()
         CallbackBridge.removeGrabListener(this)
     }
@@ -72,15 +80,28 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
     override fun onSensorChanged(event: SensorEvent) {
         if (!shouldHandleEvents) return
 
-        System.arraycopy(currentRotation, 0, previousRotation, 0, currentRotation.size)
-        SensorManager.getRotationMatrixFromVector(currentRotation, event.values)
+        if (event.sensor.type == Sensor.TYPE_GYROSCOPE) {
+            if (lastGyroTimestamp == 0L) {
+                lastGyroTimestamp = event.timestamp
+                return
+            }
+            val dt = (event.timestamp - lastGyroTimestamp) * 1.0e-9f
+            lastGyroTimestamp = event.timestamp
+            if (dt > 0.1f) return
+            angleDifference[0] = event.values[0] * dt
+            angleDifference[1] = event.values[1] * dt
+            angleDifference[2] = event.values[2] * dt
+        } else {
+            System.arraycopy(currentRotation, 0, previousRotation, 0, currentRotation.size)
+            SensorManager.getRotationMatrixFromVector(currentRotation, event.values)
 
-        if (warmup > 0) {
-            warmup--
-            return
+            if (warmup > 0) {
+                warmup--
+                return
+            }
+
+            SensorManager.getAngleChange(angleDifference, currentRotation, previousRotation)
         }
-
-        SensorManager.getAngleChange(angleDifference, currentRotation, previousRotation)
         damperValue(angleDifference)
         val sensitivity = AllSettings.gyroscopeSensitivity.getValue()
         storedX += xAverage * 10 * sensitivity
@@ -89,27 +110,34 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
         val absX = abs(storedX)
         val absY = abs(storedY)
         var updatePosition = false
+        var deltaX = 0f
+        var deltaY = 0f
         if (absX + absY > MULTI_AXIS_LOW_PASS_THRESHOLD) {
-            CallbackBridge.mouseX -= (if (swapXY) storedY else storedX) * xFactor
-            CallbackBridge.mouseY += (if (swapXY) storedX else storedY) * yFactor
+            deltaX = -(if (swapXY) storedY else storedX) * xFactor
+            deltaY = (if (swapXY) storedX else storedY) * yFactor
             storedX = 0f
             storedY = 0f
             updatePosition = true
         } else {
             if (absX > SINGLE_AXIS_LOW_PASS_THRESHOLD) {
-                CallbackBridge.mouseX -= (if (swapXY) storedY else storedX) * xFactor
+                deltaX = -(if (swapXY) storedY else storedX) * xFactor
                 storedX = 0f
                 updatePosition = true
             }
             if (absY > SINGLE_AXIS_LOW_PASS_THRESHOLD) {
-                CallbackBridge.mouseY += (if (swapXY) storedX else storedY) * yFactor
+                deltaY = (if (swapXY) storedX else storedY) * yFactor
                 storedY = 0f
                 updatePosition = true
             }
         }
 
         if (updatePosition) {
-            CallbackBridge.sendCursorPos(CallbackBridge.mouseX, CallbackBridge.mouseY)
+            onDeltaListener?.invoke(deltaX, deltaY)
+            try {
+                CallbackBridge.mouseX += deltaX
+                CallbackBridge.mouseY += deltaY
+                CallbackBridge.sendCursorPos(CallbackBridge.mouseX, CallbackBridge.mouseY)
+            } catch (ignored: Throwable) {}
         }
     }
 
@@ -145,7 +173,7 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
 
     override fun onGrabState(isGrabbing: Boolean) {
         warmup = ROTATION_VECTOR_WARMUP_PERIOD
-        shouldHandleEvents = isGrabbing
+        shouldHandleEvents = forceAlwaysHandle || isGrabbing
     }
 
     private fun damperValue(newAngleDifference: FloatArray) {

@@ -20,6 +20,8 @@
 
 package com.movtery.zalithlauncher.ui.screens.content
 
+import com.movtery.zalithlauncher.setting.AllSettings
+
 import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonHomeBanner
 import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonSetupDialog
 
@@ -1907,74 +1909,76 @@ fun LauncherScreen(
                                                 val heroPagerHeight = if (isLandscape) 280.dp else 325.dp
                                                 val heroCardHeight = if (isLandscape) 270.dp else 315.dp
 
-                                                val featuredArtworks = remember {
-                                                    listOf(
-                                                        R.drawable.art_wilderness_bound,
-                                                        R.drawable.art_bundles_bravery,
-                                                        R.drawable.art_tricky_trials,
-                                                        R.drawable.art_copper_age,
-                                                        R.drawable.art_mounts_of_mayhem,
-                                                        R.drawable.art_spring_to_life,
-                                                        R.drawable.art_nether_update
-                                                    )
-                                                }
-
                                                 val hasMultipleVersions = allVersions.size > 1
-                                                val itemCount = if (hasMultipleVersions) allVersions.size else featuredArtworks.size
 
-                                                val heroPagerState = androidx.compose.foundation.pager.rememberPagerState(
-                                                    initialPage = 5000 - (5000 % itemCount)
-                                                ) { 10000 }
+                                                 if (!hasMultipleVersions) {
+                                                     val singleVersion = allVersions.firstOrNull() ?: currentVersion
+                                                     HeroMinecraftCard(
+                                                         modifier = Modifier
+                                                             .fillMaxWidth()
+                                                             .height(heroCardHeight)
+                                                             .padding(horizontal = 14.dp, vertical = 4.dp),
+                                                         version = singleVersion,
+                                                         account = account,
+                                                         customArtworkRes = if (allVersions.isEmpty() || singleVersion == null) R.drawable.art_wilderness_bound else null,
+                                                         onVersionClick = { showVersionMenu = true }
+                                                     )
+                                                 } else {
+                                                     val heroPagerState = androidx.compose.foundation.pager.rememberPagerState(
+                                                         initialPage = 5000 - (5000 % allVersions.size)
+                                                     ) { 10000 }
 
-                                                LaunchedEffect(heroPagerState, itemCount) {
-                                                    while (true) {
-                                                        kotlinx.coroutines.delay(5000L)
-                                                        if (!heroPagerState.isScrollInProgress) {
-                                                            heroPagerState.animateScrollToPage(
-                                                                page = heroPagerState.currentPage + 1,
-                                                                animationSpec = androidx.compose.animation.core.tween(
-                                                                    durationMillis = 700,
-                                                                    easing = androidx.compose.animation.core.FastOutSlowInEasing
-                                                                )
-                                                            )
-                                                        }
-                                                    }
-                                                }
+                                                     val autoScroll = AllSettings.heroCardAutoScroll.state
+                                                     LaunchedEffect(heroPagerState, allVersions.size, autoScroll) {
+                                                         if (!autoScroll) return@LaunchedEffect
+                                                         while (true) {
+                                                             kotlinx.coroutines.delay(5000L)
+                                                             if (!heroPagerState.isScrollInProgress) {
+                                                                 heroPagerState.animateScrollToPage(
+                                                                     page = heroPagerState.currentPage + 1,
+                                                                     animationSpec = androidx.compose.animation.core.tween(
+                                                                         durationMillis = 700,
+                                                                         easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                                                     )
+                                                                 )
+                                                             }
+                                                         }
+                                                     }
 
-                                                androidx.compose.foundation.pager.HorizontalPager(
-                                                    state = heroPagerState,
-                                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = heroHorizontalPadding),
-                                                    pageSpacing = 16.dp,
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .height(heroPagerHeight)
-                                                ) { page ->
-                                                    val index = page % itemCount
-                                                    val pageVersion = if (hasMultipleVersions) allVersions[index] else currentVersion
-                                                    val pageArt = if (hasMultipleVersions) null else featuredArtworks[index]
-                                                    val pageOffset = ((heroPagerState.currentPage - page) + heroPagerState.currentPageOffsetFraction).let { kotlin.math.abs(it) }
-                                                    val fraction = (1f - pageOffset.coerceIn(0f, 1f))
-                                                    val scale = 0.92f + 0.08f * fraction
-                                                    val alpha = 0.70f + 0.30f * fraction
+                                                     androidx.compose.foundation.pager.HorizontalPager(
+                                                         state = heroPagerState,
+                                                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = heroHorizontalPadding),
+                                                         pageSpacing = 16.dp,
+                                                         modifier = Modifier
+                                                             .fillMaxWidth()
+                                                             .height(heroPagerHeight)
+                                                     ) { page ->
+                                                         val index = page % allVersions.size
+                                                         val pageVersion = allVersions[index]
+                                                         val pageOffset = ((heroPagerState.currentPage - page) + heroPagerState.currentPageOffsetFraction).let { kotlin.math.abs(it) }
+                                                         val fraction = (1f - pageOffset.coerceIn(0f, 1f))
+                                                         val scale = 0.92f + 0.08f * fraction
+                                                         val alpha = 0.70f + 0.30f * fraction
 
-                                                    HeroMinecraftCard(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .height(heroCardHeight)
-                                                            .padding(vertical = 4.dp)
-                                                            .graphicsLayer {
-                                                                scaleX = scale
-                                                                scaleY = scale
-                                                                this.alpha = alpha
-                                                            },
-                                                        version = pageVersion,
-                                                        account = account,
-                                                        customArtworkRes = pageArt,
-                                                        onVersionClick = { showVersionMenu = true }
-                                                    )
-                                                }
+                                                         HeroMinecraftCard(
+                                                             modifier = Modifier
+                                                                 .fillMaxWidth()
+                                                             .height(heroCardHeight)
+                                                             .padding(vertical = 4.dp)
+                                                             .graphicsLayer {
+                                                                 scaleX = scale
+                                                                 scaleY = scale
+                                                                 this.alpha = alpha
+                                                             },
+                                                             version = pageVersion,
+                                                             account = account,
+                                                             customArtworkRes = null,
+                                                             onVersionClick = { showVersionMenu = true }
+                                                         )
+                                                     }
+                                                 }
 
-                                                // Horizon Promotional Banner (Panels B & C)
+                                                 // Horizon Promotional Banner (Panels B & C)
                                                 HorizonHomeBanner(
                                                     onClick = {
                                                         if (com.movtery.zalithlauncher.game.horizon.HorizonManager.isInstalled(context)) {
@@ -5770,6 +5774,45 @@ private fun HeroMinecraftCard(
                     .height(68.dp),
                 contentScale = ContentScale.Fit
             )
+            }
+
+            // Auto Scroll Toggle Badge in Portrait Mode
+            val autoScroll = AllSettings.heroCardAutoScroll.state
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(10.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(3.dp))
+                    .background(Color(0xCC1A1A1C))
+                    .border(
+                        androidx.compose.foundation.BorderStroke(1.dp, if (autoScroll) Color(0xFF55FF55) else Color(0xFF444444)),
+                        androidx.compose.foundation.shape.RoundedCornerShape(3.dp)
+                    )
+                    .clickable {
+                        com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
+                        AllSettings.heroCardAutoScroll.save(!AllSettings.heroCardAutoScroll.getValue())
+                    }
+                    .padding(horizontal = 7.dp, vertical = 4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(if (autoScroll) Color(0xFF55FF55) else Color(0xFF777777))
+                    )
+                    Text(
+                        text = if (autoScroll) "AUTO ON" else "AUTO OFF",
+                        color = if (autoScroll) Color(0xFF55FF55) else Color(0xFFCCCCCC),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
 

@@ -106,7 +106,7 @@ public class EditControlPopup {
         mColorSelector.getRootView().setVisibility(View.GONE);
         mColorSelector.getRootView().setElevation(11);
         mColorSelector.getRootView().setTranslationZ(11);
-        mColorSelector.getRootView().setX(-context.getResources().getDimensionPixelOffset(R.dimen._220sdp));
+        mColorSelector.getRootView().setX(-3000f);
 
         mEditPopupAnimator = ObjectAnimator.ofFloat(mScrollView, "x", 0).setDuration(90);
         mColorEditorAnimator = ObjectAnimator.ofFloat(mColorSelector.getRootView(), "x", 0).setDuration(90);
@@ -128,21 +128,31 @@ public class EditControlPopup {
         textView.setText(textView.getContext().getString(R.string.percent_format, progress));
     }
 
+    private int getEffectiveWidth() {
+        return mScrollView.getWidth() > 0 ? mScrollView.getWidth() : context.getResources().getDimensionPixelOffset(R.dimen._220sdp);
+    }
+
     /**
      * Slide the layout into the visible screen area
      */
     public void appear(boolean fromRight) {
+        if (mColorEditorAnimator.isRunning()) {
+            mColorEditorAnimator.cancel();
+        }
+        mDisplayingColor = false;
         mColorSelector.getRootView().setVisibility(View.GONE);
-        disappearColor(); // When someone jumps from a button to another
+        mColorSelector.getRootView().setX(-3000f);
+
+        int panelWidth = getEffectiveWidth();
 
         if (fromRight) {
             if (!mDisplaying || !isAtRight()) {
-                mEditPopupAnimator.setFloatValues(currentDisplayMetrics.widthPixels, currentDisplayMetrics.widthPixels - mScrollView.getWidth() - mMargin);
+                mEditPopupAnimator.setFloatValues(currentDisplayMetrics.widthPixels, currentDisplayMetrics.widthPixels - panelWidth - mMargin);
                 mEditPopupAnimator.start();
             }
         } else {
             if (!mDisplaying || isAtRight()) {
-                mEditPopupAnimator.setFloatValues(-mScrollView.getWidth(), mMargin);
+                mEditPopupAnimator.setFloatValues(-panelWidth, mMargin);
                 mEditPopupAnimator.start();
             }
         }
@@ -154,15 +164,20 @@ public class EditControlPopup {
      * Slide out the layout
      */
     public void disappear() {
+        if (mColorEditorAnimator.isRunning()) {
+            mColorEditorAnimator.cancel();
+        }
+        mDisplayingColor = false;
         mColorSelector.getRootView().setVisibility(View.GONE);
-        disappearColor();
+        mColorSelector.getRootView().setX(-3000f);
         if (!mDisplaying) return;
 
         mDisplaying = false;
+        int panelWidth = getEffectiveWidth();
         if (isAtRight())
-            mEditPopupAnimator.setFloatValues(currentDisplayMetrics.widthPixels - mScrollView.getWidth() - mMargin, currentDisplayMetrics.widthPixels);
+            mEditPopupAnimator.setFloatValues(currentDisplayMetrics.widthPixels - panelWidth - mMargin, currentDisplayMetrics.widthPixels);
         else
-            mEditPopupAnimator.setFloatValues(mMargin, -mScrollView.getWidth());
+            mEditPopupAnimator.setFloatValues(mMargin, -panelWidth);
 
         mEditPopupAnimator.start();
     }
@@ -172,21 +187,23 @@ public class EditControlPopup {
      */
     public void appearColor(boolean fromRight, int color) {
         mColorSelector.getRootView().setVisibility(View.VISIBLE);
+        int panelWidth = getEffectiveWidth();
         if (fromRight) {
             if (!mDisplayingColor || !isAtRight()) {
-                mColorEditorAnimator.setFloatValues(currentDisplayMetrics.widthPixels, currentDisplayMetrics.widthPixels - mScrollView.getWidth() - mMargin);
+                mColorEditorAnimator.setFloatValues(currentDisplayMetrics.widthPixels, currentDisplayMetrics.widthPixels - panelWidth - mMargin);
                 mColorEditorAnimator.start();
             }
         } else {
             if (!mDisplayingColor || isAtRight()) {
-                mColorEditorAnimator.setFloatValues(-mScrollView.getWidth(), mMargin);
+                mColorEditorAnimator.setFloatValues(-panelWidth, mMargin);
                 mColorEditorAnimator.start();
             }
         }
 
         // Adjust the color selector to have the same size as the control settings
         ViewGroup.LayoutParams params = mColorSelector.getRootView().getLayoutParams();
-        params.height = mScrollView.getHeight();
+        params.height = mScrollView.getHeight() > 0 ? mScrollView.getHeight() : ViewGroup.LayoutParams.WRAP_CONTENT;
+        params.width = panelWidth;
         mColorSelector.getRootView().setLayoutParams(params);
 
         mDisplayingColor = true;
@@ -197,23 +214,12 @@ public class EditControlPopup {
      * Slide out the layout
      */
     public void disappearColor() {
-        if (!mDisplayingColor) {
-            mColorSelector.getRootView().setVisibility(View.GONE);
-            return;
-        }
-
         mDisplayingColor = false;
-        if (isAtRight())
-            mColorEditorAnimator.setFloatValues(currentDisplayMetrics.widthPixels - mScrollView.getWidth() - mMargin, currentDisplayMetrics.widthPixels);
-        else
-            mColorEditorAnimator.setFloatValues(mMargin, -mScrollView.getWidth());
-
-        mColorEditorAnimator.start();
-        mColorSelector.getRootView().postDelayed(() -> {
-            if (!mDisplayingColor) {
-                mColorSelector.getRootView().setVisibility(View.GONE);
-            }
-        }, 90);
+        if (mColorEditorAnimator.isRunning()) {
+            mColorEditorAnimator.cancel();
+        }
+        mColorSelector.getRootView().setVisibility(View.GONE);
+        mColorSelector.getRootView().setX(-3000f);
     }
 
     /**

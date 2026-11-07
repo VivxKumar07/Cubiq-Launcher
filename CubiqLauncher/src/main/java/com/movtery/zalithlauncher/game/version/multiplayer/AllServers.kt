@@ -54,7 +54,10 @@ class AllServers {
                 _serverList.clear()
                 hiddenServerList.clear()
 
-                if (!dataFile.exists()) return@withContext
+                if (!dataFile.exists()) {
+                    _serverList.add(ServerData("Skillora SMP", "Ip-paid3.skilloraclouds.com:20004"))
+                    return@withContext
+                }
 
                 val compound = NBTIO.readFile(dataFile, false, false)
                     ?: error("Failed to read the server.dat file as a CompoundTag.")

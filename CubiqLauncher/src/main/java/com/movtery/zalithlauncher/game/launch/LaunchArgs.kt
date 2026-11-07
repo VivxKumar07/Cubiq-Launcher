@@ -33,6 +33,7 @@ import com.movtery.zalithlauncher.game.path.getLibrariesHome
 import com.movtery.zalithlauncher.game.plugin.natives.NativePluginManager
 import com.movtery.zalithlauncher.game.version.download.artifactToPath
 import com.movtery.zalithlauncher.game.version.download.filterLibrary
+import com.movtery.zalithlauncher.game.version.download.usesLwjglSdl
 import com.movtery.zalithlauncher.game.version.download.getLibraryReplacement
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.game.version.installed.VersionInfo
@@ -41,6 +42,7 @@ import com.movtery.zalithlauncher.path.LibPath
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.ui.screens.content.elements.QuickPlay
 import com.movtery.zalithlauncher.utils.file.child
+import com.movtery.zalithlauncher.utils.device.Architecture
 import com.movtery.zalithlauncher.utils.logging.Logger
 import com.movtery.zalithlauncher.utils.network.ServerAddress
 import com.movtery.zalithlauncher.utils.string.insertJSONValueList
@@ -248,23 +250,35 @@ class LaunchArgs(
 //        }
 
         val varArgMap: MutableMap<String, String> = android.util.ArrayMap()
+        val usesLwjglSdl = gameManifest.libraries.usesLwjglSdl()
         val launchClassPath = buildList {
+            // ALWAYS prioritize Cubiq Android-patched LWJGL (MemoryUtil, CallbackBridge)
             add(getLWJGL3ClassPath())
             add(LibPath.MIO_LAUNCH_WRAPPER.absolutePath)
-            putLaunchClassPath(gameManifest)
-        }.joinToString(":")
+            putLaunchClassPath(gameManifest, allowLwjglSdlClasses = usesLwjglSdl)
+        }.filter { it.isNotEmpty() }.joinToString(":")
         var hasClasspath = false //是否已经在jvm参数中包含 ${classpath} 配置
 
         varArgMap["classpath_separator"] = ":"
         varArgMap["library_directory"] = getLibrariesHome(version.getGameHome())
         varArgMap["version_name"] = gameManifest.id
-        varArgMap["natives_directory"] = runtimeLibraryPath
+        val lwjglNativesDir = File(PathManager.DIR_COMPONENTS, "lwjgl/${lwjglVersionDir(lwjglVersion)}/natives/${Architecture.archAsStringAndroid(Architecture.getDeviceArchitecture())}").absolutePath
+        val fullNativesPath = listOf(
+            PathManager.DIR_NATIVE_LIB,
+            lwjglNativesDir,
+            runtimeLibraryPath
+        ).flatMap { it.split(":") }
+            .filter { it.isNotEmpty() && File(it).exists() }
+            .distinct()
+            .joinToString(":")
+
+        varArgMap["natives_directory"] = fullNativesPath
         setLauncherInfo(varArgMap)
 
         fun Any.processJvmArg(): String? = (this as? String)?.let { argument ->
             if (argument.startsWith("-Djava.library.path=")) {
-                //26.2+ Mojang 更改到了具体的路径，需要手动重定向
-                return@let $$"-Djava.library.path=${natives_directory}"
+                // 26.2+ Mojang 更改到了具体的路径，需要手动重定向为包含 nativeLibraryDir 和 lwjglNatives 的完整路径
+                return@let "-Djava.library.path=$fullNativesPath"
             }
             when {
                 argument.startsWith("-DignoreList=") -> {
@@ -301,8 +315,11 @@ class LaunchArgs(
     /**
      * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/a6f3fc0/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/Tools.java#L572-L592)
      */
-    private fun MutableList<String>.putLaunchClassPath(gameManifest: GameManifest) {
-        val classpath: Array<String> = generateLibClasspath(gameManifest)
+    private fun MutableList<String>.putLaunchClassPath(
+        gameManifest: GameManifest,
+        allowLwjglSdlClasses: Boolean = false
+    ) {
+        val classpath: Array<String> = generateLibClasspath(gameManifest, allowLwjglSdlClasses)
 
         for (jarFile in classpath) {
             val jarFileObj = File(jarFile)
@@ -320,13 +337,16 @@ class LaunchArgs(
     /**
      * [Modified from PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher/blob/a6f3fc0/app_pojavlauncher/src/main/java/net/kdt/pojavlaunch/Tools.java#L871-L882)
      */
-    private fun generateLibClasspath(gameManifest: GameManifest): Array<String> {
+    private fun generateLibClasspath(
+        gameManifest: GameManifest,
+        allowLwjglSdlClasses: Boolean = false
+    ): Array<String> {
         val libSortFix = LibSortFix(version.getVersionInfo())
         val libs = LinkedHashMap<GameManifest.Library, String>()
 
         for (libItem in gameManifest.libraries) {
             if (!(GameManifest.Rule.checkRules(libItem.rules) && !libItem.isNative)) continue
-            val path = libItem.progressLibrary() ?: continue
+            val path = libItem.progressLibrary(allowLwjglSdlClasses) ?: continue
             with(libSortFix) {
                 libs.insertLib(libItem, getLibrariesHome(version.getGameHome()) + "/" + path)
             }
@@ -339,8 +359,8 @@ class LaunchArgs(
     /**
      * @return 库相对路径
      */
-    private fun GameManifest.Library.progressLibrary(): String? {
-        if (filterLibrary()) return null
+    private fun GameManifest.Library.progressLibrary(allowLwjglSdlClasses: Boolean = false): String? {
+        if (filterLibrary(allowLwjglSdlClasses)) return null
 
         var path = artifactToPath(this)
 
@@ -429,7 +449,7 @@ fun detectLwjglVersion(manifest: GameManifest): Int {
         }
     }
     val id = manifest.id ?: ""
-    if (maxVersion < 340 && (id.startsWith("26") || id.contains("26.") || id.contains("27."))) {
+    if (maxVersion < 340 && (manifest.libraries.usesLwjglSdl() || id.startsWith("26") || id.contains("26.") || id.contains("27."))) {
         return 341
     }
     return maxVersion

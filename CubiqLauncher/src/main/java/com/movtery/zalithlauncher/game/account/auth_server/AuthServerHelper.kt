@@ -28,6 +28,8 @@ import com.movtery.zalithlauncher.game.account.auth_server.data.AuthServer
 import com.movtery.zalithlauncher.game.account.auth_server.models.AuthResult
 import com.movtery.zalithlauncher.ui.androidText
 import com.movtery.zalithlauncher.utils.logging.Logger
+import com.movtery.zalithlauncher.utils.string.toUuidStr
+import com.movtery.zalithlauncher.BuildKeys
 import kotlinx.coroutines.Dispatchers
 import java.util.Objects
 
@@ -99,7 +101,7 @@ class AuthServerHelper(
     ) {
         account.apply {
             this.accessToken = authResult.accessToken
-            this.clientToken = authResult.clientToken
+            this.clientToken = authResult.clientToken ?: this.clientToken ?: com.movtery.zalithlauncher.BuildKeys.LAUNCHER_NAME.toUuidStr().replace("-", "")
             this.otherBaseUrl = baseUrl
             this.otherAccount = email
             this.otherPassword = password
@@ -121,7 +123,7 @@ class AuthServerHelper(
             account.accessToken = authResult.accessToken
             true
         } catch (e: ResponseException) {
-            if (e.statusCode == 403) false else throw e
+            if (e.statusCode == 403 || e.statusCode == 401) false else throw e
         }
     }
 

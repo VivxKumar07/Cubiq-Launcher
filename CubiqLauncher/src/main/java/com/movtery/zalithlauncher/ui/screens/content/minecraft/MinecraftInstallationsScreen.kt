@@ -252,6 +252,10 @@ fun MinecraftInstallationsScreen(
                         onLaunch = {
                             HorizonManager.launchHorizon(context)
                         },
+                        onRecheckFiles = {
+                            HorizonManager.recheckFiles(context)
+                            showHorizonSetup = true
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 4.dp)
@@ -262,7 +266,7 @@ fun MinecraftInstallationsScreen(
                         isLandscape = isLandscape,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(76.dp)
+                            
                             .padding(vertical = 4.dp)
                     )
                 }
@@ -273,7 +277,7 @@ fun MinecraftInstallationsScreen(
                     isLandscape = isLandscape,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(76.dp)
+                        
                         .padding(vertical = 4.dp)
                 )
 

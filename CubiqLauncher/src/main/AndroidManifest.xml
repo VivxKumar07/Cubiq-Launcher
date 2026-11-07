@@ -261,6 +261,7 @@
         <!-- Horizon (Minecraft Rust Edition) Native Game Engine Activity -->
         <activity
             android:name="dev.horizon.android.HorizonActivity"
+            android:label="Minecraft Rust Edition"
             android:process=":horizon"
             android:exported="false"
             android:screenOrientation="sensorLandscape"

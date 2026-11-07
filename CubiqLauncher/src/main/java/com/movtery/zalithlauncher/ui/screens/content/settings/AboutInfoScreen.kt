@@ -271,82 +271,89 @@ fun AboutInfoScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "🎮 TOUCH CONTROLS & EDITORS",
+                            text = "🦀 HORIZON & MINECRAFT RUST EDITION",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color(0xFF55FF55)
                         )
                         Text(
-                            text = "• Multi-touch joystick conflict fixed: Sprint, look around, and tap attack (PRI) / mine at the same time without losing control.",
+                            text = "• Direct Launch: Tapping Play on Rust Edition starts the game instantly without opening any intermediate launcher screens.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Mojo Launcher Controls perfected: Clean two-line corner hint placement that never collides with the Mouse button, plus an ultra-responsive 90ms properties sidebar.",
+                            text = "• Custom Loading Screen: Seamless black launch splash with 'Cubiq Launcher — Minecraft Java but in Rust'.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Zalith Launcher 1 (ZL1) Controls: Sleek deep dark canvas (#121214), dark rounded-square gear menu button, and eliminated phantom color picker popups on button clicks.",
+                            text = "• Dedicated Rust Settings & Mods: Tune Vulkan/OpenGL renderers, resolution scaling, worker threads, and toggle .hmod mods directly in Cubiq.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Authentic ZL1 Button Settings: Equal-width size inputs (91.0 x 91.0), compressed sidebar layout, and seamless control menu styling.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• Bedrock Touch Gestures: Added dedicated toggle for Bedrock-style tap-to-place and hold-to-break block interactions.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• Layout naming & creation fix: Default layouts now show as 'Mojo Launcher Controls' and 'Zalith Launcher 1 Controls', and '+New Layout' saves your custom name instead of random hex codes.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• Normalized control button scale and opacity slider widths across settings.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• Full Keyboard & Mouse remapping cards added directly in Cubiq settings.",
+                            text = "• One-Tap File Repair: Instant 'Re-check files' to verify engine tables and assets if anything ever gets corrupted.",
                             style = MaterialTheme.typography.bodySmall
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "🖥️ UI, HOMESCREEN & LANDSCAPE",
+                            text = "🎮 CONTROLS, GYROSCOPE & MOUSE REMAPPING",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color(0xFF55FF55)
                         )
                         Text(
-                            text = "• Official 3D Steve block-head settings icon matched across portrait bottom nav and landscape sidebar.",
+                            text = "• Universal ZL1 Gyroscope Default: ZL1 gyro engine is now enabled by default and serves as the sole gyro mechanism across ALL control schemes (ZL1, ZL2, Mojo, Pocket Edition).",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Landscape Hero Card Polish: Excluded Files, Multiplayer, and Rotation buttons from overlapping the hero card's green highlighter boundary.",
+                            text = "• Zalith Launcher 1 (ZL1) Controls Restored: ZL1 control layout is preserved and unpacked by default alongside ZL2, Mojo Launcher, and Pocket Edition.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Hero Artwork Carousel: 23 official artwork themes with smooth forward-only auto-scrolling and authentic green highlighter borders.",
+                            text = "• Interactive Key & Mouse Remap Popup: Remapping now opens a dedicated popup with 1-tap hardware button/key detection and category tabs.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• MJ Launcher styled green rectangular switches and block-thumb seekbars across all menus and control editors.",
+                            text = "• Custom Mouse Cursor Packs: Choose from Classic, Obsidian, Crosshair, Bedrock Arrow, Emerald, or import any custom .png/.zip cursor.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Completely resolved dark text on dark surfaces in version selectors and dialog fields.",
+                            text = "• Fixed Hotbar Touch Desync: Resolved coordinate mismatch on scaled resolutions (like 60%) so hotbar slot taps always register accurately.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• No More Double Typing: Fixed chat typing where phone keyboards typed duplicate letters (like '//' instead of '/').",
                             style = MaterialTheme.typography.bodySmall
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "📦 DOWNLOADS HUB & CONTENT",
+                            text = "☕ JAVA EDITION & MINECRAFT 26.3 LINKER FIX",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color(0xFF55FF55)
                         )
                         Text(
-                            text = "• Category filter dropdowns restored across Modpacks, Mods, Resource Packs, Shaders, and Saves on both Modrinth and CurseForge.",
+                            text = "• Native Library Resolution: Resolved java.library.path and Pojav library loader to explicitly include APK DIR_NATIVE_LIB, permanently fixing libpojavexec.so and libSDL3.so linking errors.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• 1-Tap file associations: Direct .jar mod, .mrpack, and resource pack/world import right from Android's 'Open with' menu.",
+                            text = "• Rust Minecraft (Horizon) CWD Fix: Set process working directory and HOME/HORIZON_HOME environment variables, resolving (os error 2) resource preparation failure.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• Zero Regressions: Complete compatibility across legacy and modern versions, with full support for LTW, MobileGlues, and Krypton renderers.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "📱 SYSTEM BARS & ELY.BY DIALOG FIXES",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFF55FF55)
+                        )
+                        Text(
+                            text = "• Portrait Mode System Bars: Restored Android status bar and bottom gestural hint bar in portrait mode without awkward letterboxing.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• Landscape Ely.by Login Dialog: Soft keyboard resize with IME padding keeps input fields visible, and Back press dismisses keyboard instead of the entire dialog.",
                             style = MaterialTheme.typography.bodySmall
                         )
 
@@ -357,34 +364,49 @@ fun AboutInfoScreen(
                             color = Color(0xFF55FF55)
                         )
                         Text(
-                            text = "• LTW (Large Thin Wrapper) renderer crash fixed: Corrected SDL system EGL driver resolution so LTW runs smoothly on MC 1.14 - 1.21+ with Sodium and Iris.",
+                            text = "• 'Follow Global' Fix: Changing your profile renderer no longer overrides a version's 'Follow Global' setting on relaunch.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• High-performance G1GC garbage collection tuning for smooth 60+ FPS gameplay with zero micro-stutters.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• Instant file manager: Zero-lag cold start for browsing files, configs, and logs.",
+                            text = "• Full Renderer Library: Out-of-the-box support for LTW, Zink, Angle, VirGL, and MobileGlues with auto-detection and G1GC optimization.",
                             style = MaterialTheme.typography.bodySmall
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "🎨 SKINS & MULTIPLAYER",
+                            text = "📦 DOWNLOADS HUB & MULTIPLAYER",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color(0xFF55FF55)
                         )
                         Text(
-                            text = "• Decoupled 3px (Slim) and 4px (Classic) arm models from character skins: Toggling arm size now stays on Steve or Alex instead of swapping characters.",
+                            text = "• Restored Category Filter: Brought back the ZL2 Category dropdown (Multiplayer, Combat, Biomes, Dimensions, Optimization, etc.) in the landscape sidebar for Mods, Modpacks, and Resource Packs.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Fixed LAN discovery with Android Wi-Fi Multicast locks so local worlds show up instantly.",
+                            text = "• Skillora SMP Built-In: Added Skillora SMP (Ip-paid3.skilloraclouds.com:20004) to default multiplayer server presets.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Fixed offline player UUIDs for cracked servers with standard RFC-4122 compliance.",
+                            text = "• Cleaner Capture Paths: In-game recordings save cleanly to Movies/Cubiq and screenshots to Pictures/Cubiq with saved path alerts.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "👤 ACCOUNTS & UI REFINEMENT",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFF55FF55)
+                        )
+                        Text(
+                            text = "• Fast Ely.by Sign-in: Redesigned the Ely.by dialog for landscape, added direct register links, and made auth take 1-2 seconds with background skin caching.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• Offline Session Fallback: If auth servers are down or tokens expire, easily skip refresh and launch right away.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• Clean Hero Presentation: Single clean artwork card when one version is installed, and authentic 3D Steve icon in navigation.",
                             style = MaterialTheme.typography.bodySmall
                         )
                     }

@@ -471,29 +471,27 @@ fun ControlManageScreen(
         changeOperation = { viewModel.operation = it },
 
         onCreate = { name, author, versionName, templateType ->
-
             if (templateType == "Mojo Launcher Controls") {
-
-                val safeName = name.trim().replace(Regex("[\\/:*?\"<>|]"), "_")
-
+                val safeName = name.trim().replace(Regex("[^a-zA-Z0-9_ -]"), "_")
                 val targetFile = java.io.File(com.movtery.zalithlauncher.path.PathManager.DIR_CONTROL_LAYOUTS, "$safeName.json")
-
                 runCatching {
-
                     val jsonStr = context.assets.open("mojo_layout.json").bufferedReader().use { it.readText() }
-
                     targetFile.writeText(jsonStr)
-
                 }
-
                 com.movtery.zalithlauncher.game.control.ControlManager.refresh()
-
                 startEditorActivity(context, targetFile)
-
-                
-
+                return@ControlOperation
+            } else if (templateType == "Zalith Launcher 1 Controls") {
+                val safeName = name.trim().replace(Regex("[^a-zA-Z0-9_ -]"), "_")
+                val targetFile = java.io.File(com.movtery.zalithlauncher.path.PathManager.DIR_CONTROL_LAYOUTS, "$safeName.json")
+                runCatching {
+                    val jsonStr = context.assets.open("zalith_1_layout.json").bufferedReader().use { it.readText() }
+                    targetFile.writeText(jsonStr)
+                }
+                com.movtery.zalithlauncher.game.control.ControlManager.refresh()
+                startEditorActivity(context, targetFile)
+                return@ControlOperation
             }
-
             val assetName = if (templateType == "Pocket Edition Controls") "pocket_edition_layout.json" else "zalith_2_layout.json"
 
             val layout = runCatching {
@@ -2190,7 +2188,7 @@ private fun CreateNewLayoutDialog(
 
 
 
-                        listOf("Pocket Edition Controls", "Mojo Launcher Controls", "Plain Java Controls").forEach { template ->
+                        listOf("Zalith Launcher 1 Controls", "Zalith Launcher 2 Controls", "Pocket Edition Controls", "Mojo Launcher Controls").forEach { template ->
 
                             val isSel = selectedTemplate == template
 
@@ -2234,7 +2232,9 @@ private fun CreateNewLayoutDialog(
 
                                         text = when (template) {
 
-                                            "Pocket Edition Controls" -> "Bedrock mobile controls layout (~65% opacity)"
+                                            "Zalith Launcher 1 Controls" -> "Classic Zalith Launcher 1 custom controls with authentic Pojav layout"
+"Zalith Launcher 2 Controls" -> "Standard Zalith Launcher 2 layered controls"
+"Pocket Edition Controls" -> "Bedrock mobile controls layout (~65% opacity)"
 
                                             "Mojo Launcher Controls" -> "Mojo Launcher controls (drawer, joystick, side dialog)"
 

@@ -127,7 +127,7 @@ fun JavaRustEngineSelector(
                     painter = painterResource(R.drawable.ic_rust_logo),
                     contentDescription = "Rust Logo",
                     tint = Color.Unspecified,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(20.dp)
                 )
                 Text(
                     text = "Rust",
@@ -147,10 +147,18 @@ fun JavaRustEngineSelector(
 @Composable
 fun RustInstallationCard(
     onLaunch: () -> Unit,
+    onRecheckFiles: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    if (showSettingsDialog) {
+        HorizonSettingsDialog(
+            onDismissRequest = { showSettingsDialog = false }
+        )
+    }
 
     Box(
         modifier = modifier
@@ -198,7 +206,7 @@ fun RustInstallationCard(
                 }
             }
 
-            // Right: Play Button & Overflow
+            // Right: Play Button, Settings Button & Overflow
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -218,6 +226,32 @@ fun RustInstallationCard(
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
+                }
+
+                // Settings Button with Gear Icon (Migrated Horizon Settings in Cubiq Style)
+                MinecraftButton(
+                    onClick = { showSettingsDialog = true },
+                    style = MinecraftButtonStyle.STONE,
+                    modifier = Modifier.height(34.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_settings_filled),
+                            contentDescription = "Settings",
+                            tint = Color.White,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = "Settings",
+                            color = Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                    }
                 }
 
                 // Options Menu Button
@@ -255,7 +289,21 @@ fun RustInstallationCard(
                             },
                             onClick = {
                                 menuExpanded = false
-                                HorizonManager.setupHorizon(context)
+                                onRecheckFiles()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = "Horizon Settings",
+                                    color = Color.White,
+                                    fontFamily = MinecraftFontFamily,
+                                    fontSize = 12.sp
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                showSettingsDialog = true
                             }
                         )
                     }

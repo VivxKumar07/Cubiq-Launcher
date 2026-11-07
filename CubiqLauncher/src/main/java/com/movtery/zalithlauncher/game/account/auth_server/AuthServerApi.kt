@@ -104,7 +104,7 @@ class AuthServerApi(private var baseUrl: String) {
         requireBaseUrl(context)
 
         val refresh = Refresh(
-            clientToken = account.clientToken,
+            clientToken = account.clientToken ?: BuildKeys.LAUNCHER_NAME.toUuidStr().replace("-", ""),
             accessToken = account.accessToken
         )
 
@@ -158,7 +158,7 @@ class AuthServerApi(private var baseUrl: String) {
                 }
                 response.status.isSuccess()
             } catch (e: ClientRequestException) {
-                if (e.response.status.value == 403) false
+                if (e.response.status.value == 403 || e.response.status.value == 401) false
                 else throw ResponseException(e.response.getErrorMessage(), e.response.status.value)
             }
         }

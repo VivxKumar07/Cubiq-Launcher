@@ -335,8 +335,13 @@ fun MousePointer(
     val fileExists by produceState(initialValue = false, triggerRefresh, mouseFile) {
         value = withContext(Dispatchers.IO) { mouseFile?.exists() == true }
     }
+    val activePack = AllSettings.customCursorPack.state
     val defaultRes = when (cursorShape) {
-        CursorShape.Arrow -> R.drawable.img_mouse_pointer_arrow
+        CursorShape.Arrow -> when (activePack) {
+            "Precision Crosshair" -> R.drawable.img_mouse_pointer_crosshair
+            "Bedrock Arrow" -> R.drawable.ic_highlight_mouse_cursor
+            else -> R.drawable.img_mouse_pointer_arrow
+        }
         CursorShape.IBeam -> R.drawable.img_mouse_pointer_ibeam
         CursorShape.Hand -> R.drawable.img_mouse_pointer_link
         CursorShape.CrossHair -> R.drawable.img_mouse_pointer_crosshair
@@ -346,7 +351,19 @@ fun MousePointer(
         CursorShape.NotAllowed -> R.drawable.img_mouse_pointer_not_allowed
     }
 
-    val model = remember(fileExists, triggerRefresh, cursorShape) {
+    val colorFilter = when (activePack) {
+        "Chroma Emerald" -> androidx.compose.ui.graphics.ColorFilter.tint(
+            androidx.compose.ui.graphics.Color(0xFF55FF55),
+            androidx.compose.ui.graphics.BlendMode.SrcAtop
+        )
+        "Modern Obsidian" -> androidx.compose.ui.graphics.ColorFilter.tint(
+            androidx.compose.ui.graphics.Color(0xFF505260),
+            androidx.compose.ui.graphics.BlendMode.SrcAtop
+        )
+        else -> null
+    }
+
+    val model = remember(fileExists, triggerRefresh, cursorShape, activePack) {
         if (fileExists && mouseFile != null) mouseFile else defaultRes
     }
 
@@ -358,6 +375,7 @@ fun MousePointer(
         contentDescription = null,
         alignment = imageAlignment,
         contentScale = ContentScale.Fit,
+        colorFilter = colorFilter,
         modifier = modifier.size(mouseSize)
     )
 }

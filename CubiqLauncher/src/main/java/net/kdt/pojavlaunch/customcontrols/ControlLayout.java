@@ -435,6 +435,9 @@ public class ControlLayout extends FrameLayout {
 	@SuppressLint("ClickableViewAccessibility")
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
+		if (!mModifiable) {
+			return false;
+		}
 		if (mModifiable && event.getActionMasked() != MotionEvent.ACTION_UP || mControlPopup == null)
 			return true;
 

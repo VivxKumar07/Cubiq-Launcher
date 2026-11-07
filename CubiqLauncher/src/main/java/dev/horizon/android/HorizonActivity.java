@@ -1,5 +1,6 @@
 package dev.horizon.android;
 
+import android.app.Instrumentation;
 import android.app.NativeActivity;
 import android.content.Intent;
 import android.graphics.Color;
@@ -15,108 +16,161 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.movtery.zalithlauncher.R;
+import com.movtery.zalithlauncher.ui.control.gyroscope.Zl1GyroControl;
+import com.movtery.zalithlauncher.setting.AllSettings;
+
+import java.io.File;
 
 /**
  * Native host activity for Horizon (Minecraft Rust Edition).
  * Runs in isolated :horizon process.
- * Handles SAF document callbacks and direct Minecraft Rust launch without exposing launcher UI.
+ * Handles SAF document callbacks, ZL1 Gyroscope, and seamless direct Minecraft Rust launch without exposing launcher UI.
  */
 public final class HorizonActivity extends NativeActivity {
     static {
+        try {
+            File filesDir = new File("/data/user/0/com.cubiq.app/files");
+            if (!filesDir.exists()) {
+                filesDir = new File("/data/data/com.cubiq.app/files");
+            }
+            if (filesDir.exists()) {
+                String path = filesDir.getAbsolutePath();
+                try {
+                    com.movtery.zalithlauncher.bridge.ZLBridge.chdir(path);
+                } catch (Throwable ignored) {}
+                android.system.Os.setenv("HOME", path, true);
+                android.system.Os.setenv("HORIZON_HOME", path, true);
+                android.system.Os.setenv("XDG_DATA_HOME", path, true);
+            }
+        } catch (Throwable ignored) {}
         System.loadLibrary("horizon_android");
     }
 
     private native void nativeDocumentResult(int request, int result, String uri);
 
-    private FrameLayout mSplashOverlay;
     private final Handler mHandler = new Handler(Looper.getMainLooper());
     private boolean mDirectLaunchRequested = false;
     private boolean mTriggerDispatched = false;
+    private FrameLayout mCoverOverlay = null;
+    private Zl1GyroControl mZl1GyroControl = null;
+    private volatile boolean mIsActive = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        try {
+            File filesDir = getFilesDir();
+            if (filesDir != null) {
+                String path = filesDir.getAbsolutePath();
+                try {
+                    com.movtery.zalithlauncher.bridge.ZLBridge.chdir(path);
+                } catch (Throwable ignored) {}
+                android.system.Os.setenv("HOME", path, true);
+                android.system.Os.setenv("HORIZON_HOME", path, true);
+                android.system.Os.setenv("XDG_DATA_HOME", path, true);
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+
         super.onCreate(savedInstanceState);
+        setTitle("Minecraft Rust Edition");
+
+        // Clear any stale android-error.txt before launching
+        try {
+            File errFile = new File(getFilesDir(), "android-error.txt");
+            if (errFile.exists()) {
+                errFile.delete();
+            }
+        } catch (Exception ignored) {}
 
         Intent intent = getIntent();
         if (intent != null && intent.getBooleanExtra("EXTRA_DIRECT_LAUNCH", false)) {
             mDirectLaunchRequested = true;
-            createSplashOverlay();
+        }
+
+        // 1. Setup seamless full-screen splash cover to eliminate Horizon Launcher UI entirely
+        setupSeamlessCover();
+
+        // 2. Initialize authentic ZL1 Gyroscope Mechanism for Rust Edition
+        try {
+            mZl1GyroControl = new Zl1GyroControl(this);
+            mZl1GyroControl.setOnDeltaListener((deltaX, deltaY) -> {
+                if (mIsActive) {
+                    injectGyroMotion(deltaX, deltaY);
+                }
+                return kotlin.Unit.INSTANCE;
+            });
+        } catch (Throwable t) {
+            t.printStackTrace();
         }
     }
 
-    private void createSplashOverlay() {
-        mSplashOverlay = new FrameLayout(this);
-        mSplashOverlay.setBackgroundColor(Color.parseColor("#121318"));
-        mSplashOverlay.setLayoutParams(new ViewGroup.LayoutParams(
+    private void setupSeamlessCover() {
+        if (!mDirectLaunchRequested) return;
+
+        FrameLayout decor = (FrameLayout) getWindow().getDecorView();
+        mCoverOverlay = new FrameLayout(this);
+        mCoverOverlay.setBackgroundColor(Color.parseColor("#101014"));
+        mCoverOverlay.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
         ));
 
-        LinearLayout container = new LinearLayout(this);
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setGravity(Gravity.CENTER);
-
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+        LinearLayout centerBox = new LinearLayout(this);
+        centerBox.setOrientation(LinearLayout.VERTICAL);
+        centerBox.setGravity(Gravity.CENTER);
+        FrameLayout.LayoutParams boxParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.CENTER
         );
-        container.setLayoutParams(params);
+        centerBox.setLayoutParams(boxParams);
 
-        // Horizon Circular Logo
-        ImageView logo = new ImageView(this);
-        logo.setImageResource(R.drawable.ic_horizon_logo);
-        int logoSize = (int) (64 * getResources().getDisplayMetrics().density);
-        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(logoSize, logoSize);
-        logoParams.bottomMargin = (int) (18 * getResources().getDisplayMetrics().density);
-        container.addView(logo, logoParams);
+        TextView titleText = new TextView(this);
+        titleText.setText("Minecraft Rust Edition");
+        titleText.setTextColor(Color.WHITE);
+        titleText.setTextSize(20);
+        titleText.setTypeface(Typeface.DEFAULT_BOLD);
+        titleText.setGravity(Gravity.CENTER);
 
-        // Title
-        TextView title = new TextView(this);
-        title.setText("Minecraft Rust Edition");
-        title.setTextColor(Color.WHITE);
-        title.setTextSize(18);
-        title.setTypeface(Typeface.DEFAULT_BOLD);
-        title.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        titleParams.bottomMargin = (int) (6 * getResources().getDisplayMetrics().density);
-        container.addView(title, titleParams);
+        TextView subText = new TextView(this);
+        subText.setText("Loading Minecraft Rust 26.3...");
+        subText.setTextColor(Color.parseColor("#55FF55"));
+        subText.setTextSize(13);
+        subText.setPadding(0, 16, 0, 24);
+        subText.setGravity(Gravity.CENTER);
 
-        // Subtitle
-        TextView subtitle = new TextView(this);
-        subtitle.setText("Powered by Rust · Starting Engine...");
-        subtitle.setTextColor(Color.parseColor("#9CA3AF"));
-        subtitle.setTextSize(12);
-        subtitle.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams subParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        subParams.bottomMargin = (int) (20 * getResources().getDisplayMetrics().density);
-        container.addView(subtitle, subParams);
+        ProgressBar spinner = new ProgressBar(this);
+        spinner.setIndeterminate(true);
 
-        // Indeterminate Progress Indicator
-        ProgressBar progress = new ProgressBar(this);
-        int progSize = (int) (32 * getResources().getDisplayMetrics().density);
-        LinearLayout.LayoutParams progParams = new LinearLayout.LayoutParams(progSize, progSize);
-        container.addView(progress, progParams);
+        centerBox.addView(titleText);
+        centerBox.addView(subText);
+        centerBox.addView(spinner);
+        mCoverOverlay.addView(centerBox);
 
-        mSplashOverlay.addView(container);
+        decor.addView(mCoverOverlay);
+    }
 
-        // Attach overlay to window decor view
-        getWindow().addContentView(mSplashOverlay, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        ));
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mIsActive = true;
+        if (mZl1GyroControl != null && AllSettings.INSTANCE.getGyroscopeControl().getValue()) {
+            mZl1GyroControl.enable(true);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mIsActive = false;
+        if (mZl1GyroControl != null) {
+            mZl1GyroControl.disable();
+        }
     }
 
     @Override
@@ -126,52 +180,113 @@ public final class HorizonActivity extends NativeActivity {
         if (hasFocus && mDirectLaunchRequested && !mTriggerDispatched) {
             mTriggerDispatched = true;
 
-            // Wait 350ms for native window and surface event loop to ready up, then simulate Play trigger
-            mHandler.postDelayed(() -> {
-                dispatchDirectPlayTrigger();
-            }, 350);
-
-            // Wait 1400ms for game engine to take over native window, then smoothly fade out splash
-            mHandler.postDelayed(() -> {
-                if (mSplashOverlay != null) {
-                    mSplashOverlay.animate()
-                            .alpha(0f)
-                            .setDuration(400)
-                            .withEndAction(() -> {
-                                if (mSplashOverlay != null && mSplashOverlay.getParent() != null) {
-                                    ((ViewGroup) mSplashOverlay.getParent()).removeView(mSplashOverlay);
-                                    mSplashOverlay = null;
-                                }
-                            })
-                            .start();
+            // Trigger direct play through Instrumentation worker thread
+            new Thread(() -> {
+                int[] delays = {100, 250, 450, 750, 1200, 1800};
+                for (int delay : delays) {
+                    SystemClock.sleep(delay);
+                    dispatchInstrumentationPlay();
                 }
-            }, 1400);
+
+                // Smoothly dismiss cover overlay after launch trigger has fired
+                mHandler.postDelayed(() -> {
+                    if (mCoverOverlay != null && mCoverOverlay.getParent() != null) {
+                        mCoverOverlay.animate()
+                                .alpha(0f)
+                                .setDuration(350)
+                                .withEndAction(() -> {
+                                    ViewGroup parent = (ViewGroup) mCoverOverlay.getParent();
+                                    if (parent != null) {
+                                        parent.removeView(mCoverOverlay);
+                                    }
+                                });
+                    }
+                }, 1000);
+            }).start();
         }
     }
 
-    private void dispatchDirectPlayTrigger() {
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-        // Down in lower-left area where Play button is located: [32, h - 100, 320, 60]
-        float clickX = 192.0f * dm.density;
-        float clickY = dm.heightPixels - (70.0f * dm.density);
+    private void dispatchInstrumentationPlay() {
+        try {
+            View decorView = getWindow().getDecorView();
+            int width = decorView.getWidth();
+            int height = decorView.getHeight();
+            if (width <= 0) width = getResources().getDisplayMetrics().widthPixels;
+            if (height <= 0) height = getResources().getDisplayMetrics().heightPixels;
 
-        long downTime = SystemClock.uptimeMillis();
+            // Horizon Android 0.7.6 Play button: situated at 11% from left, 90% from top
+            float clickX = width * 0.11f;
+            float clickY = height * 0.90f;
 
-        // 1. Dispatch touch event down & up on Play button
-        MotionEvent down = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, clickX, clickY, 0);
-        dispatchTouchEvent(down);
-        down.recycle();
+            long downTime = SystemClock.uptimeMillis();
+            MotionEvent down = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, clickX, clickY, 0);
+            down.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);
+            MotionEvent up = MotionEvent.obtain(downTime, downTime + 30, MotionEvent.ACTION_UP, clickX, clickY, 0);
+            up.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);
 
-        long upTime = downTime + 40;
-        MotionEvent up = MotionEvent.obtain(downTime, upTime, MotionEvent.ACTION_UP, clickX, clickY, 0);
-        dispatchTouchEvent(up);
-        up.recycle();
+            Instrumentation inst = new Instrumentation();
+            inst.sendPointerSync(down);
+            inst.sendPointerSync(up);
+            down.recycle();
+            up.recycle();
 
-        // 2. Also dispatch Gamepad A (Button::South) & Enter keys
-        dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_A));
-        dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_A));
-        dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
-        dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER));
+            // Also send Keycodes to trigger start
+            inst.sendKeyDownUpSync(KeyEvent.KEYCODE_BUTTON_A);
+            inst.sendKeyDownUpSync(KeyEvent.KEYCODE_ENTER);
+        } catch (Throwable t) {
+            // Fallback to View dispatch if instrumentation is restricted
+            mHandler.post(this::dispatchViewPlayFallback);
+        }
+    }
+
+    private void dispatchViewPlayFallback() {
+        try {
+            View decorView = getWindow().getDecorView();
+            int width = decorView.getWidth();
+            int height = decorView.getHeight();
+            if (width <= 0) width = getResources().getDisplayMetrics().widthPixels;
+            if (height <= 0) height = getResources().getDisplayMetrics().heightPixels;
+
+            float clickX = width * 0.11f;
+            float clickY = height * 0.90f;
+            long downTime = SystemClock.uptimeMillis();
+
+            MotionEvent down = MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, clickX, clickY, 0);
+            decorView.dispatchTouchEvent(down);
+            down.recycle();
+
+            MotionEvent up = MotionEvent.obtain(downTime, downTime + 30, MotionEvent.ACTION_UP, clickX, clickY, 0);
+            decorView.dispatchTouchEvent(up);
+            up.recycle();
+
+            decorView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_A));
+            decorView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_A));
+            decorView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER));
+            decorView.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER));
+        } catch (Throwable ignored) {}
+    }
+
+    private void injectGyroMotion(float dx, float dy) {
+        try {
+            View decorView = getWindow().getDecorView();
+            int width = decorView.getWidth();
+            int height = decorView.getHeight();
+            if (width <= 0) width = getResources().getDisplayMetrics().widthPixels;
+            if (height <= 0) height = getResources().getDisplayMetrics().heightPixels;
+
+            // Inject touch camera swipe on the right half of the screen
+            float startX = width * 0.75f;
+            float startY = height * 0.50f;
+            float endX = startX + dx;
+            float endY = startY + dy;
+
+            long time = SystemClock.uptimeMillis();
+            MotionEvent move = MotionEvent.obtain(time, time, MotionEvent.ACTION_MOVE, endX, endY, 0);
+            move.setSource(android.view.InputDevice.SOURCE_TOUCHSCREEN);
+            decorView.dispatchGenericMotionEvent(move);
+            decorView.dispatchTouchEvent(move);
+            move.recycle();
+        } catch (Throwable ignored) {}
     }
 
     @Override

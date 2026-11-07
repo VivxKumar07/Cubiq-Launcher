@@ -103,6 +103,7 @@ object ControlManager {
             val defaultPresets = listOf(
                 "pocket_edition_layout.json",
                 "mojo_layout.json",
+                "zalith_1_layout.json",
                 "zalith_2_layout.json"
             )
 
@@ -141,29 +142,40 @@ object ControlManager {
                 val layout: ControlLayout = try {
                     loadLayoutFromFile(file)
                 } catch (_: IllegalArgumentException) {
-                    isSupport = false
-                    runCatching {
-                        loadLayoutFromFileUncheck(file)
-                    }.onFailure { e ->
-                        Logger.warning(TAG, "Failed to load control layout! file = $file", e)
-                    }.getOrNull() ?: run {
-                        if (file.name.contains("mojo", ignoreCase = true) || runCatching { file.readText().contains("mControlDataList") }.getOrDefault(false)) {
-                            com.movtery.layer_controller.layout.EmptyControlLayout.copy(
-                                info = com.movtery.layer_controller.layout.EmptyLayoutInfo.copy(
-                                    name = com.movtery.layer_controller.data.lang.createTranslatable(default = resolveCustomLayoutName(file)),
-                                    author = com.movtery.layer_controller.data.lang.createTranslatable(default = "Mojo Launcher"),
-                                    versionName = "1.0"
-                                )
-                            )
-                        } else null
-                    } ?: return@mapNotNull null
-                } catch (e: Exception) {
-                    if (file.name.contains("mojo", ignoreCase = true) || runCatching { file.readText().contains("mControlDataList") }.getOrDefault(false)) {
-                        isSupport = false
+                    val rawText = runCatching { file.readText() }.getOrDefault("")
+                    val isCustom = file.name.contains("mojo", ignoreCase = true) ||
+                            file.name.contains("zl1", ignoreCase = true) ||
+                            file.name.contains("zalith_1", ignoreCase = true) ||
+                            rawText.contains("mControlDataList")
+                    if (isCustom) {
+                        isSupport = true
                         com.movtery.layer_controller.layout.EmptyControlLayout.copy(
                             info = com.movtery.layer_controller.layout.EmptyLayoutInfo.copy(
                                 name = com.movtery.layer_controller.data.lang.createTranslatable(default = resolveCustomLayoutName(file)),
-                                author = com.movtery.layer_controller.data.lang.createTranslatable(default = "Mojo Launcher"),
+                                author = com.movtery.layer_controller.data.lang.createTranslatable(default = if (file.name.contains("zl1", ignoreCase = true) || file.name.contains("zalith_1", ignoreCase = true)) "ZL1 Controls" else "Mojo Launcher"),
+                                versionName = "1.0"
+                            )
+                        )
+                    } else {
+                        isSupport = false
+                        runCatching {
+                            loadLayoutFromFileUncheck(file)
+                        }.onFailure { e ->
+                            Logger.warning(TAG, "Failed to load control layout! file = $file", e)
+                        }.getOrNull() ?: return@mapNotNull null
+                    }
+                } catch (e: Exception) {
+                    val rawText = runCatching { file.readText() }.getOrDefault("")
+                    val isCustom = file.name.contains("mojo", ignoreCase = true) ||
+                            file.name.contains("zl1", ignoreCase = true) ||
+                            file.name.contains("zalith_1", ignoreCase = true) ||
+                            rawText.contains("mControlDataList")
+                    if (isCustom) {
+                        isSupport = true
+                        com.movtery.layer_controller.layout.EmptyControlLayout.copy(
+                            info = com.movtery.layer_controller.layout.EmptyLayoutInfo.copy(
+                                name = com.movtery.layer_controller.data.lang.createTranslatable(default = resolveCustomLayoutName(file)),
+                                author = com.movtery.layer_controller.data.lang.createTranslatable(default = if (file.name.contains("zl1", ignoreCase = true) || file.name.contains("zalith_1", ignoreCase = true)) "ZL1 Controls" else "Mojo Launcher"),
                                 versionName = "1.0"
                             )
                         )
@@ -198,10 +210,10 @@ object ControlManager {
     private fun checkSettings() {
         val setting = AllSettings.controlLayout.getValue()
 
-        val layout = _dataList.value.find { it.file.name == setting && it.isSupport }
-            ?: _dataList.value.find { it.file.name == "pocket_edition_layout.json" && it.isSupport }
+        val layout = _dataList.value.find { it.file.name == setting }
+            ?: _dataList.value.find { it.file.name == "pocket_edition_layout.json" }
                 ?.also { AllSettings.controlLayout.save(it.file.name) }
-            ?: _dataList.value.firstOrNull { it.isSupport }
+            ?: _dataList.value.firstOrNull()
                 ?.also { AllSettings.controlLayout.save(it.file.name) }
 
         if (layout == null) {
@@ -223,6 +235,7 @@ object ControlManager {
             val defaultPresets = listOf(
                 "pocket_edition_layout.json",
                 "mojo_layout.json",
+                "zalith_1_layout.json",
                 "zalith_2_layout.json"
             )
             for (preset in defaultPresets) {
@@ -238,7 +251,7 @@ object ControlManager {
      * 选择控制布局
      */
     fun selectControl(data: ControlData) {
-        if (!data.file.exists() || !data.isSupport) return
+        if (!data.file.exists()) return
         AllSettings.controlLayout.save(data.file.name)
         _selectedLayout.update { data }
     }
@@ -288,11 +301,14 @@ object ControlManager {
     ) = withContext(Dispatchers.IO) {
         val file = getNewRandomFile()
         try {
-            inputStream.use { stream ->
-                val jsonString = stream.readString()
+            val jsonString = inputStream.use { it.readString() }
+            if (jsonString.contains("mControlDataList") || jsonString.contains("\"version\": 8") || jsonString.contains("\"version\": 9") || jsonString.contains("\"version\":8") || jsonString.contains("\"version\":9")) {
+                file.writeText(jsonString)
+            } else {
                 val layout = loadLayoutFromString(jsonString)
                 layout.saveToFile(file)
             }
+            refresh()
             onFinished()
         } catch (e: SerializationException) {
             FileUtils.deleteQuietly(file)

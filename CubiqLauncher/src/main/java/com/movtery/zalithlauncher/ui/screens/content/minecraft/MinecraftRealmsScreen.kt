@@ -74,6 +74,7 @@ fun MinecraftRealmsScreen(
 
     val servers = remember {
         mutableStateListOf(
+            MinecraftServerEntry("Skillora SMP", "Ip-paid3.skilloraclouds.com:20004", "Official Skillora Community Server", 24),
             MinecraftServerEntry("Hypixel Network", "mc.hypixel.net", "The #1 Minecraft Minigame Server", 28),
             MinecraftServerEntry("CubeCraft Games", "play.cubecraft.net", "Skyblock, EggWars, Lucky Islands", 35),
             MinecraftServerEntry("Complex Gaming", "hub.mc-complex.com", "Pixelmon, Skyblock, Factions, Survival", 42),

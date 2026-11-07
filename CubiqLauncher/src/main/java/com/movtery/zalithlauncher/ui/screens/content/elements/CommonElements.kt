@@ -18,6 +18,13 @@
 
 package com.movtery.zalithlauncher.ui.screens.content.elements
 
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import android.view.WindowManager
+
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -374,9 +381,22 @@ fun TitleTaskFlowDialog(
         onDismissRequest = {},
         properties = DialogProperties(
             dismissOnClickOutside = false,
-            usePlatformDefaultWidth = logOutput == null
+            usePlatformDefaultWidth = logOutput == null,
+            decorFitsSystemWindows = false
         )
     ) {
+        val view = LocalView.current
+        androidx.compose.runtime.DisposableEffect(view) {
+            val window = (view.parent as? DialogWindowProvider)?.window
+            if (window != null) {
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                val controller = WindowCompat.getInsetsController(window, window.decorView)
+                controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                controller.hide(WindowInsetsCompat.Type.systemBars())
+                window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+            }
+            onDispose {}
+        }
         BoxWithConstraints(
             modifier = Modifier
                 .heightIn(max = rememberDialogMaxHeight())

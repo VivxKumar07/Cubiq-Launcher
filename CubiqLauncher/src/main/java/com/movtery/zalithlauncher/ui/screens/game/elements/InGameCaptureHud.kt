@@ -136,7 +136,7 @@ fun InGameCaptureHud(
                                 }
                                 Toast.makeText(
                                     context,
-                                    "📸 Screenshot taken! (Saved to .minecraft/screenshots)",
+                                    "📸 Screenshot taken! (Saved to Pictures/Cubiq)",
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -175,7 +175,7 @@ fun InGameCaptureHud(
                                 } else {
                                     Toast.makeText(
                                         context,
-                                        "🎥 Recording saved to Movies/CubiqRecordings!",
+                                        "🎥 Recording saved to Movies/Cubiq!",
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }

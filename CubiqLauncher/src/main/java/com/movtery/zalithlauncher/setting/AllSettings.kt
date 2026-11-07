@@ -357,6 +357,10 @@ object AllSettings : SettingsRegistry() {
      */
 
     val physicalMouseMode = boolSetting("physicalMouseMode", true)
+    val customCursorPack = stringSetting("customCursorPack", "Default Classic")
+    val customCursorUri = stringSetting("customCursorUri", "")
+    val mouseRemapBindings = stringSetting("mouseRemapBindings", "")
+    val keyboardRemapBindings = stringSetting("keyboardRemapBindings", "")
 
 
 
@@ -656,7 +660,7 @@ object AllSettings : SettingsRegistry() {
 
      */
 
-    val gyroscopeControl = boolSetting("gyroscopeControl", false)
+    val gyroscopeControl = boolSetting("gyroscopeControl", true)
 
 
 
@@ -816,6 +820,7 @@ object AllSettings : SettingsRegistry() {
      */
 
     val launcherFestivalEffects = boolSetting("launcherFestivalEffects", false)
+    val heroCardAutoScroll = boolSetting("heroCardAutoScroll", false)
 
 
 
@@ -995,7 +1000,7 @@ object AllSettings : SettingsRegistry() {
 
      */
 
-    val launcherTaskMenuExpanded = boolSetting("launcherTaskMenuExpanded", true)
+    val launcherTaskMenuExpanded = boolSetting("launcherTaskMenuExpanded", false)
 
 
 

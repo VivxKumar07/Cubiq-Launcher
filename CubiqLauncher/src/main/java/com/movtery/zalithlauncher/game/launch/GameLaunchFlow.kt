@@ -281,8 +281,15 @@ class GameLaunchFlow(scope: CoroutineScope) {
             email = account.otherAccount!!,
             password = account.otherPassword!!
         )
-        if (!helper.validateOrRefresh(context, account)) {
-            helper.passwordLogin(context, account)
+        try {
+            if (!helper.validateOrRefresh(context, account)) {
+                helper.passwordLogin(context, account)
+            }
+        } catch (e: Exception) {
+            com.movtery.zalithlauncher.utils.logging.Logger.warning("GameLaunchFlow", "Account refresh failed, checking credentials", e)
+            if (account.accessToken.isNullOrBlank()) {
+                throw e
+            }
         }
     }
 

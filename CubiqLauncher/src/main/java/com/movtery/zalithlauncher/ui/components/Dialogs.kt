@@ -18,15 +18,26 @@
 
 package com.movtery.zalithlauncher.ui.components
 
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import android.view.WindowManager
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -83,23 +94,43 @@ import kotlin.coroutines.CoroutineContext
 fun MinecraftDialogContainer(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    dismissOnBackPress: Boolean = false,
+    dismissOnClickOutside: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val isImeVisible = WindowInsets.isImeVisible
     Dialog(
         onDismissRequest = onDismissRequest,
-        properties = DialogProperties(decorFitsSystemWindows = false)
+        properties = DialogProperties(
+            decorFitsSystemWindows = false,
+            dismissOnBackPress = !isImeVisible && dismissOnBackPress,
+            dismissOnClickOutside = dismissOnClickOutside
+        )
     ) {
+        val view = LocalView.current
+        androidx.compose.runtime.DisposableEffect(view) {
+            val window = (view.parent as? DialogWindowProvider)?.window
+            if (window != null) {
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                val controller = WindowCompat.getInsetsController(window, window.decorView)
+                controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                controller.hide(WindowInsetsCompat.Type.systemBars())
+                window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
+                window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            }
+            onDispose {}
+        }
         BoxWithConstraints(
             modifier = Modifier
-                .heightIn(max = rememberDialogMaxHeight())
-                .fillMaxHeight(),
+                .fillMaxSize()
+                .imePadding(),
             contentAlignment = Alignment.Center
         ) {
             Surface(
                 modifier = modifier
-                    .padding(12.dp)
-                    .widthIn(min = 310.dp, max = 460.dp)
-                    .heightIn(max = (maxHeight - 24.dp).coerceAtMost(rememberDialogMaxHeight()))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                    .widthIn(min = 310.dp, max = 480.dp)
+                    .heightIn(max = (maxHeight - 12.dp).coerceAtMost(rememberDialogMaxHeight()))
                     .wrapContentHeight(),
                 shape = RoundedCornerShape(3.dp),
                 color = Color(0xFF1E1E20),
@@ -108,9 +139,9 @@ fun MinecraftDialogContainer(
                 shadowElevation = 8.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(18.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     content()
                 }

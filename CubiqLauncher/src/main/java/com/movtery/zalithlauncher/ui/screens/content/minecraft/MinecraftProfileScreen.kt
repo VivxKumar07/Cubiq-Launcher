@@ -9,6 +9,8 @@
 
 
 package com.movtery.zalithlauncher.ui.screens.content.minecraft
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
 
 
 
@@ -1394,9 +1396,9 @@ fun MinecraftProfileScreen(
                         onControlsButtonScaleChange = { controlsButtonScale = it },
 
                         onSelectLayout = { name ->
-
                             activeControlLayoutName = name
-
+                            AllSettings.controlLayout.save(name)
+                            controlLayouts.find { it.file.name == name }?.let { ControlManager.selectControl(it) }
                         },
 
                         onLaunchEditor = {
@@ -1445,7 +1447,7 @@ fun MinecraftProfileScreen(
 
                         onCreateNewLayout = { showCreateLayoutDialog = true },
 
-                        onImportControls = { importControlsLauncher.launch("application/json") },
+                        onImportControls = { importControlsLauncher.launch("*/*") },
 
                         onExportLayout = { data -> shareFile(context, data.file) }
 
@@ -1682,6 +1684,11 @@ fun MicrosoftLoginDialog(
     AlertDialog(
 
         onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(
+            decorFitsSystemWindows = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = true
+        ),
 
         containerColor = Color(0xFF1C1C1E),
 
@@ -1922,434 +1929,257 @@ fun MicrosoftLoginDialog(
 
 
 @Composable
-
 fun ElybyLoginDialog(
-
     onDismiss: () -> Unit,
-
     onSuccess: () -> Unit
-
 ) {
-
     val context = LocalContext.current
-
     val scope = rememberCoroutineScope()
-
     var emailOrUsername by remember { mutableStateOf("") }
-
     var password by remember { mutableStateOf("") }
-
-    var isLoading by remember { mutableStateOf(false) }
-
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-
     var passwordVisible by remember { mutableStateOf(false) }
-
-
-
-    AlertDialog(
-
-        onDismissRequest = { if (!isLoading) onDismiss() },
-
-        containerColor = Color(0xFF1C1C1E),
-
-        title = {
-
-            Row(
-
-                verticalAlignment = Alignment.CenterVertically,
-
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-
-            ) {
-
-                Box(
-
-                    modifier = Modifier
-
-                        .size(24.dp)
-
-                        .clip(RoundedCornerShape(4.dp))
-
-                        .background(Color(0xFF0284C7)),
-
-                    contentAlignment = Alignment.Center
-
-                ) {
-
-                    Text("E", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-
-                }
-
-                Text(
-
-                    text = "ADD ELY.BY ACCOUNT",
-
-                    color = Color.White,
-
-                    fontFamily = MinecraftFontFamily,
-
-                    fontWeight = FontWeight.Bold,
-
-                    fontSize = 15.sp
-
-                )
-
-            }
-
-        },
-
-        text = {
-
-            Column(
-
-                modifier = Modifier.fillMaxWidth(),
-
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-
-            ) {
-
-                Text(
-
-                    text = "Sign in with your Ely.by username/email and password for custom skins, capes, and authlib integration:",
-
-                    color = Color(0xFFCCCCCC),
-
-                    fontFamily = MinecraftFontFamily,
-
-                    fontSize = 11.5.sp
-
-                )
-
-
-
-                OutlinedTextField(
-
-                    value = emailOrUsername,
-
-                    onValueChange = { emailOrUsername = it; errorMessage = null },
-
-                    placeholder = { Text("Username or Email", color = Color(0xFF666666), fontSize = 12.sp) },
-
-                    singleLine = true,
-
-                    enabled = !isLoading,
-
-                    modifier = Modifier.fillMaxWidth(),
-
-                    colors = OutlinedTextFieldDefaults.colors(
-
-                        focusedContainerColor = Color(0xFF242426),
-
-                        unfocusedContainerColor = Color(0xFF242426),
-
-                        focusedBorderColor = Color(0xFF0284C7),
-
-                        unfocusedBorderColor = Color(0xFF383838),
-
-                        focusedTextColor = Color.White,
-
-                        unfocusedTextColor = Color.White
-
-                    )
-
-                )
-
-
-
-                OutlinedTextField(
-
-                    value = password,
-
-                    onValueChange = { password = it; errorMessage = null },
-
-                    placeholder = { Text("Password", color = Color(0xFF666666), fontSize = 12.sp) },
-
-                    singleLine = true,
-
-                    enabled = !isLoading,
-
-                    visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
-
-                    trailingIcon = {
-
-                        Text(
-
-                            text = if (passwordVisible) "HIDE" else "SHOW",
-
-                            color = Color(0xFF0284C7),
-
-                            fontFamily = MinecraftFontFamily,
-
-                            fontSize = 10.sp,
-
-                            modifier = Modifier
-
-                                .clickable { passwordVisible = !passwordVisible }
-
-                                .padding(end = 8.dp)
-
-                        )
-
-                    },
-
-                    modifier = Modifier.fillMaxWidth(),
-
-                    colors = OutlinedTextFieldDefaults.colors(
-
-                        focusedContainerColor = Color(0xFF242426),
-
-                        unfocusedContainerColor = Color(0xFF242426),
-
-                        focusedBorderColor = Color(0xFF0284C7),
-
-                        unfocusedBorderColor = Color(0xFF383838),
-
-                        focusedTextColor = Color.White,
-
-                        unfocusedTextColor = Color.White
-
-                    )
-
-                )
-
-
-
-                if (errorMessage != null) {
-
-                    Text(
-
-                        text = errorMessage ?: "",
-
-                        color = Color(0xFFFF5555),
-
-                        fontFamily = MinecraftFontFamily,
-
-                        fontSize = 11.sp
-
-                    )
-
-                }
-
-
-
-                Row(
-
-                    modifier = Modifier.fillMaxWidth(),
-
-                    horizontalArrangement = Arrangement.SpaceBetween,
-
-                    verticalAlignment = Alignment.CenterVertically
-
-                ) {
-
-                    Text(
-
-                        text = "Don't have an account?",
-
-                        color = Color(0xFF888888),
-
-                        fontFamily = MinecraftFontFamily,
-
-                        fontSize = 10.5.sp
-
-                    )
-
-                    Text(
-
-                        text = "Register at Ely.by ↗",
-
-                        color = Color(0xFF38BDF8),
-
-                        fontFamily = MinecraftFontFamily,
-
-                        fontSize = 10.5.sp,
-
-                        fontWeight = FontWeight.Bold,
-
-                        modifier = Modifier.clickable {
-
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ely.by/registration")).apply {
-
-                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-
-                            }
-
-                            context.startActivity(intent)
-
-                        }
-
-                    )
-
-                }
-
-
-
-                if (isLoading) {
-
-                    Row(
-
-                        modifier = Modifier.fillMaxWidth(),
-
-                        horizontalArrangement = Arrangement.Center,
-
-                        verticalAlignment = Alignment.CenterVertically
-
-                    ) {
-
-                        CircularProgressIndicator(
-
-                            color = Color(0xFF0284C7),
-
-                            strokeWidth = 2.dp,
-
-                            modifier = Modifier.size(20.dp)
-
-                        )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Text(
-
-                            text = "Authenticating with Ely.by...",
-
-                            color = Color(0xFFCCCCCC),
-
-                            fontFamily = MinecraftFontFamily,
-
-                            fontSize = 11.sp
-
-                        )
-
-                    }
-
-                }
-
-            }
-
-        },
-
-        confirmButton = {
-
-            MinecraftButton(
-
-                onClick = {
-
-                    val trimmedUser = emailOrUsername.trim()
-
-                    if (trimmedUser.isBlank() || password.isBlank()) {
-
-                        errorMessage = "Please enter username/email and password"
-
-                        return@MinecraftButton
-
-                    }
-
-                    isLoading = true
-
-                    errorMessage = null
-
-                    val helper = AuthServerHelper(
-
-                        baseUrl = "https://authserver.ely.by/api/authlib-injector",
-
-                        serverName = "Ely.by",
-
-                        email = trimmedUser,
-
-                        password = password,
-
-                        onSuccess = { acc, task ->
-
-                            task.updateMessage(com.movtery.zalithlauncher.ui.androidText(R.string.account_logging_in_saving))
-
-                            acc.downloadYggdrasil()
-
-                            AccountsManager.suspendSaveAccount(acc)
-
-                            AccountsManager.setCurrentAccount(acc)
-
-                            withContext(Dispatchers.Main) {
-
-                                isLoading = false
-
-                                Toast.makeText(context, "Logged in as ${acc.username}!", Toast.LENGTH_SHORT).show()
-
-                                onSuccess()
-
-                            }
-
-                        },
-
-                        onFailed = { th ->
-
-                            scope.launch(Dispatchers.Main) {
-
-                                isLoading = false
-
-                                errorMessage = th.localizedMessage ?: "Authentication failed"
-
-                            }
-
-                        }
-
-                    )
-
-                    helper.createNewAccount(context) { profiles, select ->
-
-                        if (profiles.isNotEmpty()) {
-
-                            select(profiles.first())
-
-                        }
-
-                    }
-
-                },
-
-                style = MinecraftButtonStyle.GREEN,
-
-                text = if (isLoading) "WAIT..." else "LOGIN",
-
-                fontSize = 11.5.sp,
-
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val isImeVisible = WindowInsets.isImeVisible
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    val isLandscape = androidx.compose.ui.platform.LocalConfiguration.current.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+
+    androidx.activity.compose.BackHandler(enabled = isImeVisible) {
+        keyboardController?.hide()
+    }
+
+    com.movtery.zalithlauncher.ui.components.MinecraftDialogContainer(
+        onDismissRequest = { if (!isLoading && !isImeVisible) onDismiss() },
+        dismissOnBackPress = false
+    ) {
+        // Title Row with Ely.by Badge
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Box(
                 modifier = Modifier
-
-                    .width(84.dp)
-
-                    .height(34.dp)
-
+                    .size(26.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(0xFF0284C7)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("E", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            }
+            Text(
+                text = "ADD ELY.BY ACCOUNT",
+                color = Color.White,
+                fontFamily = MinecraftFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                modifier = Modifier.weight(1f)
             )
-
-        },
-
-        dismissButton = {
-
-            MinecraftButton(
-
-                onClick = onDismiss,
-
-                style = MinecraftButtonStyle.STONE,
-
-                text = "CANCEL",
-
-                fontSize = 11.5.sp,
-
+            Box(
                 modifier = Modifier
-
-                    .width(84.dp)
-
-                    .height(34.dp)
-
-            )
-
+                    .size(24.dp)
+                    .clickable { if (!isLoading) onDismiss() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_close),
+                    contentDescription = "Close",
+                    tint = Color(0xFFAAAAAA),
+                    modifier = Modifier.size(16.dp)
+                )
+            }
         }
 
-    )
+        // Scrollable content area with IME padding so soft keyboard never hides fields
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(if (isLandscape) 6.dp else 10.dp)
+        ) {
+            Text(
+                text = if (isLandscape) "Sign in with your Ely.by account:" else "Sign in with your Ely.by username/email and password for custom skins, capes, and authlib integration:",
+                color = Color(0xFFCCCCCC),
+                fontFamily = MinecraftFontFamily,
+                fontSize = if (isLandscape) 10.5.sp else 11.5.sp
+            )
 
+            OutlinedTextField(
+                value = emailOrUsername,
+                onValueChange = { emailOrUsername = it; errorMessage = null },
+                placeholder = { Text("Username or Email", color = Color(0xFF666666), fontSize = 12.sp) },
+                singleLine = true,
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF242426),
+                    unfocusedContainerColor = Color(0xFF242426),
+                    focusedBorderColor = Color(0xFF0284C7),
+                    unfocusedBorderColor = Color(0xFF383838),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it; errorMessage = null },
+                placeholder = { Text("Password", color = Color(0xFF666666), fontSize = 12.sp) },
+                singleLine = true,
+                enabled = !isLoading,
+                visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
+                trailingIcon = {
+                    Text(
+                        text = if (passwordVisible) "HIDE" else "SHOW",
+                        color = Color(0xFF0284C7),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 10.sp,
+                        modifier = Modifier
+                            .clickable { passwordVisible = !passwordVisible }
+                            .padding(end = 8.dp)
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color(0xFF242426),
+                    unfocusedContainerColor = Color(0xFF242426),
+                    focusedBorderColor = Color(0xFF0284C7),
+                    unfocusedBorderColor = Color(0xFF383838),
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                )
+            )
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage ?: "",
+                    color = Color(0xFFFF5555),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 11.sp
+                )
+            }
+
+            // Registration Link (always visible in both portrait and landscape)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Don't have an account?",
+                    color = Color(0xFF888888),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 10.5.sp
+                )
+                Text(
+                    text = "Register at Ely.by \u2197",
+                    color = Color(0xFF38BDF8),
+                    fontFamily = MinecraftFontFamily,
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ely.by/registration")).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        context.startActivity(intent)
+                    }
+                )
+            }
+
+            if (isLoading) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CircularProgressIndicator(
+                        color = Color(0xFF0284C7),
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Authenticating with Ely.by...",
+                        color = Color(0xFFCCCCCC),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
+
+        // Action Buttons Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            MinecraftButton(
+                onClick = onDismiss,
+                style = MinecraftButtonStyle.STONE,
+                text = "CANCEL",
+                fontSize = 11.5.sp,
+                modifier = Modifier
+                    .width(84.dp)
+                    .height(34.dp)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            MinecraftButton(
+                onClick = {
+                    val trimmedUser = emailOrUsername.trim()
+                    if (trimmedUser.isBlank() || password.isBlank()) {
+                        errorMessage = "Please enter username/email and password"
+                        return@MinecraftButton
+                    }
+                    isLoading = true
+                    errorMessage = null
+                    val helper = AuthServerHelper(
+                        baseUrl = "https://authserver.ely.by/api/authlib-injector",
+                        serverName = "Ely.by",
+                        email = trimmedUser,
+                        password = password,
+                        onSuccess = { acc, _ ->
+                            AccountsManager.markSessionValidated(acc)
+                            AccountsManager.suspendSaveAccount(acc)
+                            AccountsManager.setCurrentAccount(acc)
+                            // Download skin asynchronously in background to avoid blocking login flow
+                            kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                                runCatching { acc.downloadYggdrasil() }
+                            }
+                            withContext(Dispatchers.Main) {
+                                isLoading = false
+                                Toast.makeText(context, "Logged in as ${acc.username}!", Toast.LENGTH_SHORT).show()
+                                onSuccess()
+                            }
+                        },
+                        onFailed = { th ->
+                            scope.launch(Dispatchers.Main) {
+                                isLoading = false
+                                errorMessage = th.localizedMessage ?: "Authentication failed"
+                            }
+                        }
+                    )
+                    helper.createNewAccount(context) { profiles, select ->
+                        if (profiles.isNotEmpty()) {
+                            select(profiles.first())
+                        }
+                    }
+                },
+                style = MinecraftButtonStyle.GREEN,
+                text = if (isLoading) "WAIT..." else "LOGIN",
+                fontSize = 11.5.sp,
+                modifier = Modifier
+                    .width(84.dp)
+                    .height(34.dp)
+            )
+        }
+    }
 }
-
-
 
 @Composable
 
@@ -2372,6 +2202,11 @@ private fun AddOfflineAccountDialog(
     AlertDialog(
 
         onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(
+            decorFitsSystemWindows = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = true
+        ),
 
         containerColor = Color(0xFF1C1C1E),
 
@@ -2777,6 +2612,11 @@ private fun DeleteAccountConfirmDialog(
     AlertDialog(
 
         onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(
+            decorFitsSystemWindows = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = true
+        ),
 
         containerColor = Color(0xFF1C1C1E),
 
@@ -2987,6 +2827,11 @@ private fun CreateGamepadConfigDialog(
     AlertDialog(
 
         onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(
+            decorFitsSystemWindows = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = true
+        ),
 
         containerColor = Color(0xFF1C1C1E),
 
@@ -3161,6 +3006,11 @@ private fun CreateTouchLayoutDialog(
     AlertDialog(
 
         onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.DialogProperties(
+            decorFitsSystemWindows = false,
+            dismissOnBackPress = false,
+            dismissOnClickOutside = true
+        ),
 
         containerColor = Color(0xFF1C1C1E),
 
@@ -4999,14 +4849,6 @@ private fun VideoSettingsTab(
                             onRendererChange(renderer.getUniqueIdentifier())
                             AllSettings.renderer.save(renderer.getUniqueIdentifier())
                             com.movtery.zalithlauncher.game.renderer.Renderers.setCurrentRenderer(renderer.getUniqueIdentifier())
-                            com.movtery.zalithlauncher.game.version.installed.VersionsManager.currentVersion.value?.let { curVer ->
-                                runCatching {
-                                    curVer.getVersionConfig().apply {
-                                        this.renderer = renderer.getUniqueIdentifier()
-                                        saveWithThrowable()
-                                    }
-                                }
-                            }
                         }
 
                         .padding(horizontal = 10.dp, vertical = 8.dp),
@@ -5111,14 +4953,6 @@ private fun VideoSettingsTab(
                             onRendererChange(renderer.getUniqueIdentifier())
                             AllSettings.renderer.save(renderer.getUniqueIdentifier())
                             com.movtery.zalithlauncher.game.renderer.Renderers.setCurrentRenderer(renderer.getUniqueIdentifier())
-                            com.movtery.zalithlauncher.game.version.installed.VersionsManager.currentVersion.value?.let { curVer ->
-                                runCatching {
-                                    curVer.getVersionConfig().apply {
-                                        this.renderer = renderer.getUniqueIdentifier()
-                                        saveWithThrowable()
-                                    }
-                                }
-                            }
                         },
 
                         colors = RadioButtonDefaults.colors(
@@ -8788,18 +8622,16 @@ private fun AboutSettingsTab(backStackViewModel: com.movtery.zalithlauncher.view
                 )
 
                 val changes = listOf(
-                    "Authentic Mojo Launcher Controls suite: full Java engine, ControlLayout, drawer pull buttons, sub-buttons, multi-touch input, HSV color picker, image cropper & side dialog",
-                    "Dedicated Keyboard & Mouse Settings page: physical mouse capture, cursor sensitivity, custom scroll speed & key mapping controls",
-                    "In-game floating screen recorder & screenshot capture HUD with direct storage export",
-                    "Dynamic Minecraft Hero Card Carousel: 23 official artwork themes with authentic pixelated white corners",
-                    "Direct in-app APK update downloader & 1-tap installer without browser redirects",
-                    "Eliminated file manager cold-start delay for instant file browsing",
-                    "Auto Modern G1GC tuning & frame pacing stability across renderers",
-                    "3D skin & cape depth clipping plane fix for Steve/Alex arm models",
-                    "Multi-touch support fixed for Pocket Edition controls",
-                    "Multicast LAN and multiplayer connectivity fixes",
-                    "Offline cracked server username support & legacy session authentication fix",
-                    "All Renderers reordered with Krypton & LTW on top"
+                    "Java Edition Native Linker Fix: Resolved java.library.path and Pojav library loader to include DIR_NATIVE_LIB (libpojavexec.so & libSDL3.so), eliminating UnsatisfiedLinkError crashes on Minecraft 26.3 and all Java editions",
+                    "Rust Minecraft (Horizon) Working Directory Fix: Configured process working directory and HOME/HORIZON_HOME environment variables, permanently fixing (os error 2) resource preparation error",
+                    "Universal ZL1 Gyroscope Engine: Default across all control layouts (ZL1, ZL2, Mojo, Pocket Edition) using rotation vector matrix fusion and authentic pointer positioning",
+                    "Zalith Launcher 1 (ZL1) Controls: Restored ZL1 controls layout template for layout creation and switching alongside ZL2, Mojo, and Pocket Edition",
+                    "Keyboard & Mouse Remap Popup: Dedicated 1-tap Remap Buttons & Keys card with hardware key/button detection and categorized action chips",
+                    "Portrait Mode System Bars: Fixed full screen bug in portrait mode, restoring Android status bar and bottom gestural hint bar",
+                    "Landscape Ely.by Login Dialog: Compact layout with soft keyboard padding; Back button now dismisses the keyboard instead of closing the popup",
+                    "Custom Mouse Cursor Packs: Built-in Classic, Modern Obsidian, Crosshair, Bedrock Arrow, Emerald, and Custom Imported .png/.zip packs",
+                    "Authentic Mojo Launcher Controls: Full Java engine, ControlLayout, drawer buttons, and HSV color picker",
+                    "In-game Floating Screen Recorder & Screenshot HUD: Direct storage export to Movies/Cubiq and Pictures/Cubiq"
                 )
 
                 changes.forEach { item ->
