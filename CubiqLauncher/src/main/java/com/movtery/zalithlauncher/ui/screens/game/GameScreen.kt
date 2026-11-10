@@ -94,6 +94,8 @@ import androidx.compose.foundation.layout.padding
 
 import androidx.compose.foundation.layout.size
 
+import androidx.compose.foundation.layout.width
+
 import androidx.compose.foundation.layout.widthIn
 
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -1363,6 +1365,11 @@ fun GameScreen(
                                 if (ctrl.getModifiable() != inEditMode) {
                                     ctrl.setModifiable(inEditMode)
                                 }
+                                val currentPath = viewModel.currentControlFile?.absolutePath
+                                if (ctrl.tag != currentPath && currentPath != null) {
+                                    ctrl.tag = currentPath
+                                    ctrl.post { runCatching { ctrl.loadLayout(currentPath) } }
+                                }
                             }
                         )
                     } else if (isZl1Layout) {
@@ -1377,6 +1384,7 @@ fun GameScreen(
                                     setMenuListener { showLegacySideMenu = true }
                                     background = null
                                     viewModel.currentControlFile?.absolutePath?.let { path ->
+                                        tag = path
                                         post { runCatching { loadLayout(path) } }
                                     }
                                     zl1LayoutInstance = this
@@ -1386,6 +1394,11 @@ fun GameScreen(
                                 zl1LayoutInstance = ctrl
                                 if (ctrl.getModifiable() != inEditMode) {
                                     ctrl.setModifiable(inEditMode)
+                                }
+                                val currentPath = viewModel.currentControlFile?.absolutePath
+                                if (ctrl.tag != currentPath && currentPath != null) {
+                                    ctrl.tag = currentPath
+                                    ctrl.post { runCatching { ctrl.loadLayout(currentPath) } }
                                 }
                             }
                         )
@@ -1607,81 +1620,42 @@ fun GameScreen(
                 }
             }
         } else {
+            val showFps = AllSettings.showFPS.state
+            DisposableEffect(showFps) {
+                if (showFps) viewModel.startFpsCapture()
+                onDispose {
+                    viewModel.stopFpsCapture()
+                }
+            }
+
+            val gameFps: Int? = if (showFps) {
+                viewModel.gameFps
+            } else {
+                null
+            }
 
             if (!isLegacyLayout && AllSettings.showMenuBall.state) {
-
-                //在这里根据设置决定是否启用帧率捕获协程
-
-                val showFps = AllSettings.showFPS.state
-
-                DisposableEffect(showFps) {
-
-                    if (showFps) viewModel.startFpsCapture()
-
-                    onDispose {
-
-                        viewModel.stopFpsCapture()
-
-                    }
-
-                }
-
-
-
-                val gameFps: Int? = if (showFps) {
-
-                    viewModel.gameFps
-
-                } else {
-
-                    null
-
-                }
-
-
-
                 val isPocket = AllSettings.controlLayout.state.contains("pocket", ignoreCase = true) ||
-
                         viewModel.currentControlFile?.name?.contains("pocket", ignoreCase = true) == true
-
                 val ballPosSetting = if (isPocket) AllSettings.menuBallPosPocket else AllSettings.menuBallPos
 
-
-
                 DraggableGameBall(
-
                     position = ballPosSetting.state,
-
                     onPositionChanged = {
-
                         ballPosSetting.updateState(it)
-
                     },
-
                     onSavePos = {
-
                         ballPosSetting.save()
-
                     },
-
                     gameFps = gameFps,
-
                     showMemory = AllSettings.showMemory.state,
-
                     opened = viewModel.gameMenuState == MenuState.SHOW,
-
                     isPocketEdition = isPocket,
-
                     alpha = AllSettings.menuBallOpacity.state / 100f,
-
                     onClick = {
-
                         viewModel.switchMenu()
-
                     }
-
                 )
-
             } else if (isZl1Layout) {
                 var zl1BallPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
                 com.movtery.zalithlauncher.ui.components.FloatingBall(
@@ -1691,18 +1665,76 @@ fun GameScreen(
                     color = Color.Transparent,
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
                 ) {
-                    Box(
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .size(44.dp)
-                            .background(Color(0xEE16161A), androidx.compose.foundation.shape.RoundedCornerShape(10.dp)),
-                        contentAlignment = Alignment.Center
+                            .background(Color(0xEE16161A), androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                            .padding(4.dp)
                     ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_sharp_settings_24),
-                            contentDescription = "ZL1 Game Menu",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        Box(
+                            modifier = Modifier.size(38.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sharp_settings_24),
+                                contentDescription = "ZL1 Game Menu",
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        if (AllSettings.showFPS.state || AllSettings.showMemory.state) {
+                            Column(modifier = Modifier.padding(start = 4.dp, end = 6.dp)) {
+                                if (AllSettings.showFPS.state) {
+                                    Text("FPS: ${gameFps ?: 0}", color = Color.White, fontSize = 11.sp)
+                                }
+                                if (AllSettings.showMemory.state) {
+                                    val rt = Runtime.getRuntime()
+                                    val used = (rt.totalMemory() - rt.freeMemory()) / 1048576L
+                                    val max = rt.maxMemory() / 1048576L
+                                    Text("${used}MB/${max}MB", color = Color(0xFFAAAAAA), fontSize = 10.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (isMojoLayout) {
+                // Mojo Waterdrop Drawer Button at top center!
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    AndroidView(
+                        modifier = Modifier
+                            .width(60.dp)
+                            .height(26.dp),
+                        factory = { ctx ->
+                            git.artdeell.mojo.input.handleview.DrawerPullButton(ctx).apply {
+                                setOnClickListener {
+                                    showLegacySideMenu = !showLegacySideMenu
+                                }
+                            }
+                        }
+                    )
+                }
+                if (AllSettings.showFPS.state || AllSettings.showMemory.state) {
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                            .background(Color(0xCC16161A), androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        if (AllSettings.showFPS.state) {
+                            Text("FPS: ${gameFps ?: 0}  ", color = Color.White, fontSize = 11.sp)
+                        }
+                        if (AllSettings.showMemory.state) {
+                            val rt = Runtime.getRuntime()
+                            val used = (rt.totalMemory() - rt.freeMemory()) / 1048576L
+                            val max = rt.maxMemory() / 1048576L
+                            Text("${used}MB/${max}MB", color = Color(0xFFAAAAAA), fontSize = 10.sp)
+                        }
                     }
                 }
             }
@@ -1809,6 +1841,9 @@ fun GameScreen(
                 },
                 onButtonOpacityChange = {
                     mojoLayoutInstance?.updateButtonOpacity()
+                },
+                onRefreshWindowSize = {
+                    eventViewModel.sendEvent(EventViewModel.Event.Game.RefreshSize)
                 }
             )
 

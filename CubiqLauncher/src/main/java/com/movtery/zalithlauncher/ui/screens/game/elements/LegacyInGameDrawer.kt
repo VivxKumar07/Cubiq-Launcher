@@ -71,6 +71,7 @@ fun LegacyInGameDrawer(
     onLeaveEditor: () -> Unit,
     onReplaceControl: () -> Unit = {},
     onButtonOpacityChange: ((Float) -> Unit)? = null,
+    onRefreshWindowSize: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showMojoQuickSettings by remember { mutableStateOf(false) }
@@ -99,7 +100,8 @@ fun LegacyInGameDrawer(
             ) {
                 MojoQuickSettingsSidePanel(
                     onClose = { showMojoQuickSettings = false },
-                    onButtonOpacityChange = onButtonOpacityChange
+                    onButtonOpacityChange = onButtonOpacityChange,
+                    onRefreshWindowSize = onRefreshWindowSize
                 )
             }
 
@@ -216,7 +218,8 @@ fun LegacyInGameDrawer(
                     onSaveLayout = onSaveLayout,
                     onSaveAndExit = onSaveAndExit,
                     onSelectDefaultLayout = onSelectDefaultLayout,
-                    onLeaveEditor = onLeaveEditor
+                    onLeaveEditor = onLeaveEditor,
+                    onRefreshWindowSize = onRefreshWindowSize
                 )
             }
         }
@@ -242,13 +245,14 @@ private fun Zl1InGameDrawerContent(
     onSaveLayout: () -> Unit,
     onSaveAndExit: () -> Unit,
     onSelectDefaultLayout: () -> Unit,
-    onLeaveEditor: () -> Unit
+    onLeaveEditor: () -> Unit,
+    onRefreshWindowSize: () -> Unit = {}
 ) {
     var resRatio by remember { mutableFloatStateOf(AllSettings.resolutionRatio.state.toFloat()) }
     var mouseSpeed by remember { mutableFloatStateOf(AllSettings.mouseCaptureSensitivity.state.toFloat()) }
     var gestureDelay by remember { mutableFloatStateOf(AllSettings.mouseLongPressDelay.state.toFloat()) }
-    var gesturesDisabled by remember { mutableStateOf(false) }
-    var doubleTapDisabled by remember { mutableStateOf(false) }
+    var gesturesDisabled by remember { mutableStateOf(!AllSettings.gestureControl.state) }
+    var doubleTapDisabled by remember { mutableStateOf(AllSettings.disableDoubleTap.state) }
     var showMemory by remember { mutableStateOf(AllSettings.showMemory.state) }
     var showFps by remember { mutableStateOf(AllSettings.showFPS.state) }
     var gyroEnabled by remember { mutableStateOf(AllSettings.gyroscopeControl.state) }
@@ -339,6 +343,7 @@ private fun Zl1InGameDrawerContent(
                 resRatio = it
                 AllSettings.resolutionRatio.updateState(it.toInt())
                 AllSettings.resolutionRatio.save()
+                onRefreshWindowSize()
             }
 
             // Control Category
@@ -349,6 +354,8 @@ private fun Zl1InGameDrawerContent(
                 checked = gesturesDisabled
             ) {
                 gesturesDisabled = it
+                AllSettings.gestureControl.updateState(!it)
+                AllSettings.gestureControl.save()
             }
 
             Zl1SwitchItem(
@@ -356,6 +363,8 @@ private fun Zl1InGameDrawerContent(
                 checked = doubleTapDisabled
             ) {
                 doubleTapDisabled = it
+                AllSettings.disableDoubleTap.updateState(it)
+                AllSettings.disableDoubleTap.save()
             }
 
             Zl1SliderItem(
@@ -639,13 +648,14 @@ private fun MojoDivider() {
 @Composable
 private fun MojoQuickSettingsSidePanel(
     onClose: () -> Unit,
-    onButtonOpacityChange: ((Float) -> Unit)? = null
+    onButtonOpacityChange: ((Float) -> Unit)? = null,
+    onRefreshWindowSize: () -> Unit = {}
 ) {
     var resRatio by remember { mutableFloatStateOf(AllSettings.resolutionRatio.state.toFloat()) }
     var gyroEnabled by remember { mutableStateOf<Boolean>(AllSettings.gyroscopeControl.state) }
     var mouseSpeed by remember { mutableFloatStateOf(AllSettings.mouseCaptureSensitivity.state.toFloat()) }
-    var gesturesDisabled by remember { mutableStateOf(false) }
-    var gestureDelay by remember { mutableFloatStateOf(300f) }
+    var gesturesDisabled by remember { mutableStateOf(!AllSettings.gestureControl.state) }
+    var gestureDelay by remember { mutableFloatStateOf(AllSettings.mouseLongPressDelay.state.toFloat()) }
     var buttonsOpacity by remember { mutableFloatStateOf(AllSettings.controlsOpacity.state.toFloat()) }
 
     Column(
@@ -806,12 +816,18 @@ private fun MojoQuickSettingsSidePanel(
                 onClick = {
                     AllSettings.resolutionRatio.updateState(resRatio.toInt())
                     AllSettings.resolutionRatio.save()
+                    onRefreshWindowSize()
                     AllSettings.gyroscopeControl.updateState(gyroEnabled)
                     AllSettings.gyroscopeControl.save()
                     AllSettings.mouseCaptureSensitivity.updateState(mouseSpeed.toInt())
                     AllSettings.mouseCaptureSensitivity.save()
+                    AllSettings.gestureControl.updateState(!gesturesDisabled)
+                    AllSettings.gestureControl.save()
+                    AllSettings.mouseLongPressDelay.updateState(gestureDelay.toInt())
+                    AllSettings.mouseLongPressDelay.save()
                     AllSettings.controlsOpacity.updateState(buttonsOpacity.toInt())
                     AllSettings.controlsOpacity.save()
+                    onButtonOpacityChange?.invoke(buttonsOpacity)
                     onClose()
                 }
             ) {

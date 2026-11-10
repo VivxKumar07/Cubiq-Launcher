@@ -522,6 +522,11 @@ object AllSettings : SettingsRegistry() {
 
     val enableMouseClick = boolSetting("enableMouseClick", true)
 
+    /**
+     * Disable double tap to swap hand items
+     */
+    val disableDoubleTap = boolSetting("disableDoubleTap", false)
+
 
 
     /**

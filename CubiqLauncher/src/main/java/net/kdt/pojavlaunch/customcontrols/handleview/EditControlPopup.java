@@ -100,7 +100,7 @@ public class EditControlPopup {
         mScrollView = (DefocusableScrollView) LayoutInflater.from(context).inflate(R.layout.dialog_control_button_setting, parent, false);
         parent.addView(mScrollView);
 
-        mMargin = (int) (12 * context.getResources().getDisplayMetrics().density);
+        mMargin = 0;
 
         mColorSelector = new ColorSelector(context, parent, null);
         mColorSelector.getRootView().setElevation(11);

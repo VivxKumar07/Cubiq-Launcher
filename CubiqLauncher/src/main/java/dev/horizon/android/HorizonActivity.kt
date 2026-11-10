@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,11 +51,13 @@ import com.movtery.layer_controller.observable.ObservableControlLayout
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
+import com.movtery.zalithlauncher.ui.components.FloatingBall
 import com.movtery.zalithlauncher.ui.components.MenuState
 import com.movtery.zalithlauncher.ui.control.event.LAUNCHER_EVENT_SWITCH_MENU
 import com.movtery.zalithlauncher.ui.screens.game.elements.DraggableGameBall
 import com.movtery.zalithlauncher.ui.screens.game.elements.ForceCloseOperation
 import com.movtery.zalithlauncher.ui.screens.game.elements.GameMenuSubscreen
+import com.movtery.zalithlauncher.ui.screens.game.elements.LegacyInGameDrawer
 import com.movtery.zalithlauncher.ui.screens.game.elements.ReplacementControlOperation
 import com.movtery.zalithlauncher.ui.screens.game.elements.ReplacementControlState
 import com.movtery.zalithlauncher.ui.theme.ZalithLauncherTheme
@@ -140,8 +143,10 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
      */
     inner class PassthroughOverlayLayout(context: Context) : FrameLayout(context) {
         private val touchableRegion = Region()
+        private var isModalState = false
 
         fun updateTouchableRegions(rects: List<Rect>, isModal: Boolean) {
+            isModalState = isModal
             val w = width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
             val h = height.takeIf { it > 0 } ?: resources.displayMetrics.heightPixels
 
@@ -154,6 +159,18 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                 }
             }
             viewTreeObserver.dispatchOnGlobalLayout()
+        }
+
+        override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+            if (isModalState) {
+                return super.dispatchTouchEvent(ev)
+            }
+            val x = ev.x.toInt()
+            val y = ev.y.toInt()
+            if (touchableRegion.contains(x, y)) {
+                return super.dispatchTouchEvent(ev)
+            }
+            return this@HorizonActivity.dispatchTouchEventToNative(ev)
         }
 
         override fun onAttachedToWindow() {
@@ -279,6 +296,17 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
         }
     }
 
+    fun dispatchTouchEventToNative(ev: MotionEvent): Boolean {
+        return try {
+            window.superDispatchTouchEvent(ev)
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private var lastCursorX = 500f
+    private var lastCursorY = 500f
+
     private fun setupInputBridge() {
         CallbackBridge.setNativeInputListener(object : CallbackBridge.NativeInputListener {
             override fun onKey(glfwKey: Int, keyChar: Char, scancode: Int, modifiers: Int, status: Boolean) {
@@ -293,6 +321,28 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                 }
             }
 
+            override fun onCursor(x: Float, y: Float) {
+                lastCursorX = x
+                lastCursorY = y
+                val now = SystemClock.uptimeMillis()
+                val pp = arrayOf(MotionEvent.PointerProperties().apply {
+                    id = 0
+                    toolType = MotionEvent.TOOL_TYPE_MOUSE
+                })
+                val pc = arrayOf(MotionEvent.PointerCoords().apply {
+                    this.x = x
+                    this.y = y
+                })
+                val ev = MotionEvent.obtain(
+                    now, now, MotionEvent.ACTION_HOVER_MOVE, 1, pp, pc, 0, 0, 1.0f, 1.0f, 0, 0,
+                    InputDevice.SOURCE_MOUSE, 0
+                )
+                try {
+                    this@HorizonActivity.dispatchGenericMotionEvent(ev)
+                } catch (_: Throwable) {}
+                ev.recycle()
+            }
+
             override fun onMouseButton(glfwButton: Int, status: Boolean) {
                 val now = SystemClock.uptimeMillis()
                 val buttonState = if (status) {
@@ -303,18 +353,13 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                     }
                 } else 0
 
-                val w = window.decorView.width
-                val h = window.decorView.height
-                val x = if (w > 0) w / 2f else 500f
-                val y = if (h > 0) h / 2f else 500f
-
                 val pp = arrayOf(MotionEvent.PointerProperties().apply {
                     id = 0
                     toolType = MotionEvent.TOOL_TYPE_MOUSE
                 })
                 val pc = arrayOf(MotionEvent.PointerCoords().apply {
-                    this.x = x
-                    this.y = y
+                    this.x = lastCursorX
+                    this.y = lastCursorY
                 })
                 val action = if (status) MotionEvent.ACTION_DOWN else MotionEvent.ACTION_UP
                 val ev = MotionEvent.obtain(
@@ -323,13 +368,11 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                 )
                 try {
                     this@HorizonActivity.dispatchTouchEvent(ev)
-                    this@HorizonActivity.dispatchGenericMotionEvent(ev)
                 } catch (_: Throwable) {}
                 ev.recycle()
             }
 
             override fun onScroll(xoffset: Double, yoffset: Double) {}
-            override fun onCursor(x: Float, y: Float) {}
         })
     }
 
@@ -337,6 +380,7 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
     private fun HorizonInGameScreen() {
         var showSplash by remember { mutableStateOf(true) }
         var isMenuOpen by remember { mutableStateOf(false) }
+        var showLegacySideMenu by remember { mutableStateOf(false) }
         var controlMenuTabIndex by remember { mutableIntStateOf(0) }
         var forceCloseState by remember { mutableStateOf<ForceCloseOperation>(ForceCloseOperation.None) }
         var replacementControlState by remember { mutableStateOf<ReplacementControlState>(ReplacementControlState.None) }
@@ -351,12 +395,11 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
             showSplash = false
         }
 
-        // Active layout setting - defaults to authentic ZL2 layout
         var activeLayoutName by remember {
             val initial = intent.getStringExtra("EXTRA_CONTROL_LAYOUT_NAME")
                 ?: runCatching { AllSettings.controlLayout.getValue() }.getOrNull()
                 ?: "zalith_2_layout.json"
-            mutableStateOf(if (initial.isNotBlank() && (initial.contains("zalith_2") || initial.contains("pocket"))) initial else "zalith_2_layout.json")
+            mutableStateOf(if (initial.isNotBlank()) initial else "zalith_2_layout.json")
         }
 
         var controlsOpacity by remember {
@@ -373,34 +416,39 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
 
         val ballPosSetting = if (isPocket) AllSettings.menuBallPosPocket else AllSettings.menuBallPos
 
-        // Dynamically update the touchable region of the overlay window so touches
-        // on empty areas (title screen buttons, crosshair camera drag) pass through to Rust
         val density = LocalDensity.current.density
         val screenWidth = resources.displayMetrics.widthPixels
         val screenHeight = resources.displayMetrics.heightPixels
 
-        LaunchedEffect(isMenuOpen, activeLayoutName, ballPosSetting.state, forceCloseState, replacementControlState) {
-            val rects = mutableListOf<Rect>()
-            val isModal = isMenuOpen || forceCloseState == ForceCloseOperation.Show || replacementControlState == ReplacementControlState.Show
+        LaunchedEffect(isMenuOpen, showLegacySideMenu, activeLayoutName, ballPosSetting.state, forceCloseState, replacementControlState, isLegacy) {
+            val isModal = isMenuOpen || showLegacySideMenu || forceCloseState == ForceCloseOperation.Show || replacementControlState == ReplacementControlState.Show
             if (isModal) {
                 overlayContainer?.updateTouchableRegions(emptyList(), isModal = true)
             } else {
-                // 1. Draggable Game Ball
-                val ballX = (ballPosSetting.state.x * density).toInt()
-                val ballY = (ballPosSetting.state.y * density).toInt()
-                val ballSize = (56 * density).toInt()
-                rects.add(Rect(ballX - 10, ballY - 10, ballX + ballSize + 10, ballY + ballSize + 10))
+                val rects = mutableListOf<Rect>()
+                if (isMojo) {
+                    val btnW = (60 * density).toInt()
+                    val btnH = (28 * density).toInt()
+                    val btnLeft = (screenWidth - btnW) / 2
+                    rects.add(Rect(btnLeft, 0, btnLeft + btnW, btnH))
+                    // Controls clusters
+                    rects.add(Rect(0, (screenHeight * 0.45f).toInt(), (screenWidth * 0.35f).toInt(), screenHeight))
+                    rects.add(Rect((screenWidth * 0.65f).toInt(), (screenHeight * 0.45f).toInt(), screenWidth, screenHeight))
+                } else if (isZl1) {
+                    rects.add(Rect(0, 0, (60 * density).toInt(), (60 * density).toInt()))
+                    rects.add(Rect(0, (screenHeight * 0.45f).toInt(), (screenWidth * 0.35f).toInt(), screenHeight))
+                    rects.add(Rect((screenWidth * 0.65f).toInt(), (screenHeight * 0.45f).toInt(), screenWidth, screenHeight))
+                } else {
+                    val ballX = (ballPosSetting.state.x * density).toInt()
+                    val ballY = (ballPosSetting.state.y * density).toInt()
+                    val ballSize = (56 * density).toInt()
+                    rects.add(Rect(ballX - 10, ballY - 10, ballX + ballSize + 10, ballY + ballSize + 10))
 
-                // 2. Control clusters:
-                // Left cluster (D-pad / Joystick):
-                rects.add(Rect(0, (screenHeight * 0.40f).toInt(), (screenWidth * 0.36f).toInt(), screenHeight))
-
-                // Right cluster (Action buttons, Jump, Sneak, Attack):
-                rects.add(Rect((screenWidth * 0.64f).toInt(), (screenHeight * 0.40f).toInt(), screenWidth, screenHeight))
-
-                // Top cluster (Keyboard, Pause, etc.):
-                rects.add(Rect((screenWidth * 0.30f).toInt(), 0, (screenWidth * 0.70f).toInt(), (screenHeight * 0.16f).toInt()))
-
+                    // Only cover the left and right control quadrants, leave the entire middle 35%-65% open
+                    rects.add(Rect(0, (screenHeight * 0.45f).toInt(), (screenWidth * 0.35f).toInt(), screenHeight))
+                    rects.add(Rect((screenWidth * 0.65f).toInt(), (screenHeight * 0.45f).toInt(), screenWidth, screenHeight))
+                    rects.add(Rect((screenWidth * 0.35f).toInt(), 0, (screenWidth * 0.65f).toInt(), (screenHeight * 0.12f).toInt()))
+                }
                 overlayContainer?.updateTouchableRegions(rects, isModal = false)
             }
         }
@@ -431,8 +479,7 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
 
         Box(modifier = Modifier.fillMaxSize()) {
             // 1. Controls layer
-            if (isLegacy) {
-                // Legacy Mojo / ZL1 layout view
+            if (isMojo) {
                 AndroidView(
                     modifier = Modifier
                         .fillMaxSize()
@@ -441,6 +488,7 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                         git.artdeell.mojo.Tools.init(ctx)
                         git.artdeell.mojo.input.ControlLayout(ctx).apply {
                             setModifiable(false)
+                            setMenuListener { showLegacySideMenu = true }
                             background = null
                             post {
                                 runCatching {
@@ -459,6 +507,79 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                         }
                     }
                 )
+
+                // Mojo Top Waterdrop Drawer Button
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter),
+                    contentAlignment = Alignment.TopCenter
+                ) {
+                    AndroidView(
+                        modifier = Modifier
+                            .width(60.dp)
+                            .height(28.dp),
+                        factory = { ctx ->
+                            git.artdeell.mojo.input.handleview.DrawerPullButton(ctx).apply {
+                                setOnClickListener {
+                                    showLegacySideMenu = !showLegacySideMenu
+                                }
+                            }
+                        }
+                    )
+                }
+            } else if (isZl1) {
+                AndroidView(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(controlsOpacity),
+                    factory = { ctx ->
+                        (ctx as? android.app.Activity)?.let { net.kdt.pojavlaunch.Tools.updateWindowSize(it) }
+                        net.kdt.pojavlaunch.customcontrols.ControlLayout(ctx).apply {
+                            setModifiable(false)
+                            setMenuListener { showLegacySideMenu = true }
+                            background = null
+                            post {
+                                runCatching {
+                                    val f = File(PathManager.DIR_CONTROL_LAYOUTS, activeLayoutName)
+                                    if (f.exists()) {
+                                        loadLayout(f.absolutePath)
+                                    } else {
+                                        val fallbackFile = File(filesDir, "horizon_$activeLayoutName")
+                                        assets.open(activeLayoutName).use { input ->
+                                            fallbackFile.outputStream().use { output -> input.copyTo(output) }
+                                        }
+                                        loadLayout(fallbackFile.absolutePath)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                )
+
+                // ZL1 Floating Gear Ball
+                var zl1BallPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+                FloatingBall(
+                    position = zl1BallPos,
+                    onPositionChanged = { zl1BallPos = it },
+                    onClick = { showLegacySideMenu = !showLegacySideMenu },
+                    color = Color.Transparent,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .background(Color(0xEE16161A), androidx.compose.foundation.shape.RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sharp_settings_24),
+                            contentDescription = "ZL1 Game Menu",
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
             } else {
                 // Pocket Edition & Zalith 2 ControlBoxLayout layer
                 val currentFile = File(PathManager.DIR_CONTROL_LAYOUTS, activeLayoutName)
@@ -495,22 +616,22 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                         isDark = true
                     ) {}
                 }
+
+                // Iconic ZL2 3-Horizontal-Line Floating Menu Ball!
+                DraggableGameBall(
+                    position = ballPosSetting.state,
+                    onPositionChanged = { ballPosSetting.updateState(it) },
+                    onSavePos = { ballPosSetting.save() },
+                    gameFps = null,
+                    showMemory = false,
+                    opened = isMenuOpen,
+                    isPocketEdition = isPocket,
+                    alpha = (AllSettings.menuBallOpacity.state / 100f).coerceIn(0.1f, 1f),
+                    onClick = { isMenuOpen = !isMenuOpen }
+                )
             }
 
-            // 2. The Iconic ZL2 3-Horizontal-Line Floating Menu Ball!
-            DraggableGameBall(
-                position = ballPosSetting.state,
-                onPositionChanged = { ballPosSetting.updateState(it) },
-                onSavePos = { ballPosSetting.save() },
-                gameFps = null,
-                showMemory = false,
-                opened = isMenuOpen,
-                isPocketEdition = isPocket,
-                alpha = (AllSettings.menuBallOpacity.state / 100f).coerceIn(0.1f, 1f),
-                onClick = { isMenuOpen = !isMenuOpen }
-            )
-
-            // 3. Authentic Zalith Launcher 2 In-Game Menu (GameMenuSubscreen)
+            // Authentic Zalith Launcher 2 In-Game Menu (GameMenuSubscreen)
             GameMenuSubscreen(
                 state = if (isMenuOpen) MenuState.SHOW else MenuState.HIDE,
                 controlMenuTabIndex = controlMenuTabIndex,
@@ -535,6 +656,32 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                 onEditLayout = {},
                 onShowToast = { text, duration ->
                     Toast.makeText(this@HorizonActivity, text.toAndroidString(this@HorizonActivity), duration).show()
+                }
+            )
+
+            // Legacy In-Game Drawer for Mojo & ZL1
+            LegacyInGameDrawer(
+                visible = showLegacySideMenu,
+                isMojo = isMojo,
+                isInEditor = false,
+                onDismiss = { showLegacySideMenu = false },
+                onForceClose = {
+                    showLegacySideMenu = false
+                    forceCloseState = ForceCloseOperation.Show
+                },
+                onViewLogs = {},
+                onSendKeycode = {},
+                onStartEditControls = {},
+                onAddButton = {},
+                onAddDrawer = {},
+                onAddJoystick = {},
+                onLoadLayout = {},
+                onSaveLayout = {},
+                onSelectDefaultLayout = {},
+                onLeaveEditor = {},
+                onReplaceControl = {
+                    showLegacySideMenu = false
+                    replacementControlState = ReplacementControlState.Show
                 }
             )
 
