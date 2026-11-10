@@ -73,9 +73,9 @@ fun EditWidgetClickEvent(
         ) {
             val tabs = remember {
                 listOf(
+                    TabItem(R.string.control_editor_edit_event_key),
                     TabItem(R.string.control_editor_edit_event_basic),
-                    TabItem(R.string.control_editor_edit_event_launcher),
-                    TabItem(R.string.control_editor_edit_event_key)
+                    TabItem(R.string.control_editor_edit_event_launcher)
                 )
             }
 
@@ -111,6 +111,14 @@ fun EditWidgetClickEvent(
             ) { page ->
                 when (page) {
                     0 -> {
+                        KeyEventEdit(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 2.dp),
+                            provider = clickEventsProvider(data)
+                        )
+                    }
+                    1 -> {
                         EditBasicEvent(
                             modifier = Modifier.fillMaxSize(),
                             data = data,
@@ -119,7 +127,7 @@ fun EditWidgetClickEvent(
                             }
                         )
                     }
-                    1 -> {
+                    2 -> {
                         val provider = clickEventsProvider(data)
                         LauncherEventsEdit(
                             provider = provider,
@@ -129,14 +137,6 @@ fun EditWidgetClickEvent(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = 2.dp, vertical = 12.dp)
-                        )
-                    }
-                    2 -> {
-                        KeyEventEdit(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 2.dp),
-                            provider = clickEventsProvider(data)
                         )
                     }
                 }

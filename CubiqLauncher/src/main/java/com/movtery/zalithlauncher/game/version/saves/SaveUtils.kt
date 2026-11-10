@@ -134,3 +134,21 @@ suspend fun parseLevelDatFile(
         )
     }
 }
+
+/**
+ * 启用或禁用世界存档的指令/管理员权限 (Bug 5: Admin / OP commands in singleplayer)
+ */
+fun updateAllowCommands(saveFile: File, allow: Boolean): Boolean {
+    return runCatching {
+        val levelDat = File(saveFile, "level.dat")
+        if (!levelDat.exists()) return false
+        val compound = NBTIO.readFile(levelDat) ?: return false
+        val data = compound.asCompoundTag("Data") ?: return false
+        data.put(com.github.steveice10.opennbt.tag.builtin.ByteTag("allowCommands", (if (allow) 1 else 0).toByte()))
+        NBTIO.writeFile(compound, levelDat)
+        Logger.info(TAG, "Updated allowCommands in ${levelDat.absolutePath} to $allow")
+        true
+    }.onFailure {
+        Logger.warning(TAG, "Failed to update allowCommands in ${saveFile.absolutePath}", it)
+    }.getOrDefault(false)
+}

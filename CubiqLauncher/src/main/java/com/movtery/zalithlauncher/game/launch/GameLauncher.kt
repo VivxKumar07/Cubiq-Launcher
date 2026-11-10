@@ -105,7 +105,21 @@ class GameLauncher(
     override suspend fun launch(screenSize: IntSize): Int {
         // Always set the renderer according to the version's configuration
         val minecraftVersion = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
-        Renderers.setCurrentRendererForMinecraftVersion(version.getRenderer(), minecraftVersion)
+        var activeRenderer = version.getRenderer()
+        if (activeRenderer.contains("ltw", ignoreCase = true) && Version.isMaliGpuHardware()) {
+            val maliWarn = "Notice: Mali GPU detected with LTW renderer. Auto-falling back to Holy GL4ES to prevent crash (Bug 9)."
+            appendInfo(maliWarn)
+            Logger.warning(TAG, maliWarn)
+            activeRenderer = com.movtery.zalithlauncher.game.renderer.renderers.NGGL4ESRenderer.getUniqueIdentifier()
+        } else if (activeRenderer.contains("ltw", ignoreCase = true) &&
+            org.jackhuang.hmcl.util.versioning.GameVersionNumber.compare(minecraftVersion, "1.21") >= 0 &&
+            org.jackhuang.hmcl.util.versioning.GameVersionNumber.compare(minecraftVersion, "26.0") < 0) {
+            val ltwWarn = "Notice: Minecraft $minecraftVersion core shaders are incompatible with LTW GLSL translator (Bug 14A). Auto-falling back to Holy GL4ES for visual stability."
+            appendInfo(ltwWarn)
+            Logger.warning(TAG, ltwWarn)
+            activeRenderer = com.movtery.zalithlauncher.game.renderer.renderers.NGGL4ESRenderer.getUniqueIdentifier()
+        }
+        Renderers.setCurrentRendererForMinecraftVersion(activeRenderer, minecraftVersion)
 
         val versionJsonFile = File(version.getVersionPath(), "${version.getVersionName()}.json")
         val manifestJsonText = when {

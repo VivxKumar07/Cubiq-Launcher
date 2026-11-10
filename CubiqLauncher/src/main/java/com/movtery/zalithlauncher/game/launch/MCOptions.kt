@@ -18,6 +18,7 @@
 
 package com.movtery.zalithlauncher.game.launch
 
+import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
 import android.os.FileObserver
@@ -28,6 +29,7 @@ import com.movtery.zalithlauncher.utils.string.splitPreservingQuotes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.json.JSONObject
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -59,7 +61,57 @@ object MCOptions {
             }
 
             loadInternal()
+            enforceSafeRenderDistance(context, version)
             setupFileObserver()
+        }
+    }
+
+    /**
+     * Bug 1A: Auto-cap render distance based on physical device RAM & allocated heap to prevent Android OOM crashes
+     */
+    private fun enforceSafeRenderDistance(context: Context, version: Version) {
+        runCatching {
+            val actManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+            val memInfo = ActivityManager.MemoryInfo()
+            actManager?.getMemoryInfo(memInfo)
+            val totalRamMb = (memInfo.totalMem / (1024 * 1024)).toInt()
+            val allocatedRamMb = version.getRamAllocation(context)
+
+            // Safe maximum chunks for mobile memory constraints:
+            // <= 3.5GB RAM or <= 1.5GB allocated: 5 chunks max
+            // <= 4.5GB RAM or <= 2.3GB allocated: 6 chunks max
+            // <= 6.5GB RAM or <= 3.5GB allocated: 8 chunks max
+            val safeMaxDistance = when {
+                totalRamMb <= 3500 || allocatedRamMb <= 1536 -> 5
+                totalRamMb <= 4500 || allocatedRamMb <= 2304 -> 6
+                totalRamMb <= 6500 || allocatedRamMb <= 3500 -> 8
+                else -> 12
+            }
+
+            // Check options.txt
+            val currentDistance = get("renderDistance")?.toIntOrNull()
+            if (currentDistance != null && currentDistance > safeMaxDistance) {
+                Logger.info(TAG, "Sub-bug 1A: Capping renderDistance from $currentDistance to safe limit $safeMaxDistance (RAM: ${totalRamMb}MB total, ${allocatedRamMb}MB alloc)")
+                set("renderDistance", safeMaxDistance.toString())
+                save()
+            }
+
+            // Check Sodium options if present
+            val sodiumOptionsFile = File(version.getGameDir(), "config/sodium-options.json")
+            if (sodiumOptionsFile.exists()) {
+                val json = JSONObject(sodiumOptionsFile.readText())
+                val quality = json.optJSONObject("quality") ?: json
+                if (quality.has("view_distance")) {
+                    val sodiumDistance = quality.getInt("view_distance")
+                    if (sodiumDistance > safeMaxDistance) {
+                        quality.put("view_distance", safeMaxDistance)
+                        sodiumOptionsFile.writeText(json.toString(2))
+                        Logger.info(TAG, "Sub-bug 1A: Capped Sodium view_distance from $sodiumDistance to $safeMaxDistance")
+                    }
+                }
+            }
+        }.onFailure {
+            Logger.warning(TAG, "Failed to enforce safe render distance", it)
         }
     }
 

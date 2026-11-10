@@ -107,10 +107,15 @@ public class ControlButton extends TextView implements ControlInterface {
     }
 
 
+    private int mActivePointerId = MotionEvent.INVALID_POINTER_ID;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        switch (event.getActionMasked()){
+        int action = event.getActionMasked();
+        int actionIndex = event.getActionIndex();
+
+        switch (action){
             case MotionEvent.ACTION_MOVE:
                 //Send the event to be taken as a mouse action
                 if(getProperties().passThruEnabled && CallbackBridge.isGrabbing()){
@@ -144,15 +149,38 @@ public class ControlButton extends TextView implements ControlInterface {
                 break;
 
             case MotionEvent.ACTION_DOWN: // 0
+                mActivePointerId = event.getPointerId(0);
+                if(!getProperties().isToggle){
+                    sendKeyPresses(true);
+                }
+                break;
             case MotionEvent.ACTION_POINTER_DOWN: // 5
+                mActivePointerId = event.getPointerId(actionIndex);
                 if(!getProperties().isToggle){
                     sendKeyPresses(true);
                 }
                 break;
 
+            case MotionEvent.ACTION_POINTER_UP: // 6
+                // Bug 15: Only release this button if the pointer that lifted is the one that pressed it!
+                if (event.getPointerId(actionIndex) == mActivePointerId) {
+                    mActivePointerId = MotionEvent.INVALID_POINTER_ID;
+                    if(getProperties().passThruEnabled){
+                        View gameSurface = getControlLayoutParent().getGameSurface();
+                        if(gameSurface != null) gameSurface.dispatchTouchEvent(event);
+                    }
+                    if(mIsPointerOutOfBounds) getControlLayoutParent().onTouch(this, event);
+                    mIsPointerOutOfBounds = false;
+
+                    if(!triggerToggle()) {
+                        sendKeyPresses(false);
+                    }
+                }
+                break;
+
             case MotionEvent.ACTION_UP: // 1
             case MotionEvent.ACTION_CANCEL: // 3
-            case MotionEvent.ACTION_POINTER_UP: // 6
+                mActivePointerId = MotionEvent.INVALID_POINTER_ID;
                 if(getProperties().passThruEnabled){
                     View gameSurface = getControlLayoutParent().getGameSurface();
                     if(gameSurface != null) gameSurface.dispatchTouchEvent(event);

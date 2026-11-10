@@ -235,10 +235,24 @@ class Version(
             return GL4ESRenderer.getUniqueIdentifier()
         }
         // Auto-Default for Minecraft > 26.2 (e.g., 26.3+)
-        if (mcVer.isBiggerVer("26.2")) {
+        // Bug 9: Mali GPUs lack complete desktop Vulkan compliance required by LTW.
+        // On Mali GPUs, default to NGGL4ESRenderer (Holy GL4ES / MobileGlues) which is rock-solid.
+        if (mcVer.isBiggerVer("26.2") && !isMaliGpuHardware()) {
             return LTWRenderer.getUniqueIdentifier()
         }
         return NGGL4ESRenderer.getUniqueIdentifier()
+    }
+
+    companion object {
+        fun isMaliGpuHardware(): Boolean {
+            return runCatching {
+                File("/dev/mali0").exists() ||
+                File("/sys/module/mali_kbase").exists() ||
+                android.os.Build.HARDWARE.lowercase().contains("mali") ||
+                android.os.Build.BOARD.lowercase().contains("mali") ||
+                (android.os.Build.VERSION.SDK_INT >= 31 && android.os.Build.SOC_MODEL.lowercase().contains("dimensity"))
+            }.getOrDefault(false)
+        }
     }
 
     fun getDriver(): String = versionConfig.driver.getValueOrDefault(AllSettings.vulkanDriver.getValue())

@@ -726,7 +726,7 @@ object AllSettings : SettingsRegistry() {
 
     /** Inbuilt screen recorder and screenshot taker HUD toggle */
 
-    val hudScreenCaptureTools = boolSetting("hudScreenCaptureTools", false)
+    val hudScreenCaptureTools = boolSetting("hudScreenCaptureTools", true)
 
     /** Play camera shutter sound when capturing screenshots */
     val hudCaptureSound = boolSetting("hudCaptureSound", true)

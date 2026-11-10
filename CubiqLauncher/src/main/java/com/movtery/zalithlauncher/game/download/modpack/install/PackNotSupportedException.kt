@@ -41,5 +41,10 @@ enum class UnsupportedPackReason(
     /**
      * 不支持的整合包格式
      */
-    UnsupportedFormat("The modpack format is not supported.")
+    UnsupportedFormat("The modpack format is not supported."),
+
+    /**
+     * 选择了世界存档文件而非整合包
+     */
+    WorldArchive("This archive is a Minecraft World save, not a modpack! It has been imported into your saves folder.")
 }

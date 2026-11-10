@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -262,6 +263,12 @@ fun ModpackImportOperation(
                                 //启动器确实不支持这个格式
                                 Text(text = stringResource(R.string.import_modpack_not_supported_formats))
                                 AllSupportPackDisplay(modifier = Modifier.fillMaxWidth())
+                            }
+                            UnsupportedPackReason.WorldArchive -> {
+                                Text(
+                                    text = "This archive is a Minecraft World Save, not a Modpack.\n\nIt has been automatically imported into your saves (.minecraft/saves) folder! You can find and load it in Singleplayer.",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
                             }
                         }
                     }

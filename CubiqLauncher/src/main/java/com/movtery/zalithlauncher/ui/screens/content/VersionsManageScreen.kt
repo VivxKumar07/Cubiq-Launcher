@@ -18,7 +18,12 @@
 
 package com.movtery.zalithlauncher.ui.screens.content
 
+import android.app.Activity
 import android.os.Environment
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.movtery.zalithlauncher.game.launch.executeJarWithUri
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -463,6 +468,18 @@ private fun VersionsLayout(
     onVersionPinned: () -> Unit,
     onInstall: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val executeJarLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            val activity = context as? Activity
+            if (activity != null) {
+                executeJarWithUri(activity, uri, null)
+            }
+        }
+    }
+
     val surfaceYOffset by swapAnimateDpAsState(
         targetValue = (-40).dp,
         swapIn = isVisible
@@ -620,6 +637,12 @@ private fun VersionsLayout(
                                     painter = painterResource(R.drawable.ic_download),
                                     contentDescription = stringResource(R.string.versions_manage_install_new),
                                     text = stringResource(R.string.versions_manage_install_new),
+                                )
+                                IconTextButton(
+                                    onClick = { executeJarLauncher.launch("*/*") },
+                                    painter = painterResource(R.drawable.ic_terminal_outlined),
+                                    contentDescription = "Execute .jar",
+                                    text = "Execute .jar"
                                 )
                             }
                         }

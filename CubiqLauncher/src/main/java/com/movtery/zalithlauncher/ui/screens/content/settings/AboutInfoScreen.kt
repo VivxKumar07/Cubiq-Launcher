@@ -383,7 +383,7 @@ fun AboutInfoScreen(
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Skillora SMP Built-In: Added Skillora SMP (Ip-paid3.skilloraclouds.com:20004) to default multiplayer server presets.",
+                            text = "• Skillora SMP Built-In: Added Skillora SMP (paid51.skilloraclouds.com:20015) to default multiplayer server presets.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(

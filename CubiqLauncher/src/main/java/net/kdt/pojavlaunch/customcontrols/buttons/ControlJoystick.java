@@ -97,6 +97,46 @@ public class ControlJoystick extends JoystickView implements ControlInterface {
         }, 10);
     }
 
+    private int mActivePointerId = android.view.MotionEvent.INVALID_POINTER_ID;
+
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public boolean onTouchEvent(android.view.MotionEvent event) {
+        int action = event.getActionMasked();
+        int actionIndex = event.getActionIndex();
+
+        switch (action) {
+            case android.view.MotionEvent.ACTION_DOWN:
+                mActivePointerId = event.getPointerId(0);
+                return super.onTouchEvent(event);
+            case android.view.MotionEvent.ACTION_POINTER_DOWN:
+                if (mActivePointerId == android.view.MotionEvent.INVALID_POINTER_ID) {
+                    mActivePointerId = event.getPointerId(actionIndex);
+                }
+                return true;
+            case android.view.MotionEvent.ACTION_POINTER_UP:
+                if (event.getPointerId(actionIndex) == mActivePointerId) {
+                    mActivePointerId = android.view.MotionEvent.INVALID_POINTER_ID;
+                    return super.onTouchEvent(event);
+                }
+                return true;
+            case android.view.MotionEvent.ACTION_UP:
+            case android.view.MotionEvent.ACTION_CANCEL:
+                mActivePointerId = android.view.MotionEvent.INVALID_POINTER_ID;
+                return super.onTouchEvent(event);
+            case android.view.MotionEvent.ACTION_MOVE:
+                if (mActivePointerId != android.view.MotionEvent.INVALID_POINTER_ID) {
+                    int pointerIndex = event.findPointerIndex(mActivePointerId);
+                    if (pointerIndex != -1) {
+                        return super.onTouchEvent(event);
+                    }
+                }
+                return true;
+            default:
+                return super.onTouchEvent(event);
+        }
+    }
+
     @Override
     public void removeButton() {
         getControlLayoutParent().getLayout().mJoystickDataList.remove(mControlData);

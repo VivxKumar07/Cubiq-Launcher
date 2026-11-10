@@ -324,9 +324,11 @@ class GameLaunchFlow(scope: CoroutineScope) {
         val modsDir = VersionFolders.MOD.getDir(gameDir)
         modsDir.mkdirs()
 
+        val versionModsDir = VersionFolders.MOD.getDir(version.getVersionPath())
+        val rootModsDir = VersionFolders.MOD.getDir(File(version.getGameHome()))
+
         if (version.isIsolation()) {
-            val rootModsDir = VersionFolders.MOD.getDir(File(version.getGameHome()))
-            if (rootModsDir.isDirectory && modsDir.listFiles()?.isEmpty() == true) {
+            if (rootModsDir.isDirectory && (modsDir.listFiles()?.none { it.name.endsWith(".jar") } == true)) {
                 val rootMods = rootModsDir.listFiles()?.filter { it.isFile && (it.name.endsWith(".jar") || it.name.endsWith(".disabled")) }
                 if (!rootMods.isNullOrEmpty()) {
                     Logger.info(TAG, "Version isolation active for ${version.getVersionName()}. Copying ${rootMods.size} mods from root .minecraft/mods to ${modsDir.absolutePath}")
@@ -337,9 +339,70 @@ class GameLaunchFlow(scope: CoroutineScope) {
                     }
                 }
             }
+        } else {
+            // Version isolation is disabled, so gameDir is root .minecraft.
+            // If user placed mods in versions/<versionName>/mods (Bug 3a), sync them to root modsDir so they load!
+            if (versionModsDir.isDirectory && versionModsDir.exists()) {
+                val versionMods = versionModsDir.listFiles()?.filter { it.isFile && (it.name.endsWith(".jar") || it.name.endsWith(".disabled")) }
+                if (!versionMods.isNullOrEmpty()) {
+                    Logger.info(TAG, "Version isolation disabled, but found ${versionMods.size} mods in ${versionModsDir.absolutePath}. Syncing to root mods directory.")
+                    versionMods.forEach { file ->
+                        runCatching {
+                            file.copyTo(File(modsDir, file.name), overwrite = false)
+                        }
+                    }
+                }
+            }
         }
 
         val mods = AllModReader(modsDir).readAllLocals()
+
+        // Bug 6 & 7: Check for known incompatible mods that cause native crash (Error code -1)
+        val incompatibleMods = mods.filter { mod ->
+            mod.file.isEnabled() && (
+                mod.id.contains("distanthorizons", ignoreCase = true) ||
+                mod.id.contains("distant-horizons", ignoreCase = true) ||
+                mod.name.contains("Distant Horizons", ignoreCase = true) ||
+                mod.file.name.contains("distanthorizons", ignoreCase = true) ||
+                mod.file.name.contains("DistantHorizons", ignoreCase = true) ||
+                mod.id.contains("voxy", ignoreCase = true) ||
+                mod.file.name.contains("voxy", ignoreCase = true)
+            )
+        }
+        if (incompatibleMods.isNotEmpty()) {
+            val names = incompatibleMods.joinToString(", ") { it.name.ifBlank { it.file.name } }
+            val warn = "Incompatible Mod Warning: $names cannot run on Android ARM64 (requires desktop x86_64 binaries & compute shaders). They may crash with Error Code -1."
+            Logger.warning(TAG, warn)
+            com.movtery.zalithlauncher.bridge.LoggerBridge.append(warn)
+        }
+
+        // Bug 7: Minimap / Map mods (Xaero's Minimap, World Map, JourneyMap)
+        // Ensure config directory exists and configure fpsLimiter to prevent OpenGL framebuffer exhaustion
+        val isMapModPresent = mods.any { mod ->
+            mod.file.isEnabled() && (
+                mod.id.contains("xaero", ignoreCase = true) ||
+                mod.file.name.contains("xaero", ignoreCase = true) ||
+                mod.id.contains("journeymap", ignoreCase = true)
+            )
+        }
+        if (isMapModPresent) {
+            val configDir = File(gameDir, "config")
+            configDir.mkdirs()
+            val xaeroConfig = File(configDir, "xaerominimap.txt")
+            if (xaeroConfig.exists()) {
+                runCatching {
+                    var txt = xaeroConfig.readText()
+                    if (txt.contains("fpsLimiter:false")) {
+                        txt = txt.replace("fpsLimiter:false", "fpsLimiter:true")
+                        xaeroConfig.writeText(txt)
+                        Logger.info(TAG, "Bug 7: Auto-enabled fpsLimiter in xaerominimap.txt for mobile stability")
+                    }
+                }
+            }
+        }
+
+        // Bug 19: Ensure config directory exists and is writable for Sodium & mod settings persistence
+        File(gameDir, "config").mkdirs()
 
         // Notebook Item 12: Warning when running Vanilla with mods installed
         if (version.getVersionInfo()?.loaderInfo?.loader == null && mods.any { it.file.isEnabled() }) {

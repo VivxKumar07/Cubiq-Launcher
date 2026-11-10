@@ -50,12 +50,23 @@ import kotlin.math.roundToInt
 
 @Composable
 fun InGameCaptureHud(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    alpha: Float = 0.6f
 ) {
     val context = LocalContext.current
-    var offsetX by remember { mutableStateOf(20f) }
-    var offsetY by remember { mutableStateOf(80f) }
-    var isExpanded by remember { mutableStateOf(true) }
+    val currentCtrl = com.movtery.zalithlauncher.setting.AllSettings.controlLayout.getValue()
+    val initialX = remember(currentCtrl) {
+        if (currentCtrl.contains("pocket", ignoreCase = true)) 180f
+        else if (currentCtrl.contains("mojo", ignoreCase = true)) 240f
+        else 140f
+    }
+    val initialY = remember(currentCtrl) {
+        if (currentCtrl.contains("pocket", ignoreCase = true)) 20f
+        else 15f
+    }
+    var offsetX by remember { mutableStateOf(initialX) }
+    var offsetY by remember { mutableStateOf(initialY) }
+    var isExpanded by remember { mutableStateOf(false) }
     var isRecording by remember { mutableStateOf(false) }
     var recordSeconds by remember { mutableIntStateOf(0) }
 
@@ -93,11 +104,12 @@ fun InGameCaptureHud(
     ) {
         Row(
             modifier = Modifier
-                .shadow(8.dp, RoundedCornerShape(20.dp))
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xDD18181C))
-                .border(1.dp, Color(0xFF388E23), RoundedCornerShape(20.dp))
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .shadow(2.dp, RoundedCornerShape(18.dp))
+                .clip(RoundedCornerShape(18.dp))
+                .background(Color(0x55141418))
+                .border(1.dp, Color(0x35FFFFFF), RoundedCornerShape(18.dp))
+                .alpha(alpha)
+                .padding(horizontal = 7.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
@@ -106,7 +118,8 @@ fun InGameCaptureHud(
                 modifier = Modifier
                     .size(24.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF2A2A30))
+                    .background(Color(0x552A2A34))
+                    .border(0.5.dp, Color(0x30FFFFFF), CircleShape)
                     .clickable { isExpanded = !isExpanded },
                 contentAlignment = Alignment.Center
             ) {
@@ -125,8 +138,9 @@ fun InGameCaptureHud(
                     // Screenshot Button (F2 Keycode)
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFF2A2A30))
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0x552A2A34))
+                            .border(0.5.dp, Color(0x28FFFFFF), RoundedCornerShape(10.dp))
                             .clickable {
                                 if (AllSettings.hudCaptureSound.state) {
                                     MinecraftSoundHelper.playClickSound()
@@ -140,15 +154,15 @@ fun InGameCaptureHud(
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                            .padding(horizontal = 9.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = "📸", fontSize = 13.sp)
+                        Text(text = "📸", fontSize = 12.sp)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "Screenshot",
                             color = Color.White,
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -156,8 +170,9 @@ fun InGameCaptureHud(
                     // Screen Recorder Button
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isRecording) Color(0xFF4A1010) else Color(0xFF2A2A30))
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (isRecording) Color(0x888B0000) else Color(0x552A2A34))
+                            .border(0.5.dp, if (isRecording) Color(0xAAFF3333) else Color(0x28FFFFFF), RoundedCornerShape(10.dp))
                             .clickable {
                                 if (AllSettings.hudCaptureSound.state) {
                                     MinecraftSoundHelper.playClickSound()
@@ -180,7 +195,7 @@ fun InGameCaptureHud(
                                     ).show()
                                 }
                             }
-                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                            .padding(horizontal = 9.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (isRecording) {
@@ -197,16 +212,16 @@ fun InGameCaptureHud(
                             Text(
                                 text = if (AllSettings.hudShowRecordTimer.state) String.format("REC %02d:%02d", m, s) else "REC",
                                 color = Color.Red,
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         } else {
-                            Text(text = "🎥", fontSize = 13.sp)
+                            Text(text = "🎥", fontSize = 12.sp)
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Record",
                                 color = Color.White,
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
                             )
                         }

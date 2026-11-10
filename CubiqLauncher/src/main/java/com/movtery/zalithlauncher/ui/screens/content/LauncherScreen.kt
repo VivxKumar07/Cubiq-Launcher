@@ -180,6 +180,7 @@ import androidx.compose.material3.DropdownMenu
 
 
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MenuDefaults
 
 
 
@@ -3065,66 +3066,20 @@ private fun TopAccountHeader(
 
 
 
-                    val skinFile = account?.getSkinFile()
-
-
-
-                    if (account != null && skinFile != null && skinFile.exists()) {
-
-
-
+                    if (account != null) {
                         PlayerFace(
-
-
-
                             account = account,
-
-
-
                             avatarSize = 34.dp
-
-
-
                         )
-
-
-
                     } else {
-
-
-
                         Image(
-
-
-
                             painter = painterResource(R.drawable.ic_mc_pc_profile),
-
-
-
                             contentDescription = "Steve Face",
-
-
-
                             modifier = Modifier
-
-
-
                                 .size(34.dp)
-
-
-
                                 .clip(RoundedCornerShape(4.dp)),
-
-
-
                             contentScale = ContentScale.Fit
-
-
-
                         )
-
-
-
                     }
 
 

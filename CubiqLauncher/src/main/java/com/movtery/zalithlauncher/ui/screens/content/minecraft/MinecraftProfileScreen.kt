@@ -11,6 +11,8 @@
 package com.movtery.zalithlauncher.ui.screens.content.minecraft
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.Surface
 
 
 
@@ -7369,7 +7371,219 @@ private fun KeyboardMouseSettingsTab(
             )
         }
 
+        // Active Remap Dialog State
+        var activeRemapAction by remember { mutableStateOf<String?>(null) }
+        var activeRemapDefaultLabel by remember { mutableStateOf("") }
+        var activeRemapIsMouse by remember { mutableStateOf(false) }
+        var remapRefreshKey by remember { mutableIntStateOf(0) }
+
+        if (activeRemapAction != null) {
+            val action = activeRemapAction!!
+            var selectedLabel by remember { mutableStateOf(com.movtery.zalithlauncher.ui.control.input.KeyboardRemapManager.getBindingLabel(action, activeRemapDefaultLabel)) }
+            var isListening by remember { mutableStateOf(false) }
+
+            var selectedRemapTab by remember { mutableIntStateOf(if (activeRemapIsMouse) 2 else 0) }
+
+            androidx.compose.ui.window.Dialog(
+                onDismissRequest = { activeRemapAction = null }
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(0.95f)
+                        .wrapContentHeight(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFF1B1C22),
+                    tonalElevation = 6.dp,
+                    border = BorderStroke(1.dp, Color(0xFF333540))
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(18.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Title & Current Badge
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = "Remap Key",
+                                    color = Color.Gray,
+                                    fontSize = 11.sp,
+                                    fontFamily = MinecraftFontFamily
+                                )
+                                Text(
+                                    text = action,
+                                    color = Color.White,
+                                    fontFamily = MinecraftFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFF1C3A24))
+                                    .border(BorderStroke(1.dp, Color(0xFF55FF55)), RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                            ) {
+                                Text(
+                                    text = selectedLabel,
+                                    color = Color(0xFF55FF55),
+                                    fontFamily = MinecraftFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+
+                        // AUTO DETECT BUTTON
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isListening) Color(0xFF2E7D32) else Color(0xFF262730))
+                                .border(
+                                    BorderStroke(1.5.dp, if (isListening) Color(0xFF55FF55) else Color(0xFF404250)),
+                                    RoundedCornerShape(6.dp)
+                                )
+                                .clickable { isListening = !isListening }
+                                .padding(vertical = 12.dp, horizontal = 12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (isListening) "⚡ LISTENING... Press Any Keyboard Key or Mouse Button" else "🔍 AUTO DETECT (Hardware Key / Mouse)",
+                                color = if (isListening) Color.White else Color(0xFF55FF55),
+                                fontFamily = MinecraftFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 11.5.sp
+                            )
+                        }
+
+                        // Tabs: Keyboard / Functions / Mouse
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            listOf("Keyboard (A-Z)", "Numbers & F-Keys", "Mouse & Actions").forEachIndexed { idx, title ->
+                                val isChosen = selectedRemapTab == idx
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(if (isChosen) Color(0xFF2E7D32) else Color(0xFF24252E))
+                                        .border(
+                                            BorderStroke(1.dp, if (isChosen) Color(0xFF55FF55) else Color(0xFF383A48)),
+                                            RoundedCornerShape(4.dp)
+                                        )
+                                        .clickable { selectedRemapTab = idx }
+                                        .padding(vertical = 7.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = title,
+                                        color = if (isChosen) Color.White else Color.LightGray,
+                                        fontFamily = MinecraftFontFamily,
+                                        fontSize = 10.sp,
+                                        fontWeight = if (isChosen) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                            }
+                        }
+
+                        // Key Tiles Grid for Chosen Tab
+                        val keyList = when (selectedRemapTab) {
+                            0 -> listOf(
+                                "Key W", "Key A", "Key S", "Key D", "Space", "Left Shift", "Left Control", "Left Alt",
+                                "Key E", "Key Q", "Key F", "Key R", "Key C", "Key T", "Tab", "Escape", "Enter", "Backspace",
+                                "Key Z", "Key X", "Key V", "Key B", "Key G", "Key H", "Key J", "Key K", "Key L", "Key M",
+                                "Key I", "Key O", "Key P", "Key U", "Key Y", "Key N"
+                            )
+                            1 -> listOf(
+                                "Key 1", "Key 2", "Key 3", "Key 4", "Key 5", "Key 6", "Key 7", "Key 8", "Key 9", "Key 0",
+                                "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"
+                            )
+                            else -> listOf(
+                                "Mouse Left", "Mouse Right", "Mouse Middle", "Mouse 4", "Mouse 5",
+                                "Scroll Up", "Scroll Down", "Up Arrow", "Down Arrow", "Left Arrow", "Right Arrow"
+                            )
+                        }
+
+                        androidx.compose.foundation.layout.FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            keyList.forEach { k ->
+                                val isSelected = selectedLabel == k
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(if (isSelected) Color(0xFF2E7D32) else Color(0xFF282A34))
+                                        .border(
+                                            BorderStroke(1.dp, if (isSelected) Color(0xFF55FF55) else Color(0xFF3D4050)),
+                                            RoundedCornerShape(4.dp)
+                                        )
+                                        .clickable {
+                                            selectedLabel = k
+                                            isListening = false
+                                        }
+                                        .padding(horizontal = 9.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = k,
+                                        color = if (isSelected) Color(0xFF55FF55) else Color.White,
+                                        fontFamily = MinecraftFontFamily,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        // Bottom Non-Overlapping Action Buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            MinecraftButton(
+                                onClick = { activeRemapAction = null },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(38.dp),
+                                style = MinecraftButtonStyle.STONE
+                            ) {
+                                Text("CANCEL", fontFamily = MinecraftFontFamily, fontSize = 11.5.sp, color = Color.White)
+                            }
+                            MinecraftButton(
+                                onClick = {
+                                    com.movtery.zalithlauncher.ui.control.input.KeyboardRemapManager.saveBinding(action, 0, selectedLabel, context)
+                                    Toast.makeText(context, "$action remapped to $selectedLabel", Toast.LENGTH_SHORT).show()
+                                    remapRefreshKey++
+                                    activeRemapAction = null
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(38.dp),
+                                style = MinecraftButtonStyle.GREEN
+                            ) {
+                                Text("SAVE BINDING", fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = Color.White)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         mouseBinds.forEach { (action, defKey) ->
+            val currentBound = remember(remapRefreshKey) {
+                com.movtery.zalithlauncher.ui.control.input.KeyboardRemapManager.getBindingLabel(action, defKey)
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -7382,11 +7596,13 @@ private fun KeyboardMouseSettingsTab(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = action, color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                    Text(text = defKey, color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                    Text(text = currentBound, color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
                 }
                 MinecraftButton(
                     onClick = {
-                        Toast.makeText(context, "$action bound to $defKey", Toast.LENGTH_SHORT).show()
+                        activeRemapAction = action
+                        activeRemapDefaultLabel = defKey
+                        activeRemapIsMouse = true
                     },
                     style = MinecraftButtonStyle.STONE,
                     text = "REMAP",
@@ -7425,6 +7641,9 @@ private fun KeyboardMouseSettingsTab(
         }
 
         keyBinds.forEach { (action, defKey) ->
+            val currentBound = remember(remapRefreshKey) {
+                com.movtery.zalithlauncher.ui.control.input.KeyboardRemapManager.getBindingLabel(action, defKey)
+            }
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -7437,11 +7656,13 @@ private fun KeyboardMouseSettingsTab(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = action, color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                    Text(text = defKey, color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                    Text(text = currentBound, color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
                 }
                 MinecraftButton(
                     onClick = {
-                        Toast.makeText(context, "$action bound to $defKey", Toast.LENGTH_SHORT).show()
+                        activeRemapAction = action
+                        activeRemapDefaultLabel = defKey
+                        activeRemapIsMouse = false
                     },
                     style = MinecraftButtonStyle.STONE,
                     text = "REMAP",
@@ -7520,13 +7741,64 @@ private fun ScreenRecordingSettingsTab(
             )
         }
 
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val memInfo = remember {
+            val actMan = context.getSystemService(android.content.Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+            val info = android.app.ActivityManager.MemoryInfo()
+            actMan?.getMemoryInfo(info)
+            info
+        }
+        val totalRamGb = remember(memInfo) { (memInfo.totalMem / (1024L * 1024L * 1024L)).coerceAtLeast(1L).toInt() }
+        val isLowEnd = totalRamGb < 4
+        val isMidRange = totalRamGb in 4..6
+        val isHighEnd = totalRamGb > 6
+
+        val availableResolutions = remember(isLowEnd, isMidRange, isHighEnd) {
+            when {
+                isLowEnd -> listOf("720p" to "720p HD")
+                isMidRange -> listOf("720p" to "720p HD", "1080p" to "1080p FHD")
+                else -> listOf("720p" to "720p HD", "1080p" to "1080p FHD", "native" to "Native Screen")
+            }
+        }
+
+        val availableFps = remember(isLowEnd, isMidRange, isHighEnd) {
+            val display = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                runCatching { context.display }.getOrNull()
+            } else null
+            val refreshRate = display?.refreshRate ?: 60f
+            val list = mutableListOf(30 to "30 FPS")
+            if (!isLowEnd || totalRamGb >= 3) list.add(60 to "60 FPS")
+            if (isHighEnd && refreshRate >= 85f) list.add(90 to "90 FPS")
+            if (isHighEnd && refreshRate >= 115f) list.add(120 to "120 FPS")
+            list
+        }
+
+        val maxBitrate = if (isLowEnd) 12f else if (isMidRange) 20f else 35f
+
+        // Device Capability Badge
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(3.dp))
+                .background(Color(0xFF1B231C))
+                .border(BorderStroke(1.dp, Color(0xFF2C4A2C)), RoundedCornerShape(3.dp))
+                .padding(horizontal = 10.dp, vertical = 7.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "⚡ Hardware Profile: ${totalRamGb}GB RAM (${if (isLowEnd) "Safe Low-End" else if (isMidRange) "Balanced Mid-Range" else "High-End Unlocked"}), max ${availableResolutions.last().second} @ ${availableFps.last().second}",
+                color = Color(0xFF77FF77),
+                fontFamily = MinecraftFontFamily,
+                fontSize = 10.5.sp
+            )
+        }
+
         // Video Resolution Selector
         Column {
             Text("Video Resolution", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(6.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val resolutions = listOf("720p" to "720p HD", "1080p" to "1080p FHD", "native" to "Native Screen")
-                resolutions.forEach { (resKey, label) ->
+                availableResolutions.forEach { (resKey, label) ->
                     val isSel = recordResolution == resKey
                     Box(
                         modifier = Modifier
@@ -7549,8 +7821,7 @@ private fun ScreenRecordingSettingsTab(
             Text("Recording Framerate", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(6.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val fpsList = listOf(30 to "30 FPS", 60 to "60 FPS", 90 to "90 FPS", 120 to "120 FPS")
-                fpsList.forEach { (fpsVal, label) ->
+                availableFps.forEach { (fpsVal, label) ->
                     val isSel = recordFps == fpsVal
                     Box(
                         modifier = Modifier
@@ -7578,9 +7849,9 @@ private fun ScreenRecordingSettingsTab(
                 Text("${recordBitrate} Mbps", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
             }
             Slider(
-                value = recordBitrate.toFloat(),
+                value = recordBitrate.toFloat().coerceIn(2f, maxBitrate),
                 onValueChange = { onRecordBitrateChange(it.toInt()) },
-                valueRange = 2f..30f,
+                valueRange = 2f..maxBitrate,
                 colors = SliderDefaults.colors(
                     thumbColor = Color(0xFF55FF55),
                     activeTrackColor = Color(0xFF3C8527),

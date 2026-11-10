@@ -75,6 +75,10 @@ public class ControlLayout extends FrameLayout {
 
 	public void loadLayout(String jsonPath) throws IOException, JsonSyntaxException {
 		Point size = new Point(getWidth(), getHeight());
+		if (size.x <= 0 || size.y <= 0) {
+			android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+			size = new Point(Math.max(dm.widthPixels, dm.heightPixels), Math.min(dm.widthPixels, dm.heightPixels));
+		}
         try {
             CustomControls layout = LayoutConverter.loadAndConvertIfNecessary(size, jsonPath);
             loadLayout(layout);

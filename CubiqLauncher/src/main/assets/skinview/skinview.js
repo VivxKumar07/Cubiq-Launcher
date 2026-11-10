@@ -290,22 +290,78 @@ window.addEventListener('resize', resize);
 setTimeout(resize, 100);
 setTimeout(resize, 500);
 
-function loadSkin(skinUrl, model = "auto-detect") {
-    const p = skinViewer.loadSkin(skinUrl, { model: model });
-    if (p && typeof p.then === 'function') {
-        p.then(() => {
-            if (skinViewer.playerObject) {
-                skinViewer.playerObject.traverse((obj) => {
-                    if (obj.isMesh && obj.material) {
-                        obj.material.depthWrite = true;
-                        obj.material.alphaTest = 0.1;
-                        obj.material.transparent = true;
-                        obj.material.needsUpdate = true;
-                    }
-                });
-            }
-        }).catch(err => console.warn('Skin load warning:', err));
+function adaptSkinModel(image, targetModel) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(image, 0, 0);
+
+    const imgData = ctx.getImageData(0, 0, 64, 64);
+    const data = imgData.data;
+    const isSkinSlim = data[(20 * 64 + 54) * 4 + 3] === 0;
+
+    if (targetModel === "slim" && !isSkinSlim) {
+        // Convert Classic 4px to Slim 3px
+        ctx.drawImage(image, 48, 16, 3, 4, 47, 16, 3, 4);
+        ctx.drawImage(image, 48, 32, 3, 4, 47, 32, 3, 4);
+        ctx.drawImage(image, 40, 48, 3, 4, 39, 48, 3, 4);
+        ctx.drawImage(image, 56, 48, 3, 4, 55, 48, 3, 4);
+        ctx.clearRect(54, 20, 2, 12);
+        return canvas;
+    } else if (targetModel === "default" && isSkinSlim) {
+        // Convert Slim 3px to Classic 4px
+        ctx.drawImage(image, 46, 16, 1, 4, 47, 16, 1, 4);
+        ctx.drawImage(image, 47, 16, 3, 4, 48, 16, 3, 4);
+        ctx.drawImage(image, 50, 16, 1, 4, 51, 16, 1, 4);
+        ctx.drawImage(image, 46, 20, 1, 12, 47, 20, 1, 12);
+        ctx.drawImage(image, 47, 20, 3, 12, 48, 20, 3, 12);
+        ctx.drawImage(image, 50, 20, 4, 12, 52, 20, 4, 12);
+        ctx.drawImage(image, 38, 48, 1, 4, 39, 48, 1, 4);
+        ctx.drawImage(image, 39, 48, 3, 4, 40, 48, 3, 4);
+        ctx.drawImage(image, 42, 48, 1, 4, 43, 48, 1, 4);
+        ctx.drawImage(image, 38, 52, 1, 12, 39, 52, 1, 12);
+        ctx.drawImage(image, 39, 52, 3, 12, 40, 52, 3, 12);
+        ctx.drawImage(image, 42, 52, 4, 12, 44, 52, 4, 12);
+        const p4 = ctx.getImageData(53, 20, 1, 1);
+        ctx.putImageData(p4, 54, 20);
+        return canvas;
     }
+    return canvas;
+}
+
+function loadSkin(skinUrl, model = "auto-detect") {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+        try {
+            const adapted = adaptSkinModel(img, model);
+            const p = skinViewer.loadSkin(adapted, { model: model });
+            if (p && typeof p.then === 'function') {
+                p.then(() => {
+                    if (skinViewer.playerObject) {
+                        skinViewer.playerObject.traverse((obj) => {
+                            if (obj.isMesh && obj.material) {
+                                obj.material.depthWrite = true;
+                                obj.material.alphaTest = 0.5;
+                                obj.material.transparent = true;
+                                obj.material.polygonOffset = true;
+                                obj.material.polygonOffsetFactor = 1;
+                                obj.material.polygonOffsetUnits = 1;
+                                obj.material.needsUpdate = true;
+                            }
+                        });
+                    }
+                }).catch(err => console.warn('Skin load warning:', err));
+            }
+        } catch (e) {
+            skinViewer.loadSkin(skinUrl, { model: model });
+        }
+    };
+    img.onerror = () => {
+        skinViewer.loadSkin(skinUrl, { model: model });
+    };
+    img.src = skinUrl;
 }
 
 function loadCape(capeUrl) {

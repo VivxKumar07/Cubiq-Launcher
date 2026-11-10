@@ -95,6 +95,23 @@ import dalvik.annotation.optimization.CriticalNative;
 @Keep
 
 public class CallbackBridge {
+    public interface NativeInputListener {
+        void onKey(int glfwKey, char keyChar, int scancode, int modifiers, boolean status);
+        void onMouseButton(int glfwButton, boolean status);
+        void onScroll(double xoffset, double yoffset);
+        void onCursor(float x, float y);
+    }
+
+    private static volatile NativeInputListener sNativeInputListener = null;
+
+    public static void setNativeInputListener(NativeInputListener listener) {
+        sNativeInputListener = listener;
+    }
+
+    public static NativeInputListener getNativeInputListener() {
+        return sNativeInputListener;
+    }
+
 
     private static final int GLFW_IBEAM_CURSOR = 0x36002;
 
@@ -395,6 +412,11 @@ public class CallbackBridge {
 
 
     public static void sendCursorPos(float x, float y) {
+        if (sNativeInputListener != null) {
+            sNativeInputListener.onCursor(x, y);
+            return;
+        }
+
 
         mouseX = x;
 
@@ -415,6 +437,11 @@ public class CallbackBridge {
 
 
     public static void sendCursorDelta(float x, float y) {
+        if (sNativeInputListener != null) {
+            sNativeInputListener.onCursor(mouseX + x, mouseY + y);
+            return;
+        }
+
 
         deltaX = x;
 
@@ -435,11 +462,19 @@ public class CallbackBridge {
 
 
     public static void sendKeycode(int keycode, char keychar, int scancode, int modifiers, boolean isDown) {
+        if (sNativeInputListener != null) {
+            sNativeInputListener.onKey(keycode, keychar, scancode, modifiers, isDown);
+            return;
+        }
+
 
         if (com.movtery.zalithlauncher.ui.control.input.TouchCharInput.isActive()) {
-
             modifiers &= ~LwjglGlfwKeycode.GLFW_MOD_CONTROL;
-
+            modifiers &= ~LwjglGlfwKeycode.GLFW_MOD_ALT;
+            // Bug 12 & 14b: While keyboard is active, suppress sending Ctrl down to prevent cutting off text / select-all
+            if ((keycode == LwjglGlfwKeycode.GLFW_KEY_LEFT_CONTROL || keycode == LwjglGlfwKeycode.GLFW_KEY_RIGHT_CONTROL) && isDown) {
+                return;
+            }
         }
 
         if (keycode > LwjglGlfwKeycode.GLFW_KEY_UNKNOWN && keycode <= LwjglGlfwKeycode.GLFW_KEY_LAST) {
@@ -604,6 +639,10 @@ public class CallbackBridge {
 
         // if (isGrabbing()) DEBUG_STRING.append("MouseGrabStrace: " + android.util.Log.getStackTraceString(new Throwable()) + "\n");
 
+        if (sNativeInputListener != null) {
+            sNativeInputListener.onMouseButton(button, isDown);
+            return;
+        }
         nativeSendMouseButton(button, isDown ? 1 : 0, modifiers);
 
         // SDL 输入双路（按键状态累积后一次性上报，SDL 需要 MotionEvent.getButtonState()）
@@ -679,6 +718,11 @@ public class CallbackBridge {
     
 
     public static void sendScroll(double xoffset, double yoffset) {
+        if (sNativeInputListener != null) {
+            sNativeInputListener.onScroll(xoffset, yoffset);
+            return;
+        }
+
 
         nativeSendScroll(xoffset, yoffset);
 

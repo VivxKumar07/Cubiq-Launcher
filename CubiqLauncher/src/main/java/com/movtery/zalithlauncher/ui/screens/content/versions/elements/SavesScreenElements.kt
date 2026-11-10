@@ -34,6 +34,8 @@ sealed interface SavesOperation {
     data class BackupSave(val saveData: SaveData) : SavesOperation
     /** 删除存档对话框 */
     data class DeleteSave(val saveData: SaveData) : SavesOperation
+    /** 切换世界管理员/命令权限 (Bug 5) */
+    data class ToggleCommands(val saveData: SaveData) : SavesOperation
 }
 
 /**

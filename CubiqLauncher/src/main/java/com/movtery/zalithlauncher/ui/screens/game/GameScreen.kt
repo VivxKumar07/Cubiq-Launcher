@@ -60,6 +60,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 
 import androidx.compose.foundation.Image
 
@@ -68,6 +71,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 
 import androidx.compose.foundation.layout.Box
+
+import androidx.compose.ui.draw.alpha
 
 import androidx.compose.ui.viewinterop.AndroidView
 
@@ -263,6 +268,8 @@ import com.movtery.zalithlauncher.ui.screens.game.elements.DraggableGameBall
 import com.movtery.zalithlauncher.ui.screens.game.elements.ForceCloseOperation
 
 import com.movtery.zalithlauncher.ui.screens.game.elements.GameMenuSubscreen
+import com.movtery.zalithlauncher.ui.screens.game.elements.LegacyControlEditorBar
+import com.movtery.zalithlauncher.ui.screens.game.elements.LegacyInGameDrawer
 
 import com.movtery.zalithlauncher.ui.screens.game.elements.GamepadModePromptDialog
 
@@ -1132,11 +1139,28 @@ fun GameScreen(
 
 
 
-    LaunchedEffect(viewModel.isEditingLayout, viewModel.gameMenuState) {
+    val ctrlFile = viewModel.currentControlFile
+    val fileContent = ctrlFile?.let { runCatching { it.readText() }.getOrDefault("") } ?: ""
+    val isMojoLayout = ctrlFile?.let {
+        it.name.contains("mojo", ignoreCase = true) || fileContent.contains(""""version": 9""") || fileContent.contains(""""version":9""")
+    } ?: false
+    val isZl1Layout = ctrlFile?.let {
+        !isMojoLayout && (it.name.contains("zalith_1", ignoreCase = true) || it.name.contains("zl1", ignoreCase = true)
+                || fileContent.contains(""""version": 8""") || fileContent.contains(""""version":8""")
+                || fileContent.contains("mControlDataList"))
+    } ?: false
+    val isLegacyLayout = isMojoLayout || isZl1Layout
+
+    var mojoLayoutInstance by remember { mutableStateOf<git.artdeell.mojo.input.ControlLayout?>(null) }
+    var zl1LayoutInstance by remember { mutableStateOf<net.kdt.pojavlaunch.customcontrols.ControlLayout?>(null) }
+    var isEditingLegacyLayout by remember { mutableStateOf(false) }
+    var showLegacySideMenu by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel.isEditingLayout, viewModel.gameMenuState, isEditingLegacyLayout, showLegacySideMenu) {
 
         //向VMActivity同步状态，编辑控制布局或打开游戏菜单时，不会继续处理按键事件
 
-        val allowKeyHandle = !viewModel.isEditingLayout && viewModel.gameMenuState != MenuState.SHOW
+        val allowKeyHandle = !viewModel.isEditingLayout && !isEditingLegacyLayout && !showLegacySideMenu && viewModel.gameMenuState != MenuState.SHOW
 
         eventViewModel.sendEvent(EventViewModel.Event.Game.KeyHandle(allowKeyHandle))
 
@@ -1163,11 +1187,18 @@ fun GameScreen(
         onChange = { viewModel.forceCloseState = it },
 
         onForceClose = {
-
             Terracotta.setWaiting(false)
-
-            ZLNativeInvoker.jvmExit(0, false)
-
+            try {
+                CallbackBridge.sendKeyPress(LwjglGlfwKeycode.GLFW_KEY_ESCAPE.toInt(), 0, true)
+                CallbackBridge.sendKeyPress(LwjglGlfwKeycode.GLFW_KEY_ESCAPE.toInt(), 0, false)
+                // Bug 19: Trigger GLFW window should close so Minecraft & Sodium flush settings
+                CallbackBridge.nativeSetWindowAttrib(0x00020001, 1)
+            } catch (ignored: Throwable) {}
+            viewModel.viewModelScope.launch {
+                // Bug 19: Allow Minecraft & Sodium 1200ms to flush configs & save data to disk
+                kotlinx.coroutines.delay(1200)
+                ZLNativeInvoker.jvmExit(0, false)
+            }
         },
 
         text = stringResource(R.string.game_menu_option_force_close_text)
@@ -1278,128 +1309,107 @@ fun GameScreen(
 
 
 
-            val ctrlFile = viewModel.currentControlFile
-            val fileContent = ctrlFile?.let { runCatching { it.readText() }.getOrDefault("") } ?: ""
-            val isMojoLayout = ctrlFile?.let {
-                it.name.contains("mojo", ignoreCase = true) || fileContent.contains(""""version": 9""") || fileContent.contains(""""version":9""")
-            } ?: false
-
-            val isZl1Layout = ctrlFile?.let {
-                !isMojoLayout && (it.name.contains("zalith_1", ignoreCase = true) || it.name.contains("zl1", ignoreCase = true)
-                        || fileContent.contains(""""version": 8""") || fileContent.contains(""""version":8""")
-                        || fileContent.contains("mControlDataList"))
-            } ?: false
-
-            if (isMojoLayout) {
-                AndroidView(
+            val mouseControlContent = @Composable {
+                //虚拟鼠标控制层
+                MouseControlLayout(
+                    isTouchProxyEnabled = isTouchProxyEnabled,
                     modifier = Modifier.fillMaxSize(),
-                    factory = { ctx ->
-                        git.artdeell.mojo.Tools.init(ctx)
-                        git.artdeell.mojo.input.ControlLayout(ctx).apply {
-                            setModifiable(false)
-                            viewModel.currentControlFile?.absolutePath?.let { path ->
-                                post { runCatching { loadLayout(path) } }
-                            }
-                        }
+                    cursorMode = cursorMode,
+                    screenSize = screenSize,
+                    onInputAreaRectUpdated = onInputAreaRectUpdated,
+                    textInputMode = textInputMode,
+                    isMoveOnlyPointer = { viewModel.moveOnlyPointers.contains(it) },
+                    onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
+                    onReleasePointer = {
+                        viewModel.occupiedPointers.remove(it)
+                        viewModel.moveOnlyPointers.remove(it)
                     },
-                    update = { ctrl ->
-                        viewModel.currentControlFile?.absolutePath?.let { path ->
-                            if (ctrl.mLayoutFileName != path) {
-                                ctrl.post { runCatching { ctrl.loadLayout(path) } }
-                            }
-                        }
-                    }
-                )
-            } else if (isZl1Layout) {
-                AndroidView(
-                    modifier = Modifier.fillMaxSize(),
-                    factory = { ctx ->
-                        (ctx as? android.app.Activity)?.let { net.kdt.pojavlaunch.Tools.updateWindowSize(it) }
-                        net.kdt.pojavlaunch.customcontrols.ControlLayout(ctx).apply {
-                            setModifiable(false)
-                            viewModel.currentControlFile?.absolutePath?.let { path ->
-                                post { runCatching { loadLayout(path) } }
-                            }
-                        }
-                    },
-                    update = { ctrl ->
-                        viewModel.currentControlFile?.absolutePath?.let { path ->
-                            if (ctrl.mLayoutFileName == null || !path.contains(ctrl.mLayoutFileName)) {
-                                ctrl.post { runCatching { ctrl.loadLayout(path) } }
-                            }
-                        }
-                    }
+                    onMouseMoved = { viewModel.switchControlLayer(HideLayerWhen.WhenMouse) },
+                    onTouch = { viewModel.switchControlLayer(HideLayerWhen.None) },
+                    gamepadViewModel = gamepadViewModel.takeIf { AllSettings.gamepadControl.state }
                 )
             }
 
+            if (isLegacyLayout) {
+                // 1. 触摸与鼠标控制层（置于底层，负责处理空屏拖动转动视角、点击单人游戏/设置菜单）
+                if (!viewModel.isEditingLayout) {
+                    mouseControlContent()
+                }
 
+                // 2. 传统控件层（Mojo / ZL1）
+                val controlsAlpha = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f)
+                val isControlsVisible = viewModel.controlLayerHideState != HideLayerWhen.WhenMouse
 
-            //控制布局层 (Cubiq Native Controls)
-
-            ControlBoxLayout(
-
-                modifier = Modifier.fillMaxSize(),
-
-                observedLayout = if (isMojoLayout || isZl1Layout) null else viewModel.observableLayout,
-
-                eventHandler = viewModel.eventHandler,
-
-                checkOccupiedPointers = { viewModel.occupiedPointers.contains(it) },
-
-                opacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f),
-
-                buttonScale = (AllSettings.controlsButtonScale.state.toFloat() / 100f).coerceIn(0.5f, 2.0f),
-
-                markPointerAsMoveOnly = { viewModel.moveOnlyPointers.add(it) },
-
-                onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
-
-                onReleasePointer = { viewModel.occupiedPointers.remove(it) },
-
-                isCursorGrabbing = isGrabbing,
-
-                hideLayerWhen = viewModel.controlLayerHideState,
-
-                isDark = isLauncherInDarkTheme()
-
-            ) {
-
-                //虚拟鼠标控制层
-
-                MouseControlLayout(
-
-                    isTouchProxyEnabled = isTouchProxyEnabled,
-
+                if (isControlsVisible) {
+                    val inEditMode = isEditingLegacyLayout || viewModel.isEditingLayout
+                    if (isMojoLayout) {
+                        AndroidView(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .alpha(if (inEditMode) 1f else controlsAlpha),
+                            factory = { ctx ->
+                                git.artdeell.mojo.Tools.init(ctx)
+                                git.artdeell.mojo.input.ControlLayout(ctx).apply {
+                                    setModifiable(inEditMode)
+                                    setMenuListener { showLegacySideMenu = true }
+                                    background = null
+                                    viewModel.currentControlFile?.absolutePath?.let { path ->
+                                        post { runCatching { loadLayout(path) } }
+                                    }
+                                    mojoLayoutInstance = this
+                                }
+                            },
+                            update = { ctrl ->
+                                mojoLayoutInstance = ctrl
+                                if (ctrl.getModifiable() != inEditMode) {
+                                    ctrl.setModifiable(inEditMode)
+                                }
+                            }
+                        )
+                    } else if (isZl1Layout) {
+                        AndroidView(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .alpha(if (inEditMode) 1f else controlsAlpha),
+                            factory = { ctx ->
+                                (ctx as? android.app.Activity)?.let { net.kdt.pojavlaunch.Tools.updateWindowSize(it) }
+                                net.kdt.pojavlaunch.customcontrols.ControlLayout(ctx).apply {
+                                    setModifiable(inEditMode)
+                                    setMenuListener { showLegacySideMenu = true }
+                                    background = null
+                                    viewModel.currentControlFile?.absolutePath?.let { path ->
+                                        post { runCatching { loadLayout(path) } }
+                                    }
+                                    zl1LayoutInstance = this
+                                }
+                            },
+                            update = { ctrl ->
+                                zl1LayoutInstance = ctrl
+                                if (ctrl.getModifiable() != inEditMode) {
+                                    ctrl.setModifiable(inEditMode)
+                                }
+                            }
+                        )
+                    }
+                }
+            } else {
+                //控制布局层 (Cubiq Native Controls)
+                ControlBoxLayout(
                     modifier = Modifier.fillMaxSize(),
-
-                    cursorMode = cursorMode,
-
-                    screenSize = screenSize,
-
-                    onInputAreaRectUpdated = onInputAreaRectUpdated,
-
-                    textInputMode = textInputMode,
-
-                    isMoveOnlyPointer = { viewModel.moveOnlyPointers.contains(it) },
-
+                    observedLayout = viewModel.observableLayout,
+                    eventHandler = viewModel.eventHandler,
+                    checkOccupiedPointers = { viewModel.occupiedPointers.contains(it) },
+                    opacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f),
+                    buttonScale = (AllSettings.controlsButtonScale.state.toFloat() / 100f).coerceIn(0.5f, 2.0f),
+                    markPointerAsMoveOnly = { viewModel.moveOnlyPointers.add(it) },
                     onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
-
-                    onReleasePointer = {
-
-                        viewModel.occupiedPointers.remove(it)
-
-                        viewModel.moveOnlyPointers.remove(it)
-
-                    },
-
-                    onMouseMoved = { viewModel.switchControlLayer(HideLayerWhen.WhenMouse) },
-
-                    onTouch = { viewModel.switchControlLayer(HideLayerWhen.None) },
-
-                    gamepadViewModel = gamepadViewModel.takeIf { AllSettings.gamepadControl.state }
-
-                )
-
+                    onReleasePointer = { viewModel.occupiedPointers.remove(it) },
+                    isCursorGrabbing = isGrabbing,
+                    hideLayerWhen = viewModel.controlLayerHideState,
+                    isDark = isLauncherInDarkTheme()
+                ) {
+                    mouseControlContent()
+                }
             }
 
 
@@ -1577,46 +1587,68 @@ fun GameScreen(
 
 
         if (viewModel.isEditingLayout) {
-
-            viewModel.currentControlFile?.let {
-
-                ControlEditor(
-
-                    viewModel = editorViewModel,
-
-                    targetFile = it,
-
-                    exit = {
-
-                        viewModel.exitControlEditor()
-
-                    },
-
-                    menuExit = {
-
-                        editorViewModel.showExitEditorDialog(
-
-                            context = context,
-
-                            targetFile = it,
-
-                            onExit = {
-
-                                viewModel.exitControlEditor()
-
-                            }
-
-                        )
-
-                    }
-
-                )
-
+            if (!isLegacyLayout) {
+                viewModel.currentControlFile?.let {
+                    ControlEditor(
+                        viewModel = editorViewModel,
+                        targetFile = it,
+                        exit = {
+                            viewModel.exitControlEditor()
+                        },
+                        menuExit = {
+                            editorViewModel.showExitEditorDialog(
+                                context = context,
+                                targetFile = it,
+                                onExit = {
+                                    viewModel.exitControlEditor()
+                                }
+                            )
+                        }
+                    )
+                }
             }
-
+        } else if (isEditingLegacyLayout) {
+            LegacyControlEditorBar(
+                isMojo = isMojoLayout,
+                onAddButton = {
+                    if (isMojoLayout) mojoLayoutInstance?.addControlButton(git.artdeell.mojo.input.ControlData("BTN"))
+                    else zl1LayoutInstance?.addControlButton(net.kdt.pojavlaunch.customcontrols.ControlData("BTN"))
+                },
+                onAddDrawer = {
+                    if (isMojoLayout) mojoLayoutInstance?.addDrawer(git.artdeell.mojo.input.ControlDrawerData())
+                    else zl1LayoutInstance?.addDrawer(net.kdt.pojavlaunch.customcontrols.ControlDrawerData())
+                },
+                onAddJoystick = {
+                    if (isMojoLayout) mojoLayoutInstance?.addJoystickButton(git.artdeell.mojo.input.ControlJoystickData())
+                    else zl1LayoutInstance?.addJoystickButton(net.kdt.pojavlaunch.customcontrols.ControlJoystickData())
+                },
+                onLoadLayout = {
+                    if (isMojoLayout) mojoLayoutInstance?.openLoadDialog()
+                    else zl1LayoutInstance?.openLoadDialog()
+                },
+                onSave = {
+                    viewModel.currentControlFile?.absolutePath?.let { path ->
+                        if (isMojoLayout) mojoLayoutInstance?.saveLayout(path)
+                        else zl1LayoutInstance?.saveLayout(path)
+                        android.widget.Toast.makeText(context, "Layout saved!", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onExit = {
+                    isEditingLegacyLayout = false
+                    mojoLayoutInstance?.setModifiable(false)
+                    zl1LayoutInstance?.setModifiable(false)
+                    viewModel.currentControlFile?.absolutePath?.let { path ->
+                        if (isMojoLayout) mojoLayoutInstance?.saveLayout(path)
+                        else zl1LayoutInstance?.saveLayout(path)
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 16.dp)
+            )
         } else {
 
-            if (AllSettings.showMenuBall.state) {
+            if (!isLegacyLayout && AllSettings.showMenuBall.state) {
 
                 //在这里根据设置决定是否启用帧率捕获协程
 
@@ -1691,6 +1723,56 @@ fun GameScreen(
                 )
 
             }
+
+            if (isLegacyLayout && !isEditingLegacyLayout) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .clip(RoundedCornerShape(topEnd = 6.dp, bottomEnd = 6.dp))
+                        .background(Color(0x99202024))
+                        .border(1.dp, Color(0x66FFFFFF), RoundedCornerShape(topEnd = 6.dp, bottomEnd = 6.dp))
+                        .clickable { showLegacySideMenu = true }
+                        .padding(horizontal = 4.dp, vertical = 12.dp)
+                ) {
+                    Text(
+                        text = "MENU",
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 10.sp,
+                        color = Color.White
+                    )
+                }
+            }
+
+            if (AllSettings.hudScreenCaptureTools.state && !viewModel.isEditingLayout && !isEditingLegacyLayout && viewModel.controlLayerHideState != HideLayerWhen.WhenMouse) {
+                com.movtery.zalithlauncher.ui.screens.game.elements.InGameCaptureHud(
+                    modifier = Modifier.align(Alignment.TopStart),
+                    alpha = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0.25f, 0.9f)
+                )
+            }
+
+            LegacyInGameDrawer(
+                visible = showLegacySideMenu,
+                isMojo = isMojoLayout,
+                onDismiss = { showLegacySideMenu = false },
+                onStartEditControls = {
+                    showLegacySideMenu = false
+                    isEditingLegacyLayout = true
+                    mojoLayoutInstance?.setModifiable(true)
+                    zl1LayoutInstance?.setModifiable(true)
+                },
+                onSendKeycode = {
+                    showLegacySideMenu = false
+                    viewModel.sendKeycodeState = SendKeycodeState.ShowDialog
+                },
+                onViewLogs = {
+                    showLegacySideMenu = false
+                    onLogStateChange(logState.next())
+                },
+                onForceClose = {
+                    showLegacySideMenu = false
+                    viewModel.forceCloseState = ForceCloseOperation.Show
+                }
+            )
 
         }
 
@@ -1900,7 +1982,17 @@ fun GameScreen(
 
                     is EventViewModel.Event.Game.OnBack -> {
 
-                        if (viewModel.isEditingLayout) {
+                        if (isEditingLegacyLayout) {
+
+                            isEditingLegacyLayout = false
+                            mojoLayoutInstance?.setModifiable(false)
+                            zl1LayoutInstance?.setModifiable(false)
+
+                        } else if (showLegacySideMenu) {
+
+                            showLegacySideMenu = false
+
+                        } else if (viewModel.isEditingLayout) {
 
                             //处于控制布局编辑模式
 

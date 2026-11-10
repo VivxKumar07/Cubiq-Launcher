@@ -1392,7 +1392,9 @@ fun ModsManagerScreen(
 
                                 ) {
 
-                                    updaterViewModel.modsUpdateOperation = ModsUpdateOperation.Warning(viewModel.selectedMods)
+                                    val targets = if (viewModel.selectedMods.isNotEmpty()) viewModel.selectedMods else viewModel.allMods
+
+                                    updaterViewModel.modsUpdateOperation = ModsUpdateOperation.Warning(targets)
 
                                 }
 
@@ -2015,6 +2017,14 @@ private fun ModsActionsHeader(
                         text = stringResource(R.string.generic_download)
 
                     )
+
+                    if (hasModLoader) {
+                        IconTextButton(
+                            onClick = onUpdateMods,
+                            painter = painterResource(R.drawable.ic_update),
+                            text = stringResource(R.string.mods_update)
+                        )
+                    }
 
 
 

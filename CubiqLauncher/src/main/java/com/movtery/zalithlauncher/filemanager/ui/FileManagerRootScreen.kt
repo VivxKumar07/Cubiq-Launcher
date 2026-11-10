@@ -27,7 +27,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -297,7 +299,9 @@ private fun InitBox(
     showProgress: Boolean = true
 ) {
     Surface(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        color = fmBackgroundColor(),
+        contentColor = fmOnBackgroundColor()
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -305,10 +309,20 @@ private fun InitBox(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                if (showProgress) CircularProgressIndicator()
-                Text(text = text)
+                if (showProgress) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(36.dp),
+                        strokeWidth = 3.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = fmOnBackgroundColor().copy(alpha = 0.8f)
+                )
             }
         }
     }

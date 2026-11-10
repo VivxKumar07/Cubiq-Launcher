@@ -27,6 +27,7 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
 import android.net.Uri
+import coil3.compose.AsyncImage
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -266,15 +267,68 @@ fun PlayerFace(
     val context = LocalContext.current
     val density = LocalDensity.current
     val refreshWardrobe by AccountsManager.refreshWardrobe.collectAsStateWithLifecycle()
-    val avatarBitmap = remember(account, refreshKey, refreshWardrobe, density) {
-        getSkinAvatarFromAccount(context, account, avatarSize, density).asImageBitmap()
+
+    // Auto-fetch skin for offline accounts with username if not yet on disk
+    LaunchedEffect(account.uniqueUUID, account.username, refreshWardrobe) {
+        val file = account.getSkinFile()
+        if (!file.exists() && account.username.isNotBlank() && account.username != "Player" && account.username != "Steve") {
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                runCatching {
+                    val url = java.net.URL("https://minotar.net/skin/${account.username}")
+                    val conn = url.openConnection() as java.net.HttpURLConnection
+                    conn.connectTimeout = 6000
+                    conn.readTimeout = 6000
+                    conn.instanceFollowRedirects = true
+                    if (conn.responseCode == 200) {
+                        file.parentFile?.mkdirs()
+                        conn.inputStream.use { inStream ->
+                            java.io.FileOutputStream(file).use { outStream ->
+                                inStream.copyTo(outStream)
+                            }
+                        }
+                        AccountsManager.refreshWardrobe()
+                    }
+                }
+            }
+        }
     }
 
-    Image(
-        modifier = modifier.size(avatarSize),
-        bitmap = avatarBitmap,
-        contentDescription = null
-    )
+    val skinExists = remember(account, refreshKey, refreshWardrobe) {
+        account.getSkinFile().exists()
+    }
+
+    if (skinExists) {
+        val avatarBitmap = remember(account, refreshKey, refreshWardrobe, density) {
+            getSkinAvatarFromAccount(context, account, avatarSize, density).asImageBitmap()
+        }
+        Image(
+            modifier = modifier.size(avatarSize),
+            bitmap = avatarBitmap,
+            contentDescription = null
+        )
+    } else {
+        val onlineAvatarUrl = remember(account.username) {
+            if (account.username.isNotBlank() && account.username != "Player" && account.username != "Steve") {
+                "https://minotar.net/avatar/${account.username}/64"
+            } else null
+        }
+        if (onlineAvatarUrl != null) {
+            AsyncImage(
+                model = onlineAvatarUrl,
+                contentDescription = null,
+                modifier = modifier.size(avatarSize)
+            )
+        } else {
+            val defaultBitmap = remember(account, density) {
+                getDefaultAvatar(context, avatarSize, density).asImageBitmap()
+            }
+            Image(
+                modifier = modifier.size(avatarSize),
+                bitmap = defaultBitmap,
+                contentDescription = null
+            )
+        }
+    }
 }
 
 @Composable

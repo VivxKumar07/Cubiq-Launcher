@@ -108,10 +108,16 @@ private suspend fun fetchNodesFromRemote(): List<URI> {
             }
             .toList()
 
-        result
+        if (result.isEmpty()) {
+            listOf(
+                URI.create("tcp://public.easytier.top:11010")
+            )
+        } else {
+            result
+        }
     }.onFailure {
-        Logger.warning(TAG, "Failed to fetch terracotta node list", it)
-    }.getOrDefault(emptyList())
+        Logger.warning(TAG, "Failed to fetch terracotta node list, using fallback relay", it)
+    }.getOrDefault(listOf(URI.create("tcp://public.easytier.top:11010")))
 }
 
 private fun parseNode(
@@ -137,7 +143,10 @@ private fun shouldUseNode(
 ): Boolean {
     if (region.isNullOrBlank()) return true
 
-    //仅限中国大陆地区使用
     val isMainLand = isChinaMainland()
-    return isMainLand && region.equals("CN", ignoreCase = true)
+    if (isMainLand) {
+        return region.equals("CN", ignoreCase = true)
+    }
+    // Bug 1: International users outside China must be able to connect to relay nodes!
+    return true
 }

@@ -214,6 +214,24 @@ class ModpackImporter(
                             }
                         }
                         //整合包不受支持，或格式有误未能匹配
+                        // Bug 17: Check if this was actually a Minecraft world save (.zip / .mcworld containing level.dat)
+                        val levelDat = packDir.walkTopDown().firstOrNull { it.isFile && it.name.equals("level.dat", ignoreCase = true) }
+                        if (levelDat != null) {
+                            val worldRoot = levelDat.parentFile ?: packDir
+                            val savesDir = File(GamePathManager.currentPath.value, "saves")
+                            savesDir.mkdirs()
+                            val worldName = installerFile.nameWithoutExtension.removeSuffix(".zip").removeSuffix(".mcworld").ifBlank { "ImportedWorld" }
+                            var targetFolder = File(savesDir, worldName)
+                            var counter = 1
+                            while (targetFolder.exists()) {
+                                targetFolder = File(savesDir, "${worldName}_$counter")
+                                counter++
+                            }
+                            worldRoot.copyRecursively(targetFolder, overwrite = true)
+                            Logger.info(TAG, "Detected Minecraft world in modpack archive. Auto-imported to saves: ${targetFolder.absolutePath}")
+                            throw PackNotSupportedException(UnsupportedPackReason.WorldArchive)
+                        }
+
                         null
                     } ?: throw PackNotSupportedException(UnsupportedPackReason.UnsupportedFormat)
 

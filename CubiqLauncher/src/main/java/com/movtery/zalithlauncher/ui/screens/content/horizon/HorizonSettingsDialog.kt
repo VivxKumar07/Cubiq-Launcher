@@ -222,6 +222,66 @@ fun HorizonSettingsDialog(
     }
 
     val accountName = AccountsManager.getCurrentAccount()?.username?.takeIf { it.isNotBlank() } ?: "OnePeak"
+    var showAccountDialog by remember { mutableStateOf(false) }
+
+    if (showAccountDialog) {
+        val currentAcc = AccountsManager.getCurrentAccount()
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showAccountDialog = false },
+            title = {
+                Text(
+                    text = "Microsoft / Xbox Account",
+                    color = Color.White,
+                    fontFamily = MinecraftFontFamily,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Current account: ${currentAcc?.username ?: "Offline Player"}",
+                        color = Color(0xFFDDDDDD),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 13.sp
+                    )
+                    Text(
+                        text = "Type: ${if (currentAcc?.accountType == com.movtery.zalithlauncher.game.account.AccountType.MICROSOFT.tag) "Microsoft Account (MSA)" else "Offline / Local"}",
+                        color = Color(0xFFAAAAAA),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 12.sp
+                    )
+                    Text(
+                        text = "Minecraft Rust uses your active Cubiq Launcher account session for authentication and skin loading.",
+                        color = Color(0xFF888899),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 11.sp
+                    )
+                }
+            },
+            confirmButton = {
+                MinecraftButton(
+                    onClick = {
+                        showAccountDialog = false
+                        Toast.makeText(context, "Account verified: ${currentAcc?.username ?: "Steve"}", Toast.LENGTH_SHORT).show()
+                    },
+                    style = MinecraftButtonStyle.GREEN
+                ) {
+                    Text("OK", color = Color.White, fontFamily = MinecraftFontFamily)
+                }
+            },
+            dismissButton = {
+                MinecraftButton(
+                    onClick = {
+                        showAccountDialog = false
+                    },
+                    style = MinecraftButtonStyle.STONE
+                ) {
+                    Text("Close", color = Color.White, fontFamily = MinecraftFontFamily)
+                }
+            },
+            containerColor = Color(0xFF1E2026)
+        )
+    }
 
     Dialog(
         onDismissRequest = {
@@ -231,32 +291,47 @@ fun HorizonSettingsDialog(
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
             dismissOnBackPress = true,
-            dismissOnClickOutside = true
+            dismissOnClickOutside = false
         )
     ) {
+        val dialogWindow = (androidx.compose.ui.platform.LocalView.current.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window
+        androidx.compose.runtime.SideEffect {
+            dialogWindow?.let { win ->
+                win.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.MATCH_PARENT)
+                win.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(0xFF101014.toInt()))
+                win.decorView.setBackgroundColor(0xFF101014.toInt())
+                win.decorView.setPadding(0, 0, 0, 0)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                    val lp = win.attributes
+                    lp.layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                    win.attributes = lp
+                }
+                win.setFlags(
+                    android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                    android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS,
+                    android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                    android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS
+                )
+                win.statusBarColor = 0xFF101014.toInt()
+                win.navigationBarColor = 0xFF101014.toInt()
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xE60A0A0E))
-                .clickable {
-                    saveConfig()
-                    onDismissRequest()
-                },
+                .background(Color(0xFF101014)),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(if (isLandscape) 12.dp else 6.dp)
-                    .clip(RoundedCornerShape(8.dp))
                     .background(Color(0xFF101014))
-                    .border(BorderStroke(1.dp, Color(0xFF26262E)), RoundedCornerShape(8.dp))
-                    .clickable(enabled = false) {}
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // Top App Header: "Horizon Android 0.7.6" and "Offline: <User>"
+                    // Top App Header: "Minecraft Rust Edition" and "Account: <User>"
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -264,13 +339,24 @@ fun HorizonSettingsDialog(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "Horizon Android 0.7.6",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = MinecraftFontFamily
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_rust_logo),
+                                contentDescription = "Rust Logo",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Text(
+                                text = "Minecraft Rust Edition",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontFamily = MinecraftFontFamily
+                            )
+                        }
 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -283,8 +369,8 @@ fun HorizonSettingsDialog(
                                     .padding(horizontal = 10.dp, vertical = 6.dp)
                             ) {
                                 Text(
-                                    text = "Offline: $accountName",
-                                    color = Color(0xFFD4D4DC),
+                                    text = "Account: $accountName",
+                                    color = Color(0xFF55FF55),
                                     fontSize = 11.sp,
                                     fontFamily = MinecraftFontFamily
                                 )
@@ -322,7 +408,7 @@ fun HorizonSettingsDialog(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .background(if (isSelected) Color(0xFF8C72FF) else Color.Transparent)
+                                    .background(if (isSelected) Color(0xFF22C55E) else Color.Transparent)
                                     .clickable {
                                         com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
                                         currentTab = tab
@@ -599,9 +685,9 @@ fun HorizonSettingsDialog(
                                                     .weight(1f)
                                                     .height(40.dp)
                                                     .clip(RoundedCornerShape(4.dp))
-                                                    .background(Color(0xFF8C72FF))
+                                                    .background(Color(0xFF22C55E))
                                                     .clickable {
-                                                        Toast.makeText(context, "Current account: $accountName (Ely.by / MSA)", Toast.LENGTH_SHORT).show()
+                                                        showAccountDialog = true
                                                     },
                                                 contentAlignment = Alignment.CenterStart
                                             ) {
@@ -650,7 +736,7 @@ fun HorizonSettingsDialog(
                                             .width(140.dp)
                                             .height(44.dp)
                                             .clip(RoundedCornerShape(4.dp))
-                                            .background(Color(0xFF8C72FF))
+                                            .background(Color(0xFF22C55E))
                                             .clickable {
                                                 saveConfig()
                                                 onDismissRequest()
@@ -681,7 +767,7 @@ fun HorizonSettingsDialog(
                                             Box(
                                                 modifier = Modifier
                                                     .clip(RoundedCornerShape(3.dp))
-                                                    .background(Color(0xFF8C72FF))
+                                                    .background(Color(0xFF22C55E))
                                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                                             ) {
                                                 Text("Horizon", color = Color.White, fontSize = 11.sp, fontFamily = MinecraftFontFamily)
@@ -820,7 +906,7 @@ private fun HorizonDropdownRow(
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold
                 )
-                Text("v", color = Color(0xFF8C72FF), fontSize = 11.sp, fontFamily = MinecraftFontFamily)
+                Text("v", color = Color(0xFF55FF55), fontSize = 11.sp, fontFamily = MinecraftFontFamily)
             }
 
             DropdownMenu(
@@ -833,7 +919,7 @@ private fun HorizonDropdownRow(
                         text = {
                             Text(
                                 text = option,
-                                color = if (option == currentValue) Color(0xFF8C72FF) else Color.White,
+                                color = if (option == currentValue) Color(0xFF55FF55) else Color.White,
                                 fontSize = 12.sp,
                                 fontFamily = MinecraftFontFamily
                             )
@@ -877,7 +963,7 @@ private fun HorizonSwitchRow(
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = Color(0xFF8C72FF),
+                checkedTrackColor = Color(0xFF22C55E),
                 uncheckedThumbColor = Color(0xFF888894),
                 uncheckedTrackColor = Color(0xFF262632)
             )

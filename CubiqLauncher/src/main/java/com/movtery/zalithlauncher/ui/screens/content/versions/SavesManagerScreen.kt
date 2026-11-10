@@ -322,6 +322,14 @@ fun SavesManagerScreen(
                         quickPlay = { saveName ->
                             onQuickPlay(version, saveName)
                         },
+                        toggleCommands = { saveData ->
+                            runProgress {
+                                com.movtery.zalithlauncher.game.version.saves.updateAllowCommands(
+                                    saveData.saveFile,
+                                    !(saveData.allowCommands == true)
+                                )
+                            }
+                        },
                         renameSave = { saveData, newName ->
                             runProgress {
                                 saveData.saveFile.renameTo(File(savesDir, newName))
@@ -472,7 +480,7 @@ private fun SavesActionsHeader(
                     val taskBuilder = rememberMultipleUriImportTaskBuilder(
                         id = "ContentManager.Saves.Import",
                         targetDir = savesDir,
-                        checkExtension = listOf("zip"),
+                        checkExtension = listOf("zip", "mcworld"),
                         errorMessage = stringResource(R.string.saves_manage_import_failed),
                         submitError = submitError,
                         onImported = refreshSaves,
@@ -485,7 +493,7 @@ private fun SavesActionsHeader(
                         }
                     )
                     ImportMultipleFileButton(
-                        extension = "zip",
+                        extension = "*/*",
                         progressUris = { uris ->
                             TaskSystem.submitTask(
                                 taskBuilder(uris)
@@ -714,6 +722,10 @@ private fun SaveItemLayout(
                     buttonSize = 38.dp,
                     iconSize = 26.dp,
                     canQuickPlay = quickPlay.isQuickPlaySingleplayer,
+                    allowCommands = saveData.allowCommands == true,
+                    onToggleCommandsClick = {
+                        updateOperation(SavesOperation.ToggleCommands(saveData))
+                    },
                     onQuickPlayClick = {
                         updateOperation(SavesOperation.QuickPlay(saveData))
                     },
@@ -845,6 +857,8 @@ private fun SaveOperationMenu(
     buttonSize: Dp,
     iconSize: Dp = buttonSize,
     canQuickPlay: Boolean,
+    allowCommands: Boolean = false,
+    onToggleCommandsClick: () -> Unit = {},
     onQuickPlayClick: () -> Unit = {},
     onRenameClick: () -> Unit = {},
     onBackupClick: () -> Unit = {},
@@ -870,6 +884,23 @@ private fun SaveOperationMenu(
             shadowElevation = 3.dp,
             onDismissRequest = { menuExpanded = false }
         ) {
+            DropdownMenuItem(
+                enabled = saveValid,
+                text = {
+                    Text(text = if (allowCommands) "Disable Commands / Cheats" else "Allow Commands / Admin (/op)")
+                },
+                leadingIcon = {
+                    Icon(
+                        modifier = Modifier.size(20.dp),
+                        painter = painterResource(R.drawable.ic_terminal_outlined),
+                        contentDescription = "Commands / Admin"
+                    )
+                },
+                onClick = {
+                    onToggleCommandsClick()
+                    menuExpanded = false
+                }
+            )
             DropdownMenuItem(
                 enabled = saveValid && canQuickPlay,
                 text = {
@@ -947,6 +978,7 @@ private fun SaveOperation(
     savesDir: File,
     updateOperation: (SavesOperation) -> Unit,
     quickPlay: (saveName: String) -> Unit,
+    toggleCommands: (SaveData) -> Unit = {},
     renameSave: (SaveData, String) -> Unit,
     backupSave: (SaveData, String) -> Unit,
     deleteSave: (SaveData) -> Unit
@@ -955,6 +987,10 @@ private fun SaveOperation(
         is SavesOperation.None -> {}
         is SavesOperation.Progress -> {
             ProgressDialog()
+        }
+        is SavesOperation.ToggleCommands -> {
+            toggleCommands(savesOperation.saveData)
+            updateOperation(SavesOperation.None)
         }
         is SavesOperation.QuickPlay -> {
             val saveData = savesOperation.saveData

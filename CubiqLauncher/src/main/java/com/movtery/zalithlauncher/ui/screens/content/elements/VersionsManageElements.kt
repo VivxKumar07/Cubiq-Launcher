@@ -83,6 +83,8 @@ import com.movtery.zalithlauncher.game.addons.modloader.ModLoader
 import com.movtery.zalithlauncher.game.path.GamePath
 import com.movtery.zalithlauncher.game.path.GamePathManager
 import com.movtery.zalithlauncher.game.version.installed.Version
+import com.movtery.zalithlauncher.game.version.installed.utils.isLowerVer
+import com.movtery.zalithlauncher.game.versioninfo.MinecraftVersions
 import com.movtery.zalithlauncher.game.version.installed.VersionsManager
 import com.movtery.zalithlauncher.game.version.installed.cleanup.CleanFailedException
 import com.movtery.zalithlauncher.game.version.installed.cleanup.GameAssetCleaner
@@ -946,6 +948,7 @@ fun CommonVersionInfoLayout(
                     versionInfo?.let { versionInfo ->
                         Text(
                             text = versionInfo.minecraftVersion,
+                            color = androidx.compose.ui.graphics.Color(0xFFDDDDDD),
                             style = MaterialTheme.typography.labelSmall,
                         )
                         versionInfo.loaderInfo?.let { loaderInfo ->
@@ -956,6 +959,19 @@ fun CommonVersionInfoLayout(
                             Text(
                                 text = loaderInfo.version,
                                 style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+
+                        // Suggestion 10: Auto-notify when a new Minecraft release exists
+                        val latestRelease = remember {
+                            MinecraftVersions.latestRelease
+                        }
+                        if (latestRelease != null && versionInfo.minecraftVersion.isLowerVer(latestRelease)) {
+                            LittleTextLabel(
+                                text = "New: $latestRelease",
+                                color = androidx.compose.ui.graphics.Color(0xFF1B5E20),
+                                contentColor = androidx.compose.ui.graphics.Color.White,
+                                textStyle = MaterialTheme.typography.labelSmall
                             )
                         }
                     }

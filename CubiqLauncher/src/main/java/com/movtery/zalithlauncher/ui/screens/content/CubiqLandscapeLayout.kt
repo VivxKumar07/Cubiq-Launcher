@@ -146,6 +146,7 @@ import androidx.compose.material3.DropdownMenu
 
 
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MenuDefaults
 
 
 
@@ -1780,6 +1781,7 @@ fun LandscapePlayScreen(
                             } else {
                                 allVersions.forEach { ver ->
                                     DropdownMenuItem(
+                                        colors = MenuDefaults.itemColors(textColor = Color.White, leadingIconColor = Color.White),
                                         text = {
                                             Row(
                                                 modifier = Modifier.fillMaxWidth(),

@@ -258,6 +258,12 @@ class SplashActivity : BaseAppCompatActivity() {
     private fun swapToMain() {
         val forward = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            if (intent.hasExtra("EXTRA_DIRECT_LAUNCH_VERSION")) {
+                putExtra("EXTRA_DIRECT_LAUNCH_VERSION", intent.getStringExtra("EXTRA_DIRECT_LAUNCH_VERSION"))
+            }
+            if (intent.getBooleanExtra("EXTRA_DIRECT_LAUNCH_RUST", false)) {
+                putExtra("EXTRA_DIRECT_LAUNCH_RUST", true)
+            }
         }
         startActivity(forward)
         finish()

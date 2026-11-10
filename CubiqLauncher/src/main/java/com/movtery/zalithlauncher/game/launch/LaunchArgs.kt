@@ -21,6 +21,7 @@ package com.movtery.zalithlauncher.game.launch
 import androidx.collection.ArrayMap
 import com.movtery.zalithlauncher.BuildConfig
 import com.movtery.zalithlauncher.BuildKeys
+import com.movtery.zalithlauncher.context.GlobalContext
 import com.movtery.zalithlauncher.bridge.LoggerBridge
 import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.account.isAuthServerAccount
@@ -186,6 +187,21 @@ class LaunchArgs(
     private fun getJavaArgs(): List<String> {
         val argsList: MutableList<String> = ArrayList()
 
+        // Ensure authlib-injector.jar is unpacked if needed for custom auth / skins (Bug 4)
+        if (!LibPath.AUTHLIB_INJECTOR.exists()) {
+            runCatching {
+                LibPath.AUTHLIB_INJECTOR.parentFile?.mkdirs()
+                GlobalContext.assets.open("components/auth_libs/authlib-injector.jar").use { input ->
+                    LibPath.AUTHLIB_INJECTOR.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                Logger.info(TAG, "Extracted authlib-injector.jar to ${LibPath.AUTHLIB_INJECTOR.absolutePath}")
+            }.onFailure { e ->
+                Logger.warning(TAG, "Failed to extract authlib-injector.jar", e)
+            }
+        }
+
         if (account.isLocalAccount()) {
             if (account.hasSkinFile || account.getCapeFile().exists()) {
                 //该离线账号拥有本地皮肤，启用离线yggdrasil服务器
@@ -213,6 +229,7 @@ class LaunchArgs(
             } else {
                 argsList.add("-javaagent:${LibPath.AUTHLIB_INJECTOR.absolutePath}=${account.otherBaseUrl}")
                 argsList.add("-Dauthlibinjector.side=client")
+                argsList.add("-Dauthlibinjector.ignoredCraftBukkit=true")
             }
         }
 
@@ -239,6 +256,18 @@ class LaunchArgs(
         argsList.add("-Dminecraft.client.jar=${clientJar.absolutePath}")
         argsList.add("-Dminecraft.launcher.brand=${BuildKeys.LAUNCHER_NAME}")
         argsList.add("-Dminecraft.launcher.version=${BuildConfig.VERSION_NAME}")
+
+        // Low-end RAM Auto-Tuning (Suggestion 3):
+        val allocatedRam = version.getRamAllocation()
+        if (allocatedRam <= 2048) {
+            argsList.add("-XX:+UseG1GC")
+            argsList.add("-XX:+ParallelRefProcEnabled")
+            argsList.add("-XX:G1HeapRegionSize=8M")
+            argsList.add("-XX:G1ReservePercent=15")
+            argsList.add("-XX:G1MixedGCCountTarget=4")
+            argsList.add("-XX:InitiatingHeapOccupancyPercent=20")
+            argsList.add("-XX:G1ConfidencePercent=5")
+        }
 
         return argsList
     }
@@ -304,11 +333,19 @@ class LaunchArgs(
             ?: emptyArray()
 
         val replacedArgs = insertJSONValueList(jvmArgs, varArgMap)
-        return if (hasClasspath) {
+        val withClasspath = if (hasClasspath) {
             replacedArgs
         } else {
             //不包含 ${classpath} 配置，则需要手动添加
             replacedArgs + arrayOf("-cp", launchClassPath)
+        }
+
+        // Bug 8: Legacy versions (1.8.9, 1.12.2, etc.) lack arguments.jvm in manifest,
+        // so -Djava.library.path must be explicitly injected for runtime natives (libfontmanager, libfreetype, etc.)
+        return if (withClasspath.none { it.startsWith("-Djava.library.path=") }) {
+            arrayOf("-Djava.library.path=$fullNativesPath") + withClasspath
+        } else {
+            withClasspath
         }
     }
 
@@ -379,8 +416,9 @@ class LaunchArgs(
         val varArgMap: MutableMap<String, String> = ArrayMap()
         varArgMap["auth_session"] = account.accessToken
         varArgMap["auth_access_token"] = account.accessToken
-        varArgMap["auth_player_name"] = account.username
-        varArgMap["auth_uuid"] = account.profileId.replace("-", "")
+        val safeUsername = account.username.trim().ifEmpty { "Steve" }
+        varArgMap["auth_player_name"] = safeUsername
+        varArgMap["auth_uuid"] = (account.profileId.takeIf { it.isNotBlank() } ?: java.util.UUID.nameUUIDFromBytes("OfflinePlayer:$safeUsername".toByteArray()).toString()).replace("-", "")
         varArgMap["auth_xuid"] = account.xUid ?: ""
         varArgMap["assets_root"] = getAssetsHome(version.getGameHome())
         varArgMap["assets_index_name"] = gameManifest.assetIndex.id

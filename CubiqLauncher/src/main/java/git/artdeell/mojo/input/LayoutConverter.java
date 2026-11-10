@@ -261,7 +261,7 @@ public class LayoutConverter {
         return (int) ((maxSize / 2) * (widthInPercent / 100));
     }
 
-    private static int keyCodeFromGLFW(int keycode){
+    public static int keyCodeFromGLFW(int keycode){
         switch (keycode) {
             case LwjglGlfwKeycode.GLFW_KEY_SPACE: return KeyEvent.KEYCODE_SPACE;
             case LwjglGlfwKeycode.GLFW_KEY_APOSTROPHE: return KeyEvent.KEYCODE_APOSTROPHE;

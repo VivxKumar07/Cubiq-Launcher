@@ -150,11 +150,14 @@ public class ControlButton extends TextView implements ControlInterface {
         }
     }
 
+    private int mActivePointerId = MotionEvent.INVALID_POINTER_ID;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         ControlData properties = getProperties();
         int action = event.getActionMasked();
+        int actionIndex = event.getActionIndex();
         switch (action) {
             case MotionEvent.ACTION_MOVE:
             case MotionEvent.ACTION_UP: // 1
@@ -175,12 +178,22 @@ public class ControlButton extends TextView implements ControlInterface {
 
         switch (action){
             case MotionEvent.ACTION_DOWN: // 0
-            case MotionEvent.ACTION_POINTER_DOWN: // 5
+                mActivePointerId = event.getPointerId(0);
                 handlePressed();
+                break;
+            case MotionEvent.ACTION_POINTER_DOWN: // 5
+                mActivePointerId = event.getPointerId(actionIndex);
+                handlePressed();
+                break;
+            case MotionEvent.ACTION_POINTER_UP: // 6
+                if (event.getPointerId(actionIndex) == mActivePointerId) {
+                    mActivePointerId = MotionEvent.INVALID_POINTER_ID;
+                    handleReleased();
+                }
                 break;
             case MotionEvent.ACTION_UP: // 1
             case MotionEvent.ACTION_CANCEL: // 3
-            case MotionEvent.ACTION_POINTER_UP: // 6
+                mActivePointerId = MotionEvent.INVALID_POINTER_ID;
                 handleReleased();
                 break;
             default:

@@ -258,16 +258,10 @@ fun SwitchableMouseLayout(
                         onCapturedTap(fingerPos)
                     }
                     CURSOR_ENABLED -> {
-                        onTap(
-                            if (controlMode == MouseControlMode.CLICK) {
-                                updateMousePointer(!isCaptured && !hideMouseInClickMode)
-                                //当前手指的绝对坐标
-                                pointerPosition = fingerPos
-                                fingerPos
-                            } else {
-                                pointerPosition
-                            }
-                        )
+                        // Bug 16: In GUI/Inventory mode, direct tap on an inventory slot clicks where the finger tapped
+                        updateMousePointer(!isCaptured && !hideMouseInClickMode)
+                        pointerPosition = fingerPos
+                        onTap(fingerPos)
                     }
                 }
             },

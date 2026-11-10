@@ -843,12 +843,12 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
                 } else {
 
                     AllSettings.lastCrashCode.save(0)
-
                     AllSettings.lastCrashLogPath.save("")
-
-                    //重启启动器
-
-                    ProcessPhoenix.triggerRebirth(this@VMActivity)
+                    val mainIntent = Intent(this@VMActivity, MainActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    }
+                    startActivity(mainIntent)
+                    finish()
 
                 }
 
@@ -1026,10 +1026,6 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
                     }
 
-                    if (AllSettings.hudScreenCaptureTools.state) {
-                        com.movtery.zalithlauncher.ui.screens.game.elements.InGameCaptureHud()
-                    }
-
 
 
                     if (vmViewModel.textInputMode == TextInputMode.ENABLE) {
@@ -1147,17 +1143,17 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
         }
 
         runCatching {
-
             org.libsdl.app.SDLActivity.getSDLSurface()?.let { surface ->
-
                 surface.post {
-
                     surface.surfaceChanged()
-
                 }
-
             }
-
+            // Bug 10: Refresh window size and redraw on resume so non-SDL surfaces (GL4ES, LTW, Zink) recover from black screen
+            val viewWidth = gameSurfaceView?.width ?: 0
+            val viewHeight = gameSurfaceView?.height ?: 0
+            if (viewWidth > 0 && viewHeight > 0) {
+                requestRefreshWindowSize(screenSize = referenceScreenSize(fallback = IntSize(viewWidth, viewHeight)))
+            }
         }
 
         withHandler { onResume() }
@@ -1383,17 +1379,14 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
 
     override fun onDestroy() {
-
         stopAllService()
-
+        runCatching {
+            CallbackBridge.nativeSetWindowAttrib(0x00020001, 1)
+        }
         withHandler { onDestroy() }
-
         SdlBridge.reset()
-
         FliteTts.shutdown()
-
         super.onDestroy()
-
     }
 
 
@@ -1705,17 +1698,16 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
         SdlBridge.prepareSurface(this, surface, gameSurfaceView?.parent as? ViewGroup, holder)
 
         if (vmViewModel.isRunning) {
-
             if (SdlBridge.sdlEnabled) {
-
                 SDLActivity.getSDLSurface()?.surfaceCreated(holder)
-
             }
-
             ZLBridge.setupBridgeWindow(surface)
-
+            val viewWidth = gameSurfaceView?.width ?: 0
+            val viewHeight = gameSurfaceView?.height ?: 0
+            if (viewWidth > 0 && viewHeight > 0) {
+                requestRefreshWindowSize(screenSize = referenceScreenSize(fallback = IntSize(viewWidth, viewHeight)))
+            }
             return
-
         }
 
         vmViewModel.isRunning = true

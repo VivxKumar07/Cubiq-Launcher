@@ -42,6 +42,14 @@ private const val TAG = "MinecraftVersions"
 object MinecraftVersions {
     private var manifest: VersionManifest? = null
 
+    val latestRelease: String?
+        get() = manifest?.latest?.release ?: runCatching {
+            val localFile = PathManager.FILE_MINECRAFT_VERSIONS
+            if (localFile.exists()) {
+                GSON.fromJson(localFile.readText(), VersionManifest::class.java)?.latest?.release
+            } else null
+        }.getOrNull()
+
     private val _allVersions = MutableStateFlow<List<MinecraftVersion>>(emptyList())
     val allVersions = _allVersions.asStateFlow()
 

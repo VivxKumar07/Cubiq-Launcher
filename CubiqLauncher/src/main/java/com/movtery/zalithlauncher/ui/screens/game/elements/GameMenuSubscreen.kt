@@ -47,7 +47,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -243,6 +245,19 @@ private fun GameActionContent(
                 contentColor = contentColor,
             )
         }
+        // Suggestion 9: Screen Recorder & Capture HUD toggle in in-game menu
+        item {
+            MenuSwitchButton(
+                modifier = Modifier.fillMaxWidth(),
+                text = "Screen Recorder / HUD",
+                switch = AllSettings.hudScreenCaptureTools.state,
+                onSwitch = {
+                    AllSettings.hudScreenCaptureTools.save(it)
+                },
+                color = color,
+                contentColor = contentColor
+            )
+        }
 
         //如果开启多人联机，则展示这个按钮
         if (enableTerracotta) {
@@ -416,6 +431,8 @@ private fun CustomResolutionContent(
 ) {
     val context = LocalContext.current
     val screenSize = remember(context) { getRealScreenSize(context) }
+    var widthState by remember { mutableStateOf(AllSettings.customResolutionWidth.state) }
+    var heightState by remember { mutableStateOf(AllSettings.customResolutionHeight.state) }
 
     BackgroundCard(
         modifier = modifier.fillMaxWidth(),
@@ -438,25 +455,32 @@ private fun CustomResolutionContent(
             ) {
                 IntInputField(
                     modifier = Modifier.weight(1f),
-                    value = AllSettings.customResolutionWidth.state,
+                    value = widthState,
                     permitted = customResolutionRange(screenSize.width),
                     label = stringResource(R.string.settings_renderer_resolution_custom_width),
                     onValueChange = { value ->
-                        AllSettings.customResolutionWidth.save(value)
-                        onValueCommitted()
+                        widthState = value
                     }
                 )
                 IntInputField(
                     modifier = Modifier.weight(1f),
-                    value = AllSettings.customResolutionHeight.state,
+                    value = heightState,
                     permitted = customResolutionRange(screenSize.height),
                     label = stringResource(R.string.settings_renderer_resolution_custom_height),
                     onValueChange = { value ->
-                        AllSettings.customResolutionHeight.save(value)
-                        onValueCommitted()
+                        heightState = value
                     }
                 )
             }
+            MenuTextButton(
+                modifier = Modifier.fillMaxWidth(),
+                text = "Apply Resolution",
+                onClick = {
+                    AllSettings.customResolutionWidth.save(widthState)
+                    AllSettings.customResolutionHeight.save(heightState)
+                    onValueCommitted()
+                }
+            )
         }
     }
 }

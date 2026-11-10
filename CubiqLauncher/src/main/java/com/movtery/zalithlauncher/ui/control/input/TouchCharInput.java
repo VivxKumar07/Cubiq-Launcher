@@ -47,6 +47,13 @@ public class TouchCharInput extends androidx.appcompat.widget.AppCompatEditText 
         InputMethodManager imm = (InputMethodManager) getContext().getSystemService(INPUT_METHOD_SERVICE);
         enable();
         sActiveInput = this;
+        // Bug 12 & 14b: Release virtual modifier keys when typing so toggle-sprint doesn't trigger Ctrl+A/Ctrl+W in chat!
+        try {
+            org.lwjgl.glfw.CallbackBridge.sendKeyPress(net.kdt.pojavlaunch.LwjglGlfwKeycode.GLFW_KEY_LEFT_CONTROL, 0, false);
+            org.lwjgl.glfw.CallbackBridge.sendKeyPress(net.kdt.pojavlaunch.LwjglGlfwKeycode.GLFW_KEY_RIGHT_CONTROL, 0, false);
+            org.lwjgl.glfw.CallbackBridge.sendKeyPress(net.kdt.pojavlaunch.LwjglGlfwKeycode.GLFW_KEY_LEFT_ALT, 0, false);
+            org.lwjgl.glfw.CallbackBridge.sendKeyPress(net.kdt.pojavlaunch.LwjglGlfwKeycode.GLFW_KEY_RIGHT_ALT, 0, false);
+        } catch (Throwable ignored) {}
         SdlBridge.requestComposeFocus();
         imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT);
         clear();

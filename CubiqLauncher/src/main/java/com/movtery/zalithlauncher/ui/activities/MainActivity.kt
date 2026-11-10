@@ -353,6 +353,9 @@ class MainActivity : BaseAppCompatActivity() {
             containsChinese = isChinese(this@MainActivity)
         )
 
+        // Direct Shortcut Launch Handler
+        handleShortcutLaunch(intent)
+
         setContent {
             ZalithLauncherTheme(
                 backgroundViewModel = backgroundViewModel,
@@ -566,6 +569,8 @@ class MainActivity : BaseAppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        handleShortcutLaunch(intent)
         handleImportIfNeeded(intent)
         // 重载渲染器
         Renderers.init(true)
@@ -802,6 +807,26 @@ class MainActivity : BaseAppCompatActivity() {
             importControlFiles(listOf(uri))
         }
         return uri != null
+    }
+
+    private fun handleShortcutLaunch(intent: Intent?) {
+        if (intent == null) return
+        if (intent.getBooleanExtra("EXTRA_DIRECT_LAUNCH_RUST", false)) {
+            intent.removeExtra("EXTRA_DIRECT_LAUNCH_RUST")
+            com.movtery.zalithlauncher.game.horizon.HorizonManager.launchHorizon(this)
+            return
+        }
+        val targetVer = intent.getStringExtra("EXTRA_DIRECT_LAUNCH_VERSION")
+        if (!targetVer.isNullOrBlank()) {
+            intent.removeExtra("EXTRA_DIRECT_LAUNCH_VERSION")
+            lifecycleScope.launch {
+                val list = com.movtery.zalithlauncher.game.version.installed.VersionsManager.versions.value
+                val version = list.find { it.getVersionName() == targetVer } ?: list.firstOrNull()
+                if (version != null) {
+                    launchGameViewModel.tryLaunch(version)
+                }
+            }
+        }
     }
 
     @SuppressLint("RestrictedApi")

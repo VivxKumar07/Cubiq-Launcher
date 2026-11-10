@@ -442,49 +442,101 @@ object HorizonManager {
             val root = getHorizonClientDir(context)
             root.mkdirs()
 
-            // 1. Ensure Title Background Panorama faces exist (panorama_0.png .. panorama_5.png)
+            // 1. Ensure Title Background Panorama faces exist (panorama_0.png .. panorama_5.png) with official Mojang textures
             val panoDir = File(root, "assets/minecraft/textures/gui/title/background")
             panoDir.mkdirs()
-            val needPanorama = (0..5).any { !File(panoDir, "panorama_$it.png").exists() }
-            if (needPanorama) {
-                try {
-                    val bmp = android.graphics.Bitmap.createBitmap(512, 512, android.graphics.Bitmap.Config.ARGB_8888)
-                    val canvas = android.graphics.Canvas(bmp)
-                    val paint = android.graphics.Paint()
-                    paint.color = android.graphics.Color.parseColor("#1B2A3B")
-                    canvas.drawRect(0f, 0f, 512f, 512f, paint)
+            val resPanoDir = File(context.filesDir, "resources/assets/minecraft/textures/gui/title/background")
+            resPanoDir.mkdirs()
 
-                    for (i in 0..5) {
-                        val panoFile = File(panoDir, "panorama_$i.png")
-                        if (!panoFile.exists()) {
-                            java.io.FileOutputStream(panoFile).use { out ->
-                                bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 95, out)
+            for (i in 0..5) {
+                val f1 = File(panoDir, "panorama_$i.png")
+                val f2 = File(resPanoDir, "panorama_$i.png")
+                val needUpdate1 = !f1.exists() || f1.length() < 20_000L
+                val needUpdate2 = !f2.exists() || f2.length() < 20_000L
+
+                if (needUpdate1) {
+                    try {
+                        context.assets.open("panorama/panorama_$i.png").use { input ->
+                            FileOutputStream(f1).use { out -> input.copyTo(out) }
+                        }
+                    } catch (e: Throwable) {
+                        Logger.warning("HorizonManager", "Could not copy panorama_$i: ${e.message}")
+                    }
+                }
+                if (needUpdate2) {
+                    try {
+                        if (f1.exists() && f1.length() >= 20_000L) {
+                            f1.copyTo(f2, overwrite = true)
+                        } else {
+                            context.assets.open("panorama/panorama_$i.png").use { input ->
+                                FileOutputStream(f2).use { out -> input.copyTo(out) }
                             }
                         }
-                    }
-                    bmp.recycle()
-                    Logger.info("HorizonManager", "Generated default square panorama faces in ${panoDir.absolutePath}")
-                } catch (e: Throwable) {
-                    Logger.warning("HorizonManager", "Could not generate panorama: ${e.message}")
+                    } catch (_: Throwable) {}
                 }
             }
 
-            // 2. Ensure horizon-resources.json exists
+            // Also copy panorama_overlay.png
+            val ov1 = File(panoDir, "panorama_overlay.png")
+            val ov2 = File(resPanoDir, "panorama_overlay.png")
+            if (!ov1.exists() || ov1.length() < 10L) {
+                runCatching { context.assets.open("panorama/panorama_overlay.png").use { it.copyTo(FileOutputStream(ov1)) } }
+            }
+            if (!ov2.exists() || ov2.length() < 10L) {
+                runCatching { context.assets.open("panorama/panorama_overlay.png").use { it.copyTo(FileOutputStream(ov2)) } }
+            }
+
+            // 2. Ensure official horizon-resources.json exists with valid data hashes
             val resourcesJson = File(root, "horizon-resources.json")
-            if (!resourcesJson.exists()) {
-                resourcesJson.writeText("{\n  \"revision\": \"46ba6ea985fb5a92d79a9419198f10dda14c199d\",\n  \"files\": []\n}", Charsets.UTF_8)
-            }
-
-            // 3. Ensure horizon-touch.json exists
-            val touchJsonFiles = listOf(File(context.filesDir, "horizon-touch.json"), File(root, "horizon-touch.json"))
-            val defaultTouchConfig = "{\"schema\":1,\"elements\":[{\"name\":\"Sprint\",\"visible\":true},{\"name\":\"Jump\",\"visible\":true},{\"name\":\"Attack\",\"visible\":true},{\"name\":\"Use\",\"visible\":true},{\"name\":\"Pause\",\"visible\":true},{\"name\":\"F3\",\"visible\":true},{\"name\":\"F5\",\"visible\":true}]}"
-            for (f in touchJsonFiles) {
-                if (!f.exists()) {
-                    f.writeText(defaultTouchConfig, Charsets.UTF_8)
+            val resResourcesJson = File(context.filesDir, "resources/horizon-resources.json")
+            try {
+                val fullRes = context.assets.open("horizon/horizon-resources.json").use { it.reader().readText() }
+                if (!resourcesJson.exists() || !resourcesJson.readText().contains("client_sha256")) {
+                    resourcesJson.writeText(fullRes, Charsets.UTF_8)
                 }
+                if (!resResourcesJson.exists() || !resResourcesJson.readText().contains("client_sha256")) {
+                    resResourcesJson.parentFile?.mkdirs()
+                    resResourcesJson.writeText(fullRes, Charsets.UTF_8)
+                }
+            } catch (e: Throwable) {
+                Logger.warning("HorizonManager", "Could not copy horizon-resources.json: ${e.message}")
             }
 
-            // 4. Ensure resources directory beside executable or root
+            // 3. Deploy all 60 official Bedrock touch controls textures (dismount, dpad, attack, jump, etc.)
+            val bedrockTarget = File(root, "assets/minecraft/textures/gui/bedrock")
+            val resBedrockTarget = File(context.filesDir, "resources/assets/minecraft/textures/gui/bedrock")
+            bedrockTarget.mkdirs()
+            resBedrockTarget.mkdirs()
+            try {
+                copyAssetFolder(context, "horizon/bedrock", bedrockTarget)
+                copyAssetFolder(context, "horizon/bedrock", resBedrockTarget)
+            } catch (e: Throwable) {
+                Logger.warning("HorizonManager", "Could not copy Bedrock touch assets: ${e.message}")
+            }
+
+            // 4. Disable native Bedrock touch controls
+            val touchJsonFiles = listOf(File(context.filesDir, "horizon-touch.json"), File(root, "horizon-touch.json"))
+            val disabledTouchConfig = JSONObject().apply {
+                put("schema", 1)
+                put("elements", org.json.JSONArray())
+            }.toString()
+            for (f in touchJsonFiles) {
+                f.writeText(disabledTouchConfig, Charsets.UTF_8)
+            }
+
+            // 5. Ensure options.txt has proper mobile GUI scale (guiScale: 3) so UI elements are finger-friendly
+            val optionsFiles = listOf(File(context.filesDir, "options.txt"), File(root, "options.txt"))
+            for (optFile in optionsFiles) {
+                var content = if (optFile.exists()) optFile.readText() else ""
+                if (content.contains("guiScale:")) {
+                    content = content.replace(Regex("guiScale:\\s*\\d+"), "guiScale:3")
+                } else {
+                    content += "\nguiScale:3\n"
+                }
+                optFile.writeText(content.trim() + "\n")
+            }
+
+            // 6. Ensure resources directory beside executable or root
             val resourcesDir = File(context.filesDir, "resources")
             if (!resourcesDir.exists()) {
                 try {
@@ -493,8 +545,90 @@ object HorizonManager {
                     try { root.copyRecursively(resourcesDir, overwrite = false) } catch (_: Throwable) {}
                 }
             }
+
+            // 7. Ensure Minecraft sound assets and sounds.json are mapped
+            ensureSoundAssets(context, root)
         } catch (e: Throwable) {
             Logger.warning("HorizonManager", "ensureAssetsAndTouch failed: ${e.message}")
+        }
+    }
+
+    private fun ensureSoundAssets(context: Context, root: File) {
+        try {
+            val mcAssetsDir = File(root, "assets/minecraft")
+            val soundsJson = File(mcAssetsDir, "sounds.json")
+            val soundsDir = File(mcAssetsDir, "sounds")
+
+            val searchDirs = listOf(
+                File(com.movtery.zalithlauncher.game.path.GamePathManager.currentPath.value, "assets"),
+                File(context.getExternalFilesDir(null), ".minecraft/assets"),
+                File(context.filesDir, ".minecraft/assets")
+            )
+
+            var foundIndex: File? = null
+            var objectsDir: File? = null
+
+            for (assetsBase in searchDirs) {
+                if (assetsBase.exists() && assetsBase.isDirectory) {
+                    val idxDir = File(assetsBase, "indexes")
+                    val objDir = File(assetsBase, "objects")
+                    if (idxDir.exists() && objDir.exists()) {
+                        val indexes = idxDir.listFiles()
+                        if (!indexes.isNullOrEmpty()) {
+                            foundIndex = indexes.maxByOrNull { it.length() }
+                            objectsDir = objDir
+                            break
+                        }
+                    }
+                }
+            }
+
+            if (foundIndex != null && objectsDir != null && foundIndex.exists()) {
+                val indexJson = JSONObject(foundIndex.readText(Charsets.UTF_8))
+                if (indexJson.has("objects")) {
+                    val objects = indexJson.getJSONObject("objects")
+                    mcAssetsDir.mkdirs()
+                    soundsDir.mkdirs()
+
+                    if (!soundsJson.exists() || soundsJson.length() == 0L) {
+                        if (objects.has("minecraft/sounds.json")) {
+                            val hash = objects.getJSONObject("minecraft/sounds.json").getString("hash")
+                            val objFile = File(objectsDir, "${hash.substring(0, 2)}/$hash")
+                            if (objFile.exists()) {
+                                try {
+                                    java.nio.file.Files.createSymbolicLink(soundsJson.toPath(), objFile.toPath())
+                                } catch (_: Throwable) {
+                                    objFile.copyTo(soundsJson, overwrite = true)
+                                }
+                            }
+                        }
+                    }
+
+                    val keys = objects.keys()
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        if (key.startsWith("minecraft/sounds/")) {
+                            val relSound = key.removePrefix("minecraft/sounds/")
+                            val targetSound = File(soundsDir, relSound)
+                            if (!targetSound.exists() || targetSound.length() == 0L) {
+                                val hash = objects.getJSONObject(key).getString("hash")
+                                val objFile = File(objectsDir, "${hash.substring(0, 2)}/$hash")
+                                if (objFile.exists()) {
+                                    targetSound.parentFile?.mkdirs()
+                                    try {
+                                        java.nio.file.Files.createSymbolicLink(targetSound.toPath(), objFile.toPath())
+                                    } catch (_: Throwable) {
+                                        objFile.copyTo(targetSound, overwrite = true)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Logger.info("HorizonManager", "Mapped sound assets from ${foundIndex.name}")
+                }
+            }
+        } catch (e: Throwable) {
+            Logger.warning("HorizonManager", "ensureSoundAssets: ${e.message}")
         }
     }
 
@@ -563,7 +697,7 @@ object HorizonManager {
             json.put("profile", 0)
             if (!json.has("renderer")) json.put("renderer", "vulkan")
             if (!json.has("orientation")) json.put("orientation", "landscape")
-            if (!json.has("input_host")) json.put("input_host", "touch")
+            json.put("input_host", "keyboard-mouse")
             json.put("keypad_controls", false)
             json.put("record_performance", false)
             json.put("worker_limit", 4)
@@ -594,15 +728,19 @@ object HorizonManager {
         } catch (ignored: Exception) {}
 
         // 2. Start HorizonActivity with direct launch flag
-        android.os.Handler(android.os.Looper.getMainLooper()).post {
-            android.widget.Toast.makeText(context, "Minecraft Rust Edition", android.widget.Toast.LENGTH_SHORT).show()
-        }
+        val controlName = com.movtery.zalithlauncher.setting.AllSettings.controlLayout.getValue()
+        val layoutFile = java.io.File(com.movtery.zalithlauncher.path.PathManager.DIR_CONTROL_LAYOUTS, controlName)
+        val alpha = (com.movtery.zalithlauncher.setting.AllSettings.controlsOpacity.getValue().toFloat() / 100f).coerceIn(0.1f, 1f)
+
         val intent = Intent(context, HorizonActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("EXTRA_DIRECT_LAUNCH", true)
+            putExtra("EXTRA_CONTROL_LAYOUT_PATH", layoutFile.absolutePath)
+            putExtra("EXTRA_CONTROL_LAYOUT_NAME", controlName)
+            putExtra("EXTRA_CONTROLS_ALPHA", alpha)
         }
         context.startActivity(intent)
-        Logger.info("HorizonManager", "Launched HorizonActivity (:horizon process) with direct launch flag")
+        Logger.info("HorizonManager", "Launched HorizonActivity (:horizon process) with layout ${layoutFile.name}")
     }
 
     private fun fetchString(urlStr: String): String {
@@ -647,5 +785,29 @@ object HorizonManager {
             }
         }
         return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
+    private fun copyAssetFolder(context: Context, assetPath: String, targetDir: File) {
+        val list = context.assets.list(assetPath) ?: return
+        targetDir.mkdirs()
+        for (item in list) {
+            val subAsset = if (assetPath.isEmpty()) item else "$assetPath/$item"
+            val subList = context.assets.list(subAsset)
+            if (subList != null && subList.isNotEmpty()) {
+                val subTarget = File(targetDir, item)
+                copyAssetFolder(context, subAsset, subTarget)
+            } else {
+                val targetFile = File(targetDir, item)
+                if (!targetFile.exists() || targetFile.length() == 0L) {
+                    try {
+                        context.assets.open(subAsset).use { input ->
+                            FileOutputStream(targetFile).use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                    } catch (ignored: Throwable) {}
+                }
+            }
+        }
     }
 }

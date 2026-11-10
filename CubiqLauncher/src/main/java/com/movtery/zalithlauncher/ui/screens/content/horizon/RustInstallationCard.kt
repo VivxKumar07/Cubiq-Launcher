@@ -175,14 +175,15 @@ fun RustInstallationCard(
         ) {
             // Left: Icon + Title
             Row(
+                modifier = Modifier.weight(1f, fill = false),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Image(
                     painter = painterResource(R.drawable.ic_horizon_logo),
                     contentDescription = "Horizon Icon",
                     modifier = Modifier
-                        .size(42.dp)
+                        .size(38.dp)
                         .clip(CircleShape)
                 )
 
@@ -194,22 +195,26 @@ fun RustInstallationCard(
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                        fontSize = 13.sp,
+                        maxLines = 1
                     )
 
                     Text(
                         text = "Horizon · Rust Edition",
                         color = Color(0xFF9E9E9E),
                         fontFamily = MinecraftFontFamily,
-                        fontSize = 11.sp
+                        fontSize = 11.sp,
+                        maxLines = 1
                     )
                 }
             }
 
+            Spacer(modifier = Modifier.width(6.dp))
+
             // Right: Play Button, Settings Button & Overflow
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 // Play Button
                 MinecraftButton(
@@ -217,7 +222,7 @@ fun RustInstallationCard(
                     style = MinecraftButtonStyle.GREEN,
                     modifier = Modifier
                         .height(34.dp)
-                        .width(72.dp)
+                        .width(64.dp)
                 ) {
                     Text(
                         text = "Play",
@@ -228,13 +233,14 @@ fun RustInstallationCard(
                     )
                 }
 
-                // Settings Button with Gear Icon (Migrated Horizon Settings in Cubiq Style)
+                // Settings Button with Gear Icon (Never cut off)
                 MinecraftButton(
                     onClick = { showSettingsDialog = true },
                     style = MinecraftButtonStyle.STONE,
                     modifier = Modifier.height(34.dp)
                 ) {
                     Row(
+                        modifier = Modifier.padding(horizontal = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
@@ -249,7 +255,9 @@ fun RustInstallationCard(
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
                 }
@@ -278,6 +286,20 @@ fun RustInstallationCard(
                         onDismissRequest = { menuExpanded = false },
                         modifier = Modifier.background(Color(0xFF222428))
                     ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = "Add Shortcut to Home Screen",
+                                    color = Color(0xFF77DDFF),
+                                    fontFamily = MinecraftFontFamily,
+                                    fontSize = 12.sp
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                com.movtery.zalithlauncher.utils.ShortcutHelper.createGameShortcut(context, "Minecraft Rust 26.3", true)
+                            }
+                        )
                         DropdownMenuItem(
                             text = {
                                 Text(

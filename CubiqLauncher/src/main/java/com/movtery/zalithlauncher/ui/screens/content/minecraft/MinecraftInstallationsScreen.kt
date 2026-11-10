@@ -1121,6 +1121,7 @@ private fun InstallationCardItem(
 ) {
 
     var showMenu by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
 
 
 
@@ -1428,6 +1429,20 @@ private fun InstallationCardItem(
 
                     }
 
+                )
+
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = "Add Shortcut to Home Screen",
+                            color = Color(0xFF77DDFF),
+                            fontFamily = MinecraftFontFamily
+                        )
+                    },
+                    onClick = {
+                        showMenu = false
+                        com.movtery.zalithlauncher.utils.ShortcutHelper.createGameShortcut(context, name, false)
+                    }
                 )
 
                 DropdownMenuItem(

@@ -134,9 +134,15 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
         if (updatePosition) {
             onDeltaListener?.invoke(deltaX, deltaY)
             try {
-                CallbackBridge.mouseX += deltaX
-                CallbackBridge.mouseY += deltaY
-                CallbackBridge.sendCursorPos(CallbackBridge.mouseX, CallbackBridge.mouseY)
+                if (CallbackBridge.isGrabbing()) {
+                    // In-game aim: smooth relative camera rotation
+                    CallbackBridge.sendCursorDelta(deltaX, deltaY)
+                } else {
+                    // In-menu aim: absolute pointer positioning
+                    CallbackBridge.mouseX += deltaX
+                    CallbackBridge.mouseY += deltaY
+                    CallbackBridge.sendCursorPos(CallbackBridge.mouseX, CallbackBridge.mouseY)
+                }
             } catch (ignored: Throwable) {}
         }
     }
@@ -235,8 +241,8 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
     }
 
     private companion object {
-        const val SINGLE_AXIS_LOW_PASS_THRESHOLD = 1.13f
-        const val MULTI_AXIS_LOW_PASS_THRESHOLD = 1.3f
+        const val SINGLE_AXIS_LOW_PASS_THRESHOLD = 0.08f
+        const val MULTI_AXIS_LOW_PASS_THRESHOLD = 0.12f
         const val ROTATION_VECTOR_WARMUP_PERIOD = 2
     }
 }

@@ -77,7 +77,8 @@ private fun extractLevelPath(file: File): String? {
         return null
     }
 
-    if (!file.name.endsWith(".zip", ignoreCase = true)) {
+    val isSupportedExt = file.name.endsWith(".zip", ignoreCase = true) || file.name.endsWith(".mcworld", ignoreCase = true)
+    if (!isSupportedExt) {
         return null
     }
 

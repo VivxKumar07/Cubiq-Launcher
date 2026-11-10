@@ -263,7 +263,7 @@
             android:name="dev.horizon.android.HorizonActivity"
             android:label="Minecraft Rust Edition"
             android:process=":horizon"
-            android:exported="false"
+            android:exported="true"
             android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard|density|screenLayout"
             android:windowSoftInputMode="adjustResize"

@@ -55,7 +55,7 @@ class AllServers {
                 hiddenServerList.clear()
 
                 if (!dataFile.exists()) {
-                    _serverList.add(ServerData("Skillora SMP", "Ip-paid3.skilloraclouds.com:20004"))
+                    _serverList.add(ServerData("Skillora SMP", "paid51.skilloraclouds.com:20015"))
                     return@withContext
                 }
 

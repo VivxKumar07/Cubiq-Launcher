@@ -262,18 +262,23 @@ fun MinecraftSkinsScreen(
                 .border(BorderStroke(1.5.dp, Color(0xFF383838)), RoundedCornerShape(4.dp)),
             contentAlignment = Alignment.Center
         ) {
+            val activePresetCape = presetCapes.find { it.id == selectedCapeId }
+            val currentCapeAsset = activePresetCape?.assetPath
+            val currentCapeFile = if (selectedCapeId == "Custom" || (selectedCapeId == "Current" && activeCapeFile != null)) activeCapeFile else null
+
             SkinPreview3D(
                 skinFile = previewSkinFile,
                 skinUrl = previewSkinUrl,
                 skinAsset = previewSkinAsset,
-                capeFile = activeCapeFile,
+                capeFile = currentCapeFile,
+                capeAsset = if (currentCapeFile == null && selectedCapeId != "None") currentCapeAsset else null,
                 modelType = activeModelType,
                 azimuth = if (selectedWardrobeTab == 1) 145 else -35,
                 pitch = 10,
                 modifier = Modifier.fillMaxSize(),
                 interactionEnabled = true,
-                refreshKey = remember(selectedSkinPreset, isSlimModel, activeSkinFile, activeCapeFile, previewSkinUrl, selectedCapeId, refreshWardrobe) {
-                    "$selectedSkinPreset-$isSlimModel-${activeSkinFile?.path}-${activeCapeFile?.path}-$previewSkinUrl-$previewSkinAsset-$selectedCapeId-$refreshWardrobe"
+                refreshKey = remember(selectedSkinPreset, isSlimModel, activeSkinFile, activeCapeFile, previewSkinUrl, selectedCapeId, selectedWardrobeTab, refreshWardrobe) {
+                    "$selectedSkinPreset-$isSlimModel-${activeSkinFile?.path}-${activeCapeFile?.path}-$previewSkinUrl-$previewSkinAsset-$selectedCapeId-$selectedWardrobeTab-$refreshWardrobe"
                 }
             )
 
@@ -510,11 +515,6 @@ fun MinecraftSkinsScreen(
                                 .clickable {
                                     com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
                                     selectedSkinPreset = label
-                                    if (label == "Alex") {
-                                        isSlimModel = true
-                                    } else if (label == "Steve") {
-                                        isSlimModel = false
-                                    }
                                     if (label != "Current") {
                                         Toast.makeText(context, "$label skin selected", Toast.LENGTH_SHORT).show()
                                     }

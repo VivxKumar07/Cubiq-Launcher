@@ -51,6 +51,19 @@ private const val TAG = "ControlManager"
  * 控制布局管理者
  */
 object ControlManager {
+    fun isLegacyOrThirdPartyLayout(content: String): Boolean {
+        return content.contains("mControlDataList") ||
+                content.contains("controlDataList") ||
+                content.contains("mControlLayoutVersion") ||
+                content.contains("mControlInfoDataList") ||
+                content.contains("\"buttons\"") ||
+                content.contains("\"joysticks\"") ||
+                content.contains("\"version\":") ||
+                content.contains("\"version\" :") ||
+                content.contains("\"layoutVersion\"") ||
+                content.contains("mLayoutVersion")
+    }
+
     private fun resolveCustomLayoutName(file: java.io.File): String {
         return runCatching {
             val content = file.readText()
@@ -60,11 +73,15 @@ object ControlManager {
                 if (infoObj.has("name")) infoObj.getString("name") else null
             } else if (jobj.has("name")) {
                 jobj.getString("name")
+            } else if (jobj.has("layout_name")) {
+                jobj.getString("layout_name")
             } else null
         }.getOrNull()?.takeIf { it.isNotBlank() } ?: when (file.name) {
             "mojo_layout.json" -> "Mojo Launcher Controls"
             "zalith_1_layout.json" -> "Zalith Launcher 1 Controls"
-            else -> file.nameWithoutExtension.replace("_", " ")
+            "zalith_2_layout.json" -> "Zalith Launcher 2 Controls"
+            "pocket_edition_layout.json" -> "Pocket Edition Controls"
+            else -> file.nameWithoutExtension.replace("_", " ").replace("-", " ")
         }
     }
 
@@ -96,8 +113,19 @@ object ControlManager {
         scope.launch(Dispatchers.IO) {
             // Delete legacy default_layout.json if present
             runCatching {
-                val legacyDefault = File(PathManager.DIR_CONTROL_LAYOUTS, "default_layout.json")
-                if (legacyDefault.exists()) legacyDefault.delete()
+                val legacyFiles = listOf("default_layout.json", "cs_launcher_layout.json", "cs_layout.json", "cs_client_layout.json")
+                for (legacy in legacyFiles) {
+                    val f = File(PathManager.DIR_CONTROL_LAYOUTS, legacy)
+                    if (f.exists()) f.delete()
+                }
+                PathManager.DIR_CONTROL_LAYOUTS.listFiles()?.forEach { f ->
+                    if (f.name.contains("cs_launcher", ignoreCase = true) ||
+                        f.name.contains("cs_layout", ignoreCase = true) ||
+                        f.name.contains("cs_client", ignoreCase = true) ||
+                        f.name.contains("cslauncher", ignoreCase = true)) {
+                        f.delete()
+                    }
+                }
             }
 
             val defaultPresets = listOf(
@@ -109,9 +137,10 @@ object ControlManager {
 
             for (preset in defaultPresets) {
                 val targetFile = File(PathManager.DIR_CONTROL_LAYOUTS, preset)
-                if (!targetFile.exists()) {
+                val needsUpdate = !targetFile.exists()
+                if (needsUpdate) {
                     runCatching {
-                        context.copyAssetFile(fileName = preset, output = targetFile, overwrite = false)
+                        context.copyAssetFile(fileName = preset, output = targetFile, overwrite = true)
                     }
                 }
             }
@@ -137,22 +166,26 @@ object ControlManager {
             _dataList.update { emptyList() }
             PathManager.DIR_CONTROL_LAYOUTS.listFiles()?.mapNotNull { file ->
                 if (!(file.isFile && file.exists() && file.extension.equals("json", true))) return@mapNotNull null
+                if (file.name.contains("cs_launcher", ignoreCase = true) ||
+                    file.name.contains("cs_layout", ignoreCase = true) ||
+                    file.name.contains("cs_client", ignoreCase = true) ||
+                    file.name.contains("cslauncher", ignoreCase = true)) return@mapNotNull null
 
                 var isSupport = true
                 val layout: ControlLayout = try {
                     loadLayoutFromFile(file)
                 } catch (_: IllegalArgumentException) {
                     val rawText = runCatching { file.readText() }.getOrDefault("")
-                    val isCustom = file.name.contains("mojo", ignoreCase = true) ||
+                    val isCustom = isLegacyOrThirdPartyLayout(rawText) ||
+                            file.name.contains("mojo", ignoreCase = true) ||
                             file.name.contains("zl1", ignoreCase = true) ||
-                            file.name.contains("zalith_1", ignoreCase = true) ||
-                            rawText.contains("mControlDataList")
+                            file.name.contains("zalith_1", ignoreCase = true)
                     if (isCustom) {
                         isSupport = true
                         com.movtery.layer_controller.layout.EmptyControlLayout.copy(
                             info = com.movtery.layer_controller.layout.EmptyLayoutInfo.copy(
                                 name = com.movtery.layer_controller.data.lang.createTranslatable(default = resolveCustomLayoutName(file)),
-                                author = com.movtery.layer_controller.data.lang.createTranslatable(default = if (file.name.contains("zl1", ignoreCase = true) || file.name.contains("zalith_1", ignoreCase = true)) "ZL1 Controls" else "Mojo Launcher"),
+                                author = com.movtery.layer_controller.data.lang.createTranslatable(default = if (file.name.contains("zl1", ignoreCase = true) || file.name.contains("zalith_1", ignoreCase = true)) "ZL1 Controls" else "Custom / Pojav"),
                                 versionName = "1.0"
                             )
                         )
@@ -166,16 +199,16 @@ object ControlManager {
                     }
                 } catch (e: Exception) {
                     val rawText = runCatching { file.readText() }.getOrDefault("")
-                    val isCustom = file.name.contains("mojo", ignoreCase = true) ||
+                    val isCustom = isLegacyOrThirdPartyLayout(rawText) ||
+                            file.name.contains("mojo", ignoreCase = true) ||
                             file.name.contains("zl1", ignoreCase = true) ||
-                            file.name.contains("zalith_1", ignoreCase = true) ||
-                            rawText.contains("mControlDataList")
+                            file.name.contains("zalith_1", ignoreCase = true)
                     if (isCustom) {
                         isSupport = true
                         com.movtery.layer_controller.layout.EmptyControlLayout.copy(
                             info = com.movtery.layer_controller.layout.EmptyLayoutInfo.copy(
                                 name = com.movtery.layer_controller.data.lang.createTranslatable(default = resolveCustomLayoutName(file)),
-                                author = com.movtery.layer_controller.data.lang.createTranslatable(default = if (file.name.contains("zl1", ignoreCase = true) || file.name.contains("zalith_1", ignoreCase = true)) "ZL1 Controls" else "Mojo Launcher"),
+                                author = com.movtery.layer_controller.data.lang.createTranslatable(default = if (file.name.contains("zl1", ignoreCase = true) || file.name.contains("zalith_1", ignoreCase = true)) "ZL1 Controls" else "Custom / Pojav"),
                                 versionName = "1.0"
                             )
                         )
@@ -302,11 +335,18 @@ object ControlManager {
         val file = getNewRandomFile()
         try {
             val jsonString = inputStream.use { it.readString() }
-            if (jsonString.contains("mControlDataList") || jsonString.contains("\"version\": 8") || jsonString.contains("\"version\": 9") || jsonString.contains("\"version\":8") || jsonString.contains("\"version\":9")) {
+            if (isLegacyOrThirdPartyLayout(jsonString)) {
                 file.writeText(jsonString)
             } else {
-                val layout = loadLayoutFromString(jsonString)
-                layout.saveToFile(file)
+                try {
+                    val layout = loadLayoutFromString(jsonString)
+                    layout.saveToFile(file)
+                } catch (se: SerializationException) {
+                    // Fallback: If it's valid JSON from another launcher, save as third-party custom layout
+                    runCatching { org.json.JSONObject(jsonString) }.getOrNull()?.let {
+                        file.writeText(jsonString)
+                    } ?: throw se
+                }
             }
             refresh()
             onFinished()
