@@ -373,6 +373,21 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/editBackgroundColor_textView" />
 
+        <TextView
+            android:id="@+id/setBackgroundBitmap_textView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/editStrokeColor_textView" />
+
+        <TextView
+            android:id="@+id/editBackgroundColorWarning_textView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/setBackgroundBitmap_textView" />
+
         <!-- STROKE WIDTH -->
         <TextView
             android:id="@+id/editStrokeWidth_textView"
