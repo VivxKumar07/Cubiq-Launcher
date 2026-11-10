@@ -4,12 +4,16 @@ import android.app.NativeActivity
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
+import android.graphics.Rect
+import android.graphics.Region
 import android.os.Bundle
 import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import android.view.*
+import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.OnBackPressedDispatcherOwner
 import androidx.activity.setViewTreeOnBackPressedDispatcherOwner
@@ -18,9 +22,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,11 +30,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.*
 import androidx.savedstate.*
 import com.movtery.inputmap.keycodes.ControlEventKeycode
@@ -45,21 +47,30 @@ import com.movtery.layer_controller.layout.ControlLayout
 import com.movtery.layer_controller.layout.loadLayoutFromFile
 import com.movtery.layer_controller.layout.loadLayoutFromString
 import com.movtery.layer_controller.observable.ObservableControlLayout
+import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
+import com.movtery.zalithlauncher.ui.components.MenuState
 import com.movtery.zalithlauncher.ui.control.event.LAUNCHER_EVENT_SWITCH_MENU
 import com.movtery.zalithlauncher.ui.screens.game.elements.DraggableGameBall
+import com.movtery.zalithlauncher.ui.screens.game.elements.ForceCloseOperation
+import com.movtery.zalithlauncher.ui.screens.game.elements.GameMenuSubscreen
+import com.movtery.zalithlauncher.ui.screens.game.elements.ReplacementControlOperation
+import com.movtery.zalithlauncher.ui.screens.game.elements.ReplacementControlState
 import com.movtery.zalithlauncher.ui.theme.ZalithLauncherTheme
+import com.movtery.zalithlauncher.ui.toAndroidString
+import com.movtery.zalithlauncher.viewmodel.GamepadViewModel
 import git.artdeell.mojo.input.LayoutConverter
 import kotlinx.coroutines.delay
 import org.lwjgl.glfw.CallbackBridge
 import java.io.File
+import java.lang.reflect.Proxy
 
 /**
  * Native host activity for Horizon (Minecraft Rust Edition).
- * Directly hosts Compose UI (ZL2 ControlBoxLayout, ZL2 DraggableGameBall menu, and Splash Screen)
- * over the NativeActivity surface via WindowManager TYPE_APPLICATION_PANEL to guarantee
- * hardware-accelerated rendering on top of the native Vulkan/EGL surface.
+ * Directly hosts Compose UI (ZL2 ControlBoxLayout, authentic ZL2 GameMenuSubscreen, and DraggableGameBall)
+ * over the NativeActivity surface via WindowManager TYPE_APPLICATION_PANEL with OnComputeInternalInsetsListener
+ * so touch events outside the buttons seamlessly pass straight through to the underlying Rust game engine.
  */
 open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner, OnBackPressedDispatcherOwner {
 
@@ -67,6 +78,7 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
         private const val TAG = "HorizonActivity"
 
         init {
+            unsealHiddenApis()
             try {
                 var filesDir = File("/data/user/0/com.cubiq.app/files")
                 if (!filesDir.exists()) {
@@ -89,6 +101,20 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                 } catch (_: Throwable) {}
             }
         }
+
+        private fun unsealHiddenApis() {
+            try {
+                val forName = Class::class.java.getDeclaredMethod("forName", String::class.java)
+                val vmRuntimeClass = forName.invoke(null, "dalvik.system.VMRuntime") as Class<*>
+                val getRuntimeMethod = vmRuntimeClass.getDeclaredMethod("getRuntime")
+                val setHiddenApiExemptionsMethod = vmRuntimeClass.getDeclaredMethod("setHiddenApiExemptions", Array<String>::class.java)
+                val vmRuntime = getRuntimeMethod.invoke(null)
+                setHiddenApiExemptionsMethod.invoke(vmRuntime, arrayOf("L"))
+                Log.i(TAG, "Successfully exempted hidden APIs")
+            } catch (t: Throwable) {
+                Log.w(TAG, "Hidden API unseal failed: ${t.message}")
+            }
+        }
     }
 
     private external fun nativeDocumentResult(request: Int, result: Int, uri: String?)
@@ -107,21 +133,61 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
     private var overlayContainer: PassthroughOverlayLayout? = null
     private var windowManagerRef: WindowManager? = null
 
+    /**
+     * Overlay container that dynamically restricts its touchable window region
+     * to only the on-screen buttons and menu ball.
+     * All touches outside this region pass through to the underlying NativeActivity window.
+     */
     inner class PassthroughOverlayLayout(context: Context) : FrameLayout(context) {
-        override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-            // First let Compose UI (buttons, joystick, floating menu ball) handle the event
-            val handled = super.dispatchTouchEvent(ev)
-            if (!handled) {
-                // If touch fell on empty / transparent space, pass it directly to the underlying
-                // NativeActivity window so the Rust engine can perform camera look / drag / interaction
-                return this@HorizonActivity.dispatchToNative(ev)
-            }
-            return true
-        }
-    }
+        private val touchableRegion = Region()
 
-    fun dispatchToNative(ev: MotionEvent): Boolean {
-        return super.dispatchTouchEvent(ev)
+        fun updateTouchableRegions(rects: List<Rect>, isModal: Boolean) {
+            val w = width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+            val h = height.takeIf { it > 0 } ?: resources.displayMetrics.heightPixels
+
+            if (isModal) {
+                touchableRegion.set(0, 0, w, h)
+            } else {
+                touchableRegion.setEmpty()
+                for (r in rects) {
+                    touchableRegion.op(r, Region.Op.UNION)
+                }
+            }
+            viewTreeObserver.dispatchOnGlobalLayout()
+        }
+
+        override fun onAttachedToWindow() {
+            super.onAttachedToWindow()
+            setupInsetsListener()
+        }
+
+        private fun setupInsetsListener() {
+            try {
+                val listenerClass = Class.forName("android.view.ViewTreeObserver\$OnComputeInternalInsetsListener")
+                val addMethod = ViewTreeObserver::class.java.getMethod("addOnComputeInternalInsetsListener", listenerClass)
+                val infoClass = Class.forName("android.view.ViewTreeObserver\$InternalInsetsInfo")
+                val setTouchableInsetsMethod = infoClass.getMethod("setTouchableInsets", Int::class.javaPrimitiveType)
+                val touchableRegionField = infoClass.getField("touchableRegion")
+                val touchableInsetsRegionConstant = infoClass.getField("TOUCHABLE_INSETS_REGION").getInt(null)
+
+                val listener = Proxy.newProxyInstance(
+                    listenerClass.classLoader,
+                    arrayOf(listenerClass)
+                ) { _, method, args ->
+                    if (method?.name == "onComputeInternalInsets" && args != null && args.isNotEmpty()) {
+                        val inoutInfo = args[0]
+                        setTouchableInsetsMethod.invoke(inoutInfo, touchableInsetsRegionConstant)
+                        val region = touchableRegionField.get(inoutInfo) as Region
+                        region.set(touchableRegion)
+                    }
+                    null
+                }
+                addMethod.invoke(viewTreeObserver, listener)
+                Log.i(TAG, "OnComputeInternalInsetsListener attached successfully")
+            } catch (e: Throwable) {
+                Log.e(TAG, "Failed to register OnComputeInternalInsetsListener: ${e.message}", e)
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -271,6 +337,13 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
     private fun HorizonInGameScreen() {
         var showSplash by remember { mutableStateOf(true) }
         var isMenuOpen by remember { mutableStateOf(false) }
+        var controlMenuTabIndex by remember { mutableIntStateOf(0) }
+        var forceCloseState by remember { mutableStateOf<ForceCloseOperation>(ForceCloseOperation.None) }
+        var replacementControlState by remember { mutableStateOf<ReplacementControlState>(ReplacementControlState.None) }
+
+        val gamepadViewModel = remember {
+            ViewModelProvider(this@HorizonActivity)[GamepadViewModel::class.java]
+        }
 
         // Start splash fade timer
         LaunchedEffect(Unit) {
@@ -297,6 +370,40 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
 
         val moveOnlyPointers = remember { mutableSetOf<PointerId>() }
         val occupiedPointers = remember { mutableSetOf<PointerId>() }
+
+        val ballPosSetting = if (isPocket) AllSettings.menuBallPosPocket else AllSettings.menuBallPos
+
+        // Dynamically update the touchable region of the overlay window so touches
+        // on empty areas (title screen buttons, crosshair camera drag) pass through to Rust
+        val density = LocalDensity.current.density
+        val screenWidth = resources.displayMetrics.widthPixels
+        val screenHeight = resources.displayMetrics.heightPixels
+
+        LaunchedEffect(isMenuOpen, activeLayoutName, ballPosSetting.state, forceCloseState, replacementControlState) {
+            val rects = mutableListOf<Rect>()
+            val isModal = isMenuOpen || forceCloseState == ForceCloseOperation.Show || replacementControlState == ReplacementControlState.Show
+            if (isModal) {
+                overlayContainer?.updateTouchableRegions(emptyList(), isModal = true)
+            } else {
+                // 1. Draggable Game Ball
+                val ballX = (ballPosSetting.state.x * density).toInt()
+                val ballY = (ballPosSetting.state.y * density).toInt()
+                val ballSize = (56 * density).toInt()
+                rects.add(Rect(ballX - 10, ballY - 10, ballX + ballSize + 10, ballY + ballSize + 10))
+
+                // 2. Control clusters:
+                // Left cluster (D-pad / Joystick):
+                rects.add(Rect(0, (screenHeight * 0.40f).toInt(), (screenWidth * 0.36f).toInt(), screenHeight))
+
+                // Right cluster (Action buttons, Jump, Sneak, Attack):
+                rects.add(Rect((screenWidth * 0.64f).toInt(), (screenHeight * 0.40f).toInt(), screenWidth, screenHeight))
+
+                // Top cluster (Keyboard, Pause, etc.):
+                rects.add(Rect((screenWidth * 0.30f).toInt(), 0, (screenWidth * 0.70f).toInt(), (screenHeight * 0.16f).toInt()))
+
+                overlayContainer?.updateTouchableRegions(rects, isModal = false)
+            }
+        }
 
         val eventHandler = remember {
             EventHandler { event: ClickEvent, pressed: Boolean ->
@@ -391,7 +498,6 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
             }
 
             // 2. The Iconic ZL2 3-Horizontal-Line Floating Menu Ball!
-            val ballPosSetting = if (isPocket) AllSettings.menuBallPosPocket else AllSettings.menuBallPos
             DraggableGameBall(
                 position = ballPosSetting.state,
                 onPositionChanged = { ballPosSetting.updateState(it) },
@@ -404,151 +510,56 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                 onClick = { isMenuOpen = !isMenuOpen }
             )
 
-            // 3. In-Game Menu Dialog (when 3-line menu ball is clicked)
-            if (isMenuOpen) {
-                Dialog(onDismissRequest = { isMenuOpen = false }) {
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth(0.85f)
-                            .wrapContentHeight(),
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color(0xFF1E202E),
-                        tonalElevation = 8.dp
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(20.dp)
-                                .verticalScroll(rememberScrollState())
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Game Menu",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-                                TextButton(onClick = { isMenuOpen = false }) {
-                                    Text("✕", fontSize = 18.sp, color = Color.White)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Switch layout options
-                            Text(
-                                text = "Control Layout:",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.LightGray
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Button(
-                                    onClick = { activeLayoutName = "zalith_2_layout.json" },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (activeLayoutName == "zalith_2_layout.json") MaterialTheme.colorScheme.primary else Color(0xFF2C2F40)
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("ZL2 Layout", fontSize = 12.sp)
-                                }
-                                Button(
-                                    onClick = { activeLayoutName = "pocket_edition_layout.json" },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = if (activeLayoutName == "pocket_edition_layout.json") MaterialTheme.colorScheme.primary else Color(0xFF2C2F40)
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Pocket Edition", fontSize = 12.sp)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Opacity slider
-                            Text(
-                                text = "Button Opacity: ${(controlsOpacity * 100).toInt()}%",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.LightGray
-                            )
-                            Slider(
-                                value = controlsOpacity,
-                                onValueChange = { controlsOpacity = it },
-                                valueRange = 0.1f..1.0f
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Quick function buttons
-                            Text(
-                                text = "Quick Keys:",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.LightGray
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                listOf(
-                                    "F3" to KeyEvent.KEYCODE_F3,
-                                    "F5" to KeyEvent.KEYCODE_F5,
-                                    "Chat" to KeyEvent.KEYCODE_T,
-                                    "Esc" to KeyEvent.KEYCODE_ESCAPE,
-                                    "Inv" to KeyEvent.KEYCODE_E
-                                ).forEach { (label, keycode) ->
-                                    Button(
-                                        onClick = {
-                                            val now = SystemClock.uptimeMillis()
-                                            dispatchKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, keycode, 0))
-                                            dispatchKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, keycode, 0))
-                                        },
-                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2C2F40)),
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text(label, fontSize = 11.sp, color = Color.White)
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(20.dp))
-
-                            // Bottom action buttons: Return to Game & Quit Game
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                OutlinedButton(
-                                    onClick = { isMenuOpen = false },
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Resume", color = Color.White)
-                                }
-                                Button(
-                                    onClick = {
-                                        isMenuOpen = false
-                                        finish()
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F)),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Text("Quit Game", color = Color.White)
-                                }
-                            }
-                        }
-                    }
+            // 3. Authentic Zalith Launcher 2 In-Game Menu (GameMenuSubscreen)
+            GameMenuSubscreen(
+                state = if (isMenuOpen) MenuState.SHOW else MenuState.HIDE,
+                controlMenuTabIndex = controlMenuTabIndex,
+                onControlMenuTabChange = { controlMenuTabIndex = it },
+                gamepadViewModel = gamepadViewModel,
+                closeScreen = { isMenuOpen = false },
+                onForceClose = {
+                    forceCloseState = ForceCloseOperation.Show
+                },
+                onSwitchLog = {},
+                enableTerracotta = false,
+                onOpenTerracottaMenu = {},
+                onRefreshWindowSize = {},
+                onInputMethod = {
+                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+                    imm?.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0)
+                },
+                onSendKeycode = {},
+                onReplacementControl = {
+                    replacementControlState = ReplacementControlState.Show
+                },
+                onEditLayout = {},
+                onShowToast = { text, duration ->
+                    Toast.makeText(this@HorizonActivity, text.toAndroidString(this@HorizonActivity), duration).show()
                 }
-            }
+            )
+
+            // Force close confirmation dialog
+            ForceCloseOperation(
+                operation = forceCloseState,
+                onChange = { forceCloseState = it },
+                onForceClose = {
+                    isMenuOpen = false
+                    finish()
+                },
+                text = stringResource(R.string.game_dialog_force_close_message)
+            )
+
+            // Layout switcher dialog
+            ReplacementControlOperation(
+                operation = replacementControlState,
+                onChange = { replacementControlState = it },
+                currentLayout = File(PathManager.DIR_CONTROL_LAYOUTS, activeLayoutName),
+                replacementControl = { file ->
+                    activeLayoutName = file.name
+                    runCatching { AllSettings.controlLayout.save(file.name) }
+                    replacementControlState = ReplacementControlState.None
+                }
+            )
 
             // 4. Clean Branded Splash Screen Overlay
             AnimatedVisibility(
