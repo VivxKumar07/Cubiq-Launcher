@@ -1682,6 +1682,29 @@ fun GameScreen(
 
                 )
 
+            } else if (isZl1Layout) {
+                var zl1BallPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+                com.movtery.zalithlauncher.ui.components.FloatingBall(
+                    position = zl1BallPos,
+                    onPositionChanged = { zl1BallPos = it },
+                    onClick = { showLegacySideMenu = !showLegacySideMenu },
+                    color = Color.Transparent,
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(Color(0xEE16161A), androidx.compose.foundation.shape.RoundedCornerShape(10.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sharp_settings_24),
+                            contentDescription = "ZL1 Game Menu",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
             }
 
             if (AllSettings.hudScreenCaptureTools.state && !viewModel.isEditingLayout && !isEditingLegacyLayout && viewModel.controlLayerHideState != HideLayerWhen.WhenMouse) {
@@ -1707,6 +1730,10 @@ fun GameScreen(
                 onSendKeycode = {
                     showLegacySideMenu = false
                     viewModel.sendKeycodeState = SendKeycodeState.ShowDialog
+                },
+                onReplaceControl = {
+                    showLegacySideMenu = false
+                    viewModel.replacementControlState = ReplacementControlState.Show
                 },
                 onStartEditControls = {
                     showLegacySideMenu = false
@@ -1737,6 +1764,24 @@ fun GameScreen(
                         android.widget.Toast.makeText(context, "Layout saved!", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 },
+                onSaveAndExit = {
+                    val exitAction = {
+                        isEditingLegacyLayout = false
+                        mojoLayoutInstance?.setModifiable(false)
+                        zl1LayoutInstance?.setModifiable(false)
+                        showLegacySideMenu = false
+                    }
+                    if (isMojoLayout) {
+                        viewModel.currentControlFile?.absolutePath?.let { path ->
+                            mojoLayoutInstance?.saveLayout(path)
+                        }
+                        exitAction()
+                    } else {
+                        zl1LayoutInstance?.openSaveAndExitDialog(net.kdt.pojavlaunch.customcontrols.EditorExitable {
+                            exitAction()
+                        })
+                    }
+                },
                 onSelectDefaultLayout = {
                     if (isMojoLayout) mojoLayoutInstance?.openSetDefaultDialog()
                     else zl1LayoutInstance?.openSetDefaultDialog()
@@ -1746,10 +1791,7 @@ fun GameScreen(
                         isEditingLegacyLayout = false
                         mojoLayoutInstance?.setModifiable(false)
                         zl1LayoutInstance?.setModifiable(false)
-                        viewModel.currentControlFile?.absolutePath?.let { path ->
-                            if (isMojoLayout) mojoLayoutInstance?.saveLayout(path)
-                            else zl1LayoutInstance?.saveLayout(path)
-                        }
+                        showLegacySideMenu = false
                     }
                     if (isMojoLayout) {
                         mojoLayoutInstance?.openExitDialog(git.artdeell.mojo.input.EditorExitable { exitAction() })
