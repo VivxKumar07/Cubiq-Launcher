@@ -89,6 +89,12 @@ import androidx.compose.foundation.layout.width
 
 import androidx.compose.foundation.layout.widthIn
 
+import androidx.compose.foundation.layout.wrapContentWidth
+
+import androidx.compose.foundation.layout.heightIn
+
+import androidx.compose.runtime.DisposableEffect
+
 import androidx.compose.foundation.rememberScrollState
 
 import com.movtery.zalithlauncher.ui.toAndroidString
@@ -7381,38 +7387,201 @@ private fun KeyboardMouseSettingsTab(
             val action = activeRemapAction!!
             var selectedLabel by remember { mutableStateOf(com.movtery.zalithlauncher.ui.control.input.KeyboardRemapManager.getBindingLabel(action, activeRemapDefaultLabel)) }
             var isListening by remember { mutableStateOf(false) }
+            var isDropdownOpen by remember { mutableStateOf(true) }
+            var selectedCategory by remember { mutableStateOf("All") }
+            var searchQuery by remember { mutableStateOf("") }
 
-            var selectedRemapTab by remember { mutableIntStateOf(if (activeRemapIsMouse) 2 else 0) }
+            // Auto-detect keyboard / mouse events via Activity Window Callback
+            val activity = (context as? android.app.Activity) ?: ((context as? android.content.ContextWrapper)?.baseContext as? android.app.Activity)
+            DisposableEffect(isListening) {
+                if (isListening && activity != null) {
+                    val window = activity.window
+                    val oldCallback = window.callback
+                    window.callback = object : android.view.Window.Callback by oldCallback {
+                        override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+                            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                                val keyName = when (event.keyCode) {
+                                    android.view.KeyEvent.KEYCODE_W -> "Key W"
+                                    android.view.KeyEvent.KEYCODE_A -> "Key A"
+                                    android.view.KeyEvent.KEYCODE_S -> "Key S"
+                                    android.view.KeyEvent.KEYCODE_D -> "Key D"
+                                    android.view.KeyEvent.KEYCODE_SPACE -> "Space"
+                                    android.view.KeyEvent.KEYCODE_SHIFT_LEFT -> "Left Shift"
+                                    android.view.KeyEvent.KEYCODE_SHIFT_RIGHT -> "Right Shift"
+                                    android.view.KeyEvent.KEYCODE_CTRL_LEFT -> "Left Control"
+                                    android.view.KeyEvent.KEYCODE_CTRL_RIGHT -> "Right Control"
+                                    android.view.KeyEvent.KEYCODE_ALT_LEFT -> "Left Alt"
+                                    android.view.KeyEvent.KEYCODE_ALT_RIGHT -> "Right Alt"
+                                    android.view.KeyEvent.KEYCODE_TAB -> "Tab"
+                                    android.view.KeyEvent.KEYCODE_ESCAPE -> "Escape"
+                                    android.view.KeyEvent.KEYCODE_ENTER -> "Enter"
+                                    android.view.KeyEvent.KEYCODE_DEL -> "Backspace"
+                                    android.view.KeyEvent.KEYCODE_DPAD_UP -> "DPAD_UP"
+                                    android.view.KeyEvent.KEYCODE_DPAD_DOWN -> "DPAD_DOWN"
+                                    android.view.KeyEvent.KEYCODE_DPAD_LEFT -> "DPAD_LEFT"
+                                    android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> "DPAD_RIGHT"
+                                    android.view.KeyEvent.KEYCODE_F1 -> "F1"
+                                    android.view.KeyEvent.KEYCODE_F2 -> "F2"
+                                    android.view.KeyEvent.KEYCODE_F3 -> "F3"
+                                    android.view.KeyEvent.KEYCODE_F4 -> "F4"
+                                    android.view.KeyEvent.KEYCODE_F5 -> "F5"
+                                    android.view.KeyEvent.KEYCODE_F6 -> "F6"
+                                    android.view.KeyEvent.KEYCODE_F7 -> "F7"
+                                    android.view.KeyEvent.KEYCODE_F8 -> "F8"
+                                    android.view.KeyEvent.KEYCODE_F9 -> "F9"
+                                    android.view.KeyEvent.KEYCODE_F10 -> "F10"
+                                    android.view.KeyEvent.KEYCODE_F11 -> "F11"
+                                    android.view.KeyEvent.KEYCODE_F12 -> "F12"
+                                    else -> {
+                                        val s = android.view.KeyEvent.keyCodeToString(event.keyCode).removePrefix("KEYCODE_")
+                                        if (s.length == 1 && s[0] in 'A'..'Z') "Key $s"
+                                        else if (s.length == 1 && s[0] in '0'..'9') "Key $s"
+                                        else s
+                                    }
+                                }
+                                if (keyName.isNotBlank() && keyName != "UNKNOWN") {
+                                    selectedLabel = keyName
+                                    isListening = false
+                                    return true
+                                }
+                            }
+                            return oldCallback.dispatchKeyEvent(event)
+                        }
+
+                        override fun dispatchGenericMotionEvent(event: android.view.MotionEvent): Boolean {
+                            if (event.actionMasked == android.view.MotionEvent.ACTION_BUTTON_PRESS || event.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+                                val bs = event.buttonState
+                                val mouseName = when {
+                                    (bs and android.view.MotionEvent.BUTTON_PRIMARY) != 0 -> "Left Click (Button 1)"
+                                    (bs and android.view.MotionEvent.BUTTON_SECONDARY) != 0 -> "Right Click (Button 2)"
+                                    (bs and android.view.MotionEvent.BUTTON_TERTIARY) != 0 -> "Middle Click (Button 3)"
+                                    (bs and android.view.MotionEvent.BUTTON_BACK) != 0 -> "Mouse 4 (Back)"
+                                    (bs and android.view.MotionEvent.BUTTON_FORWARD) != 0 -> "Mouse 5 (Forward)"
+                                    else -> null
+                                }
+                                if (mouseName != null) {
+                                    selectedLabel = mouseName
+                                    isListening = false
+                                    return true
+                                }
+                            }
+                            if (event.actionMasked == android.view.MotionEvent.ACTION_SCROLL) {
+                                val vScroll = event.getAxisValue(android.view.MotionEvent.AXIS_VSCROLL)
+                                if (vScroll > 0) {
+                                    selectedLabel = "Mouse Wheel Up"
+                                    isListening = false
+                                    return true
+                                } else if (vScroll < 0) {
+                                    selectedLabel = "Mouse Wheel Down"
+                                    isListening = false
+                                    return true
+                                }
+                            }
+                            return oldCallback.dispatchGenericMotionEvent(event)
+                        }
+                    }
+                    onDispose {
+                        window.callback = oldCallback
+                    }
+                } else {
+                    onDispose {}
+                }
+            }
+
+            val allAvailableKeys = remember {
+                listOf(
+                    // Mouse buttons
+                    "Left Click (Button 1)",
+                    "Right Click (Button 2)",
+                    "Middle Click (Button 3)",
+                    "Mouse 4 (Back)",
+                    "Mouse 5 (Forward)",
+                    "Mouse Wheel Up",
+                    "Mouse Wheel Down",
+                    // D-Pad / Controller
+                    "DPAD_UP",
+                    "DPAD_DOWN",
+                    "DPAD_LEFT",
+                    "DPAD_RIGHT",
+                    // Movement & Main
+                    "Space",
+                    "Left Shift",
+                    "Right Shift",
+                    "Left Control",
+                    "Right Control",
+                    "Left Alt",
+                    "Right Alt",
+                    "Tab",
+                    "Escape",
+                    "Enter",
+                    "Backspace",
+                    // Letters A-Z
+                    "Key A", "Key B", "Key C", "Key D", "Key E", "Key F", "Key G",
+                    "Key H", "Key I", "Key J", "Key K", "Key L", "Key M", "Key N",
+                    "Key O", "Key P", "Key Q", "Key R", "Key S", "Key T", "Key U",
+                    "Key V", "Key W", "Key X", "Key Y", "Key Z",
+                    // Numbers 0-9
+                    "Key 0", "Key 1", "Key 2", "Key 3", "Key 4",
+                    "Key 5", "Key 6", "Key 7", "Key 8", "Key 9",
+                    // Function keys F1-F12
+                    "F1", "F2", "F3", "F4", "F5", "F6",
+                    "F7", "F8", "F9", "F10", "F11", "F12",
+                    // Directional Arrows
+                    "Up Arrow", "Down Arrow", "Left Arrow", "Right Arrow"
+                )
+            }
+
+            val displayedKeys = remember(selectedCategory, searchQuery) {
+                allAvailableKeys.filter { key ->
+                    val matchesCategory = when (selectedCategory) {
+                        "Mouse" -> key.startsWith("Left Click") || key.startsWith("Right Click") || key.startsWith("Middle Click") || key.startsWith("Mouse")
+                        "D-Pad" -> key.startsWith("DPAD_")
+                        "Move" -> key in listOf("Space", "Left Shift", "Right Shift", "Left Control", "Right Control", "Left Alt", "Right Alt", "Tab", "Escape", "Enter", "Backspace", "Up Arrow", "Down Arrow", "Left Arrow", "Right Arrow")
+                        "Letters" -> key.startsWith("Key ") && key.length == 5 && key[4].isLetter()
+                        "Numbers" -> key.startsWith("Key ") && key.length == 5 && key[4].isDigit()
+                        "F-Keys" -> key.startsWith("F") && key.length in 2..3 && key.drop(1).all { it.isDigit() }
+                        else -> true
+                    }
+                    val matchesSearch = searchQuery.isBlank() || key.contains(searchQuery, ignoreCase = true)
+                    matchesCategory && matchesSearch
+                }
+            }
 
             androidx.compose.ui.window.Dialog(
-                onDismissRequest = { activeRemapAction = null }
+                onDismissRequest = { activeRemapAction = null },
+                properties = androidx.compose.ui.window.DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    dismissOnClickOutside = !isListening
+                )
             ) {
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth(0.95f)
-                        .wrapContentHeight(),
-                    shape = RoundedCornerShape(12.dp),
+                        .widthIn(min = 280.dp, max = 430.dp)
+                        .fillMaxWidth(0.92f)
+                        .wrapContentHeight()
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    shape = RoundedCornerShape(8.dp),
                     color = Color(0xFF1B1C22),
-                    tonalElevation = 6.dp,
+                    tonalElevation = 8.dp,
                     border = BorderStroke(1.dp, Color(0xFF333540))
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(18.dp)
+                            .padding(14.dp)
                             .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Title & Current Badge
+                        // Title & Current Badge (Row with weight to prevent squishing)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
                                 Text(
                                     text = "Remap Key",
                                     color = Color.Gray,
-                                    fontSize = 11.sp,
+                                    fontSize = 10.5.sp,
                                     fontFamily = MinecraftFontFamily
                                 )
                                 Text(
@@ -7420,22 +7589,28 @@ private fun KeyboardMouseSettingsTab(
                                     color = Color.White,
                                     fontFamily = MinecraftFontFamily,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp
+                                    fontSize = 13.5.sp,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
                             }
+                            Spacer(modifier = Modifier.width(8.dp))
                             Box(
                                 modifier = Modifier
+                                    .wrapContentWidth()
                                     .clip(RoundedCornerShape(4.dp))
                                     .background(Color(0xFF1C3A24))
                                     .border(BorderStroke(1.dp, Color(0xFF55FF55)), RoundedCornerShape(4.dp))
-                                    .padding(horizontal = 10.dp, vertical = 5.dp)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text = selectedLabel,
                                     color = Color(0xFF55FF55),
                                     fontFamily = MinecraftFontFamily,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    softWrap = false
                                 )
                             }
                         }
@@ -7444,135 +7619,194 @@ private fun KeyboardMouseSettingsTab(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(if (isListening) Color(0xFF2E7D32) else Color(0xFF262730))
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(if (isListening) Color(0xFF2E7D32) else Color(0xFF25262F))
                                 .border(
-                                    BorderStroke(1.5.dp, if (isListening) Color(0xFF55FF55) else Color(0xFF404250)),
-                                    RoundedCornerShape(6.dp)
+                                    BorderStroke(1.dp, if (isListening) Color(0xFF55FF55) else Color(0xFF3E4050)),
+                                    RoundedCornerShape(4.dp)
                                 )
                                 .clickable { isListening = !isListening }
-                                .padding(vertical = 12.dp, horizontal = 12.dp),
+                                .padding(vertical = 8.dp, horizontal = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (isListening) "⚡ LISTENING... Press Any Keyboard Key or Mouse Button" else "🔍 AUTO DETECT (Hardware Key / Mouse)",
+                                text = if (isListening) "⚡ LISTENING... Press Any Key or Mouse" else "🔍 AUTO DETECT (Hardware Key / Mouse)",
                                 color = if (isListening) Color.White else Color(0xFF55FF55),
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 11.5.sp
+                                fontSize = 11.sp,
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
 
-                        // Tabs: Keyboard / Functions / Mouse
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            listOf("Keyboard (A-Z)", "Numbers & F-Keys", "Mouse & Actions").forEachIndexed { idx, title ->
-                                val isChosen = selectedRemapTab == idx
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(if (isChosen) Color(0xFF2E7D32) else Color(0xFF24252E))
-                                        .border(
-                                            BorderStroke(1.dp, if (isChosen) Color(0xFF55FF55) else Color(0xFF383A48)),
-                                            RoundedCornerShape(4.dp)
-                                        )
-                                        .clickable { selectedRemapTab = idx }
-                                        .padding(vertical = 7.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = title,
-                                        color = if (isChosen) Color.White else Color.LightGray,
-                                        fontFamily = MinecraftFontFamily,
-                                        fontSize = 10.sp,
-                                        fontWeight = if (isChosen) FontWeight.Bold else FontWeight.Normal
-                                    )
-                                }
+                        // Dropdown Button (Mapping Selector)
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "MAPPING (SELECT KEY):",
+                                color = Color(0xFFAAAAAA),
+                                fontSize = 10.5.sp,
+                                fontFamily = MinecraftFontFamily,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFF22242D))
+                                    .border(BorderStroke(1.dp, Color(0xFF3C3E4C)), RoundedCornerShape(4.dp))
+                                    .clickable { isDropdownOpen = !isDropdownOpen }
+                                    .padding(horizontal = 10.dp, vertical = 7.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = selectedLabel,
+                                    color = Color.White,
+                                    fontFamily = MinecraftFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.5.sp,
+                                    maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = if (isDropdownOpen) "▲" else "▼",
+                                    color = Color(0xFF55FF55),
+                                    fontFamily = MinecraftFontFamily,
+                                    fontSize = 11.sp
+                                )
                             }
                         }
 
-                        // Key Tiles Grid for Chosen Tab
-                        val keyList = when (selectedRemapTab) {
-                            0 -> listOf(
-                                "Key W", "Key A", "Key S", "Key D", "Space", "Left Shift", "Left Control", "Left Alt",
-                                "Key E", "Key Q", "Key F", "Key R", "Key C", "Key T", "Tab", "Escape", "Enter", "Backspace",
-                                "Key Z", "Key X", "Key V", "Key B", "Key G", "Key H", "Key J", "Key K", "Key L", "Key M",
-                                "Key I", "Key O", "Key P", "Key U", "Key Y", "Key N"
-                            )
-                            1 -> listOf(
-                                "Key 1", "Key 2", "Key 3", "Key 4", "Key 5", "Key 6", "Key 7", "Key 8", "Key 9", "Key 0",
-                                "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"
-                            )
-                            else -> listOf(
-                                "Mouse Left", "Mouse Right", "Mouse Middle", "Mouse 4", "Mouse 5",
-                                "Scroll Up", "Scroll Down", "Up Arrow", "Down Arrow", "Left Arrow", "Right Arrow"
-                            )
-                        }
-
-                        androidx.compose.foundation.layout.FlowRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            keyList.forEach { k ->
-                                val isSelected = selectedLabel == k
-                                Box(
+                        // Cubiq-Style Radio List (Pojav / ZL1 Style)
+                        if (isDropdownOpen) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFF16171B))
+                                    .border(BorderStroke(1.dp, Color(0xFF2E303A)), RoundedCornerShape(4.dp))
+                                    .padding(6.dp),
+                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                // Category Filter Pills
+                                val categories = listOf("All", "Mouse", "D-Pad", "Move", "Letters", "Numbers", "F-Keys")
+                                Row(
                                     modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(if (isSelected) Color(0xFF2E7D32) else Color(0xFF282A34))
-                                        .border(
-                                            BorderStroke(1.dp, if (isSelected) Color(0xFF55FF55) else Color(0xFF3D4050)),
-                                            RoundedCornerShape(4.dp)
-                                        )
-                                        .clickable {
-                                            selectedLabel = k
-                                            isListening = false
+                                        .fillMaxWidth()
+                                        .horizontalScroll(rememberScrollState()),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    categories.forEach { cat ->
+                                        val isChosen = selectedCategory == cat
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(3.dp))
+                                                .background(if (isChosen) Color(0xFF2E7D32) else Color(0xFF22242B))
+                                                .border(
+                                                    BorderStroke(1.dp, if (isChosen) Color(0xFF55FF55) else Color(0xFF353742)),
+                                                    RoundedCornerShape(3.dp)
+                                                )
+                                                .clickable { selectedCategory = cat }
+                                                .padding(horizontal = 7.dp, vertical = 3.dp)
+                                        ) {
+                                            Text(
+                                                text = cat,
+                                                color = if (isChosen) Color.White else Color(0xFFAAAAAA),
+                                                fontFamily = MinecraftFontFamily,
+                                                fontSize = 9.5.sp,
+                                                fontWeight = if (isChosen) FontWeight.Bold else FontWeight.Normal
+                                            )
                                         }
-                                        .padding(horizontal = 9.dp, vertical = 6.dp)
+                                    }
+                                }
+
+                                // Scrollable Radio Item Rows
+                                val listScrollState = rememberScrollState()
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(max = 145.dp)
+                                        .verticalScroll(listScrollState),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
-                                    Text(
-                                        text = k,
-                                        color = if (isSelected) Color(0xFF55FF55) else Color.White,
-                                        fontFamily = MinecraftFontFamily,
-                                        fontSize = 11.sp,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                    )
+                                    displayedKeys.forEach { keyItem ->
+                                        val isSelected = selectedLabel.equals(keyItem, ignoreCase = true)
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(3.dp))
+                                                .background(if (isSelected) Color(0xFF1E3825) else Color.Transparent)
+                                                .clickable {
+                                                    selectedLabel = keyItem
+                                                    isListening = false
+                                                }
+                                                .padding(horizontal = 8.dp, vertical = 5.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = keyItem,
+                                                color = if (isSelected) Color(0xFF55FF55) else Color(0xFFCCCCCC),
+                                                fontFamily = MinecraftFontFamily,
+                                                fontSize = 11.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                                maxLines = 1
+                                            )
+                                            // Radio Button Indicator
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(15.dp)
+                                                    .border(
+                                                        BorderStroke(1.5.dp, if (isSelected) Color(0xFF55FF55) else Color(0xFF666670)),
+                                                        CircleShape
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (isSelected) {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(7.dp)
+                                                            .clip(CircleShape)
+                                                            .background(Color(0xFF55FF55))
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        // Bottom Non-Overlapping Action Buttons
+                        // Bottom Action Buttons (CANCEL / SAVE BINDING)
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             MinecraftButton(
                                 onClick = { activeRemapAction = null },
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(38.dp),
+                                    .height(34.dp),
                                 style = MinecraftButtonStyle.STONE
                             ) {
-                                Text("CANCEL", fontFamily = MinecraftFontFamily, fontSize = 11.5.sp, color = Color.White)
+                                Text("CANCEL", fontFamily = MinecraftFontFamily, fontSize = 11.sp, color = Color.White)
                             }
                             MinecraftButton(
                                 onClick = {
-                                    com.movtery.zalithlauncher.ui.control.input.KeyboardRemapManager.saveBinding(action, 0, selectedLabel, context)
+                                    val code = com.movtery.zalithlauncher.ui.control.input.KeyboardRemapManager.getActionKeyCode(selectedLabel, 0)
+                                    com.movtery.zalithlauncher.ui.control.input.KeyboardRemapManager.saveBinding(action, code, selectedLabel, context)
                                     Toast.makeText(context, "$action remapped to $selectedLabel", Toast.LENGTH_SHORT).show()
                                     remapRefreshKey++
                                     activeRemapAction = null
                                 },
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(38.dp),
+                                    .height(34.dp),
                                 style = MinecraftButtonStyle.GREEN
                             ) {
-                                Text("SAVE BINDING", fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp, color = Color.White)
+                                Text("SAVE BINDING", fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color.White)
                             }
                         }
                     }

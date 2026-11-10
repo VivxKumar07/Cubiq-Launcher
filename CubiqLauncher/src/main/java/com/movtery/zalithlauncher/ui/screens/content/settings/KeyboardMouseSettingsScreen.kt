@@ -15,6 +15,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.layout.FlowRow
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -899,9 +902,9 @@ fun RemapBindingDialog(
                     }
                 }
 
-                // Category Selector Tabs for Manual Selection
+                // Mapping Radio List (Pojav / ZL1 Style in Cubiq Theme)
                 Text(
-                    text = "OR SELECT FROM LIST:",
+                    text = "MAPPING (SELECT KEY):",
                     color = Color(0xFFAAAAAA),
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
@@ -909,29 +912,53 @@ fun RemapBindingDialog(
                     modifier = Modifier.padding(top = 2.dp)
                 )
 
+                val allKeysList = remember {
+                    listOf(
+                        // Mouse Buttons
+                        "Mouse Left Click", "Mouse Right Click", "Mouse Middle Click",
+                        "Mouse Button 4 (Back)", "Mouse Button 5 (Forward)",
+                        "Mouse Wheel Up", "Mouse Wheel Down",
+                        // D-Pad / Controller
+                        "DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT",
+                        // Movement & Keys
+                        "SPACE", "L-SHIFT", "R-SHIFT", "L-CTRL", "R-CTRL", "L-ALT", "R-ALT",
+                        "TAB", "ESCAPE", "ENTER", "BACKSPACE",
+                        // Letters
+                        "W", "A", "S", "D", "E", "Q", "F", "R", "C", "T", "Z", "X", "V", "B", "G", "H", "M",
+                        "I", "J", "K", "L", "O", "P", "U", "Y", "N",
+                        // Numbers
+                        "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
+                        // Function Keys
+                        "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"
+                    )
+                }
+
+                val categories = listOf("All", "Mouse", "D-Pad", "Move", "Letters", "Numbers", "F-Keys")
+                var selectedCategoryIndex by remember { mutableIntStateOf(0) }
+
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    val tabs = listOf("Mouse Buttons", "Actions & Movement", "Numbers & F-Keys")
-                    tabs.forEachIndexed { idx, tabTitle ->
-                        val isTabSelected = selectedTab == idx
+                    categories.forEachIndexed { idx, catTitle ->
+                        val isTabSelected = selectedCategoryIndex == idx
                         Box(
                             modifier = Modifier
-                                .weight(1f)
                                 .clip(RoundedCornerShape(3.dp))
-                                .background(if (isTabSelected) Color(0xFF2D4B34) else Color(0xFF1E1E22))
+                                .background(if (isTabSelected) Color(0xFF2E7D32) else Color(0xFF1E1E22))
                                 .border(
                                     BorderStroke(1.dp, if (isTabSelected) Color(0xFF55FF55) else Color(0xFF38383E)),
                                     RoundedCornerShape(3.dp)
                                 )
-                                .clickable { selectedTab = idx }
-                                .padding(vertical = 6.dp),
+                                .clickable { selectedCategoryIndex = idx }
+                                .padding(horizontal = 7.dp, vertical = 3.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = tabTitle,
-                                color = if (isTabSelected) Color(0xFF55FF55) else Color(0xFFCCCCCC),
+                                text = catTitle,
+                                color = if (isTabSelected) Color.White else Color(0xFFAAAAAA),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 9.5.sp,
                                 fontWeight = if (isTabSelected) FontWeight.Bold else FontWeight.Normal
@@ -940,57 +967,76 @@ fun RemapBindingDialog(
                     }
                 }
 
-                // List of Chips for chosen Tab
-                val itemsForTab = when (selectedTab) {
-                    0 -> listOf(
-                        "Mouse Left Click",
-                        "Mouse Right Click",
-                        "Mouse Middle Click",
-                        "Mouse Button 4 (Back)",
-                        "Mouse Button 5 (Forward)",
-                        "Mouse Wheel Up",
-                        "Mouse Wheel Down"
-                    )
-                    1 -> listOf(
-                        "W", "A", "S", "D", "SPACE", "L-SHIFT", "L-CTRL", "L-ALT",
-                        "E", "Q", "F", "R", "C", "T", "TAB", "ESCAPE", "ENTER",
-                        "BACKSPACE", "Z", "X", "V", "B", "G", "H", "M"
-                    )
-                    else -> listOf(
-                        "1", "2", "3", "4", "5", "6", "7", "8", "9", "0",
-                        "F1", "F2", "F3", "F4", "F5", "F11"
-                    )
+                val filteredKeys = remember(selectedCategoryIndex) {
+                    allKeysList.filter { key ->
+                        when (selectedCategoryIndex) {
+                            1 -> key.startsWith("Mouse")
+                            2 -> key.startsWith("DPAD_")
+                            3 -> key in listOf("SPACE", "L-SHIFT", "R-SHIFT", "L-CTRL", "R-CTRL", "L-ALT", "R-ALT", "TAB", "ESCAPE", "ENTER", "BACKSPACE")
+                            4 -> key.length == 1 && key[0] in 'A'..'Z'
+                            5 -> key.length == 1 && key[0] in '0'..'9'
+                            6 -> key.startsWith("F") && key.length in 2..3
+                            else -> true
+                        }
+                    }
                 }
 
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                // Scrollable Column with Pojav/ZL1 radio items in Cubiq style
+                val listScrollState = rememberScrollState()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 145.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0xFF16171B))
+                        .border(BorderStroke(1.dp, Color(0xFF2E303A)), RoundedCornerShape(4.dp))
+                        .verticalScroll(listScrollState)
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
-                    itemsForTab.forEach { item ->
+                    filteredKeys.forEach { item ->
                         val isSelected = selectedBinding.equals(item, ignoreCase = true)
-                        Box(
+                        Row(
                             modifier = Modifier
+                                .fillMaxWidth()
                                 .clip(RoundedCornerShape(3.dp))
-                                .background(if (isSelected) Color(0xFF1C3A24) else Color(0xFF26262B))
-                                .border(
-                                    BorderStroke(1.dp, if (isSelected) Color(0xFF55FF55) else Color(0xFF3E3E44)),
-                                    RoundedCornerShape(3.dp)
-                                )
+                                .background(if (isSelected) Color(0xFF1E3825) else Color.Transparent)
                                 .clickable {
                                     selectedBinding = item
                                     onSaveBinding(currentTarget, item)
                                     isDetecting = false
                                 }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .padding(horizontal = 8.dp, vertical = 5.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = item,
-                                color = if (isSelected) Color(0xFF55FF55) else Color.White,
+                                color = if (isSelected) Color(0xFF55FF55) else Color(0xFFCCCCCC),
                                 fontFamily = MinecraftFontFamily,
+                                fontSize = 11.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                fontSize = 11.sp
+                                maxLines = 1
                             )
+                            // Circular Radio Button Indicator
+                            Box(
+                                modifier = Modifier
+                                    .size(15.dp)
+                                    .border(
+                                        BorderStroke(1.5.dp, if (isSelected) Color(0xFF55FF55) else Color(0xFF666670)),
+                                        CircleShape
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isSelected) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(7.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF55FF55))
+                                    )
+                                }
+                            }
                         }
                     }
                 }
