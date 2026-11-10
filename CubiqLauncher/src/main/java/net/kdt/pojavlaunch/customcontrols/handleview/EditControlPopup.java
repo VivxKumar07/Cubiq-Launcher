@@ -100,12 +100,12 @@ public class EditControlPopup {
         mScrollView = (DefocusableScrollView) LayoutInflater.from(context).inflate(R.layout.dialog_control_button_setting, parent, false);
         parent.addView(mScrollView);
 
-        mMargin = context.getResources().getDimensionPixelOffset(R.dimen._20sdp);
+        mMargin = (int) (12 * context.getResources().getDisplayMetrics().density);
 
         mColorSelector = new ColorSelector(context, parent, null);
         mColorSelector.getRootView().setElevation(11);
         mColorSelector.getRootView().setTranslationZ(11);
-        mColorSelector.getRootView().setX(-context.getResources().getDimensionPixelOffset(R.dimen._280sdp));
+        mColorSelector.getRootView().setX(-2000f);
 
         mEditPopupAnimator = ObjectAnimator.ofFloat(mScrollView, "x", 0).setDuration(600);
         mColorEditorAnimator = ObjectAnimator.ofFloat(mColorSelector.getRootView(), "x", 0).setDuration(600);
@@ -115,7 +115,7 @@ public class EditControlPopup {
 
         mScrollView.setElevation(10);
         mScrollView.setTranslationZ(10);
-        mScrollView.setX(-context.getResources().getDimensionPixelOffset(R.dimen._280sdp));
+        mScrollView.setX(-2000f);
 
         bindLayout();
         loadAdapter();

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/color_picker_layout"
-    android:layout_width="@dimen/_220sdp"
+    android:layout_width="220dp"
     android:visibility="gone"
     android:layout_height="match_parent"
     android:layout_gravity="center_vertical"

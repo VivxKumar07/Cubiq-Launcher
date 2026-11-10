@@ -49,7 +49,7 @@ public abstract class SideDialogView {
 
 
     public SideDialogView(Context context, ViewGroup parent, @LayoutRes int layoutId) {
-        mMargin = context.getResources().getDimensionPixelOffset(R.dimen._20sdp);
+        mMargin = (int) (12 * context.getResources().getDisplayMetrics().density);
         mParent = parent;
         mLayoutId = layoutId;
     }
