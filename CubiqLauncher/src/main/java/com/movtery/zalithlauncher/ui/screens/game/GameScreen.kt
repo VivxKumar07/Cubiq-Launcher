@@ -268,7 +268,6 @@ import com.movtery.zalithlauncher.ui.screens.game.elements.DraggableGameBall
 import com.movtery.zalithlauncher.ui.screens.game.elements.ForceCloseOperation
 
 import com.movtery.zalithlauncher.ui.screens.game.elements.GameMenuSubscreen
-import com.movtery.zalithlauncher.ui.screens.game.elements.LegacyControlEditorBar
 import com.movtery.zalithlauncher.ui.screens.game.elements.LegacyInGameDrawer
 
 import com.movtery.zalithlauncher.ui.screens.game.elements.GamepadModePromptDialog
@@ -1607,45 +1606,6 @@ fun GameScreen(
                     )
                 }
             }
-        } else if (isEditingLegacyLayout) {
-            LegacyControlEditorBar(
-                isMojo = isMojoLayout,
-                onAddButton = {
-                    if (isMojoLayout) mojoLayoutInstance?.addControlButton(git.artdeell.mojo.input.ControlData("BTN"))
-                    else zl1LayoutInstance?.addControlButton(net.kdt.pojavlaunch.customcontrols.ControlData("BTN"))
-                },
-                onAddDrawer = {
-                    if (isMojoLayout) mojoLayoutInstance?.addDrawer(git.artdeell.mojo.input.ControlDrawerData())
-                    else zl1LayoutInstance?.addDrawer(net.kdt.pojavlaunch.customcontrols.ControlDrawerData())
-                },
-                onAddJoystick = {
-                    if (isMojoLayout) mojoLayoutInstance?.addJoystickButton(git.artdeell.mojo.input.ControlJoystickData())
-                    else zl1LayoutInstance?.addJoystickButton(net.kdt.pojavlaunch.customcontrols.ControlJoystickData())
-                },
-                onLoadLayout = {
-                    if (isMojoLayout) mojoLayoutInstance?.openLoadDialog()
-                    else zl1LayoutInstance?.openLoadDialog()
-                },
-                onSave = {
-                    viewModel.currentControlFile?.absolutePath?.let { path ->
-                        if (isMojoLayout) mojoLayoutInstance?.saveLayout(path)
-                        else zl1LayoutInstance?.saveLayout(path)
-                        android.widget.Toast.makeText(context, "Layout saved!", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                },
-                onExit = {
-                    isEditingLegacyLayout = false
-                    mojoLayoutInstance?.setModifiable(false)
-                    zl1LayoutInstance?.setModifiable(false)
-                    viewModel.currentControlFile?.absolutePath?.let { path ->
-                        if (isMojoLayout) mojoLayoutInstance?.saveLayout(path)
-                        else zl1LayoutInstance?.saveLayout(path)
-                    }
-                },
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
-            )
         } else {
 
             if (!isLegacyLayout && AllSettings.showMenuBall.state) {
@@ -1724,25 +1684,6 @@ fun GameScreen(
 
             }
 
-            if (isLegacyLayout && !isEditingLegacyLayout) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .clip(RoundedCornerShape(topEnd = 6.dp, bottomEnd = 6.dp))
-                        .background(Color(0x99202024))
-                        .border(1.dp, Color(0x66FFFFFF), RoundedCornerShape(topEnd = 6.dp, bottomEnd = 6.dp))
-                        .clickable { showLegacySideMenu = true }
-                        .padding(horizontal = 4.dp, vertical = 12.dp)
-                ) {
-                    Text(
-                        text = "MENU",
-                        fontFamily = MinecraftFontFamily,
-                        fontSize = 10.sp,
-                        color = Color.White
-                    )
-                }
-            }
-
             if (AllSettings.hudScreenCaptureTools.state && !viewModel.isEditingLayout && !isEditingLegacyLayout && viewModel.controlLayerHideState != HideLayerWhen.WhenMouse) {
                 com.movtery.zalithlauncher.ui.screens.game.elements.InGameCaptureHud(
                     modifier = Modifier.align(Alignment.TopStart),
@@ -1753,24 +1694,71 @@ fun GameScreen(
             LegacyInGameDrawer(
                 visible = showLegacySideMenu,
                 isMojo = isMojoLayout,
+                isInEditor = isEditingLegacyLayout,
                 onDismiss = { showLegacySideMenu = false },
+                onForceClose = {
+                    showLegacySideMenu = false
+                    viewModel.forceCloseState = ForceCloseOperation.Show
+                },
+                onViewLogs = {
+                    showLegacySideMenu = false
+                    onLogStateChange(logState.next())
+                },
+                onSendKeycode = {
+                    showLegacySideMenu = false
+                    viewModel.sendKeycodeState = SendKeycodeState.ShowDialog
+                },
                 onStartEditControls = {
                     showLegacySideMenu = false
                     isEditingLegacyLayout = true
                     mojoLayoutInstance?.setModifiable(true)
                     zl1LayoutInstance?.setModifiable(true)
                 },
-                onSendKeycode = {
-                    showLegacySideMenu = false
-                    viewModel.sendKeycodeState = SendKeycodeState.ShowDialog
+                onAddButton = {
+                    if (isMojoLayout) mojoLayoutInstance?.addControlButton(git.artdeell.mojo.input.ControlData("New"))
+                    else zl1LayoutInstance?.addControlButton(net.kdt.pojavlaunch.customcontrols.ControlData("New"))
                 },
-                onViewLogs = {
-                    showLegacySideMenu = false
-                    onLogStateChange(logState.next())
+                onAddDrawer = {
+                    if (isMojoLayout) mojoLayoutInstance?.addDrawer(git.artdeell.mojo.input.ControlDrawerData())
+                    else zl1LayoutInstance?.addDrawer(net.kdt.pojavlaunch.customcontrols.ControlDrawerData())
                 },
-                onForceClose = {
-                    showLegacySideMenu = false
-                    viewModel.forceCloseState = ForceCloseOperation.Show
+                onAddJoystick = {
+                    if (isMojoLayout) mojoLayoutInstance?.addJoystickButton(git.artdeell.mojo.input.ControlJoystickData())
+                    else zl1LayoutInstance?.addJoystickButton(net.kdt.pojavlaunch.customcontrols.ControlJoystickData())
+                },
+                onLoadLayout = {
+                    if (isMojoLayout) mojoLayoutInstance?.openLoadDialog()
+                    else zl1LayoutInstance?.openLoadDialog()
+                },
+                onSaveLayout = {
+                    viewModel.currentControlFile?.absolutePath?.let { path ->
+                        if (isMojoLayout) mojoLayoutInstance?.saveLayout(path)
+                        else zl1LayoutInstance?.saveLayout(path)
+                        android.widget.Toast.makeText(context, "Layout saved!", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onSelectDefaultLayout = {
+                    if (isMojoLayout) mojoLayoutInstance?.openSetDefaultDialog()
+                    else zl1LayoutInstance?.openSetDefaultDialog()
+                },
+                onLeaveEditor = {
+                    val exitAction = {
+                        isEditingLegacyLayout = false
+                        mojoLayoutInstance?.setModifiable(false)
+                        zl1LayoutInstance?.setModifiable(false)
+                        viewModel.currentControlFile?.absolutePath?.let { path ->
+                            if (isMojoLayout) mojoLayoutInstance?.saveLayout(path)
+                            else zl1LayoutInstance?.saveLayout(path)
+                        }
+                    }
+                    if (isMojoLayout) {
+                        mojoLayoutInstance?.openExitDialog(git.artdeell.mojo.input.EditorExitable { exitAction() })
+                    } else {
+                        zl1LayoutInstance?.openExitDialog(net.kdt.pojavlaunch.customcontrols.EditorExitable { exitAction() })
+                    }
+                },
+                onButtonOpacityChange = {
+                    mojoLayoutInstance?.updateButtonOpacity()
                 }
             )
 
