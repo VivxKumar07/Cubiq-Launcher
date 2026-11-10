@@ -1044,6 +1044,11 @@ object AllSettings : SettingsRegistry() {
 
     val menuBallPosPocket = offsetSetting("menuBallPosPocket", Offset.Zero)
 
+    val hudCapturePosPocket = offsetSetting("hudCapturePosPocket", Offset.Zero)
+    val hudCapturePosMojo = offsetSetting("hudCapturePosMojo", Offset.Zero)
+    val hudCapturePosZl1 = offsetSetting("hudCapturePosZl1", Offset.Zero)
+    val hudCapturePosZl2 = offsetSetting("hudCapturePosZl2", Offset.Zero)
+
 
 
     /**

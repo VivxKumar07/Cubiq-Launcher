@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -54,18 +56,33 @@ fun InGameCaptureHud(
     alpha: Float = 0.6f
 ) {
     val context = LocalContext.current
-    val currentCtrl = com.movtery.zalithlauncher.setting.AllSettings.controlLayout.getValue()
-    val initialX = remember(currentCtrl) {
-        if (currentCtrl.contains("pocket", ignoreCase = true)) 180f
-        else if (currentCtrl.contains("mojo", ignoreCase = true)) 240f
-        else 140f
+    val currentCtrl = AllSettings.controlLayout.getValue()
+    val isPocket = currentCtrl.contains("pocket", ignoreCase = true)
+    val isMojo = currentCtrl.contains("mojo", ignoreCase = true)
+    val isZl1 = currentCtrl.contains("zl1", ignoreCase = true) ||
+            currentCtrl.contains("zalith 1", ignoreCase = true) ||
+            currentCtrl.contains("zalith1", ignoreCase = true)
+
+    val posSetting = when {
+        isPocket -> AllSettings.hudCapturePosPocket
+        isMojo -> AllSettings.hudCapturePosMojo
+        isZl1 -> AllSettings.hudCapturePosZl1
+        else -> AllSettings.hudCapturePosZl2
     }
-    val initialY = remember(currentCtrl) {
-        if (currentCtrl.contains("pocket", ignoreCase = true)) 20f
-        else 15f
+
+    val defaultOffset = when {
+        isPocket -> Offset(80f, 14f)
+        isMojo -> Offset(280f, 14f)
+        isZl1 -> Offset(340f, 14f)
+        else -> Offset(140f, 14f)
     }
-    var offsetX by remember { mutableStateOf(initialX) }
-    var offsetY by remember { mutableStateOf(initialY) }
+
+    val initialPos = remember(posSetting.state, defaultOffset) {
+        if (posSetting.state != Offset.Zero) posSetting.state else defaultOffset
+    }
+
+    var offsetX by remember(posSetting) { mutableFloatStateOf(initialPos.x) }
+    var offsetY by remember(posSetting) { mutableFloatStateOf(initialPos.y) }
     var isExpanded by remember { mutableStateOf(false) }
     var isRecording by remember { mutableStateOf(false) }
     var recordSeconds by remember { mutableIntStateOf(0) }
@@ -94,11 +111,16 @@ fun InGameCaptureHud(
     Box(
         modifier = modifier
             .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
-            .pointerInput(Unit) {
-                detectDragGestures { change, dragAmount ->
+            .pointerInput(posSetting) {
+                detectDragGestures(
+                    onDragEnd = {
+                        posSetting.updateState(Offset(offsetX, offsetY))
+                        posSetting.save()
+                    }
+                ) { change, dragAmount ->
                     change.consume()
-                    offsetX += dragAmount.x
-                    offsetY += dragAmount.y
+                    offsetX = (offsetX + dragAmount.x).coerceAtLeast(0f)
+                    offsetY = (offsetY + dragAmount.y).coerceAtLeast(0f)
                 }
             }
     ) {

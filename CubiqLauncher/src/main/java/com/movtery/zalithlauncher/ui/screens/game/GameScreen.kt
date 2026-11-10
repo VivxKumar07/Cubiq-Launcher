@@ -1707,7 +1707,15 @@ fun GameScreen(
                 }
             }
 
-            if (AllSettings.hudScreenCaptureTools.state && !viewModel.isEditingLayout && !isEditingLegacyLayout && viewModel.controlLayerHideState != HideLayerWhen.WhenMouse) {
+            val isAnyMenuOpen = viewModel.gameMenuState == MenuState.SHOW ||
+                    showLegacySideMenu ||
+                    viewModel.isEditingLayout ||
+                    isEditingLegacyLayout ||
+                    viewModel.forceCloseState == ForceCloseOperation.Show ||
+                    viewModel.sendKeycodeState == SendKeycodeState.ShowDialog ||
+                    viewModel.replacementControlState == ReplacementControlState.Show
+
+            if (AllSettings.hudScreenCaptureTools.state && !isAnyMenuOpen && viewModel.controlLayerHideState != HideLayerWhen.WhenMouse) {
                 com.movtery.zalithlauncher.ui.screens.game.elements.InGameCaptureHud(
                     modifier = Modifier.align(Alignment.TopStart),
                     alpha = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0.25f, 0.9f)
