@@ -1,5 +1,8 @@
 package com.movtery.zalithlauncher.ui.screens.game.elements
 
+import android.app.ActivityManager
+import android.content.Context
+import android.text.format.Formatter
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -33,20 +36,24 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.setting.AllSettings
+import com.movtery.zalithlauncher.ui.control.HotbarRule
 
 /**
  * Authentic In-Game Drawers for Legacy Control Schemes (Mojo Launcher & Zalith Launcher 1)
@@ -70,6 +77,7 @@ fun LegacyInGameDrawer(
     onSelectDefaultLayout: () -> Unit,
     onLeaveEditor: () -> Unit,
     onReplaceControl: () -> Unit = {},
+    onSelectCustomMouse: () -> Unit = {},
     onButtonOpacityChange: ((Float) -> Unit)? = null,
     onRefreshWindowSize: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -116,7 +124,7 @@ fun LegacyInGameDrawer(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(200.dp)
-                        .background(Color(0xFA1E1E22))
+                        .background(Color(0xFF383838))
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
@@ -209,6 +217,7 @@ fun LegacyInGameDrawer(
                     onForceClose = onForceClose,
                     onViewLogs = onViewLogs,
                     onSendKeycode = onSendKeycode,
+                    onSelectCustomMouse = onSelectCustomMouse,
                     onReplaceControl = onReplaceControl,
                     onStartEditControls = onStartEditControls,
                     onAddButton = onAddButton,
@@ -236,6 +245,7 @@ private fun Zl1InGameDrawerContent(
     onForceClose: () -> Unit,
     onViewLogs: () -> Unit,
     onSendKeycode: () -> Unit,
+    onSelectCustomMouse: () -> Unit,
     onReplaceControl: () -> Unit,
     onStartEditControls: () -> Unit,
     onAddButton: () -> Unit,
@@ -248,6 +258,11 @@ private fun Zl1InGameDrawerContent(
     onLeaveEditor: () -> Unit,
     onRefreshWindowSize: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val dm = context.resources.displayMetrics
+    val baseW = maxOf(dm.widthPixels, dm.heightPixels)
+    val baseH = minOf(dm.widthPixels, dm.heightPixels)
+
     var resRatio by remember { mutableFloatStateOf(AllSettings.resolutionRatio.state.toFloat()) }
     var mouseSpeed by remember { mutableFloatStateOf(AllSettings.mouseCaptureSensitivity.state.toFloat()) }
     var gestureDelay by remember { mutableFloatStateOf(AllSettings.mouseLongPressDelay.state.toFloat()) }
@@ -257,13 +272,18 @@ private fun Zl1InGameDrawerContent(
     var showFps by remember { mutableStateOf(AllSettings.showFPS.state) }
     var gyroEnabled by remember { mutableStateOf(AllSettings.gyroscopeControl.state) }
     var gyroSensitivity by remember { mutableFloatStateOf(AllSettings.gyroscopeSensitivity.state.toFloat()) }
+    var gyroInvertX by remember { mutableStateOf(AllSettings.gyroscopeInvertX.state) }
+    var gyroInvertY by remember { mutableStateOf(AllSettings.gyroscopeInvertY.state) }
+    var hotbarRule by remember { mutableStateOf(AllSettings.hotbarRule.state) }
+    var hotbarWidth by remember { mutableFloatStateOf(AllSettings.hotbarWidth.state.toFloat()) }
+    var hotbarHeight by remember { mutableFloatStateOf(AllSettings.hotbarHeight.state.toFloat()) }
     var buttonSnapping by remember { mutableStateOf(AllSettings.buttonSnapping.state) }
-    var snappingDist by remember { mutableFloatStateOf(AllSettings.buttonSnappingDistance.state.toFloat()) }
+    var snappingDist by remember { mutableFloatStateOf(AllSettings.buttonSnappingDistance.state.toFloat().coerceIn(2f, 30f)) }
 
     Column(
         modifier = Modifier
             .fillMaxHeight()
-            .width(260.dp)
+            .width(272.dp)
             .background(Color(0xFA1D1E22), RoundedCornerShape(topStart = 14.dp, bottomStart = 14.dp))
             .border(1.dp, Color(0x26FFFFFF), RoundedCornerShape(topStart = 14.dp, bottomStart = 14.dp))
             .clickable(
@@ -299,16 +319,18 @@ private fun Zl1InGameDrawerContent(
         HorizontalDivider(color = Color(0x33FFFFFF), thickness = 1.dp)
 
         if (!isInEditor) {
-            // Debug section buttons
-            Zl1ButtonItem(text = "Force close") {
+            // Debug section
+            Zl1CategoryHeader(title = "Debug")
+
+            Zl1ButtonItem(text = "Force Close") {
                 onDismiss()
                 onForceClose()
             }
-            Zl1ButtonItem(text = "Log output") {
+            Zl1ButtonItem(text = "Log Output") {
                 onDismiss()
                 onViewLogs()
             }
-            Zl1ButtonItem(text = "Send custom keycode") {
+            Zl1ButtonItem(text = "Send Custom Key Code") {
                 onDismiss()
                 onSendKeycode()
             }
@@ -319,8 +341,7 @@ private fun Zl1InGameDrawerContent(
                 checked = showMemory
             ) {
                 showMemory = it
-                AllSettings.showMemory.updateState(it)
-                AllSettings.showMemory.save()
+                AllSettings.showMemory.save(it)
             }
 
             Zl1SwitchItem(
@@ -328,21 +349,21 @@ private fun Zl1InGameDrawerContent(
                 checked = showFps
             ) {
                 showFps = it
-                AllSettings.showFPS.updateState(it)
-                AllSettings.showFPS.save()
+                AllSettings.showFPS.save(it)
             }
 
-            // Resolution Scaling
+            // Resolution Scaling with live pixel preview
+            val scaledW = (baseW * resRatio / 100f).toInt().coerceAtLeast(1)
+            val scaledH = (baseH * resRatio / 100f).toInt().coerceAtLeast(1)
             Zl1SliderItem(
-                title = "Resolution Scaling",
+                title = "Resolution Scaling ($scaledW x $scaledH)",
                 value = resRatio,
                 range = 25f..300f,
                 unit = "%",
                 step = 5f
             ) {
                 resRatio = it
-                AllSettings.resolutionRatio.updateState(it.toInt())
-                AllSettings.resolutionRatio.save()
+                AllSettings.resolutionRatio.save(it.toInt())
                 onRefreshWindowSize()
             }
 
@@ -354,8 +375,7 @@ private fun Zl1InGameDrawerContent(
                 checked = gesturesDisabled
             ) {
                 gesturesDisabled = it
-                AllSettings.gestureControl.updateState(!it)
-                AllSettings.gestureControl.save()
+                AllSettings.gestureControl.save(!it)
             }
 
             Zl1SwitchItem(
@@ -363,20 +383,20 @@ private fun Zl1InGameDrawerContent(
                 checked = doubleTapDisabled
             ) {
                 doubleTapDisabled = it
-                AllSettings.disableDoubleTap.updateState(it)
-                AllSettings.disableDoubleTap.save()
+                AllSettings.disableDoubleTap.save(it)
             }
 
-            Zl1SliderItem(
-                title = "Long Press Trigger Delay",
-                value = gestureDelay,
-                range = 100f..1000f,
-                unit = " ms",
-                step = 25f
-            ) {
-                gestureDelay = it
-                AllSettings.mouseLongPressDelay.updateState(it.toInt())
-                AllSettings.mouseLongPressDelay.save()
+            if (!gesturesDisabled) {
+                Zl1SliderItem(
+                    title = "Long Press Trigger Delay",
+                    value = gestureDelay,
+                    range = 100f..1000f,
+                    unit = " ms",
+                    step = 25f
+                ) {
+                    gestureDelay = it
+                    AllSettings.mouseLongPressDelay.save(it.toInt())
+                }
             }
 
             Zl1SliderItem(
@@ -387,8 +407,12 @@ private fun Zl1InGameDrawerContent(
                 step = 5f
             ) {
                 mouseSpeed = it
-                AllSettings.mouseCaptureSensitivity.updateState(it.toInt())
-                AllSettings.mouseCaptureSensitivity.save()
+                AllSettings.mouseCaptureSensitivity.save(it.toInt())
+            }
+
+            Zl1ButtonItem(text = "Custom Virtual Mouse") {
+                onDismiss()
+                onSelectCustomMouse()
             }
 
             Zl1ButtonItem(text = "Replace Control Layout") {
@@ -405,82 +429,191 @@ private fun Zl1InGameDrawerContent(
             Zl1CategoryHeader(title = "Gyro controls")
 
             Zl1SwitchItem(
-                title = "Enable Gyroscope",
+                title = "Enable Gyroscope Control",
                 checked = gyroEnabled
             ) {
                 gyroEnabled = it
-                AllSettings.gyroscopeControl.updateState(it)
-                AllSettings.gyroscopeControl.save()
+                AllSettings.gyroscopeControl.save(it)
             }
 
-            Zl1SliderItem(
-                title = "Gyroscope Sensitivity",
-                value = gyroSensitivity,
-                range = 25f..300f,
-                unit = " %",
-                step = 5f
+            if (gyroEnabled) {
+                Zl1SliderItem(
+                    title = "Gyro Sensitivity",
+                    value = gyroSensitivity,
+                    range = 25f..300f,
+                    unit = " %",
+                    step = 5f
+                ) {
+                    gyroSensitivity = it
+                    AllSettings.gyroscopeSensitivity.save(it.toInt())
+                }
+
+                Zl1SwitchItem(
+                    title = "Invert X Axis",
+                    checked = gyroInvertX
+                ) {
+                    gyroInvertX = it
+                    AllSettings.gyroscopeInvertX.save(it)
+                }
+
+                Zl1SwitchItem(
+                    title = "Invert Y Axis",
+                    checked = gyroInvertY
+                ) {
+                    gyroInvertY = it
+                    AllSettings.gyroscopeInvertY.save(it)
+                }
+            }
+
+            // Hotbar Detection Box Category
+            Zl1CategoryHeader(title = "Hotbar Detection Box")
+
+            Text(
+                text = "Hotbar Detection Mode",
+                color = Color(0xFFB8BCC6),
+                fontSize = 11.sp,
+                modifier = Modifier.padding(top = 2.dp, bottom = 2.dp)
+            )
+            Zl1ModeOptionItem(
+                label = "Adaptive (may be inaccurate)",
+                selected = hotbarRule == HotbarRule.Auto
             ) {
-                gyroSensitivity = it
-                AllSettings.gyroscopeSensitivity.updateState(it.toInt())
-                AllSettings.gyroscopeSensitivity.save()
+                hotbarRule = HotbarRule.Auto
+                AllSettings.hotbarRule.save(HotbarRule.Auto)
+            }
+            Zl1ModeOptionItem(
+                label = "Manual Adjustment",
+                selected = hotbarRule == HotbarRule.Custom
+            ) {
+                hotbarRule = HotbarRule.Custom
+                AllSettings.hotbarRule.save(HotbarRule.Custom)
+            }
+
+            if (hotbarRule == HotbarRule.Custom) {
+                Zl1SliderItem(
+                    title = "Hotbar Width",
+                    value = hotbarWidth,
+                    range = 0f..1000f,
+                    unit = " px",
+                    step = 10f
+                ) {
+                    hotbarWidth = it
+                    AllSettings.hotbarWidth.save(it.toInt())
+                }
+                Zl1SliderItem(
+                    title = "Hotbar Height",
+                    value = hotbarHeight,
+                    range = 0f..1000f,
+                    unit = " px",
+                    step = 10f
+                ) {
+                    hotbarHeight = it
+                    AllSettings.hotbarHeight.save(it.toInt())
+                }
             }
         } else {
             // In-Editor Actions
             Zl1CategoryHeader(title = "Edit Control Layout")
 
             Zl1ButtonItem(text = "Add Button") {
+                onDismiss()
                 onAddButton()
             }
             Zl1ButtonItem(text = "Add Drawer") {
+                onDismiss()
                 onAddDrawer()
             }
             Zl1ButtonItem(text = "Add Joystick") {
+                onDismiss()
                 onAddJoystick()
             }
 
             Zl1CategoryHeader(title = "Save")
 
             Zl1ButtonItem(text = "Load") {
+                onDismiss()
                 onLoadLayout()
             }
             Zl1ButtonItem(text = "Save") {
+                onDismiss()
                 onSaveLayout()
             }
             Zl1ButtonItem(text = "Save and Exit") {
+                onDismiss()
                 onSaveAndExit()
             }
 
-            Zl1CategoryHeader(title = "Snapping")
+            Zl1CategoryHeader(title = "Control Layout")
 
             Zl1SwitchItem(
                 title = "Button Snapping",
                 checked = buttonSnapping
             ) {
                 buttonSnapping = it
-                AllSettings.buttonSnapping.updateState(it)
-                AllSettings.buttonSnapping.save()
+                AllSettings.buttonSnapping.save(it)
             }
 
             Zl1SliderItem(
-                title = "Snapping Distance",
+                title = "Button Snapping Distance",
                 value = snappingDist,
-                range = 2f..64f,
+                range = 2f..30f,
                 unit = " dp",
                 step = 1f
             ) {
                 snappingDist = it
-                AllSettings.buttonSnappingDistance.updateState(it.toInt())
-                AllSettings.buttonSnappingDistance.save()
+                AllSettings.buttonSnappingDistance.save(it.toInt().coerceIn(2, 64))
             }
 
             Zl1ButtonItem(text = "Select Default Control Layout") {
+                onDismiss()
                 onSelectDefaultLayout()
             }
 
-            Zl1ButtonItem(text = "Exit") {
+            Zl1ButtonItem(text = "Exit Editor") {
+                onDismiss()
                 onLeaveEditor()
             }
         }
+    }
+}
+
+@Composable
+private fun Zl1ModeOptionItem(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp)
+            .background(
+                if (selected) Color(0x3326A69A) else Color(0xFF2B2C32),
+                RoundedCornerShape(8.dp)
+            )
+            .border(
+                width = 1.dp,
+                color = if (selected) Color(0xFF26A69A) else Color.Transparent,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clickable { onClick() }
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            color = if (selected) Color.White else Color(0xFFD0D3DC),
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = if (selected) "✓" else "",
+            color = Color(0xFF26A69A),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -622,14 +755,15 @@ private fun MojoDrawerItem(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .height(48.dp)
             .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 16.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         Text(
             text = text,
-            color = Color.White,
-            fontSize = 14.sp
+            color = Color(0xFFE6E6E6),
+            fontSize = 14.5.sp
         )
     }
 }
@@ -637,7 +771,7 @@ private fun MojoDrawerItem(
 @Composable
 private fun MojoDivider() {
     HorizontalDivider(
-        color = Color(0x1FFFFFFF),
+        color = Color(0xFF4D4D4D),
         thickness = 1.dp
     )
 }
@@ -662,7 +796,7 @@ private fun MojoQuickSettingsSidePanel(
         modifier = Modifier
             .fillMaxHeight()
             .width(260.dp)
-            .background(Color(0xFA1E1E22))
+            .background(Color(0xFF222225), RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
             .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {}
             .padding(16.dp)
             .verticalScroll(rememberScrollState()),
@@ -671,11 +805,11 @@ private fun MojoQuickSettingsSidePanel(
         Text(
             text = "Quick settings",
             color = Color.White,
-            fontSize = 17.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
 
-        HorizontalDivider(color = Color(0x33FFFFFF), thickness = 1.dp)
+        HorizontalDivider(color = Color(0xFF444448), thickness = 1.dp)
 
         // Resolution Scaler
         Row(
@@ -684,7 +818,7 @@ private fun MojoQuickSettingsSidePanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Resolution Scaler", color = Color(0xFFDDDDDD), fontSize = 12.sp)
-            Text("${resRatio.toInt()}%", color = Color(0xFF888888), fontSize = 12.sp)
+            Text("${resRatio.toInt()}%", color = Color(0xFF9E9E9E), fontSize = 12.sp)
         }
         Slider(
             value = resRatio,
@@ -692,9 +826,9 @@ private fun MojoQuickSettingsSidePanel(
             valueRange = 25f..100f,
             steps = 14,
             colors = SliderDefaults.colors(
-                thumbColor = Color(0xFF26A69A),
-                activeTrackColor = Color(0xFF26A69A),
-                inactiveTrackColor = Color(0xFF444448)
+                thumbColor = Color(0xFF80CBC4),
+                activeTrackColor = Color(0xFF80CBC4),
+                inactiveTrackColor = Color(0xFF48484E)
             ),
             modifier = Modifier.height(28.dp)
         )
@@ -710,8 +844,10 @@ private fun MojoQuickSettingsSidePanel(
                 checked = gyroEnabled,
                 onCheckedChange = { gyroEnabled = it },
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color(0xFF26A69A),
-                    checkedTrackColor = Color(0xFF1E524D)
+                    checkedThumbColor = Color(0xFF80CBC4),
+                    checkedTrackColor = Color(0xFF00796B),
+                    uncheckedThumbColor = Color(0xFFB0B0B0),
+                    uncheckedTrackColor = Color(0xFF55555A)
                 )
             )
         }
@@ -723,7 +859,7 @@ private fun MojoQuickSettingsSidePanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Mouse Speed", color = Color(0xFFDDDDDD), fontSize = 12.sp)
-            Text("${mouseSpeed.toInt()}%", color = Color(0xFF888888), fontSize = 12.sp)
+            Text("${mouseSpeed.toInt()}%", color = Color(0xFF9E9E9E), fontSize = 12.sp)
         }
         Slider(
             value = mouseSpeed,
@@ -731,9 +867,9 @@ private fun MojoQuickSettingsSidePanel(
             valueRange = 25f..300f,
             steps = 54,
             colors = SliderDefaults.colors(
-                thumbColor = Color(0xFF26A69A),
-                activeTrackColor = Color(0xFF26A69A),
-                inactiveTrackColor = Color(0xFF444448)
+                thumbColor = Color(0xFF80CBC4),
+                activeTrackColor = Color(0xFF80CBC4),
+                inactiveTrackColor = Color(0xFF48484E)
             ),
             modifier = Modifier.height(28.dp)
         )
@@ -749,8 +885,10 @@ private fun MojoQuickSettingsSidePanel(
                 checked = gesturesDisabled,
                 onCheckedChange = { gesturesDisabled = it },
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color(0xFF26A69A),
-                    checkedTrackColor = Color(0xFF1E524D)
+                    checkedThumbColor = Color(0xFF80CBC4),
+                    checkedTrackColor = Color(0xFF00796B),
+                    uncheckedThumbColor = Color(0xFFB0B0B0),
+                    uncheckedTrackColor = Color(0xFF55555A)
                 )
             )
         }
@@ -762,7 +900,7 @@ private fun MojoQuickSettingsSidePanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Trigger long press delay", color = Color(0xFFDDDDDD), fontSize = 12.sp)
-            Text("${gestureDelay.toInt()} ms", color = Color(0xFF888888), fontSize = 12.sp)
+            Text("${gestureDelay.toInt()} ms", color = Color(0xFF9E9E9E), fontSize = 12.sp)
         }
         Slider(
             value = gestureDelay,
@@ -770,9 +908,9 @@ private fun MojoQuickSettingsSidePanel(
             valueRange = 100f..1000f,
             steps = 89,
             colors = SliderDefaults.colors(
-                thumbColor = Color(0xFF26A69A),
-                activeTrackColor = Color(0xFF26A69A),
-                inactiveTrackColor = Color(0xFF444448)
+                thumbColor = Color(0xFF80CBC4),
+                activeTrackColor = Color(0xFF80CBC4),
+                inactiveTrackColor = Color(0xFF48484E)
             ),
             modifier = Modifier.height(28.dp)
         )
@@ -784,7 +922,7 @@ private fun MojoQuickSettingsSidePanel(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Buttons transparency", color = Color(0xFFDDDDDD), fontSize = 12.sp)
-            Text("${buttonsOpacity.toInt()}%", color = Color(0xFF888888), fontSize = 12.sp)
+            Text("${buttonsOpacity.toInt()}%", color = Color(0xFF9E9E9E), fontSize = 12.sp)
         }
         Slider(
             value = buttonsOpacity,
@@ -795,9 +933,9 @@ private fun MojoQuickSettingsSidePanel(
             valueRange = 0f..100f,
             steps = 19,
             colors = SliderDefaults.colors(
-                thumbColor = Color(0xFF26A69A),
-                activeTrackColor = Color(0xFF26A69A),
-                inactiveTrackColor = Color(0xFF444448)
+                thumbColor = Color(0xFF80CBC4),
+                activeTrackColor = Color(0xFF80CBC4),
+                inactiveTrackColor = Color(0xFF48484E)
             ),
             modifier = Modifier.height(28.dp)
         )
@@ -810,7 +948,7 @@ private fun MojoQuickSettingsSidePanel(
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(onClick = onClose) {
-                Text("CANCEL", color = Color(0xFF26A69A), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text("CANCEL", color = Color(0xFF80CBC4), fontWeight = FontWeight.Bold, fontSize = 13.sp)
             }
             TextButton(
                 onClick = {
@@ -831,7 +969,144 @@ private fun MojoQuickSettingsSidePanel(
                     onClose()
                 }
             ) {
-                Text("OK", color = Color(0xFF26A69A), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Text("OK", color = Color(0xFF80CBC4), fontWeight = FontWeight.Bold, fontSize = 13.sp)
+            }
+        }
+    }
+}
+
+private fun formatSystemMemorySummary(context: Context): String {
+    val am = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+    if (am != null) {
+        val info = ActivityManager.MemoryInfo()
+        am.getMemoryInfo(info)
+        if (info.totalMem > 0L) {
+            val usedBytes = (info.totalMem - info.availMem).coerceAtLeast(0L)
+            return "${Formatter.formatFileSize(context, usedBytes)}/${Formatter.formatFileSize(context, info.totalMem)}"
+        }
+    }
+    val rt = Runtime.getRuntime()
+    val used = (rt.totalMemory() - rt.freeMemory()) / 1048576L
+    val max = rt.maxMemory() / 1048576L
+    return "${used}MB/${max}MB"
+}
+
+/**
+ * Horizontal ZL1 Floating Game Menu Pill matching view_game_menu_window.xml
+ */
+@Composable
+fun Zl1FloatingMenuPill(
+    gameFps: Int?,
+    showFps: Boolean,
+    showMemory: Boolean
+) {
+    val context = LocalContext.current
+    var memLabel by remember { mutableStateOf("") }
+    if (showMemory) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                memLabel = formatSystemMemorySummary(context)
+                kotlinx.coroutines.delay(1000L)
+            }
+        }
+    }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .background(Color(0xEE16161A), RoundedCornerShape(10.dp))
+            .border(1.dp, Color(0x26FFFFFF), RoundedCornerShape(10.dp))
+            .padding(horizontal = 6.dp, vertical = 4.dp)
+    ) {
+        Box(
+            modifier = Modifier.size(34.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_sharp_settings_24),
+                contentDescription = "ZL1 Game Menu",
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+        if (showFps) {
+            Text(
+                text = "FPS: ${gameFps ?: 0}",
+                color = Color.White,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(start = 6.dp, end = 4.dp)
+            )
+        }
+        if (showMemory && memLabel.isNotEmpty()) {
+            Text(
+                text = "M: $memLabel",
+                color = Color(0xFFB8BCC6),
+                fontSize = 10.sp,
+                modifier = Modifier.padding(start = 4.dp, end = 4.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Shared ZL1 Custom Virtual Mouse Pack Picker Dialog
+ */
+@Composable
+fun Zl1CustomMouseDialog(
+    visible: Boolean,
+    onDismiss: () -> Unit
+) {
+    if (!visible) return
+    val context = LocalContext.current
+    val packs = remember {
+        listOf(
+            "Default Classic",
+            "Precision Crosshair",
+            "Bedrock Arrow",
+            "Chroma Emerald",
+            "Modern Obsidian"
+        )
+    }
+    var selected by remember(visible) { mutableStateOf(AllSettings.customCursorPack.state) }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .width(290.dp)
+                .background(Color(0xFA1D1E22), RoundedCornerShape(14.dp))
+                .border(1.dp, Color(0x26FFFFFF), RoundedCornerShape(14.dp))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Custom Virtual Mouse",
+                color = Color.White,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold
+            )
+            HorizontalDivider(color = Color(0x33FFFFFF), thickness = 1.dp)
+            packs.forEach { pack ->
+                Zl1ModeOptionItem(
+                    label = pack,
+                    selected = selected == pack
+                ) {
+                    selected = pack
+                    AllSettings.customCursorPack.save(pack)
+                    if (pack == "Default Classic") {
+                        runCatching { com.movtery.zalithlauncher.ui.control.mouse.arrowPointerFile.delete() }
+                    }
+                    android.widget.Toast.makeText(context, "Cursor: $pack", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text("Close", color = Color(0xFF26A69A), fontWeight = FontWeight.Bold)
+                }
             }
         }
     }

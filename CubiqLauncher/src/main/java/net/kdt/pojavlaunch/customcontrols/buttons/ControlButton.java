@@ -230,8 +230,10 @@ public class ControlButton extends TextView implements ControlInterface {
         switch (keycode) {
             case ControlData.SPECIALBTN_KEYBOARD:
                 if(isDown) {
-                    android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
-                    if (imm != null) imm.toggleSoftInput(android.view.inputmethod.InputMethodManager.SHOW_FORCED, 0);
+                    if (!com.movtery.zalithlauncher.ui.control.zl1.ZL1InGameController.toggleKeyboard()) {
+                        android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                        if (imm != null) imm.toggleSoftInput(android.view.inputmethod.InputMethodManager.SHOW_FORCED, 0);
+                    }
                 }
                 break;
 
@@ -241,12 +243,14 @@ public class ControlButton extends TextView implements ControlInterface {
 
             case ControlData.SPECIALBTN_VIRTUALMOUSE:
                 if(isDown) {
-                    int currentMode = com.movtery.zalithlauncher.bridge.ZLBridgeStates.INSTANCE.getCursorMode().getValue();
-                    int nextMode = (currentMode == com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_ENABLED)
-                            ? com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_DISABLED
-                            : com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_ENABLED;
-                    com.movtery.zalithlauncher.bridge.ZLBridgeStates.changeCursorMode(nextMode);
-                    net.kdt.pojavlaunch.Tools.customMouse = (nextMode == com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_ENABLED);
+                    if (!com.movtery.zalithlauncher.ui.control.zl1.ZL1InGameController.toggleMouse(getContext())) {
+                        int currentMode = com.movtery.zalithlauncher.bridge.ZLBridgeStates.INSTANCE.getCursorMode().getValue();
+                        int nextMode = (currentMode == com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_ENABLED)
+                                ? com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_DISABLED
+                                : com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_ENABLED;
+                        com.movtery.zalithlauncher.bridge.ZLBridgeStates.changeCursorMode(nextMode);
+                        net.kdt.pojavlaunch.Tools.customMouse = (nextMode == com.movtery.zalithlauncher.bridge.ZLBridgeStatesKt.CURSOR_ENABLED);
+                    }
                 }
                 break;
 

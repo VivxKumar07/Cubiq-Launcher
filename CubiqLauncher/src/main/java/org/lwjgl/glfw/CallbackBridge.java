@@ -100,6 +100,7 @@ public class CallbackBridge {
         void onMouseButton(int glfwButton, boolean status);
         void onScroll(double xoffset, double yoffset);
         void onCursor(float x, float y);
+        default void onCursorDelta(float dx, float dy) {}
     }
 
     private static volatile NativeInputListener sNativeInputListener = null;
@@ -438,7 +439,10 @@ public class CallbackBridge {
 
     public static void sendCursorDelta(float x, float y) {
         if (sNativeInputListener != null) {
-            sNativeInputListener.onCursor(mouseX + x, mouseY + y);
+            sNativeInputListener.onCursorDelta(x, y);
+            mouseX += x;
+            mouseY += y;
+            sNativeInputListener.onCursor(mouseX, mouseY);
             return;
         }
 
@@ -966,12 +970,15 @@ public class CallbackBridge {
 
 
 
-    //Called from JRE side
+    public static void syncGrabStateFromSdl(final boolean grabbing) {
+        if (isGrabbing != grabbing) {
+            onGrabStateChanged(grabbing);
+        }
+    }
 
+    //Called from JRE side or SDL relative-mouse hook
     @SuppressWarnings("unused")
-
     @Keep
-
     private static void onGrabStateChanged(final boolean grabbing) {
 
         System.out.println("Grab callback received: " + grabbing);

@@ -1,0 +1,65 @@
+package net.kdt.pojavlaunch.customcontrols.gamepad;
+
+import android.util.Log;
+
+import com.google.gson.JsonParseException;
+import com.movtery.zalithlauncher.path.PathManager;
+
+import net.kdt.pojavlaunch.Tools;
+
+import java.io.File;
+import java.io.IOException;
+
+public class GamepadMapStore {
+    private static final File STORE_FILE = new File(PathManager.Companion.getDIR_FILES_PRIVATE(), "gamepad_map.json");
+    private static GamepadMapStore sMapStore;
+    private GamepadMap mInMenuMap;
+    private GamepadMap mInGameMap;
+
+    private static GamepadMapStore createDefault() {
+        GamepadMapStore mapStore = new GamepadMapStore();
+        mapStore.mInGameMap = GamepadMap.getDefaultGameMap();
+        mapStore.mInMenuMap = GamepadMap.getDefaultMenuMap();
+        return mapStore;
+    }
+
+    private static void loadIfNecessary() {
+        if (sMapStore != null) return;
+        load();
+    }
+
+    public static void load() {
+        GamepadMapStore mapStore = null;
+        if (STORE_FILE.exists() && STORE_FILE.canRead()) {
+            try {
+                String storeFileContent = Tools.read(STORE_FILE);
+                mapStore = Tools.GLOBAL_GSON.fromJson(storeFileContent, GamepadMapStore.class);
+            } catch (JsonParseException | IOException e) {
+                Log.w("GamepadMapStore", "Map store failed to load!", e);
+            }
+        }
+        if (mapStore == null) mapStore = createDefault();
+        sMapStore = mapStore;
+    }
+
+    public static void save() throws IOException {
+        if (sMapStore == null) throw new RuntimeException("Must load map store first!");
+        File parent = STORE_FILE.getParentFile();
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs();
+        }
+        String jsonData = Tools.GLOBAL_GSON.toJson(sMapStore);
+        Tools.write(STORE_FILE.getAbsolutePath(), jsonData);
+    }
+
+    public static GamepadMap getGameMap() {
+        loadIfNecessary();
+        return sMapStore.mInGameMap;
+    }
+
+    public static GamepadMap getMenuMap() {
+        loadIfNecessary();
+        return sMapStore.mInMenuMap;
+    }
+}
+

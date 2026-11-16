@@ -94,10 +94,10 @@ class ControlEditorActivity : BaseAppCompatActivity() {
         var controlFile: File? = controlPath?.let { File(it) }?.takeIf { it.isFile && it.exists() }
 
         if (controlFile == null) {
-            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
+            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "zalith_2_layout.json")
             if (!defaultFile.exists()) {
                 runCatching {
-                    copyAssetFile(fileName = "mojo_layout.json", output = defaultFile, overwrite = false)
+                    copyAssetFile(fileName = "zalith_2_layout.json", output = defaultFile, overwrite = false)
                 }
             }
             controlFile = defaultFile
@@ -109,10 +109,10 @@ class ControlEditorActivity : BaseAppCompatActivity() {
             loadLayoutFromFileUncheck(controlFile)
         }.getOrElse { e ->
             Logger.warning("ControlEditorActivity", "Failed to load layout from $controlFile", e)
-            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
+            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "zalith_2_layout.json")
             runCatching {
                 if (!defaultFile.exists()) {
-                    copyAssetFile(fileName = "mojo_layout.json", output = defaultFile, overwrite = false)
+                    copyAssetFile(fileName = "zalith_2_layout.json", output = defaultFile, overwrite = false)
                 }
                 loadLayoutFromFile(defaultFile)
             }.getOrNull() ?: return runFinish()
@@ -182,7 +182,9 @@ class ControlEditorActivity : BaseAppCompatActivity() {
  */
 fun startEditorActivity(context: Context, file: File) {
     val fileText = runCatching { file.readText() }.getOrDefault("")
-    val isMojo = file.name.contains("mojo", ignoreCase = true) || fileText.contains(""""version": 9""") || fileText.contains(""""version":9""")
+    val isMojo = file.name.contains("mojo", ignoreCase = true) ||
+            fileText.contains("dynamicX") || fileText.contains("\${margin}") ||
+            fileText.contains(""""version": 4""") || fileText.contains(""""version":4""")
     if (isMojo) {
         git.artdeell.mojo.prefs.LauncherPreferences.PREF_DEFAULTCTRL_PATH = file.absolutePath
         val intent = Intent(context, git.artdeell.mojo.CustomControlsActivity::class.java)

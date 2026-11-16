@@ -54,6 +54,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.movtery.zalithlauncher.game.sdl.SdlBridge;
 import com.movtery.zalithlauncher.utils.logging.Logger;
 
+import org.lwjgl.glfw.CallbackBridge;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -1305,7 +1307,11 @@ public class SDLActivity extends Activity implements View.OnSystemUiVisibilityCh
             return false;
         }
 
-        return SDLActivity.getMotionListener().setRelativeMouseEnabled(enabled);
+        boolean result = SDLActivity.getMotionListener().setRelativeMouseEnabled(enabled);
+        if (result && SdlBridge.getSdlEnabled() && SdlBridge.isSdlRenderActive()) {
+            CallbackBridge.syncGrabStateFromSdl(enabled);
+        }
+        return result;
     }
 
     /**

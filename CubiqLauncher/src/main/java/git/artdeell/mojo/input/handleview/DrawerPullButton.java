@@ -13,34 +13,69 @@ import androidx.vectordrawable.graphics.drawable.VectorDrawableCompat;
 import com.movtery.zalithlauncher.R;
 
 public class DrawerPullButton extends View {
-    public DrawerPullButton(Context context) {super(context); init();}
-    public DrawerPullButton(Context context, @Nullable AttributeSet attrs) {super(context, attrs); init();}
+    public DrawerPullButton(Context context) {
+        super(context);
+        init();
+    }
 
-    private final Paint mBackgroundPaint = new Paint();
+    public DrawerPullButton(Context context, @Nullable AttributeSet attrs) {
+        super(context, attrs);
+        init();
+    }
+
+    private final Paint mBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint mBorderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private VectorDrawableCompat mDrawable;
+    public boolean autoTranslate = true;
 
-    private void init(){
+    private void init() {
+        setClickable(true);
+        setFocusable(true);
         mDrawable = VectorDrawableCompat.create(getContext().getResources(), R.drawable.ic_sharp_settings_24, null);
-        setAlpha(0.33f);
-        mBackgroundPaint.setColor(Color.BLACK);
+        if (mDrawable != null) {
+            mDrawable.setTint(Color.WHITE);
+        }
+        setAlpha(0.92f);
+        mBackgroundPaint.setColor(Color.argb(238, 26, 27, 33));
+        mBackgroundPaint.setStyle(Paint.Style.FILL);
+
+        mBorderPaint.setColor(Color.argb(60, 255, 255, 255));
+        mBorderPaint.setStyle(Paint.Style.STROKE);
+        mBorderPaint.setStrokeWidth(2f);
+    }
+
+    @Override
+    public boolean performClick() {
+        return super.performClick();
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.drawArc(getPaddingLeft(),-getHeight() + getPaddingBottom(),getWidth() - getPaddingRight(), getHeight() - getPaddingBottom(), 0, 180, true, mBackgroundPaint);
+        float pl = getPaddingLeft();
+        float pr = getPaddingRight();
+        float pb = getPaddingBottom();
+        float w = getWidth();
+        float h = getHeight();
 
-        mDrawable.setBounds(getPaddingLeft()/2, getPaddingTop()/2, getHeight() - getPaddingRight()/2, getHeight() - getPaddingBottom()/2);
-        canvas.save();
-        canvas.translate((getWidth()-getHeight())/2f, -getPaddingBottom()/2f);
-        mDrawable.draw(canvas);
-        canvas.restore();
+        // Authentic half-circle tab hanging from the top edge
+        canvas.drawArc(pl, -h + pb, w - pr, h - pb, 0, 180, true, mBackgroundPaint);
+        canvas.drawArc(pl, -h + pb, w - pr, h - pb, 0, 180, false, mBorderPaint);
+
+        if (mDrawable != null) {
+            int iconSize = (int) (Math.min(w, h) * 0.72f);
+            int left = (int) ((w - iconSize) / 2f);
+            int top = (int) ((h - iconSize) / 3f);
+            mDrawable.setBounds(left, top, left + iconSize, top + iconSize);
+            mDrawable.draw(canvas);
+        }
     }
 
-    // Move the button to the third quarter of the screen
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         super.onLayout(changed, left, top, right, bottom);
-        int parentWidth = ((View) getParent()).getWidth();
-        setTranslationX((int)(parentWidth * 0.25));
+        if (autoTranslate && getParent() instanceof View) {
+            int parentWidth = ((View) getParent()).getWidth();
+            setTranslationX((int) (parentWidth * 0.25));
+        }
     }
 }

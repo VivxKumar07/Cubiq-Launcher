@@ -31,6 +31,7 @@ import com.movtery.zalithlauncher.context.GlobalContext
 import com.movtery.zalithlauncher.game.launch.LogName
 import com.movtery.zalithlauncher.game.path.getVersionsHome
 import com.movtery.zalithlauncher.game.support.touch_controller.VibrationHandler
+import com.movtery.zalithlauncher.game.renderer.Renderers
 import com.movtery.zalithlauncher.game.renderer.renderers.GL4ESRenderer
 import com.movtery.zalithlauncher.game.renderer.renderers.LTWRenderer
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber
@@ -216,27 +217,26 @@ class Version(
     private fun String.getValueOrDefault(default: String): String = this.takeIf { it.isNotEmpty() } ?: default
 
     fun getRenderer(): String {
-        val configured = versionConfig.renderer
-        // If user explicitly configured a renderer for this version, always respect it
-        if (configured.isNotEmpty()) {
-            return configured
-        }
-        val global = AllSettings.renderer.getValue()
-        if (global.isNotEmpty()) {
-            return global
-        }
         val mcVer = getVersionInfo()?.minecraftVersion ?: getVersionName()
-        val parsedVersion = Regex("""^\s*(\d+(?:\.\d+){1,2})""")
+        val parsedVersion = Regex("""(\d+(?:\.\d+){1,2})""")
             .find(mcVer)
             ?.groupValues
             ?.getOrNull(1) ?: mcVer.trim()
 
+        val configured = versionConfig.renderer
+        if (configured.isNotEmpty()) {
+            return configured
+        }
+
+        val global = AllSettings.renderer.getValue()
+        if (global.isNotEmpty()) {
+            return global
+        }
+
+        // Auto-Default recommendations when not explicitly set:
         if (GameVersionNumber.compare(parsedVersion, "1.16.5") <= 0) {
             return GL4ESRenderer.getUniqueIdentifier()
         }
-        // Auto-Default for Minecraft > 26.2 (e.g., 26.3+)
-        // Bug 9: Mali GPUs lack complete desktop Vulkan compliance required by LTW.
-        // On Mali GPUs, default to NGGL4ESRenderer (Holy GL4ES / MobileGlues) which is rock-solid.
         if (mcVer.isBiggerVer("26.2") && !isMaliGpuHardware()) {
             return LTWRenderer.getUniqueIdentifier()
         }
@@ -262,11 +262,11 @@ class Version(
     fun getControlPath(): File? {
         val configured = versionConfig.control
             .getValueOrDefault(AllSettings.controlLayout.getValue())
-            .ifEmpty { "mojo_layout.json" }
+            .ifEmpty { "zalith_1_layout.json" }
         val file = File(PathManager.DIR_CONTROL_LAYOUTS, configured)
         if (file.exists()) return file
 
-        val default = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
+        val default = File(PathManager.DIR_CONTROL_LAYOUTS, "zalith_1_layout.json")
         if (default.exists()) return default
 
         return null

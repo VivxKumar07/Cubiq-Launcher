@@ -142,7 +142,7 @@ fun MultiplayerScreen(
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val tabs = listOf("TERRACOTTA SETTINGS", "HOW TO PLAY (TUTORIAL)")
+                val tabs = listOf("CUBIQ FRIENDS", "TERRACOTTA SETTINGS", "HOW TO PLAY (TUTORIAL)")
                 tabs.forEachIndexed { index, title ->
                     val isSelected = activeSubTab == index
                     com.movtery.zalithlauncher.ui.components.MinecraftButton(
@@ -168,23 +168,34 @@ fun MultiplayerScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp)
             ) {
-                if (activeSubTab == 0) {
-                    MainMenu(
-                        modifier = Modifier.fillMaxSize(),
-                        eventViewModel = eventViewModel,
-                        onShareLogs = {
-                            val logFile = PathManager.FILE_TERRACOTTA_LOG
-                            if (logFile.exists()) {
-                                shareFile(context, logFile)
-                            } else {
-                                eventViewModel.sendToast(androidText(R.string.terracotta_export_log_share_null))
+                when (activeSubTab) {
+                    0 -> {
+                        com.movtery.zalithlauncher.friends.ui.CubiqFriendsContent(
+                            modifier = Modifier.fillMaxSize(),
+                            onJoinFriendWorld = { friend ->
+                                eventViewModel.sendToast(androidText("Connecting to ${friend.name} (${friend.hostAddress ?: "LAN"}:${friend.hostPort ?: 25565})..."))
                             }
-                        }
-                    )
-                } else {
-                    TutorialMenu(
-                        modifier = Modifier.fillMaxSize()
-                    )
+                        )
+                    }
+                    1 -> {
+                        MainMenu(
+                            modifier = Modifier.fillMaxSize(),
+                            eventViewModel = eventViewModel,
+                            onShareLogs = {
+                                val logFile = PathManager.FILE_TERRACOTTA_LOG
+                                if (logFile.exists()) {
+                                    shareFile(context, logFile)
+                                } else {
+                                    eventViewModel.sendToast(androidText(R.string.terracotta_export_log_share_null))
+                                }
+                            }
+                        )
+                    }
+                    else -> {
+                        TutorialMenu(
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
         }

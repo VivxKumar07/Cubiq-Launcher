@@ -973,7 +973,7 @@ object AllSettings : SettingsRegistry() {
 
      */
 
-    val controlLayout = stringSetting("controlLayout", "pocket_edition_layout.json")
+    val controlLayout = stringSetting("controlLayout", "zalith_1_layout.json")
 
 
 
@@ -1343,34 +1343,77 @@ object AllSettings : SettingsRegistry() {
 
 
     /**
-
      * ZL1 Control Subsystem Settings
-
      */
-
     @JvmField
-
     val buttonSnapping = boolSetting("buttonSnapping", true)
+    @JvmField
+    val buttonSnappingDistance = intSetting("buttonSnappingDistance", 16, 2..64)
+    @JvmField
+    val buttonAllCaps = boolSetting("buttonAllCaps", true)
 
     @JvmField
+    val mouseSpeed = intSetting("zl1MouseSpeed", 100, 25..300)
+    @JvmField
+    val mouseScale = intSetting("zl1MouseScale", 100, 25..300)
+    @JvmField
+    val disableGestures = boolSetting("zl1DisableGestures", false)
+    @JvmField
+    val timeLongPressTrigger = intSetting("zl1TimeLongPressTrigger", 300, 100..1000)
+    @JvmField
+    val virtualMouseStart = boolSetting("zl1MouseStart", false)
+    @JvmField
+    val customMouse = stringSetting("zl1CustomMouse", "")
 
-    val buttonSnappingDistance = intSetting("buttonSnappingDistance", 16, 2..64)
+    @JvmField
+    val gameMenuShowMemory = boolSetting("zl1GameMenuShowMemory", false)
+    @JvmField
+    val gameMenuShowFPS = boolSetting("zl1GameMenuShowFPS", false)
+    @JvmField
+    val gameMenuMemoryText = stringSetting("zl1GameMenuMemoryText", "M:")
+    @JvmField
+    val gameMenuLocation = stringSetting("zl1GameMenuLocation", "center")
+    @JvmField
+    val gameMenuInfoRefreshRate = intSetting("zl1GameMenuInfoRefreshRate", 1000, 100..5000)
+    @JvmField
+    val gameMenuAlpha = intSetting("zl1GameMenuAlpha", 100, 20..100)
+    @JvmField
+    val zl1GameMenuPos = stringSetting("zl1GameMenuPos", "")
 
-    @JvmField val buttonAllCaps = boolSetting("buttonAllCaps", true)
+    @JvmField
+    val hotbarType = stringSetting("zl1HotbarType", "auto")
+    @JvmField
+    val zl1HotbarWidth = intSetting("zl1HotbarWidth", 0, 0..8192)
+    @JvmField
+    val zl1HotbarHeight = intSetting("zl1HotbarHeight", 0, 0..8192)
 
- @JvmStatic fun getButtonAllCaps() = buttonAllCaps
-
- @JvmStatic fun getButtonSnapping() = buttonSnapping
-
- @JvmStatic fun getButtonSnappingDistance() = buttonSnappingDistance
-
- @JvmStatic fun getButtonScale() = controlsButtonScale
+    @JvmStatic fun getButtonAllCaps() = buttonAllCaps
+    @JvmStatic fun getButtonSnapping() = buttonSnapping
+    @JvmStatic fun getButtonSnappingDistance() = buttonSnappingDistance
+    @JvmStatic fun getButtonScale() = controlsButtonScale
     @JvmStatic fun getDefaultCtrl() = controlLayout
+    @JvmStatic fun getEnableGyro() = gyroscopeControl
     @JvmStatic fun getGyroSmoothing() = gyroscopeSmoothing
     @JvmStatic fun getGyroSampleRate() = gyroscopeSampleRate
     @JvmStatic fun getGyroSensitivity() = gyroscopeSensitivity
     @JvmStatic fun getGyroInvertX() = gyroscopeInvertX
     @JvmStatic fun getGyroInvertY() = gyroscopeInvertY
+    @JvmStatic fun getDisableGestures() = disableGestures
+    @JvmStatic fun getTimeLongPressTrigger() = timeLongPressTrigger
+    @JvmStatic fun getMouseSpeed() = mouseSpeed
+    @JvmStatic fun getMouseScale() = mouseScale
+    @JvmStatic fun getVirtualMouseStart() = virtualMouseStart
+    @JvmStatic fun getCustomMouse() = customMouse
+    @JvmStatic fun getGamepadDeadzoneScale() = gamepadDeadZoneScale
+    @JvmStatic fun getGameMenuShowMemory() = gameMenuShowMemory
+    @JvmStatic fun getGameMenuShowFPS() = gameMenuShowFPS
+    @JvmStatic fun getGameMenuMemoryText() = gameMenuMemoryText
+    @JvmStatic fun getGameMenuLocation() = gameMenuLocation
+    @JvmStatic fun getGameMenuInfoRefreshRate() = gameMenuInfoRefreshRate
+    @JvmStatic fun getGameMenuAlpha() = gameMenuAlpha
+    @JvmStatic fun getHotbarType() = hotbarType
+    @JvmStatic fun getZl1HotbarWidth() = zl1HotbarWidth
+    @JvmStatic fun getZl1HotbarHeight() = zl1HotbarHeight
 
 }
 

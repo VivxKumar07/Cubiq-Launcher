@@ -1,6 +1,5 @@
 package net.kdt.pojavlaunch.customcontrols.handleview;
 
-
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
 import static net.kdt.pojavlaunch.Tools.currentDisplayMetrics;
@@ -17,10 +16,10 @@ import android.view.animation.Interpolator;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.constraintlayout.widget.ConstraintLayout;
@@ -42,7 +41,8 @@ import net.kdt.pojavlaunch.customcontrols.buttons.ControlInterface;
 import java.util.List;
 
 /**
- * Class providing a sort of popup on top of a Layout, allowing to edit a given ControlButton
+ * Class providing a sort of popup on top of a Layout, allowing to edit a given
+ * ControlButton
  */
 public class EditControlPopup {
     private final Context context;
@@ -57,8 +57,10 @@ public class EditControlPopup {
     public boolean internalChanges = false; // True when we programmatically change stuff.
     private final View.OnLayoutChangeListener mLayoutChangedListener = new View.OnLayoutChangeListener() {
         @Override
-        public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-            if (internalChanges) return;
+        public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop,
+                int oldRight, int oldBottom) {
+            if (internalChanges)
+                return;
 
             internalChanges = true;
             int width = (int) (safeParseFloat(mWidthEditText.getText().toString()));
@@ -75,8 +77,8 @@ public class EditControlPopup {
         }
     };
     protected EditText mNameEditText, mWidthEditText, mHeightEditText;
-    @SuppressLint("UseSwitchCompatOrMaterialCode")
-    protected Switch mToggleSwitch, mPassthroughSwitch, mSwipeableSwitch, mForwardLockSwitch, mAbsoluteTrackingSwitch;
+    protected CompoundButton mToggleSwitch, mPassthroughSwitch, mSwipeableSwitch, mForwardLockSwitch,
+            mAbsoluteTrackingSwitch;
     protected Spinner mOrientationSpinner;
     protected TextView[] mKeycodeTextviews = new TextView[4];
     protected SeekBar mStrokeWidthSeekbar, mCornerRadiusSeekbar, mAlphaSeekbar;
@@ -93,22 +95,22 @@ public class EditControlPopup {
     private TextView mOrientationTextView, mMappingTextView, mNameTextView,
             mCornerRadiusTextView, mVisibilityTextView, mSizeTextview, mSizeXTextView;
 
-
     public EditControlPopup(Context context, ViewGroup parent) {
         this.context = context;
 
-        mScrollView = (DefocusableScrollView) LayoutInflater.from(context).inflate(R.layout.dialog_control_button_setting, parent, false);
+        mScrollView = (DefocusableScrollView) LayoutInflater.from(context)
+                .inflate(R.layout.dialog_zl1_control_button_setting, parent, false);
         parent.addView(mScrollView);
 
-        mMargin = 0;
+        mMargin = Math.round(12f * context.getResources().getDisplayMetrics().density);
 
         mColorSelector = new ColorSelector(context, parent, null);
         mColorSelector.getRootView().setElevation(11);
         mColorSelector.getRootView().setTranslationZ(11);
         mColorSelector.getRootView().setX(-2000f);
 
-        mEditPopupAnimator = ObjectAnimator.ofFloat(mScrollView, "x", 0).setDuration(600);
-        mColorEditorAnimator = ObjectAnimator.ofFloat(mColorSelector.getRootView(), "x", 0).setDuration(600);
+        mEditPopupAnimator = ObjectAnimator.ofFloat(mScrollView, "x", 0).setDuration(260);
+        mColorEditorAnimator = ObjectAnimator.ofFloat(mColorSelector.getRootView(), "x", 0).setDuration(260);
         Interpolator decelerate = new AccelerateDecelerateInterpolator();
         mEditPopupAnimator.setInterpolator(decelerate);
         mColorEditorAnimator.setInterpolator(decelerate);
@@ -123,6 +125,17 @@ public class EditControlPopup {
         setupRealTimeListeners();
     }
 
+    private int getParentWidth() {
+        if (mScrollView.getParent() instanceof View) {
+            int pw = ((View) mScrollView.getParent()).getWidth();
+            if (pw > 0)
+                return pw;
+        }
+        return (currentDisplayMetrics != null && currentDisplayMetrics.widthPixels > 0)
+                ? currentDisplayMetrics.widthPixels
+                : context.getResources().getDisplayMetrics().widthPixels;
+    }
+
     public static void setPercentageText(TextView textView, int progress) {
         textView.setText(textView.getContext().getString(R.string.percent_format, progress));
     }
@@ -133,14 +146,24 @@ public class EditControlPopup {
     public void appear(boolean fromRight) {
         disappearColor(); // When someone jumps from a button to another
 
+        if (mScrollView.getWidth() == 0) {
+            mScrollView.post(() -> appear(fromRight));
+            return;
+        }
+
+        int parentWidth = getParentWidth();
+        int width = mScrollView.getWidth();
+        int targetRight = Math.max(mMargin, parentWidth - width - mMargin);
+        int targetLeft = Math.min(mMargin, Math.max(0, parentWidth - width));
+
         if (fromRight) {
             if (!mDisplaying || !isAtRight()) {
-                mEditPopupAnimator.setFloatValues(currentDisplayMetrics.widthPixels, currentDisplayMetrics.widthPixels - mScrollView.getWidth() - mMargin);
+                mEditPopupAnimator.setFloatValues(parentWidth, targetRight);
                 mEditPopupAnimator.start();
             }
         } else {
             if (!mDisplaying || isAtRight()) {
-                mEditPopupAnimator.setFloatValues(-mScrollView.getWidth(), mMargin);
+                mEditPopupAnimator.setFloatValues(-width, targetLeft);
                 mEditPopupAnimator.start();
             }
         }
@@ -152,13 +175,16 @@ public class EditControlPopup {
      * Slide out the layout
      */
     public void disappear() {
-        if (!mDisplaying) return;
+        if (!mDisplaying)
+            return;
 
         mDisplaying = false;
+        int parentWidth = getParentWidth();
+        int width = mScrollView.getWidth() > 0 ? mScrollView.getWidth() : 1000;
         if (isAtRight())
-            mEditPopupAnimator.setFloatValues(currentDisplayMetrics.widthPixels - mScrollView.getWidth() - mMargin, currentDisplayMetrics.widthPixels);
+            mEditPopupAnimator.setFloatValues(Math.max(mMargin, parentWidth - width - mMargin), parentWidth);
         else
-            mEditPopupAnimator.setFloatValues(mMargin, -mScrollView.getWidth());
+            mEditPopupAnimator.setFloatValues(mMargin, -width);
 
         mEditPopupAnimator.start();
     }
@@ -167,22 +193,36 @@ public class EditControlPopup {
      * Slide the layout into the visible screen area
      */
     public void appearColor(boolean fromRight, int color) {
+        View colorView = mColorSelector.getRootView();
+        colorView.setVisibility(VISIBLE);
+        if (colorView.getWidth() == 0) {
+            colorView.post(() -> appearColor(fromRight, color));
+            return;
+        }
+
+        int parentWidth = getParentWidth();
+        int colorWidth = colorView.getWidth();
+        int targetRight = Math.max(mMargin, parentWidth - colorWidth - mMargin);
+        int targetLeft = Math.min(mMargin, Math.max(0, parentWidth - colorWidth));
+
         if (fromRight) {
             if (!mDisplayingColor || !isAtRight()) {
-                mColorEditorAnimator.setFloatValues(currentDisplayMetrics.widthPixels, currentDisplayMetrics.widthPixels - mScrollView.getWidth() - mMargin);
+                mColorEditorAnimator.setFloatValues(parentWidth, targetRight);
                 mColorEditorAnimator.start();
             }
         } else {
             if (!mDisplayingColor || isAtRight()) {
-                mColorEditorAnimator.setFloatValues(-mScrollView.getWidth(), mMargin);
+                mColorEditorAnimator.setFloatValues(-colorWidth, targetLeft);
                 mColorEditorAnimator.start();
             }
         }
 
         // Adjust the color selector to have the same size as the control settings
-        ViewGroup.LayoutParams params = mColorSelector.getRootView().getLayoutParams();
-        params.height = mScrollView.getHeight();
-        mColorSelector.getRootView().setLayoutParams(params);
+        ViewGroup.LayoutParams params = colorView.getLayoutParams();
+        if (mScrollView.getHeight() > 0) {
+            params.height = mScrollView.getHeight();
+            colorView.setLayoutParams(params);
+        }
 
         mDisplayingColor = true;
         mColorSelector.show(color == -1 ? Color.WHITE : color);
@@ -192,13 +232,17 @@ public class EditControlPopup {
      * Slide out the layout
      */
     public void disappearColor() {
-        if (!mDisplayingColor) return;
+        if (!mDisplayingColor)
+            return;
 
         mDisplayingColor = false;
+        View colorView = mColorSelector.getRootView();
+        int parentWidth = getParentWidth();
+        int colorWidth = colorView.getWidth() > 0 ? colorView.getWidth() : 1000;
         if (isAtRight())
-            mColorEditorAnimator.setFloatValues(currentDisplayMetrics.widthPixels - mScrollView.getWidth() - mMargin, currentDisplayMetrics.widthPixels);
+            mColorEditorAnimator.setFloatValues(Math.max(mMargin, parentWidth - colorWidth - mMargin), parentWidth);
         else
-            mColorEditorAnimator.setFloatValues(mMargin, -mScrollView.getWidth());
+            mColorEditorAnimator.setFloatValues(mMargin, -colorWidth);
 
         mColorEditorAnimator.start();
     }
@@ -222,8 +266,9 @@ public class EditControlPopup {
      * Switch the panels position if needed
      */
     public void adaptPanelPosition() {
-        if (mDisplaying) {
-            boolean isAtRight = mCurrentlyEditedButton.getControlView().getX() + mCurrentlyEditedButton.getControlView().getWidth() / 2f < currentDisplayMetrics.widthPixels / 2f;
+        if (mDisplaying && mCurrentlyEditedButton != null) {
+            boolean isAtRight = mCurrentlyEditedButton.getControlView().getX()
+                    + mCurrentlyEditedButton.getControlView().getWidth() / 2f < getParentWidth() / 2f;
             appear(isAtRight);
         }
     }
@@ -234,7 +279,7 @@ public class EditControlPopup {
     }
 
     private void loadAdapter() {
-        //Initialize adapter for keycodes
+        // Initialize adapter for keycodes
         mAdapter = new ArrayAdapter<>(context, R.layout.item_centered_textview);
         mSpecialArray = ControlData.buildSpecialButtonArray(context);
 
@@ -258,13 +303,13 @@ public class EditControlPopup {
         for (int i = 0; i < mRootView.getChildCount(); ++i) {
             mRootView.getChildAt(i).setVisibility(VISIBLE);
         }
-        for(Spinner s : mKeycodeSpinners) {
+        for (Spinner s : mKeycodeSpinners) {
             s.setVisibility(View.INVISIBLE);
         }
     }
 
     private boolean isAtRight() {
-        return mScrollView.getX() > currentDisplayMetrics.widthPixels / 2f;
+        return mScrollView.getX() > getParentWidth() / 2f;
     }
 
     /* LOADING VALUES */
@@ -302,7 +347,8 @@ public class EditControlPopup {
             if (data.keycodes[i] < 0) {
                 mKeycodeSpinners[i].setSelection(data.keycodes[i] + mSpecialArray.size());
             } else {
-                mKeycodeSpinners[i].setSelection(EfficientAndroidLWJGLKeycode.getIndexByValue(data.keycodes[i]) + mSpecialArray.size());
+                mKeycodeSpinners[i].setSelection(
+                        EfficientAndroidLWJGLKeycode.getIndexByValue(data.keycodes[i]) + mSpecialArray.size());
             }
         }
     }
@@ -367,7 +413,7 @@ public class EditControlPopup {
         loadValues(data);
 
         // Size linked to the parent drawer depending on the drawer settings
-        if(drawerOrientation != ControlDrawerData.Orientation.FREE){
+        if (drawerOrientation != ControlDrawerData.Orientation.FREE) {
             mSizeTextview.setVisibility(GONE);
             mSizeXTextView.setVisibility(GONE);
             mWidthEditText.setVisibility(GONE);
@@ -379,7 +425,6 @@ public class EditControlPopup {
         mDisplayInMenuCheckbox.setVisibility(GONE);
         mDisplayInGameCheckbox.setVisibility(GONE);
     }
-
 
     private void bindLayout() {
         mRootView = mScrollView.findViewById(R.id.edit_layout);
@@ -411,7 +456,7 @@ public class EditControlPopup {
         mDisplayInGameCheckbox = mScrollView.findViewById(R.id.visibility_game_checkbox);
         mDisplayInMenuCheckbox = mScrollView.findViewById(R.id.visibility_menu_checkbox);
 
-        //Decorative stuff
+        // Decorative stuff
         mMappingTextView = mScrollView.findViewById(R.id.editMapping_textView);
         mOrientationTextView = mScrollView.findViewById(R.id.editOrientation_textView);
         mNameTextView = mScrollView.findViewById(R.id.editName_textView);
@@ -426,11 +471,13 @@ public class EditControlPopup {
     /**
      * A long function linking all the displayed data on the popup and,
      * the currently edited mCurrentlyEditedButton
+     * 
      * @noinspection SuspiciousNameCombination
      */
     public void setupRealTimeListeners() {
         mNameEditText.addTextChangedListener((SimpleTextWatcher) s -> {
-            if (internalChanges) return;
+            if (internalChanges)
+                return;
 
             mCurrentlyEditedButton.getProperties().name = s.toString();
 
@@ -439,7 +486,8 @@ public class EditControlPopup {
         });
 
         mWidthEditText.addTextChangedListener((SimpleTextWatcher) s -> {
-            if (internalChanges) return;
+            if (internalChanges)
+                return;
 
             float width = safeParseFloat(s.toString());
             if (width >= 0) {
@@ -453,7 +501,8 @@ public class EditControlPopup {
         });
 
         mHeightEditText.addTextChangedListener((SimpleTextWatcher) s -> {
-            if (internalChanges) return;
+            if (internalChanges)
+                return;
 
             float height = safeParseFloat(s.toString());
             if (height >= 0) {
@@ -467,26 +516,31 @@ public class EditControlPopup {
         });
 
         mSwipeableSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (internalChanges) return;
+            if (internalChanges)
+                return;
             mCurrentlyEditedButton.getProperties().isSwipeable = isChecked;
         });
         mToggleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (internalChanges) return;
+            if (internalChanges)
+                return;
             mCurrentlyEditedButton.getProperties().isToggle = isChecked;
         });
         mPassthroughSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (internalChanges) return;
+            if (internalChanges)
+                return;
             mCurrentlyEditedButton.getProperties().passThruEnabled = isChecked;
         });
         mForwardLockSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (internalChanges) return;
-            if(mCurrentlyEditedButton.getProperties() instanceof ControlJoystickData){
+            if (internalChanges)
+                return;
+            if (mCurrentlyEditedButton.getProperties() instanceof ControlJoystickData) {
                 ((ControlJoystickData) mCurrentlyEditedButton.getProperties()).forwardLock = isChecked;
             }
         });
         mAbsoluteTrackingSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (internalChanges) return;
-            if(mCurrentlyEditedButton.getProperties() instanceof ControlJoystickData){
+            if (internalChanges)
+                return;
+            if (mCurrentlyEditedButton.getProperties() instanceof ControlJoystickData) {
                 ((ControlJoystickData) mCurrentlyEditedButton.getProperties()).absolute = isChecked;
             }
         });
@@ -494,7 +548,8 @@ public class EditControlPopup {
         mAlphaSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (internalChanges) return;
+                if (internalChanges)
+                    return;
                 mCurrentlyEditedButton.getProperties().opacity = mAlphaSeekbar.getProgress() / 100f;
                 mCurrentlyEditedButton.getControlView().setAlpha(mAlphaSeekbar.getProgress() / 100f);
                 setPercentageText(mAlphaPercentTextView, progress);
@@ -512,7 +567,8 @@ public class EditControlPopup {
         mStrokeWidthSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (internalChanges) return;
+                if (internalChanges)
+                    return;
                 mCurrentlyEditedButton.getProperties().strokeWidth = mStrokeWidthSeekbar.getProgress() / 10F;
                 mCurrentlyEditedButton.setBackground();
                 setPercentageText(mStrokePercentTextView, progress);
@@ -530,7 +586,8 @@ public class EditControlPopup {
         mCornerRadiusSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (internalChanges) return;
+                if (internalChanges)
+                    return;
                 mCurrentlyEditedButton.getProperties().cornerRadius = mCornerRadiusSeekbar.getProgress();
                 mCurrentlyEditedButton.setBackground();
                 setPercentageText(mCornerRadiusPercentTextView, progress);
@@ -544,7 +601,6 @@ public class EditControlPopup {
             public void onStopTrackingTouch(SeekBar seekBar) {
             }
         });
-
 
         for (int i = 0; i < mKeycodeSpinners.length; ++i) {
             int finalI = i;
@@ -565,7 +621,6 @@ public class EditControlPopup {
             });
         }
 
-
         mOrientationSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -573,7 +628,8 @@ public class EditControlPopup {
                 // Meaning the internalChanges bool is useless here.
 
                 if (mCurrentlyEditedButton instanceof ControlDrawer) {
-                    ((ControlDrawer) mCurrentlyEditedButton).drawerData.orientation = ControlDrawerData.intToOrientation(mOrientationSpinner.getSelectedItemPosition());
+                    ((ControlDrawer) mCurrentlyEditedButton).drawerData.orientation = ControlDrawerData
+                            .intToOrientation(mOrientationSpinner.getSelectedItemPosition());
                     ((ControlDrawer) mCurrentlyEditedButton).syncButtons();
                 }
             }
@@ -584,12 +640,14 @@ public class EditControlPopup {
         });
 
         mDisplayInGameCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (internalChanges) return;
+            if (internalChanges)
+                return;
             mCurrentlyEditedButton.getProperties().displayInGame = isChecked;
         });
 
         mDisplayInMenuCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (internalChanges) return;
+            if (internalChanges)
+                return;
             mCurrentlyEditedButton.getProperties().displayInMenu = isChecked;
         });
 
@@ -616,9 +674,11 @@ public class EditControlPopup {
         // Side note, spinner listeners are fired later than all the other ones.
         // Meaning the internalChanges bool is useless here.
         if (index < mSpecialArray.size()) {
-            mCurrentlyEditedButton.getProperties().keycodes[finalI] = mKeycodeSpinners[finalI].getSelectedItemPosition() - mSpecialArray.size();
+            mCurrentlyEditedButton.getProperties().keycodes[finalI] = mKeycodeSpinners[finalI].getSelectedItemPosition()
+                    - mSpecialArray.size();
         } else {
-            mCurrentlyEditedButton.getProperties().keycodes[finalI] = EfficientAndroidLWJGLKeycode.getValueByIndex(mKeycodeSpinners[finalI].getSelectedItemPosition() - mSpecialArray.size());
+            mCurrentlyEditedButton.getProperties().keycodes[finalI] = EfficientAndroidLWJGLKeycode
+                    .getValueByIndex(mKeycodeSpinners[finalI].getSelectedItemPosition() - mSpecialArray.size());
         }
         mKeycodeTextviews[finalI].setText((String) mKeycodeSpinners[finalI].getSelectedItem());
     }

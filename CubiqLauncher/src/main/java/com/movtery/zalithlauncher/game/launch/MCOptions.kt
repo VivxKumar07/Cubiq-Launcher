@@ -23,13 +23,16 @@ import android.content.Context
 import android.os.Build
 import android.os.FileObserver
 import com.movtery.zalithlauncher.context.copyAssetFile
+import com.movtery.zalithlauncher.event.single.MCOptionChangeEvent
 import com.movtery.zalithlauncher.game.version.installed.Version
 import com.movtery.zalithlauncher.utils.logging.Logger
 import com.movtery.zalithlauncher.utils.string.splitPreservingQuotes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.greenrobot.eventbus.EventBus
 import org.json.JSONObject
+import org.lwjgl.glfw.CallbackBridge
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -141,6 +144,7 @@ object MCOptions {
             parameterMap.putAll(newMap)
 
             _refreshKey.update { it.not() }
+            EventBus.getDefault().post(MCOptionChangeEvent())
         }.onFailure {
             Logger.warning(TAG, "Failed to load options!", it)
         }
@@ -166,6 +170,13 @@ object MCOptions {
     }
 
     fun containsKey(key: String): Boolean = parameterMap.containsKey(key)
+
+    @JvmStatic
+    fun getMcScale(): Int {
+        val guiScale = get("guiScale")?.toIntOrNull() ?: 0
+        val scale = minOf(CallbackBridge.windowWidth / 320, CallbackBridge.windowHeight / 240).coerceAtLeast(1)
+        return if (guiScale == 0 || scale < guiScale) scale else guiScale
+    }
 
     fun save() {
         synchronized(lock) {

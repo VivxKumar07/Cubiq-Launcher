@@ -63,9 +63,8 @@
 
     <FrameLayout
         android:id="@+id/customctrl_navigation_view"
-        android:layout_width="220dp"
+        android:layout_width="@dimen/zl1_sidebar_width"
         android:layout_height="match_parent"
-        android:layout_margin="@dimen/_12sdp"
         android:layout_gravity="end"
         android:elevation="@dimen/_8sdp"
         android:translationZ="4dp"

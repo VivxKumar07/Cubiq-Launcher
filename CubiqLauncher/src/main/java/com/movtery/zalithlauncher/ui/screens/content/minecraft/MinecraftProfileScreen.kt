@@ -1411,38 +1411,16 @@ fun MinecraftProfileScreen(
 
                         onLaunchEditor = {
 
-                            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
+                            val defaultFile = File(PathManager.DIR_CONTROL_LAYOUTS, "zalith_1_layout.json")
 
-                            val shouldOverwriteDefault = runCatching {
-
-                                if (!defaultFile.exists()) true
-
-                                else {
-
-                                    val existing = loadLayoutFromFile(defaultFile)
-
-                                    existing.info.versionCode < 10
-
-                                }
-
-                            }.getOrDefault(true)
-
-                            if (shouldOverwriteDefault) {
-
+                            if (!defaultFile.exists()) {
                                 runCatching {
-
-                                    context.copyAssetFile("mojo_layout.json", defaultFile, true)
-
+                                    context.copyAssetFile("zalith_1_layout.json", defaultFile, true)
                                 }
-
                             }
 
-
-
                             val activeControl = controlLayouts.find { it.file.name == activeControlLayoutName }
-
-                                ?: controlLayouts.find { it.file.name == "mojo_layout.json" }
-
+                                ?: controlLayouts.find { it.file.name == "zalith_1_layout.json" }
                                 ?: controlLayouts.firstOrNull()
 
                             val activeFile = activeControl?.file
@@ -3106,7 +3084,7 @@ private fun CreateTouchLayoutDialog(
 
 
 
-                listOf("Zalith Launcher 1 Controls", "Mojo Launcher Controls", "Pocket Edition Controls", "Plain Java Controls").forEach { template ->
+                listOf("Zalith Launcher 1 Controls", "Zalith Launcher 2 Controls", "Pocket Edition Controls").forEach { template ->
 
                     val isSel = selectedTemplate == template
 
@@ -3156,7 +3134,12 @@ private fun CreateTouchLayoutDialog(
 
                             Text(
 
-                                text = if (template == "Pocket Edition Controls") "Bedrock mobile controls layout (~65% opacity)" else if (template == "Zalith Launcher 1 Controls") "Original Zalith 1 PvP-focused control layout" else if (template == "Mojo Launcher Controls") "Authentic Mojo Launcher touch control layout" else "Standard PC keyboard on-screen buttons",
+                                text = when (template) {
+                                    "Zalith Launcher 1 Controls" -> "Original Zalith 1 PvP-focused control layout"
+                                    "Zalith Launcher 2 Controls" -> "Standard Zalith Launcher 2 layered controls"
+                                    "Pocket Edition Controls" -> "Bedrock mobile controls layout (~65% opacity)"
+                                    else -> "Custom touch control layout"
+                                },
 
                                 color = Color(0xFF888888),
 
@@ -3212,9 +3195,8 @@ private fun CreateTouchLayoutDialog(
 
                             try {
 
-                            if (selectedTemplate == "Zalith Launcher 1 Controls" || selectedTemplate == "Mojo Launcher Controls") {
-                                val srcAsset = if (selectedTemplate == "Mojo Launcher Controls") "mojo_layout.json" else "zalith_1_layout.json"
-                                val zl1Json = context.assets.open(srcAsset).bufferedReader().use { it.readText() }
+                                if (selectedTemplate == "Zalith Launcher 1 Controls") {
+                                    val zl1Json = context.assets.open("zalith_1_layout.json").bufferedReader().use { it.readText() }
                                     val jobj = org.json.JSONObject(zl1Json)
                                     val infoObj = org.json.JSONObject()
                                     infoObj.put("name", layoutName.trim())
@@ -3231,7 +3213,7 @@ private fun CreateTouchLayoutDialog(
                                     return@launch
                                 }
 
-                                val assetName = if (selectedTemplate == "Pocket Edition Controls") "pocket_edition_layout.json" else "mojo_layout.json"
+                                val assetName = if (selectedTemplate == "Pocket Edition Controls") "pocket_edition_layout.json" else "zalith_2_layout.json"
 
                                 val layout = runCatching {
 
@@ -8728,9 +8710,7 @@ private fun LayoutsSettingsTab(
                 onClick = {
 
                     val active = controlLayouts.find { it.file.name == activeControlLayoutName }
-
-                        ?: controlLayouts.find { it.file.name == "mojo_layout.json" }
-
+                        ?: controlLayouts.find { it.file.name == "zalith_1_layout.json" }
                         ?: controlLayouts.firstOrNull()
 
                     if (active != null) {
@@ -8802,8 +8782,9 @@ private fun LayoutsSettingsTab(
                 val isSelected = activeControlLayoutName == data.file.name
 
                 val layoutName = when {
-                    data.file.name == "mojo_layout.json" -> "Mojo Launcher Controls"
                     data.file.name == "zalith_1_layout.json" -> "Zalith Launcher 1 Controls"
+                    data.file.name == "zalith_2_layout.json" -> "Zalith Launcher 2 Controls"
+                    data.file.name == "pocket_edition_layout.json" -> "Pocket Edition Controls"
                     data.isSupport && data.controlLayout.info.name.translate(locale).isNotBlank() -> data.controlLayout.info.name.translate(locale)
                     else -> data.file.name.removeSuffix(".json").replace("_", " ")
                 }
@@ -8912,7 +8893,7 @@ private fun LayoutsSettingsTab(
 
 
 
-                        if (data.file.name != "mojo_layout.json") {
+                        if (data.file.name != "zalith_1_layout.json" && data.file.name != "zalith_2_layout.json") {
 
                             MinecraftButton(
 

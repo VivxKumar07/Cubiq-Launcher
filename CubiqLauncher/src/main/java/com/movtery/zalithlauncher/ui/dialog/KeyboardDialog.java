@@ -54,8 +54,14 @@ public class KeyboardDialog extends FullScreenDialog implements View.OnClickList
             int dimension = (int) Tools.dpToPx(getContext().getResources().getDimension(com.intuit.sdp.R.dimen._12sdp));
 
             WindowManager.LayoutParams params = window.getAttributes();
-            params.width = Tools.currentDisplayMetrics.widthPixels - 2 * dimension;
-            params.height = Tools.currentDisplayMetrics.heightPixels - 2 * dimension;
+            int dmW = Tools.currentDisplayMetrics != null && Tools.currentDisplayMetrics.widthPixels > 0
+                    ? Tools.currentDisplayMetrics.widthPixels
+                    : getContext().getResources().getDisplayMetrics().widthPixels;
+            int dmH = Tools.currentDisplayMetrics != null && Tools.currentDisplayMetrics.heightPixels > 0
+                    ? Tools.currentDisplayMetrics.heightPixels
+                    : getContext().getResources().getDisplayMetrics().heightPixels;
+            params.width = dmW - 2 * dimension;
+            params.height = dmH - 2 * dimension;
             window.setAttributes(params);
 
             window.setGravity(Gravity.CENTER);

@@ -70,8 +70,7 @@ private fun ReplacementControlDialog(
     onDismissRequest: (selected: Boolean) -> Unit
 ) {
     val dataList by ControlManager.dataList.collectAsStateWithLifecycle()
-    // Include all layouts, ensuring Mojo Launcher Controls and Zalith Launcher 1 are never excluded
-    val controls = remember(dataList) { dataList }
+    val controls = dataList
 
     if (controls.isNotEmpty()) {
         val locale = LocalConfiguration.current.locales[0]
@@ -89,11 +88,12 @@ private fun ReplacementControlDialog(
             itemLayout = { item, isCurrent, onClick ->
                 val rawName = item.controlLayout.info.name.translate(locale).trim()
                 val layoutName = when {
+                    item.file.name.contains("mojo", ignoreCase = true) ||
+                            (item.file.name.equals("default.json", ignoreCase = true) && runCatching { item.file.readText().contains("dynamicX") }.getOrDefault(false)) -> "Mojo Launcher Controls"
                     rawName == "control.default.title.text" || rawName.startsWith("control.") ||
-                            item.file.name.contains("zalith_1", ignoreCase = true) ||
-                            item.file.name.equals("default.json", ignoreCase = true) -> "Zalith Launcher 1 Controls"
-                    item.file.name.contains("mojo", ignoreCase = true) -> "Mojo Launcher Controls"
+                            item.file.name.contains("zalith_1", ignoreCase = true) -> "Zalith Launcher 1 Controls"
                     item.file.name.contains("zalith_2", ignoreCase = true) -> "Zalith Launcher 2 Controls"
+                    item.file.name.contains("pocket", ignoreCase = true) -> "Pocket Edition Controls"
                     rawName.isNotBlank() -> rawName
                     else -> item.file.nameWithoutExtension.replace("_", " ")
                 }

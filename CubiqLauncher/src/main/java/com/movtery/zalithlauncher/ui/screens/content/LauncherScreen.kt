@@ -765,114 +765,12 @@ fun LauncherScreen(
 
 
 
-                val hasDownloadedVersion = allVersions.any { ver ->
-
-
-
-                    val clientJar = ver.getClientJar()
-
-
-
-                    val mcVer = ver.getVersionInfo()?.minecraftVersion ?: ver.getVersionName()
-
-
-
-                    val inheritedJar = ver.getInheritedClientJar(mcVer)
-
-
-
-                    (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
-
-
-
-                }
-
-
-
-                if (!hasDownloadedVersion) {
-
-
-
+                val targetVersion = currentVersion ?: allVersions.firstOrNull()
+                if (targetVersion == null) {
                     Toast.makeText(context, "Please create an installation first!", Toast.LENGTH_SHORT).show()
-
-
-
                     LauncherNavState.activeTab = 0
-
-
-
                 } else {
-
-
-
-                    val targetVersion = currentVersion?.takeIf { ver ->
-
-
-
-                        val clientJar = ver.getClientJar()
-
-
-
-                        val mcVer = ver.getVersionInfo()?.minecraftVersion ?: ver.getVersionName()
-
-
-
-                        val inheritedJar = ver.getInheritedClientJar(mcVer)
-
-
-
-                        (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
-
-
-
-                    } ?: allVersions.firstOrNull { ver ->
-
-
-
-                        val clientJar = ver.getClientJar()
-
-
-
-                        val mcVer = ver.getVersionInfo()?.minecraftVersion ?: ver.getVersionName()
-
-
-
-                        val inheritedJar = ver.getInheritedClientJar(mcVer)
-
-
-
-                        (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
-
-
-
-                    }
-
-
-
-                    if (targetVersion == null) {
-
-
-
-                        Toast.makeText(context, "Please create an installation first!", Toast.LENGTH_SHORT).show()
-
-
-
-                        LauncherNavState.activeTab = 0
-
-
-
-                    } else {
-
-
-
-                        onLaunchGame(targetVersion)
-
-
-
-                    }
-
-
-
+                    onLaunchGame(targetVersion)
                 }
 
 
@@ -1675,114 +1573,12 @@ fun LauncherScreen(
 
 
 
-                                            val hasDownloadedVersion = allVersions.any { ver ->
-
-
-
-                                                val clientJar = ver.getClientJar()
-
-
-
-                                                val mcVer = ver.getVersionInfo()?.minecraftVersion ?: ver.getVersionName()
-
-
-
-                                                val inheritedJar = ver.getInheritedClientJar(mcVer)
-
-
-
-                                                (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
-
-
-
-                                            }
-
-
-
-                                            if (!hasDownloadedVersion) {
-
-
-
+                                            val targetVersion = currentVersion ?: allVersions.firstOrNull()
+                                            if (targetVersion == null) {
                                                 Toast.makeText(context, "Please create an installation first!", Toast.LENGTH_SHORT).show()
-
-
-
                                                 LauncherNavState.activeTab = 0
-
-
-
                                             } else {
-
-
-
-                                                val targetVersion = currentVersion?.takeIf { ver ->
-
-
-
-                                                    val clientJar = ver.getClientJar()
-
-
-
-                                                    val mcVer = ver.getVersionInfo()?.minecraftVersion ?: ver.getVersionName()
-
-
-
-                                                    val inheritedJar = ver.getInheritedClientJar(mcVer)
-
-
-
-                                                    (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
-
-
-
-                                                } ?: allVersions.firstOrNull { ver ->
-
-
-
-                                                    val clientJar = ver.getClientJar()
-
-
-
-                                                    val mcVer = ver.getVersionInfo()?.minecraftVersion ?: ver.getVersionName()
-
-
-
-                                                    val inheritedJar = ver.getInheritedClientJar(mcVer)
-
-
-
-                                                    (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
-
-
-
-                                                }
-
-
-
-                                                if (targetVersion == null) {
-
-
-
-                                                    Toast.makeText(context, "Please create an installation first!", Toast.LENGTH_SHORT).show()
-
-
-
-                                                    LauncherNavState.activeTab = 0
-
-
-
-                                                } else {
-
-
-
-                                                    onLaunchGame(targetVersion)
-
-
-
-                                                }
-
-
-
+                                                onLaunchGame(targetVersion)
                                             }
 
 

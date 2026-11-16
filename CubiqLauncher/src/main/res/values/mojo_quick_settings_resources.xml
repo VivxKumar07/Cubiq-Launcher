@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mojo Quick Settings Integers -->
+    <integer name="resolution_seekbar_increment">5</integer>
+    <integer name="resolution_seekbar_min">25</integer>
+    <integer name="gyro_speed_seekbar_increment">5</integer>
+    <integer name="gyro_speed_seekbar_min">25</integer>
+    <integer name="gyro_speed_seekbar_max">300</integer>
+    <integer name="mouse_speed_seekbar_increment">5</integer>
+    <integer name="mouse_speed_seekbar_min">25</integer>
+    <integer name="mouse_speed_seekbar_max">300</integer>
+    <integer name="gesture_delay_seekbar_increment">10</integer>
+    <integer name="gesture_delay_seekbar_min">100</integer>
+    <integer name="gesture_delay_seekbar_max">1000</integer>
+
+    <!-- Strings -->
+    <string name="mcl_setting_title_resolution_scaler">Resolution Scaler</string>
+    <string name="preference_enable_gyro_title">Enable Gyroscope</string>
+    <string name="preference_gyro_invert_x_axis">Invert Gyroscope X Axis</string>
+    <string name="preference_gyro_invert_y_axis">Invert Gyroscope Y Axis</string>
+    <string name="preference_gyro_sensitivity_title">Gyroscope Sensitivity</string>
+    <string name="mcl_setting_title_mousespeed">Mouse Speed</string>
+    <string name="mcl_disable_gestures">Disable Gestures</string>
+    <string name="mcl_setting_title_longpresstrigger">Long press delay</string>
+    <string name="preference_button_transparency">Buttons transparency</string>
+    <string name="millisecond_format">%d ms</string>
+</resources>

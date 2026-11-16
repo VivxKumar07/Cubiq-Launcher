@@ -227,7 +227,6 @@ object VersionsManager {
             if (Renderers.isInitialized) {
                 Renderers.setCurrentRenderer(targetRenderer)
             }
-            AllSettings.renderer.save(targetRenderer)
         }.onFailure { e ->
             Logger.error(TAG, "Failed to apply renderer for selected version ${version.getVersionName()}", e)
         }

@@ -34,7 +34,7 @@ public class Tools {
             File ctrlDir = PathManager.Companion.getDIR_CONTROL_LAYOUTS();
             if (!ctrlDir.exists()) ctrlDir.mkdirs();
             CTRLMAP_PATH = ctrlDir.getAbsolutePath();
-            CTRLDEF_FILE = new File(ctrlDir, "mojo_layout.json").getAbsolutePath();
+            CTRLDEF_FILE = new File(ctrlDir, "zalith_1_layout.json").getAbsolutePath();
             if (context instanceof Activity) {
                 getDisplayMetrics((Activity) context);
             } else if (context.getResources() != null) {
@@ -146,4 +146,10 @@ public class Tools {
     }
 
     public static void checkStorageInteractive(Context ctx) {}
+
+    public static boolean deviceSupportsGyro(Context context) {
+        if (context == null) return false;
+        android.hardware.SensorManager sm = (android.hardware.SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        return sm != null && sm.getDefaultSensor(android.hardware.Sensor.TYPE_GYROSCOPE) != null;
+    }
 }

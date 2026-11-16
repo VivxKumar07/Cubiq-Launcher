@@ -112,7 +112,8 @@ public class ActionRow extends LinearLayout {
         if(mFollowedView == null) return;
         int side = pickSide();
 
-        setX(MathUtils.clamp(getXPosition(side), 0, currentDisplayMetrics.widthPixels - getWidth()));
+        int screenWidth = (currentDisplayMetrics != null ? currentDisplayMetrics.widthPixels : getResources().getDisplayMetrics().widthPixels);
+        setX(MathUtils.clamp(getXPosition(side), 0, screenWidth - getWidth()));
         setY(getYPosition(side));
     }
 

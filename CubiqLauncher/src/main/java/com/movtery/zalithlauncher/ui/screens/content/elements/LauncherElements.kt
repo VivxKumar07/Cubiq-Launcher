@@ -275,7 +275,7 @@ fun LaunchGameOperation(
             SimpleAlertDialog(
                 title = "Incompatible Renderer Warning",
                 text = "$reason\n\nSuggested Fallback Renderer:\n• ${fallback.getRendererName()} (${fallback.getCompatibilityDescription()})\n\nWould you like to switch to ${fallback.getRendererName()} and launch?",
-                confirmText = "Switch & Launch",
+                confirmText = "Switch & Play",
                 onConfirm = {
                     com.movtery.zalithlauncher.game.renderer.Renderers.setCurrentRenderer(fallback.getUniqueIdentifier())
                     version.getVersionConfig().apply {

@@ -229,73 +229,67 @@ fun MinecraftInstallationsScreen(
 
     ) {
 
-        Column(
-
+        LazyColumn(
             modifier = Modifier
-
                 .fillMaxSize()
-
-                .padding(horizontal = 14.dp, vertical = 8.dp)
-
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-
-            // Java / Rust Engine Selector Tab ([☕ Java] | [⚙️ Rust]) - Panel F
-            JavaRustEngineSelector(
-                selectedEngine = selectedEngine,
-                onSelectEngine = { selectedEngine = it },
-                modifier = Modifier.padding(bottom = 6.dp)
-            )
+            item {
+                // Java / Rust Engine Selector Tab ([☕ Java] | [⚙️ Rust]) - Panel F
+                JavaRustEngineSelector(
+                    selectedEngine = selectedEngine,
+                    onSelectEngine = { selectedEngine = it },
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
+            }
 
             if (selectedEngine == "Rust") {
-                if (isHorizonInstalled) {
-                    RustInstallationCard(
-                        onLaunch = {
-                            HorizonManager.launchHorizon(context)
-                        },
-                        onRecheckFiles = {
-                            HorizonManager.recheckFiles(context)
-                            showHorizonSetup = true
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp)
-                    )
-                } else {
+                item {
+                    if (isHorizonInstalled) {
+                        RustInstallationCard(
+                            onLaunch = {
+                                HorizonManager.launchHorizon(context)
+                            },
+                            onRecheckFiles = {
+                                HorizonManager.recheckFiles(context)
+                                showHorizonSetup = true
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp)
+                        )
+                    } else {
+                        HorizonInstallationsBanner(
+                            onClick = { showHorizonSetup = true },
+                            isLandscape = isLandscape,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        )
+                    }
+                }
+            } else {
+                item {
+                    // Java Mode: Promotional Banner (Panels D & E)
                     HorizonInstallationsBanner(
                         onClick = { showHorizonSetup = true },
                         isLandscape = isLandscape,
                         modifier = Modifier
                             .fillMaxWidth()
-                            
                             .padding(vertical = 4.dp)
                     )
                 }
-            } else {
-                // Java Mode: Promotional Banner (Panels D & E)
-                HorizonInstallationsBanner(
-                    onClick = { showHorizonSetup = true },
-                    isLandscape = isLandscape,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        
-                        .padding(vertical = 4.dp)
-                )
 
-            // Header Action Bar: Stone 3D New Installation Button | Search
-
-            Row(
-
-                modifier = Modifier
-
-                    .fillMaxWidth()
-
-                    .padding(vertical = 6.dp),
-
-                verticalAlignment = Alignment.CenterVertically,
-
-                horizontalArrangement = Arrangement.SpaceBetween
-
-            ) {
+                item {
+                    // Header Action Bar: Stone 3D New Installation Button | Search
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
 
                 // Compact Rectangular "+ New..." Button (Exact 1:1 replica of Image 1)
 
@@ -554,136 +548,65 @@ fun MinecraftInstallationsScreen(
                         }
 
                     }
-
                 }
+            }
+        }
 
+            item {
+                // Filters Row: Checkboxes for Releases, Snapshots, Modded
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "VERSIONS:",
+                        color = Color(0xFF888888),
+                        fontFamily = MinecraftFontFamily,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    InstallationFilterCheckbox(
+                        label = "Releases",
+                        checked = filterReleases,
+                        onCheckedChange = { filterReleases = it }
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    InstallationFilterCheckbox(
+                        label = "Snapshots",
+                        checked = filterSnapshots,
+                        onCheckedChange = { filterSnapshots = it }
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    InstallationFilterCheckbox(
+                        label = "Modded",
+                        checked = filterModded,
+                        onCheckedChange = { filterModded = it }
+                    )
+                }
             }
 
+            val filtered = allVersions.filter { ver ->
+                val name = ver.getVersionName()
+                val isModded = ver.getVersionInfo()?.loaderInfo?.loader?.isLoader == true
+                val isSnapshot = name.contains("snapshot", ignoreCase = true) || name.contains("w", ignoreCase = true)
+                val isRelease = !isModded && !isSnapshot
 
+                val matchesFilter = (filterModded && isModded) ||
+                        (filterSnapshots && isSnapshot) ||
+                        (filterReleases && isRelease) ||
+                        (!filterModded && !filterSnapshots && !filterReleases)
 
-            // Filters Row: Checkboxes for Releases, Snapshots, Modded
-
-            Row(
-
-                modifier = Modifier
-
-                    .fillMaxWidth()
-
-                    .padding(vertical = 4.dp),
-
-                verticalAlignment = Alignment.CenterVertically
-
-            ) {
-
-                Text(
-
-                    text = "VERSIONS:",
-
-                    color = Color(0xFF888888),
-
-                    fontFamily = MinecraftFontFamily,
-
-                    fontSize = 11.sp,
-
-                    fontWeight = FontWeight.Bold
-
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-
-
-                InstallationFilterCheckbox(
-
-                    label = "Releases",
-
-                    checked = filterReleases,
-
-                    onCheckedChange = { filterReleases = it }
-
-                )
-
-
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-
-
-                InstallationFilterCheckbox(
-
-                    label = "Snapshots",
-
-                    checked = filterSnapshots,
-
-                    onCheckedChange = { filterSnapshots = it }
-
-                )
-
-
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-
-
-                InstallationFilterCheckbox(
-
-                    label = "Modded",
-
-                    checked = filterModded,
-
-                    onCheckedChange = { filterModded = it }
-
-                )
-
+                val matchesQuery = searchQuery.isBlank() || name.contains(searchQuery.trim(), ignoreCase = true)
+                matchesFilter && matchesQuery
             }
-
-
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-
-
-            // Installation List
-
-            LazyColumn(
-
-                modifier = Modifier
-
-                    .weight(1f)
-
-                    .fillMaxWidth(),
-
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-
-            ) {
-
-                val filtered = allVersions.filter { ver ->
-
-                    val name = ver.getVersionName()
-
-                    val isModded = ver.getVersionInfo()?.loaderInfo?.loader?.isLoader == true
-
-                    val isSnapshot = name.contains("snapshot", ignoreCase = true) || name.contains("w", ignoreCase = true)
-
-                    val isRelease = !isModded && !isSnapshot
-
-
-
-                    val matchesFilter = (filterModded && isModded) ||
-
-                            (filterSnapshots && isSnapshot) ||
-
-                            (filterReleases && isRelease) ||
-
-                            (!filterModded && !filterSnapshots && !filterReleases)
-
-
-
-                    val matchesQuery = searchQuery.isBlank() || name.contains(searchQuery.trim(), ignoreCase = true)
-
-                    matchesFilter && matchesQuery
-
-                }
 
 
 
@@ -859,11 +782,7 @@ fun MinecraftInstallationsScreen(
                     )
 
                 }
-
-            }
-
             } // end of Java else block
-
         }
 
 

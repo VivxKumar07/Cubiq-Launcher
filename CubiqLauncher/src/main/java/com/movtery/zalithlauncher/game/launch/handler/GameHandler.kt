@@ -21,10 +21,12 @@ package com.movtery.zalithlauncher.game.launch.handler
 import android.app.Activity
 import android.view.KeyEvent
 import android.view.Surface
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
 import com.movtery.inputmap.keycodes.LwjglGlfwKeycode
@@ -46,6 +48,7 @@ import com.movtery.zalithlauncher.terracotta.Terracotta
 import com.movtery.zalithlauncher.ui.control.gamepad.isGamepadKeyEvent
 import com.movtery.zalithlauncher.ui.control.input.TextInputMode
 import com.movtery.zalithlauncher.ui.screens.game.GameScreen
+import com.movtery.zalithlauncher.ui.screens.game.elements.LogBox
 import com.movtery.zalithlauncher.ui.screens.game.elements.LogState
 import com.movtery.zalithlauncher.ui.screens.game.elements.mutableStateOfLog
 import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
@@ -82,10 +85,19 @@ class GameHandler(
         private set
     private var showGameInfo by mutableStateOf(false)
 
+    val enableTouchProxy: Boolean
+        get() = version.enableTouchProxy
+
     /**
      * 日志展示状态
      */
     private var logState by mutableStateOfLog()
+
+    fun toggleLogState() {
+        logState = if (logState == LogState.CLOSE) LogState.SHOW else LogState.CLOSE
+    }
+
+    var onOpenCubiqFriends: () -> Unit = {}
 
     override suspend fun execute(
         surface: Surface,
@@ -245,6 +257,14 @@ class GameHandler(
     override fun ComposableLayout(
         textInputMode: TextInputMode
     ) {
+        if (ControlManager.isZl1ControlModeActive() || ControlManager.isMojoControlModeActive()) {
+            LogBox(
+                enableLog = logState.value,
+                onClose = { logState = LogState.CLOSE },
+                modifier = Modifier.fillMaxSize()
+            )
+            return
+        }
         GameScreen(
             version = version,
             gameHandler = this,

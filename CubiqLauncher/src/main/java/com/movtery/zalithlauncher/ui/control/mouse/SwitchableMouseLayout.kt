@@ -149,13 +149,13 @@ fun SwitchableMouseLayout(
     fun updateMousePointer(show: Boolean) {
         showMousePointer = show
     }
-    LaunchedEffect(cursorMode, hideMouseInClickMode) {
+    LaunchedEffect(cursorMode, hideMouseInClickMode, controlMode) {
         updateMousePointer(
             show = if (cursorMode == CURSOR_ENABLED) {
                 when {
                     //物理鼠标已连接 && 当前为物理鼠标模式：是否为抓获控制模式
                     PhysicalMouseChecker.physicalMouseConnected && isPhysicalMouseMode -> requestPointerCapture
-                    hideMouseInClickMode -> false
+                    hideMouseInClickMode && controlMode == MouseControlMode.CLICK -> false
                     else -> true
                 }
             } else false

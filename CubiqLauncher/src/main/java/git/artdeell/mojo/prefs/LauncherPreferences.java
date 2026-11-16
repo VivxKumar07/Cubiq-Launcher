@@ -12,6 +12,7 @@ public class LauncherPreferences {
     public static int PREF_LONGPRESS_TRIGGER = 300;
     public static String PREF_DEFAULTCTRL_PATH = "";
     public static boolean PREF_DISABLE_SWAP_HAND = false;
+    public static boolean PREF_DISABLE_GESTURES = false;
     public static float PREF_SCALE_FACTOR = 1f;
     public static boolean PREF_ENABLE_GYRO = false;
     public static float PREF_GYRO_SENSITIVITY = 1f;

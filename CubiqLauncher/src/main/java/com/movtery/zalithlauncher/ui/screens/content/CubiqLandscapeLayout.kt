@@ -1525,8 +1525,9 @@ fun LandscapePlayScreen(
                 }
             }
         } else {
+            val initialVersionIndex = allVersions.indexOfFirst { it.getVersionName() == currentVersion?.getVersionName() }.takeIf { it >= 0 } ?: 0
             val landscapePagerState = rememberPagerState(
-                initialPage = 5000 - (5000 % allVersions.size)
+                initialPage = (5000 - (5000 % allVersions.size)) + initialVersionIndex
             ) { 10000 }
 
             val autoScroll = AllSettings.heroCardAutoScroll.state
@@ -1546,15 +1547,42 @@ fun LandscapePlayScreen(
                 }
             }
 
+            // Two-Way Sync: Carousel page change -> Selected Version Dropdown
             LaunchedEffect(landscapePagerState.currentPage) {
-                val actualIndex = landscapePagerState.currentPage % allVersions.size
-                if (actualIndex in allVersions.indices) {
-                    val ver = allVersions[actualIndex]
-                    if (ver.getVersionName() != currentVersion?.getVersionName()) {
-                        com.movtery.zalithlauncher.game.version.installed.VersionsManager.saveVersion(ver)
+                if (allVersions.isNotEmpty()) {
+                    val pageIndex = landscapePagerState.currentPage % allVersions.size
+                    val pageVersion = allVersions.getOrNull(pageIndex)
+                    if (pageVersion != null && pageVersion.getVersionName() != currentVersion?.getVersionName()) {
+                        VersionsManager.saveVersion(pageVersion)
                     }
                 }
             }
+
+            // Two-Way Sync: Dropdown selection -> Carousel page
+            LaunchedEffect(currentVersion?.getVersionName()) {
+                if (currentVersion != null && allVersions.isNotEmpty()) {
+                    val targetIndex = allVersions.indexOfFirst { it.getVersionName() == currentVersion.getVersionName() }
+                    if (targetIndex >= 0) {
+                        val currentMod = landscapePagerState.currentPage % allVersions.size
+                        if (currentMod != targetIndex) {
+                            var diff = (targetIndex - currentMod) % allVersions.size
+                            if (diff > allVersions.size / 2) diff -= allVersions.size
+                            if (diff < -allVersions.size / 2) diff += allVersions.size
+                            val targetPage = landscapePagerState.currentPage + diff
+                            if (targetPage != landscapePagerState.currentPage && !landscapePagerState.isScrollInProgress) {
+                                landscapePagerState.animateScrollToPage(
+                                    page = targetPage,
+                                    animationSpec = androidx.compose.animation.core.tween(
+                                        durationMillis = 600,
+                                        easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
 
             Box(
                 modifier = Modifier

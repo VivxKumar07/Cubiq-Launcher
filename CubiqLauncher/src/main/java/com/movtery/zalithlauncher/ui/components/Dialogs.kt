@@ -324,25 +324,25 @@ fun SimpleAlertDialog(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             MinecraftButton(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(if (confirmText.length > 10) 0.85f else 1f)
                     .height(38.dp),
                 onClick = onCancel,
                 style = MinecraftButtonStyle.STONE,
                 text = dismissText.uppercase(),
-                fontSize = 13.sp
+                fontSize = 11.5.sp
             )
             MinecraftButton(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(if (confirmText.length > 10) 1.25f else 1f)
                     .height(38.dp),
                 onClick = onConfirm,
                 style = MinecraftButtonStyle.GREEN,
                 text = confirmText.uppercase(),
-                fontSize = 13.sp
+                fontSize = if (confirmText.length > 10) 10.5.sp else 12.sp
             )
         }
     }

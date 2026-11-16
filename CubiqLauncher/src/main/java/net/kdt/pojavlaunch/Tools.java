@@ -28,7 +28,20 @@ public final class Tools {
                 org.lwjgl.glfw.CallbackBridge.physicalWidth = currentDisplayMetrics.widthPixels;
                 org.lwjgl.glfw.CallbackBridge.physicalHeight = currentDisplayMetrics.heightPixels;
             }
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+            currentDisplayMetrics = new DisplayMetrics();
+        }
+    }
+
+    public static DisplayMetrics getDisplayMetrics() {
+        if (currentDisplayMetrics == null) {
+            try {
+                currentDisplayMetrics = Resources.getSystem().getDisplayMetrics();
+            } catch (Throwable ignored) {
+                currentDisplayMetrics = new DisplayMetrics();
+            }
+        }
+        return currentDisplayMetrics;
     }
     public static boolean customMouse = false;
 
@@ -58,6 +71,17 @@ public final class Tools {
         }
         org.lwjgl.glfw.CallbackBridge.physicalWidth = w;
         org.lwjgl.glfw.CallbackBridge.physicalHeight = h;
+    }
+
+    public static DisplayMetrics getDisplayMetrics(android.app.Activity activity) {
+        updateWindowSize(activity);
+        return currentDisplayMetrics;
+    }
+
+    public static int getDisplayFriendlyRes(int res, float scale) {
+        int scaled = Math.round(res * scale);
+        if ((scaled & 1) != 0) scaled++;
+        return Math.max(2, scaled);
     }
 
     public static float dpToPx(float dp) {

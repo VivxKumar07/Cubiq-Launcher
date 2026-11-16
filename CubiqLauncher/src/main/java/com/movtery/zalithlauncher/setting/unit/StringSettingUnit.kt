@@ -22,12 +22,14 @@ import com.movtery.zalithlauncher.setting.launcherMMKV
 
 class StringSettingUnit(key: String, defaultValue: String) : AbstractSettingUnit<String>(key, defaultValue) {
     override fun getValue(): String {
-        return launcherMMKV().getString(key ,defaultValue)!!
+        return (launcherMMKV().decodeString(key, defaultValue) ?: defaultValue)
             .also { state = it }
     }
 
     override fun saveValue(v: String): String {
-        launcherMMKV().putString(key, v).apply()
+        val mmkv = launcherMMKV()
+        mmkv.encode(key, v)
+        mmkv.sync()
         return v
     }
 }

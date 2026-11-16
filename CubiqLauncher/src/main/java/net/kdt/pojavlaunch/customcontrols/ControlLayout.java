@@ -5,23 +5,26 @@ import static net.kdt.pojavlaunch.Tools.currentDisplayMetrics;
 import static org.lwjgl.glfw.CallbackBridge.isGrabbing;
 
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.google.gson.JsonSyntaxException;
 import com.movtery.zalithlauncher.R;
+import com.movtery.zalithlauncher.game.control.ControlManager;
 import com.movtery.zalithlauncher.path.PathManager;
 import com.movtery.zalithlauncher.setting.AllSettings;
+import com.movtery.zalithlauncher.ui.dialog.EditControlInfoDialog;
+import com.movtery.zalithlauncher.ui.dialog.SelectControlsDialog;
+import com.movtery.zalithlauncher.ui.dialog.TipDialog;
 import com.movtery.zalithlauncher.ui.subassembly.customcontrols.ControlInfoData;
 
+import net.kdt.pojavlaunch.MinecraftGLSurface;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.customcontrols.buttons.ControlButton;
 import net.kdt.pojavlaunch.customcontrols.buttons.ControlDrawer;
@@ -42,7 +45,7 @@ public class ControlLayout extends FrameLayout {
 	protected CustomControls mLayout;
 	private ControlInfoData mInfoData;
 	/* Accessible when inside the game by ControlInterface implementations, cached for perf. */
-	private View mGameSurface = null;
+	private MinecraftGLSurface mGameSurface = null;
 
 	/* Cache to buttons for performance purposes */
 	private List<ControlInterface> mButtons;
@@ -65,12 +68,36 @@ public class ControlLayout extends FrameLayout {
 	}
 
 	public void loadLayout(String jsonPath) throws IOException, JsonSyntaxException {
-		File jsonFile = jsonPath != null ? new File(jsonPath) : new File(AllSettings.getDefaultCtrl().getValue());
-
-		CustomControls layout;
-		if (jsonFile.exists()) {
-			layout = LayoutConverter.loadAndConvertIfNecessary(getContext(), jsonFile.getAbsolutePath());
+		File jsonFile;
+		if (jsonPath != null) {
+			jsonFile = new File(jsonPath);
 		} else {
+			String defVal = AllSettings.getDefaultCtrl().getValue();
+			File checkFile = new File(defVal);
+			if (checkFile.isAbsolute() && checkFile.exists()) {
+				jsonFile = checkFile;
+			} else {
+				jsonFile = new File(com.movtery.zalithlauncher.path.PathManager.DIR_CONTROL_LAYOUTS, defVal);
+			}
+		}
+
+		CustomControls layout = null;
+		if (jsonFile.exists()) {
+			try {
+				layout = LayoutConverter.loadAndConvertIfNecessary(getContext(), jsonFile.getAbsolutePath());
+				if (layout != null && layout.mControlDataList != null) {
+					for (ControlData cd : layout.mControlDataList) {
+						if ("DEBUG".equalsIgnoreCase(cd.name) || "CHAT".equalsIgnoreCase(cd.name) || "KEYBOARD".equalsIgnoreCase(cd.name)) {
+							layout = LayoutConverter.loadFromAssets(getContext(), "zalith_1_layout.json");
+							break;
+						}
+					}
+				}
+			} catch (Exception e) {
+				layout = null;
+			}
+		}
+		if (layout == null) {
 			try {
 				layout = LayoutConverter.loadFromAssets(getContext(), "zalith_1_layout.json");
 			} catch (Exception e) {
@@ -369,7 +396,8 @@ public class ControlLayout extends FrameLayout {
 		mControlPopup.internalChanges = true;
 		mControlPopup.setCurrentlyEditedButton(button);
 
-		mControlPopup.appear(button.getControlView().getX() + button.getControlView().getWidth()/2f < currentDisplayMetrics.widthPixels/2f);
+		int screenWidth = (currentDisplayMetrics != null ? currentDisplayMetrics.widthPixels : getResources().getDisplayMetrics().widthPixels);
+		mControlPopup.appear(button.getControlView().getX() + button.getControlView().getWidth()/2f < screenWidth/2f);
 		button.loadEditValues(mControlPopup);
 
 		mControlPopup.internalChanges = false;
@@ -490,9 +518,15 @@ public class ControlLayout extends FrameLayout {
 		if(mMenuListener != null) mMenuListener.onClickedMenu();
 	}
 
-	public View getGameSurface(){
-		if(mGameSurface == null && getParent() instanceof View){
-			mGameSurface = (View) getParent();
+	public MinecraftGLSurface getGameSurface() {
+		if (mGameSurface == null) {
+			View root = getRootView();
+			if (root != null) {
+				View found = root.findViewById(R.id.main_game_render_view);
+				if (found instanceof MinecraftGLSurface) {
+					mGameSurface = (MinecraftGLSurface) found;
+				}
+			}
 		}
 		return mGameSurface;
 	}
@@ -511,29 +545,34 @@ public class ControlLayout extends FrameLayout {
 		String cleanName = name.endsWith(".json") ? name : (name + ".json");
 		File targetFile = new File(dir, cleanName);
 		saveLayout(targetFile.getAbsolutePath());
+		mLayoutFileName = targetFile.getName().replace(".json", "");
 		return targetFile.getAbsolutePath();
 	}
 
 	private void saveDialog(String title, Runnable confirmRunnable) {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-		builder.setTitle(title != null ? title : getContext().getString(R.string.generic_save));
-		final EditText input = new EditText(getContext());
-		input.setText(mLayoutFileName != null ? new File(mLayoutFileName).getName().replace(".json", "") : "zalith_1_layout");
-		builder.setView(input);
-		builder.setPositiveButton(R.string.generic_confirm, (dialog, which) -> {
-			String fileName = input.getText().toString().trim();
-			if (!fileName.isEmpty()) {
-				try {
-					String jsonPath = saveToDirectory(fileName);
-					Toast.makeText(getContext(), getContext().getString(R.string.generic_save) + ": " + jsonPath, Toast.LENGTH_SHORT).show();
-					if (confirmRunnable != null) confirmRunnable.run();
-				} catch (Throwable th) {
-					Tools.showError(getContext(), th, true);
-				}
+		EditControlInfoDialog infoDialog = new EditControlInfoDialog(
+				getContext(),
+				true,
+				mLayoutFileName != null ? mLayoutFileName : "zalith_1_layout",
+				mInfoData != null ? mInfoData : new ControlInfoData()
+		);
+		if (title != null && !title.isEmpty()) infoDialog.setTitle(title);
+
+		infoDialog.setOnConfirmClickListener((fileName, controlInfoData) -> {
+			mInfoData = controlInfoData;
+			if (mLayout != null) {
+				mLayout.mControlInfoDataList = controlInfoData;
 			}
+			try {
+				String jsonPath = saveToDirectory(fileName);
+				Toast.makeText(getContext(), getContext().getString(R.string.generic_save) + ": " + jsonPath, Toast.LENGTH_SHORT).show();
+				if (confirmRunnable != null) confirmRunnable.run();
+			} catch (Throwable th) {
+				Tools.showError(getContext(), th, true);
+			}
+			infoDialog.dismiss();
 		});
-		builder.setNegativeButton(R.string.generic_cancel, null);
-		builder.show();
+		infoDialog.show();
 	}
 
 	public void openSaveDialog() {
@@ -547,60 +586,39 @@ public class ControlLayout extends FrameLayout {
 	}
 
 	public void openLoadDialog() {
-		File dir = PathManager.Companion.getDIR_CONTROL_LAYOUTS();
-		File[] files = dir != null ? dir.listFiles((d, name) -> name.endsWith(".json")) : null;
-		if (files == null || files.length == 0) {
-			Toast.makeText(getContext(), "No control layouts found", Toast.LENGTH_SHORT).show();
-			return;
-		}
-		String[] names = new String[files.length];
-		for (int i = 0; i < files.length; i++) names[i] = files[i].getName();
-		new AlertDialog.Builder(getContext())
-				.setTitle(R.string.generic_load)
-				.setItems(names, (dialog, which) -> {
-					try {
-						loadLayout(files[which].getAbsolutePath());
-					} catch (IOException e) {
-						Tools.showError(getContext(), e);
-					}
-				})
-				.setNegativeButton(R.string.generic_cancel, null)
-				.show();
+		SelectControlsDialog dialog = new SelectControlsDialog(getContext(), file -> {
+			try {
+				loadLayout(file.getAbsolutePath());
+			} catch (IOException e) {
+				Tools.showError(getContext(), e);
+			}
+		});
+		dialog.show();
 	}
 
 	public void openSetDefaultDialog() {
-		File dir = PathManager.Companion.getDIR_CONTROL_LAYOUTS();
-		File[] files = dir != null ? dir.listFiles((d, name) -> name.endsWith(".json")) : null;
-		if (files == null || files.length == 0) {
-			Toast.makeText(getContext(), "No control layouts found", Toast.LENGTH_SHORT).show();
-			return;
-		}
-		String[] names = new String[files.length];
-		for (int i = 0; i < files.length; i++) names[i] = files[i].getName();
-		new AlertDialog.Builder(getContext())
-				.setTitle(R.string.customctrl_selectdefault)
-				.setItems(names, (dialog, which) -> {
-					String absolutePath = files[which].getAbsolutePath();
-					try {
-						AllSettings.getDefaultCtrl().save(absolutePath);
-						loadLayout(absolutePath);
-					} catch (IOException | JsonSyntaxException e) {
-						Tools.showError(getContext(), e);
-					}
-				})
-				.setNegativeButton(R.string.generic_cancel, null)
-				.show();
+		SelectControlsDialog dialog = new SelectControlsDialog(getContext(), file -> {
+			String absolutePath = file.getAbsolutePath();
+			try {
+				AllSettings.getDefaultCtrl().save(absolutePath);
+				ControlManager.INSTANCE.selectLayoutByFileName(file.getName());
+				loadLayout(absolutePath);
+			} catch (IOException | JsonSyntaxException e) {
+				Tools.showError(getContext(), e);
+			}
+		});
+		dialog.setTitleText(R.string.customctrl_selectdefault);
+		dialog.show();
 	}
 
 	public void openExitDialog(EditorExitable exitListener) {
-		new AlertDialog.Builder(getContext())
+		new TipDialog.Builder(getContext())
 				.setTitle(R.string.customctrl_editor_exit_title)
 				.setMessage(R.string.customctrl_editor_exit_msg)
-				.setPositiveButton(R.string.generic_confirm, (dialog, which) -> {
+				.setConfirmClickListener(checked -> {
 					if (exitListener != null) exitListener.exitEditor();
 				})
-				.setNegativeButton(R.string.generic_cancel, null)
-				.show();
+				.showDialog();
 	}
 
 	public boolean areControlVisible(){

@@ -1,0 +1,10 @@
+package com.movtery.zalithlauncher.ui.subassembly.filelist
+
+enum class FileIcon {
+    FILE, MOD
+}
+
+fun interface RefreshListener {
+    fun onRefresh()
+}
+

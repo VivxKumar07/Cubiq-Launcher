@@ -81,7 +81,9 @@ public class ControlData {
     }
 
     public ControlData(String name, int[] keycodes) {
-        this(name, keycodes, Tools.currentDisplayMetrics.widthPixels / 2f, Tools.currentDisplayMetrics.heightPixels / 2f);
+        this(name, keycodes,
+            (Tools.currentDisplayMetrics != null ? Tools.currentDisplayMetrics.widthPixels : android.content.res.Resources.getSystem().getDisplayMetrics().widthPixels) / 2f,
+            (Tools.currentDisplayMetrics != null ? Tools.currentDisplayMetrics.heightPixels : android.content.res.Resources.getSystem().getDisplayMetrics().heightPixels) / 2f);
     }
 
     public ControlData(String name, int[] keycodes, float x, float y) {

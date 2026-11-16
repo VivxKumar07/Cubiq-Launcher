@@ -1,6 +1,12 @@
 package com.movtery.zalithlauncher.ui.screens.game.elements
 
+import android.app.Activity
+import android.content.Context
+import android.media.projection.MediaProjectionManager
 import android.widget.Toast
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -46,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import com.movtery.inputmap.keycodes.LwjglGlfwKeycode
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper
+import com.movtery.zalithlauncher.utils.capture.CubiqScreenRecorder
 import kotlinx.coroutines.delay
 import org.lwjgl.glfw.CallbackBridge
 import kotlin.math.roundToInt
@@ -56,6 +63,7 @@ fun InGameCaptureHud(
     alpha: Float = 0.6f
 ) {
     val context = LocalContext.current
+    val activity = context as? Activity
     val currentCtrl = AllSettings.controlLayout.getValue()
     val isPocket = currentCtrl.contains("pocket", ignoreCase = true)
     val isMojo = currentCtrl.contains("mojo", ignoreCase = true)
@@ -84,8 +92,35 @@ fun InGameCaptureHud(
     var offsetX by remember(posSetting) { mutableFloatStateOf(initialPos.x) }
     var offsetY by remember(posSetting) { mutableFloatStateOf(initialPos.y) }
     var isExpanded by remember { mutableStateOf(false) }
-    var isRecording by remember { mutableStateOf(false) }
+    var isRecording by remember { mutableStateOf(CubiqScreenRecorder.isRecording) }
     var recordSeconds by remember { mutableIntStateOf(0) }
+
+    val registryOwner = LocalActivityResultRegistryOwner.current
+    val projectionLauncher = if (registryOwner != null) {
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+                val fpsVal = AllSettings.recordFps.state
+                val bitVal = AllSettings.recordBitrate.state
+                val started = CubiqScreenRecorder.startRecording(
+                    context = context,
+                    resultCode = result.resultCode,
+                    data = result.data!!,
+                    fps = fpsVal,
+                    bitrate = bitVal
+                )
+                if (started) {
+                    isRecording = true
+                    Toast.makeText(context, "🎥 Screen recording started!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Failed to start screen recorder", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(context, "Screen recording permission cancelled", Toast.LENGTH_SHORT).show()
+            }
+        }
+    } else null
 
     LaunchedEffect(isRecording) {
         if (isRecording) {
@@ -157,7 +192,7 @@ fun InGameCaptureHud(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Screenshot Button (F2 Keycode)
+                    // Screenshot Button (F2 Keycode + Real PixelCopy -> Gallery)
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
@@ -170,11 +205,29 @@ fun InGameCaptureHud(
                                 runCatching {
                                     CallbackBridge.sendKeyPress(LwjglGlfwKeycode.GLFW_KEY_F2.toInt())
                                 }
-                                Toast.makeText(
-                                    context,
-                                    "📸 Screenshot taken! (Saved to Pictures/Cubiq)",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                if (activity != null) {
+                                    CubiqScreenRecorder.takeScreenshot(activity) { file ->
+                                        if (file != null) {
+                                            Toast.makeText(
+                                                context,
+                                                "📸 Screenshot saved to Pictures/Cubiq!",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        } else {
+                                            Toast.makeText(
+                                                context,
+                                                "📸 Screenshot captured!",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "📸 Screenshot captured!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
                             .padding(horizontal = 9.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -189,7 +242,7 @@ fun InGameCaptureHud(
                         )
                     }
 
-                    // Screen Recorder Button
+                    // Screen Recorder Button (Real MediaProjection -> MediaRecorder -> MP4)
                     Row(
                         modifier = Modifier
                             .clip(RoundedCornerShape(10.dp))
@@ -199,22 +252,29 @@ fun InGameCaptureHud(
                                 if (AllSettings.hudCaptureSound.state) {
                                     MinecraftSoundHelper.playClickSound()
                                 }
-                                isRecording = !isRecording
                                 if (isRecording) {
-                                    val res = AllSettings.recordResolution.state
-                                    val fps = AllSettings.recordFps.state
-                                    val bitrate = AllSettings.recordBitrate.state
-                                    Toast.makeText(
-                                        context,
-                                        "Screen Recorder Started (${res} @ ${fps}fps, ${bitrate}Mbps)",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    val savedFile = CubiqScreenRecorder.stopRecording(context)
+                                    isRecording = false
+                                    if (savedFile != null) {
+                                        Toast.makeText(
+                                            context,
+                                            "🎥 Recording saved to Movies/Cubiq (${savedFile.name})!",
+                                            Toast.LENGTH_LONG
+                                        ).show()
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "🎥 Recording stopped",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
                                 } else {
-                                    Toast.makeText(
-                                        context,
-                                        "🎥 Recording saved to Movies/Cubiq!",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    val projectionManager = context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
+                                    if (projectionLauncher != null && projectionManager != null) {
+                                        projectionLauncher.launch(projectionManager.createScreenCaptureIntent())
+                                    } else {
+                                        Toast.makeText(context, "Screen recording not supported in this environment", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             }
                             .padding(horizontal = 9.dp, vertical = 4.dp),

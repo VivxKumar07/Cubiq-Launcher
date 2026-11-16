@@ -33,6 +33,7 @@ public class GyroControl implements SensorEventListener, GrabListener {
     private final OrientationCorrectionListener mCorrectionListener;
     private boolean mShouldHandleEvents;
     private int mWarmup;
+    private long mLastGyroTimestamp = 0L;
     private float xFactor; // -1 or 1 depending on device orientation
     private float yFactor;
     private boolean mSwapXY;
@@ -61,7 +62,14 @@ public class GyroControl implements SensorEventListener, GrabListener {
         mWindowManager = activity.getWindowManager();
         mSurfaceRotation = -10;
         mSensorManager = (SensorManager) activity.getSystemService(Context.SENSOR_SERVICE);
-        mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
+        Sensor s = mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR);
+        if (s == null) {
+            s = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+        }
+        if (s == null) {
+            s = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        }
+        mSensor = s;
         mCorrectionListener = new OrientationCorrectionListener(activity);
         updateOrientation();
     }
@@ -69,9 +77,10 @@ public class GyroControl implements SensorEventListener, GrabListener {
     public void enable() {
         if(mSensor == null) return;
         mWarmup = ROTATION_VECTOR_WARMUP_PERIOD;
+        mLastGyroTimestamp = 0L;
         mSensorManager.registerListener(this, mSensor, 1000 * AllSettings.getGyroSampleRate().getValue());
         mCorrectionListener.enable();
-        mShouldHandleEvents = CallbackBridge.isGrabbing();
+        mShouldHandleEvents = true;
         CallbackBridge.addGrabListener(this);
     }
 
@@ -80,6 +89,7 @@ public class GyroControl implements SensorEventListener, GrabListener {
         mSensorManager.unregisterListener(this);
         mCorrectionListener.disable();
         mStoredX = mStoredY = 0;
+        mLastGyroTimestamp = 0L;
         resetDamper();
         CallbackBridge.removeGrabListener(this);
     }
@@ -87,45 +97,67 @@ public class GyroControl implements SensorEventListener, GrabListener {
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (!mShouldHandleEvents) return;
-        // Copy the old array content
-        System.arraycopy(mCurrentRotation, 0, mPreviousRotation, 0, 16);
-        SensorManager.getRotationMatrixFromVector(mCurrentRotation, sensorEvent.values);
 
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
+            if (mLastGyroTimestamp == 0L) {
+                mLastGyroTimestamp = sensorEvent.timestamp;
+                return;
+            }
+            float dt = (sensorEvent.timestamp - mLastGyroTimestamp) * 1.0e-9f;
+            mLastGyroTimestamp = sensorEvent.timestamp;
+            if (dt > 0.1f) return;
+            mAngleDifference[0] = sensorEvent.values[0] * dt;
+            mAngleDifference[1] = sensorEvent.values[1] * dt;
+            mAngleDifference[2] = sensorEvent.values[2] * dt;
+        } else {
+            // Copy the old array content
+            System.arraycopy(mCurrentRotation, 0, mPreviousRotation, 0, 16);
+            SensorManager.getRotationMatrixFromVector(mCurrentRotation, sensorEvent.values);
 
-        if(mWarmup > 0){  // Setup initial position
-            mWarmup--;
-            return;
+            if(mWarmup > 0){  // Setup initial position
+                mWarmup--;
+                return;
+            }
+            SensorManager.getAngleChange(mAngleDifference, mCurrentRotation, mPreviousRotation);
         }
-        SensorManager.getAngleChange(mAngleDifference, mCurrentRotation, mPreviousRotation);
+
         damperValue(mAngleDifference);
-        mStoredX += xAverage * 10 * (AllSettings.getGyroSensitivity().getValue() / 100f);
-        mStoredY += yAverage * 10 * (AllSettings.getGyroSensitivity().getValue() / 100f);
+        int sensitivity = AllSettings.getGyroSensitivity().getValue();
+        mStoredX += xAverage * 10 * sensitivity;
+        mStoredY += yAverage * 10 * sensitivity;
 
         boolean updatePosition = false;
+        float deltaX = 0f;
+        float deltaY = 0f;
         float absX = Math.abs(mStoredX);
         float absY = Math.abs(mStoredY);
 
         if(absX + absY > MULTI_AXIS_LOW_PASS_THRESHOLD) {
-            CallbackBridge.mouseX -= ((mSwapXY ? mStoredY : mStoredX) * xFactor);
-            CallbackBridge.mouseY += ((mSwapXY ? mStoredX : mStoredY) * yFactor);
+            deltaX = -((mSwapXY ? mStoredY : mStoredX) * xFactor);
+            deltaY = ((mSwapXY ? mStoredX : mStoredY) * yFactor);
             mStoredX = 0;
             mStoredY = 0;
             updatePosition = true;
         } else {
             if(Math.abs(mStoredX) > SINGLE_AXIS_LOW_PASS_THRESHOLD){
-                CallbackBridge.mouseX -= ((mSwapXY ? mStoredY : mStoredX) * xFactor);
+                deltaX = -((mSwapXY ? mStoredY : mStoredX) * xFactor);
                 mStoredX = 0;
                 updatePosition = true;
             }
 
             if(Math.abs(mStoredY) > SINGLE_AXIS_LOW_PASS_THRESHOLD) {
-                CallbackBridge.mouseY += ((mSwapXY ? mStoredX : mStoredY) * yFactor);
+                deltaY = ((mSwapXY ? mStoredX : mStoredY) * yFactor);
                 mStoredY = 0;
                 updatePosition = true;
             }
         }
 
         if(updatePosition){
+            if (CallbackBridge.isGrabbing()) {
+                CallbackBridge.sendCursorDelta(deltaX, deltaY);
+            }
+            CallbackBridge.mouseX += deltaX;
+            CallbackBridge.mouseY += deltaY;
             CallbackBridge.sendCursorPos(CallbackBridge.mouseX, CallbackBridge.mouseY);
         }
     }
@@ -167,7 +199,7 @@ public class GyroControl implements SensorEventListener, GrabListener {
     @Override
     public void onGrabState(boolean isGrabbing) {
         mWarmup = ROTATION_VECTOR_WARMUP_PERIOD;
-        mShouldHandleEvents = isGrabbing;
+        mShouldHandleEvents = true;
     }
 
 

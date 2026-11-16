@@ -308,6 +308,14 @@ class GameLauncher(
 
         disableSplash(gameDirPath)
 
+        val mcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
+        // Deploy in-game Cubiq Friends Fabric client mod if available
+        com.movtery.zalithlauncher.friends.CubiqFriendsManager.installInGameMod(
+            context = activity,
+            gameDir = gameDirPath,
+            mcVersion = mcVer
+        )
+
         //初始化运行环境
         this.runtime = runtime
         val launchArgs = LaunchArgs(
@@ -467,6 +475,7 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
     if (rendererId.startsWith("opengles2")) {
         envMap["LIBGL_ES"] = "2"
         envMap["LIBGL_MIPMAP"] = "3"
+        envMap["LIBGL_NOERROR"] = "1"
         envMap["LIBGL_NOINTOVLHACK"] = "1"
         envMap["LIBGL_NORMALIZE"] = "1"
     }

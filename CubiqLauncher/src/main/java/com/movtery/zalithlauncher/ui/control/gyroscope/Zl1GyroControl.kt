@@ -179,7 +179,7 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
 
     override fun onGrabState(isGrabbing: Boolean) {
         warmup = ROTATION_VECTOR_WARMUP_PERIOD
-        shouldHandleEvents = forceAlwaysHandle || isGrabbing
+        shouldHandleEvents = true
     }
 
     private fun damperValue(newAngleDifference: FloatArray) {

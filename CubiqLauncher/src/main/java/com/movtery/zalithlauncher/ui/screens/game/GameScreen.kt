@@ -89,7 +89,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 
 import androidx.compose.foundation.layout.height
-
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 
 import androidx.compose.foundation.layout.size
@@ -154,6 +154,7 @@ import androidx.compose.ui.geometry.Offset
 
 import androidx.compose.ui.input.pointer.PointerId
 
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 
 import androidx.compose.ui.res.painterResource
@@ -266,11 +267,9 @@ import com.movtery.zalithlauncher.ui.control.input.TextInputMode
 import com.movtery.zalithlauncher.ui.control.mouse.SwitchableMouseLayout
 
 import com.movtery.zalithlauncher.ui.screens.game.elements.DraggableGameBall
-
 import com.movtery.zalithlauncher.ui.screens.game.elements.ForceCloseOperation
 
 import com.movtery.zalithlauncher.ui.screens.game.elements.GameMenuSubscreen
-import com.movtery.zalithlauncher.ui.screens.game.elements.LegacyInGameDrawer
 
 import com.movtery.zalithlauncher.ui.screens.game.elements.GamepadModePromptDialog
 
@@ -1140,28 +1139,11 @@ fun GameScreen(
 
 
 
-    val ctrlFile = viewModel.currentControlFile
-    val fileContent = ctrlFile?.let { runCatching { it.readText() }.getOrDefault("") } ?: ""
-    val isMojoLayout = ctrlFile?.let {
-        it.name.contains("mojo", ignoreCase = true) || fileContent.contains(""""version": 9""") || fileContent.contains(""""version":9""")
-    } ?: false
-    val isZl1Layout = ctrlFile?.let {
-        !isMojoLayout && (it.name.contains("zalith_1", ignoreCase = true) || it.name.contains("zl1", ignoreCase = true)
-                || fileContent.contains(""""version": 8""") || fileContent.contains(""""version":8""")
-                || fileContent.contains("mControlDataList"))
-    } ?: false
-    val isLegacyLayout = isMojoLayout || isZl1Layout
-
-    var mojoLayoutInstance by remember { mutableStateOf<git.artdeell.mojo.input.ControlLayout?>(null) }
-    var zl1LayoutInstance by remember { mutableStateOf<net.kdt.pojavlaunch.customcontrols.ControlLayout?>(null) }
-    var isEditingLegacyLayout by remember { mutableStateOf(false) }
-    var showLegacySideMenu by remember { mutableStateOf(false) }
-
-    LaunchedEffect(viewModel.isEditingLayout, viewModel.gameMenuState, isEditingLegacyLayout, showLegacySideMenu) {
+    LaunchedEffect(viewModel.isEditingLayout, viewModel.gameMenuState) {
 
         //向VMActivity同步状态，编辑控制布局或打开游戏菜单时，不会继续处理按键事件
 
-        val allowKeyHandle = !viewModel.isEditingLayout && !isEditingLegacyLayout && !showLegacySideMenu && viewModel.gameMenuState != MenuState.SHOW
+        val allowKeyHandle = !viewModel.isEditingLayout && viewModel.gameMenuState != MenuState.SHOW
 
         eventViewModel.sendEvent(EventViewModel.Event.Game.KeyHandle(allowKeyHandle))
 
@@ -1331,97 +1313,22 @@ fun GameScreen(
                 )
             }
 
-            if (isLegacyLayout) {
-                // 1. 触摸与鼠标控制层（置于底层，负责处理空屏拖动转动视角、点击单人游戏/设置菜单）
-                if (!viewModel.isEditingLayout) {
-                    mouseControlContent()
-                }
-
-                // 2. 传统控件层（Mojo / ZL1）
-                val controlsAlpha = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f)
-                val isControlsVisible = viewModel.controlLayerHideState != HideLayerWhen.WhenMouse
-
-                if (isControlsVisible) {
-                    val inEditMode = isEditingLegacyLayout || viewModel.isEditingLayout
-                    if (isMojoLayout) {
-                        AndroidView(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .alpha(if (inEditMode) 1f else controlsAlpha),
-                            factory = { ctx ->
-                                git.artdeell.mojo.Tools.init(ctx)
-                                git.artdeell.mojo.input.ControlLayout(ctx).apply {
-                                    setModifiable(inEditMode)
-                                    setMenuListener { showLegacySideMenu = true }
-                                    background = null
-                                    viewModel.currentControlFile?.absolutePath?.let { path ->
-                                        post { runCatching { loadLayout(path) } }
-                                    }
-                                    mojoLayoutInstance = this
-                                }
-                            },
-                            update = { ctrl ->
-                                mojoLayoutInstance = ctrl
-                                if (ctrl.getModifiable() != inEditMode) {
-                                    ctrl.setModifiable(inEditMode)
-                                }
-                                val currentPath = viewModel.currentControlFile?.absolutePath
-                                if (ctrl.tag != currentPath && currentPath != null) {
-                                    ctrl.tag = currentPath
-                                    ctrl.post { runCatching { ctrl.loadLayout(currentPath) } }
-                                }
-                            }
-                        )
-                    } else if (isZl1Layout) {
-                        AndroidView(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .alpha(if (inEditMode) 1f else controlsAlpha),
-                            factory = { ctx ->
-                                (ctx as? android.app.Activity)?.let { net.kdt.pojavlaunch.Tools.updateWindowSize(it) }
-                                net.kdt.pojavlaunch.customcontrols.ControlLayout(ctx).apply {
-                                    setModifiable(inEditMode)
-                                    setMenuListener { showLegacySideMenu = true }
-                                    background = null
-                                    viewModel.currentControlFile?.absolutePath?.let { path ->
-                                        tag = path
-                                        post { runCatching { loadLayout(path) } }
-                                    }
-                                    zl1LayoutInstance = this
-                                }
-                            },
-                            update = { ctrl ->
-                                zl1LayoutInstance = ctrl
-                                if (ctrl.getModifiable() != inEditMode) {
-                                    ctrl.setModifiable(inEditMode)
-                                }
-                                val currentPath = viewModel.currentControlFile?.absolutePath
-                                if (ctrl.tag != currentPath && currentPath != null) {
-                                    ctrl.tag = currentPath
-                                    ctrl.post { runCatching { ctrl.loadLayout(currentPath) } }
-                                }
-                            }
-                        )
-                    }
-                }
-            } else {
-                //控制布局层 (Cubiq Native Controls)
-                ControlBoxLayout(
-                    modifier = Modifier.fillMaxSize(),
-                    observedLayout = viewModel.observableLayout,
-                    eventHandler = viewModel.eventHandler,
-                    checkOccupiedPointers = { viewModel.occupiedPointers.contains(it) },
-                    opacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f),
-                    buttonScale = (AllSettings.controlsButtonScale.state.toFloat() / 100f).coerceIn(0.5f, 2.0f),
-                    markPointerAsMoveOnly = { viewModel.moveOnlyPointers.add(it) },
-                    onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
-                    onReleasePointer = { viewModel.occupiedPointers.remove(it) },
-                    isCursorGrabbing = isGrabbing,
-                    hideLayerWhen = viewModel.controlLayerHideState,
-                    isDark = isLauncherInDarkTheme()
-                ) {
-                    mouseControlContent()
-                }
+            //控制布局层 (Cubiq Native Controls)
+            ControlBoxLayout(
+                modifier = Modifier.fillMaxSize(),
+                observedLayout = viewModel.observableLayout,
+                eventHandler = viewModel.eventHandler,
+                checkOccupiedPointers = { viewModel.occupiedPointers.contains(it) },
+                opacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f),
+                buttonScale = (AllSettings.controlsButtonScale.state.toFloat() / 100f).coerceIn(0.5f, 2.0f),
+                markPointerAsMoveOnly = { viewModel.moveOnlyPointers.add(it) },
+                onOccupiedPointer = { viewModel.occupiedPointers.add(it) },
+                onReleasePointer = { viewModel.occupiedPointers.remove(it) },
+                isCursorGrabbing = isGrabbing,
+                hideLayerWhen = viewModel.controlLayerHideState,
+                isDark = isLauncherInDarkTheme()
+            ) {
+                mouseControlContent()
             }
 
 
@@ -1536,6 +1443,8 @@ fun GameScreen(
 
             onOpenTerracottaMenu = { terracottaViewModel.openMenu() },
 
+            onOpenCubiqFriends = { gameHandler.onOpenCubiqFriends() },
+
             onRefreshWindowSize = { eventViewModel.sendEvent(EventViewModel.Event.Game.RefreshSize) },
 
             onInputMethod = {
@@ -1599,25 +1508,23 @@ fun GameScreen(
 
 
         if (viewModel.isEditingLayout) {
-            if (!isLegacyLayout) {
-                viewModel.currentControlFile?.let {
-                    ControlEditor(
-                        viewModel = editorViewModel,
-                        targetFile = it,
-                        exit = {
-                            viewModel.exitControlEditor()
-                        },
-                        menuExit = {
-                            editorViewModel.showExitEditorDialog(
-                                context = context,
-                                targetFile = it,
-                                onExit = {
-                                    viewModel.exitControlEditor()
-                                }
-                            )
-                        }
-                    )
-                }
+            viewModel.currentControlFile?.let {
+                ControlEditor(
+                    viewModel = editorViewModel,
+                    targetFile = it,
+                    exit = {
+                        viewModel.exitControlEditor()
+                    },
+                    menuExit = {
+                        editorViewModel.showExitEditorDialog(
+                            context = context,
+                            targetFile = it,
+                            onExit = {
+                                viewModel.exitControlEditor()
+                            }
+                        )
+                    }
+                )
             }
         } else {
             val showFps = AllSettings.showFPS.state
@@ -1634,7 +1541,7 @@ fun GameScreen(
                 null
             }
 
-            if (!isLegacyLayout && AllSettings.showMenuBall.state) {
+            if (AllSettings.showMenuBall.state) {
                 val isPocket = AllSettings.controlLayout.state.contains("pocket", ignoreCase = true) ||
                         viewModel.currentControlFile?.name?.contains("pocket", ignoreCase = true) == true
                 val ballPosSetting = if (isPocket) AllSettings.menuBallPosPocket else AllSettings.menuBallPos
@@ -1656,196 +1563,14 @@ fun GameScreen(
                         viewModel.switchMenu()
                     }
                 )
-            } else if (isZl1Layout) {
-                var zl1BallPos by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
-                com.movtery.zalithlauncher.ui.components.FloatingBall(
-                    position = zl1BallPos,
-                    onPositionChanged = { zl1BallPos = it },
-                    onClick = { showLegacySideMenu = !showLegacySideMenu },
-                    color = Color.Transparent,
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .background(Color(0xEE16161A), androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
-                            .padding(4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier.size(38.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_sharp_settings_24),
-                                contentDescription = "ZL1 Game Menu",
-                                tint = Color.White,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-                        if (AllSettings.showFPS.state || AllSettings.showMemory.state) {
-                            Column(modifier = Modifier.padding(start = 4.dp, end = 6.dp)) {
-                                if (AllSettings.showFPS.state) {
-                                    Text("FPS: ${gameFps ?: 0}", color = Color.White, fontSize = 11.sp)
-                                }
-                                if (AllSettings.showMemory.state) {
-                                    val rt = Runtime.getRuntime()
-                                    val used = (rt.totalMemory() - rt.freeMemory()) / 1048576L
-                                    val max = rt.maxMemory() / 1048576L
-                                    Text("${used}MB/${max}MB", color = Color(0xFFAAAAAA), fontSize = 10.sp)
-                                }
-                            }
-                        }
-                    }
-                }
-            } else if (isMojoLayout) {
-                // Mojo Waterdrop Drawer Button at top center!
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.TopCenter),
-                    contentAlignment = Alignment.TopCenter
-                ) {
-                    AndroidView(
-                        modifier = Modifier
-                            .width(60.dp)
-                            .height(26.dp),
-                        factory = { ctx ->
-                            git.artdeell.mojo.input.handleview.DrawerPullButton(ctx).apply {
-                                setOnClickListener {
-                                    showLegacySideMenu = !showLegacySideMenu
-                                }
-                            }
-                        }
-                    )
-                }
-                if (AllSettings.showFPS.state || AllSettings.showMemory.state) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(8.dp)
-                            .background(Color(0xCC16161A), androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        if (AllSettings.showFPS.state) {
-                            Text("FPS: ${gameFps ?: 0}  ", color = Color.White, fontSize = 11.sp)
-                        }
-                        if (AllSettings.showMemory.state) {
-                            val rt = Runtime.getRuntime()
-                            val used = (rt.totalMemory() - rt.freeMemory()) / 1048576L
-                            val max = rt.maxMemory() / 1048576L
-                            Text("${used}MB/${max}MB", color = Color(0xFFAAAAAA), fontSize = 10.sp)
-                        }
-                    }
-                }
             }
 
             val isAnyMenuOpen = viewModel.gameMenuState == MenuState.SHOW ||
-                    showLegacySideMenu ||
                     viewModel.isEditingLayout ||
-                    isEditingLegacyLayout ||
                     viewModel.forceCloseState == ForceCloseOperation.Show ||
                     viewModel.sendKeycodeState == SendKeycodeState.ShowDialog ||
                     viewModel.replacementControlState == ReplacementControlState.Show
 
-            if (AllSettings.hudScreenCaptureTools.state && !isAnyMenuOpen && viewModel.controlLayerHideState != HideLayerWhen.WhenMouse) {
-                com.movtery.zalithlauncher.ui.screens.game.elements.InGameCaptureHud(
-                    modifier = Modifier.align(Alignment.TopStart),
-                    alpha = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0.25f, 0.9f)
-                )
-            }
-
-            LegacyInGameDrawer(
-                visible = showLegacySideMenu,
-                isMojo = isMojoLayout,
-                isInEditor = isEditingLegacyLayout,
-                onDismiss = { showLegacySideMenu = false },
-                onForceClose = {
-                    showLegacySideMenu = false
-                    viewModel.forceCloseState = ForceCloseOperation.Show
-                },
-                onViewLogs = {
-                    showLegacySideMenu = false
-                    onLogStateChange(logState.next())
-                },
-                onSendKeycode = {
-                    showLegacySideMenu = false
-                    viewModel.sendKeycodeState = SendKeycodeState.ShowDialog
-                },
-                onReplaceControl = {
-                    showLegacySideMenu = false
-                    viewModel.replacementControlState = ReplacementControlState.Show
-                },
-                onStartEditControls = {
-                    showLegacySideMenu = false
-                    isEditingLegacyLayout = true
-                    mojoLayoutInstance?.setModifiable(true)
-                    zl1LayoutInstance?.setModifiable(true)
-                },
-                onAddButton = {
-                    if (isMojoLayout) mojoLayoutInstance?.addControlButton(git.artdeell.mojo.input.ControlData("New"))
-                    else zl1LayoutInstance?.addControlButton(net.kdt.pojavlaunch.customcontrols.ControlData("New"))
-                },
-                onAddDrawer = {
-                    if (isMojoLayout) mojoLayoutInstance?.addDrawer(git.artdeell.mojo.input.ControlDrawerData())
-                    else zl1LayoutInstance?.addDrawer(net.kdt.pojavlaunch.customcontrols.ControlDrawerData())
-                },
-                onAddJoystick = {
-                    if (isMojoLayout) mojoLayoutInstance?.addJoystickButton(git.artdeell.mojo.input.ControlJoystickData())
-                    else zl1LayoutInstance?.addJoystickButton(net.kdt.pojavlaunch.customcontrols.ControlJoystickData())
-                },
-                onLoadLayout = {
-                    if (isMojoLayout) mojoLayoutInstance?.openLoadDialog()
-                    else zl1LayoutInstance?.openLoadDialog()
-                },
-                onSaveLayout = {
-                    viewModel.currentControlFile?.absolutePath?.let { path ->
-                        if (isMojoLayout) mojoLayoutInstance?.saveLayout(path)
-                        else zl1LayoutInstance?.saveLayout(path)
-                        android.widget.Toast.makeText(context, "Layout saved!", android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                },
-                onSaveAndExit = {
-                    val exitAction = {
-                        isEditingLegacyLayout = false
-                        mojoLayoutInstance?.setModifiable(false)
-                        zl1LayoutInstance?.setModifiable(false)
-                        showLegacySideMenu = false
-                    }
-                    if (isMojoLayout) {
-                        viewModel.currentControlFile?.absolutePath?.let { path ->
-                            mojoLayoutInstance?.saveLayout(path)
-                        }
-                        exitAction()
-                    } else {
-                        zl1LayoutInstance?.openSaveAndExitDialog(net.kdt.pojavlaunch.customcontrols.EditorExitable {
-                            exitAction()
-                        })
-                    }
-                },
-                onSelectDefaultLayout = {
-                    if (isMojoLayout) mojoLayoutInstance?.openSetDefaultDialog()
-                    else zl1LayoutInstance?.openSetDefaultDialog()
-                },
-                onLeaveEditor = {
-                    val exitAction = {
-                        isEditingLegacyLayout = false
-                        mojoLayoutInstance?.setModifiable(false)
-                        zl1LayoutInstance?.setModifiable(false)
-                        showLegacySideMenu = false
-                    }
-                    if (isMojoLayout) {
-                        mojoLayoutInstance?.openExitDialog(git.artdeell.mojo.input.EditorExitable { exitAction() })
-                    } else {
-                        zl1LayoutInstance?.openExitDialog(net.kdt.pojavlaunch.customcontrols.EditorExitable { exitAction() })
-                    }
-                },
-                onButtonOpacityChange = {
-                    mojoLayoutInstance?.updateButtonOpacity()
-                },
-                onRefreshWindowSize = {
-                    eventViewModel.sendEvent(EventViewModel.Event.Game.RefreshSize)
-                }
-            )
 
         }
 
@@ -2055,17 +1780,7 @@ fun GameScreen(
 
                     is EventViewModel.Event.Game.OnBack -> {
 
-                        if (isEditingLegacyLayout) {
-
-                            isEditingLegacyLayout = false
-                            mojoLayoutInstance?.setModifiable(false)
-                            zl1LayoutInstance?.setModifiable(false)
-
-                        } else if (showLegacySideMenu) {
-
-                            showLegacySideMenu = false
-
-                        } else if (viewModel.isEditingLayout) {
+                        if (viewModel.isEditingLayout) {
 
                             //处于控制布局编辑模式
 

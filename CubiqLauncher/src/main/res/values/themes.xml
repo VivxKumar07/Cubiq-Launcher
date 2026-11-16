@@ -65,11 +65,38 @@
         <item name="android:background">?android:attr/listDivider</item>
     </style>
 
-    <style name="HorizonGameTheme" parent="android:style/Theme.Material.NoActionBar">
+    <style name="HorizonGameTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">@android:color/black</item>
         <item name="android:colorAccent">#55FF55</item>
+    </style>
+
+    <style name="CustomAlertDialogTheme" parent="Theme.Material3.Dark.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_background</item>
+        <item name="android:scrollbarThumbHorizontal">@color/background_menu_element</item>
+        <item name="android:scrollbarThumbVertical">@color/background_menu_element</item>
+    </style>
+
+    <style name="RoundedCornersImageView">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">4%</item>
+    </style>
+
+    <style name="RoundImageView">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="Zl1SidebarSeekBar" parent="Widget.AppCompat.SeekBar">
+        <item name="android:progressDrawable">@drawable/seekbar_zl1_progress</item>
+        <item name="android:thumb">@drawable/seekbar_zl1_thumb</item>
+        <item name="android:splitTrack">false</item>
+        <item name="android:minHeight">28dp</item>
+        <item name="android:maxHeight">28dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:thumbOffset">10dp</item>
     </style>
 </resources>

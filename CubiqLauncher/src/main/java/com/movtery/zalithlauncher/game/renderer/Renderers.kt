@@ -60,6 +60,11 @@ object Renderers {
             FreedrenoRenderer,
             PanfrostRenderer
         )
+
+        val savedId = runCatching { com.movtery.zalithlauncher.setting.AllSettings.renderer.getValue() }.getOrNull().orEmpty()
+        if (savedId.isNotBlank()) {
+            setCurrentRenderer(savedId, retryToFirstOnFailure = false)
+        }
     }
 
     /**
@@ -166,12 +171,14 @@ object Renderers {
      */
     fun getCurrentRenderer(): RendererInterface {
         if (!isInitialized) init()
-        return currentRenderer ?: (
-            renderers.find { it.getUniqueIdentifier() == NGGL4ESRenderer.getUniqueIdentifier() }
+        return currentRenderer ?: run {
+            val savedId = runCatching { com.movtery.zalithlauncher.setting.AllSettings.renderer.getValue() }.getOrNull().orEmpty()
+            val saved = if (savedId.isNotBlank()) renderers.find { it.getUniqueIdentifier() == savedId } else null
+            saved ?: renderers.find { it.getUniqueIdentifier() == NGGL4ESRenderer.getUniqueIdentifier() }
                 ?: renderers.find { it.getUniqueIdentifier() == GL4ESRenderer.getUniqueIdentifier() }
                 ?: renderers.firstOrNull()
                 ?: NGGL4ESRenderer
-        ).also { currentRenderer = it }
+        }.also { currentRenderer = it }
     }
 
     /**

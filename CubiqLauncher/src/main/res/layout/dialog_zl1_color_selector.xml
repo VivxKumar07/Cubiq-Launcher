@@ -3,21 +3,21 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/color_picker_layout"
-    android:layout_width="220dp"
-    android:visibility="gone"
-    android:layout_height="match_parent"
-    android:layout_gravity="center_vertical"
-    android:layout_marginVertical="@dimen/padding_moderate"
-    android:background="@drawable/background_control_editor"
-    android:paddingHorizontal="@dimen/padding_moderate"
-    android:paddingVertical="@dimen/padding_moderate"
+    android:layout_width="@dimen/zl1_sidebar_width"
+    android:visibility="invisible"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_vertical|start"
+    android:layout_marginVertical="12dp"
+    android:background="@drawable/background_zl1_control_editor"
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="14dp"
     android:clickable="true"
     android:focusable="true">
 
     <net.kdt.pojavlaunch.colorselector.SVRectangleView
         android:id="@+id/color_selector_rectangle_view"
         android:layout_width="0dp"
-        android:layout_height="@dimen/_150sdp"
+        android:layout_height="130dp"
         android:layout_marginEnd="@dimen/_8sdp"
         android:focusable="true"
 
@@ -28,7 +28,7 @@
     <net.kdt.pojavlaunch.colorselector.ColorSideBySideView
         android:id="@+id/color_selector_color_view"
         android:layout_width="0dp"
-        android:layout_height="@dimen/_94sdp"
+        android:layout_height="80dp"
         android:layout_marginTop="@dimen/_8sdp"
         app:layout_constraintEnd_toEndOf="@+id/color_selector_rectangle_view"
         app:layout_constraintStart_toStartOf="@+id/color_selector_rectangle_view"
@@ -37,14 +37,16 @@
     <com.movtery.zalithlauncher.ui.view.AnimEditText
         android:id="@+id/color_selector_hex_edit"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/_8sdp"
-        android:background="@drawable/background_edit_box"
+        android:layout_height="38dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_control_editor_edittext"
         android:gravity="center"
         android:hint="FFFF0000"
+        android:textColorHint="#6C707C"
+        android:textColor="#FFFFFF"
+        android:textSize="13sp"
         android:importantForAutofill="no"
         android:inputType="text"
-        android:minHeight="@dimen/_48sdp"
         android:typeface="monospace"
         app:layout_constraintEnd_toEndOf="@+id/color_selector_color_view"
         app:layout_constraintStart_toStartOf="@+id/color_selector_color_view"
@@ -53,7 +55,7 @@
 
     <net.kdt.pojavlaunch.colorselector.AlphaView
         android:id="@+id/color_selector_alpha_view"
-        android:layout_width="@dimen/_25sdp"
+        android:layout_width="22dp"
         android:layout_height="0dp"
         android:layout_marginEnd="@dimen/_8sdp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -62,7 +64,7 @@
 
     <net.kdt.pojavlaunch.colorselector.HueView
         android:id="@+id/color_selector_hue_view"
-        android:layout_width="@dimen/_25sdp"
+        android:layout_width="22dp"
         android:layout_height="0dp"
         android:layout_marginStart="@dimen/_8sdp"
         android:focusable="true"

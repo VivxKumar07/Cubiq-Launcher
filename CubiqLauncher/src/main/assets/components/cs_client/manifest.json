@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "client": "CS Client V1",
+  "distribution": "launcher-bundled",
+  "versions": [
+    {"minecraft":"1.21.11","clientVersion":"1.0.0+1.21.11","fabricLoaderMin":"0.18.2","file":"cs-client-V1+1.21.11.jar","size":7282112,"sha256":"feabbf0d172834cba3eba8ba30ce724d820730946ed9d1f282ef9940491a4f17","required":["fabric-api"],"optional":["sodium","lithium","immediatelyfast","entityculling","ferritecore","modmenu"]},
+    {"minecraft":"26.1","clientVersion":"1.0.0+26.1","fabricLoaderMin":"0.19.3","file":"cs-client-V1+26.1.jar","size":7278928,"sha256":"a75474425f54130fbea228a82c31eea64f89161c970f69c6108b01e810446a62","required":["fabric-api"],"optional":["sodium","lithium","immediatelyfast","entityculling","ferritecore","modmenu"]},
+    {"minecraft":"26.2","clientVersion":"1.0.0+26.2","fabricLoaderMin":"0.19.3","file":"cs-client-V1+26.2.jar","size":7281750,"sha256":"8c1f9a45205dbba8d2df41553a1adeb4be7a2c7f244df7248eb3b91ac35a6365","required":["fabric-api"],"optional":["sodium","lithium","immediatelyfast","entityculling","ferritecore","modmenu"]}
+  ]
+}

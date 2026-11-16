@@ -199,6 +199,7 @@ fun RendererSettingsScreen(
                         },
                         onValueChange = { selectedRenderer ->
                             val id = selectedRenderer.getUniqueIdentifier()
+                            AllSettings.renderer.save(id)
                             Renderers.setCurrentRenderer(id)
                             com.movtery.zalithlauncher.game.version.installed.VersionsManager.currentVersion.value?.let { curVer ->
                                 runCatching {

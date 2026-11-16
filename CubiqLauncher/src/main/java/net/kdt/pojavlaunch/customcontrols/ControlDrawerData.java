@@ -68,7 +68,9 @@ public class ControlDrawerData {
     }
 
     public ControlDrawerData(ArrayList<ControlData> buttonProperties){
-        this(buttonProperties, new ControlData(ContextExecutor.getString(R.string.controls_add_control_drawer), new int[] {}, Tools.currentDisplayMetrics.widthPixels/2f, Tools.currentDisplayMetrics.heightPixels/2f));
+        this(buttonProperties, new ControlData(ContextExecutor.getString(R.string.controls_add_control_drawer), new int[] {},
+            (Tools.currentDisplayMetrics != null ? Tools.currentDisplayMetrics.widthPixels : android.content.res.Resources.getSystem().getDisplayMetrics().widthPixels) / 2f,
+            (Tools.currentDisplayMetrics != null ? Tools.currentDisplayMetrics.heightPixels : android.content.res.Resources.getSystem().getDisplayMetrics().heightPixels) / 2f));
     }
 
     public ControlDrawerData(ArrayList<ControlData> buttonProperties, ControlData properties){
