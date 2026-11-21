@@ -182,19 +182,9 @@ class ControlEditorActivity : BaseAppCompatActivity() {
  */
 fun startEditorActivity(context: Context, file: File) {
     val fileText = runCatching { file.readText() }.getOrDefault("")
-    val isMojo = file.name.contains("mojo", ignoreCase = true) ||
-            fileText.contains("dynamicX") || fileText.contains("\${margin}") ||
-            fileText.contains(""""version": 4""") || fileText.contains(""""version":4""")
-    if (isMojo) {
-        git.artdeell.mojo.prefs.LauncherPreferences.PREF_DEFAULTCTRL_PATH = file.absolutePath
-        val intent = Intent(context, git.artdeell.mojo.CustomControlsActivity::class.java)
-        context.startActivity(intent)
-        return
-    }
-
     val isZl1 = file.name.contains("zalith_1", ignoreCase = true) || file.name.contains("zl1", ignoreCase = true)
             || fileText.contains(""""version": 8""") || fileText.contains(""""version":8""")
-            || (fileText.contains("mControlDataList") && !isMojo)
+            || fileText.contains("mControlDataList")
     if (isZl1) {
         val intent = Intent(context, net.kdt.pojavlaunch.CustomControlsActivity::class.java).apply {
             putExtra(net.kdt.pojavlaunch.CustomControlsActivity.BUNDLE_CONTROL_PATH, file.absolutePath)

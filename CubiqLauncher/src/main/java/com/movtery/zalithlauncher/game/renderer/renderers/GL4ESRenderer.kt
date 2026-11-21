@@ -35,7 +35,16 @@ object GL4ESRenderer : RendererInterface {
 
     override fun getMaxMCVersion(): String = "1.16.5"
 
-    override fun getRendererEnv(): Lazy<Map<String, String>> = lazy { emptyMap() }
+    override fun getRendererEnv(): Lazy<Map<String, String>> = lazy {
+        buildMap {
+            put("LIBGL_USE_MC_COLOR", "1")
+            put("LIBGL_ES", "2")
+            put("LIBGL_MIPMAP", "3")
+            put("LIBGL_NOERROR", "1")
+            put("LIBGL_NOINTOVLHACK", "1")
+            put("LIBGL_NORMALIZE", "1")
+        }
+    }
 
     override fun getDlopenLibrary(): Lazy<List<String>> = lazy { emptyList() }
 

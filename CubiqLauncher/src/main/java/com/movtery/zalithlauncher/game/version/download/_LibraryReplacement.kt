@@ -96,6 +96,7 @@ fun GameManifest.Library.filterLibrary(allowLwjglSdlClasses: Boolean = false): B
 
     return when {
         coordinates.firstOrNull() == "org.lwjgl" -> !(allowLwjglSdlClasses && isLwjglSdlClasses)
+        coordinates.firstOrNull() == "org.lwjgl.lwjgl" -> true
         libraryName.contains("jinput-platform") -> true
         libraryName.contains("twitch-platform") -> true
         libraryName.contains("tv.twitch") -> true

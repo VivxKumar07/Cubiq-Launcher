@@ -497,17 +497,12 @@ import com.movtery.zalithlauncher.viewmodel.ScreenBackStackViewModel
 
 
 object LauncherNavState {
-
-
-
     var selectedBottomNav by mutableIntStateOf(1)
-
-
-
     var activeTab by mutableIntStateOf(-1)
+}
 
-
-
+object HorizonSetupNavState {
+    var showDialog by mutableStateOf(false)
 }
 
 
@@ -1011,9 +1006,12 @@ fun LauncherScreen(
 
 
 
-        if (showHorizonSetup) {
+        if (showHorizonSetup || HorizonSetupNavState.showDialog) {
             HorizonSetupDialog(
-                onDismiss = { showHorizonSetup = false },
+                onDismiss = {
+                    showHorizonSetup = false
+                    HorizonSetupNavState.showDialog = false
+                },
                 onSetupComplete = {
                     LauncherNavState.selectedBottomNav = 1
                     LauncherNavState.activeTab = 0
@@ -1688,107 +1686,103 @@ fun LauncherScreen(
 
 
                                     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-
-
-
                                         val isLandscape = maxWidth > maxHeight
-
-
+                                        val contentPaddingHorizontal = if (isLandscape) 32.dp else 16.dp
+                                        val heroCardHeight = if (isLandscape) 250.dp else (maxWidth * 0.58f).coerceIn(210.dp, 270.dp)
+                                        val heroPagerHeight = heroCardHeight + 10.dp
 
                                         // Unified Responsive Layout (Hero Card carousel + Play Action + Installations)
-                                            Column(
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .verticalScroll(rememberScrollState())
-                                                    .padding(bottom = 6.dp)
-                                            ) {
-                                                val heroHorizontalPadding = if (isLandscape) 120.dp else 42.dp
-                                                val heroPagerHeight = if (isLandscape) 280.dp else 325.dp
-                                                val heroCardHeight = if (isLandscape) 270.dp else 315.dp
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .widthIn(max = 480.dp)
+                                                .align(Alignment.TopCenter)
+                                                .verticalScroll(rememberScrollState())
+                                                .padding(bottom = 6.dp)
+                                        ) {
+                                            val hasMultipleVersions = allVersions.size > 1
 
-                                                val hasMultipleVersions = allVersions.size > 1
-
-                                                 if (!hasMultipleVersions) {
-                                                     val singleVersion = allVersions.firstOrNull() ?: currentVersion
-                                                     HeroMinecraftCard(
-                                                         modifier = Modifier
-                                                             .fillMaxWidth()
-                                                             .height(heroCardHeight)
-                                                             .padding(horizontal = 14.dp, vertical = 4.dp),
-                                                         version = singleVersion,
-                                                         account = account,
-                                                         customArtworkRes = if (allVersions.isEmpty() || singleVersion == null) R.drawable.art_wilderness_bound else null,
-                                                         onVersionClick = { showVersionMenu = true }
-                                                     )
-                                                 } else {
-                                                     val heroPagerState = androidx.compose.foundation.pager.rememberPagerState(
-                                                         initialPage = 5000 - (5000 % allVersions.size)
-                                                     ) { 10000 }
-
-                                                     val autoScroll = AllSettings.heroCardAutoScroll.state
-                                                     LaunchedEffect(heroPagerState, allVersions.size, autoScroll) {
-                                                         if (!autoScroll) return@LaunchedEffect
-                                                         while (true) {
-                                                             kotlinx.coroutines.delay(5000L)
-                                                             if (!heroPagerState.isScrollInProgress) {
-                                                                 heroPagerState.animateScrollToPage(
-                                                                     page = heroPagerState.currentPage + 1,
-                                                                     animationSpec = androidx.compose.animation.core.tween(
-                                                                         durationMillis = 700,
-                                                                         easing = androidx.compose.animation.core.FastOutSlowInEasing
-                                                                     )
-                                                                 )
-                                                             }
-                                                         }
-                                                     }
-
-                                                     androidx.compose.foundation.pager.HorizontalPager(
-                                                         state = heroPagerState,
-                                                         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = heroHorizontalPadding),
-                                                         pageSpacing = 16.dp,
-                                                         modifier = Modifier
-                                                             .fillMaxWidth()
-                                                             .height(heroPagerHeight)
-                                                     ) { page ->
-                                                         val index = page % allVersions.size
-                                                         val pageVersion = allVersions[index]
-                                                         val pageOffset = ((heroPagerState.currentPage - page) + heroPagerState.currentPageOffsetFraction).let { kotlin.math.abs(it) }
-                                                         val fraction = (1f - pageOffset.coerceIn(0f, 1f))
-                                                         val scale = 0.92f + 0.08f * fraction
-                                                         val alpha = 0.70f + 0.30f * fraction
-
-                                                         HeroMinecraftCard(
-                                                             modifier = Modifier
-                                                                 .fillMaxWidth()
-                                                             .height(heroCardHeight)
-                                                             .padding(vertical = 4.dp)
-                                                             .graphicsLayer {
-                                                                 scaleX = scale
-                                                                 scaleY = scale
-                                                                 this.alpha = alpha
-                                                             },
-                                                             version = pageVersion,
-                                                             account = account,
-                                                             customArtworkRes = null,
-                                                             onVersionClick = { showVersionMenu = true }
-                                                         )
-                                                     }
-                                                 }
-
-                                                 // Horizon Promotional Banner (Panels B & C)
-                                                HorizonHomeBanner(
-                                                    onClick = {
-                                                        if (com.movtery.zalithlauncher.game.horizon.HorizonManager.isInstalled(context)) {
-                                                            com.movtery.zalithlauncher.game.horizon.HorizonManager.launchHorizon(context)
-                                                        } else {
-                                                            showHorizonSetup = true
-                                                        }
-                                                    },
+                                            if (!hasMultipleVersions) {
+                                                val singleVersion = allVersions.firstOrNull() ?: currentVersion
+                                                HeroMinecraftCard(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .padding(horizontal = heroHorizontalPadding, vertical = 6.dp)
-                                                        .height(56.dp)
+                                                        .height(heroCardHeight)
+                                                        .padding(horizontal = contentPaddingHorizontal, vertical = 4.dp),
+                                                    version = singleVersion,
+                                                    account = account,
+                                                    customArtworkRes = if (allVersions.isEmpty() || singleVersion == null) R.drawable.art_wilderness_bound else null,
+                                                    onVersionClick = { showVersionMenu = true }
                                                 )
+                                            } else {
+                                                val heroPagerState = androidx.compose.foundation.pager.rememberPagerState(
+                                                    initialPage = 5000 - (5000 % allVersions.size)
+                                                ) { 10000 }
+
+                                                val autoScroll = AllSettings.heroCardAutoScroll.state
+                                                LaunchedEffect(heroPagerState, allVersions.size, autoScroll) {
+                                                    if (!autoScroll) return@LaunchedEffect
+                                                    while (true) {
+                                                        kotlinx.coroutines.delay(5000L)
+                                                        if (!heroPagerState.isScrollInProgress) {
+                                                            heroPagerState.animateScrollToPage(
+                                                                page = heroPagerState.currentPage + 1,
+                                                                animationSpec = androidx.compose.animation.core.tween(
+                                                                    durationMillis = 700,
+                                                                    easing = androidx.compose.animation.core.FastOutSlowInEasing
+                                                                )
+                                                            )
+                                                        }
+                                                    }
+                                                }
+
+                                                androidx.compose.foundation.pager.HorizontalPager(
+                                                    state = heroPagerState,
+                                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = contentPaddingHorizontal),
+                                                    pageSpacing = 12.dp,
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .height(heroPagerHeight)
+                                                ) { page ->
+                                                    val index = page % allVersions.size
+                                                    val pageVersion = allVersions[index]
+                                                    val pageOffset = ((heroPagerState.currentPage - page) + heroPagerState.currentPageOffsetFraction).let { kotlin.math.abs(it) }
+                                                    val fraction = (1f - pageOffset.coerceIn(0f, 1f))
+                                                    val scale = 0.94f + 0.06f * fraction
+                                                    val alpha = 0.75f + 0.25f * fraction
+
+                                                    HeroMinecraftCard(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .height(heroCardHeight)
+                                                            .padding(vertical = 4.dp)
+                                                            .graphicsLayer {
+                                                                scaleX = scale
+                                                                scaleY = scale
+                                                                this.alpha = alpha
+                                                            },
+                                                        version = pageVersion,
+                                                        account = account,
+                                                        customArtworkRes = null,
+                                                        onVersionClick = { showVersionMenu = true }
+                                                    )
+                                                }
+                                            }
+
+                                            // Horizon Promotional Banner (Panels B & C)
+                                            HorizonHomeBanner(
+                                                onClick = {
+                                                    if (com.movtery.zalithlauncher.game.horizon.HorizonManager.isInstalled(context)) {
+                                                        com.movtery.zalithlauncher.game.horizon.HorizonManager.launchHorizon(context)
+                                                    } else {
+                                                        showHorizonSetup = true
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = contentPaddingHorizontal, vertical = 6.dp)
+                                                    .height(54.dp)
+                                            )
 
                                                 
 
@@ -5510,19 +5504,10 @@ private fun HeroMinecraftCard(
 
 
                 modifier = Modifier
-
-
-
                     .align(Alignment.TopCenter)
-
-
-
-                    .padding(top = 18.dp)
-
-
-
-                    .fillMaxWidth(0.82f)
-                    .height(68.dp),
+                    .padding(top = 14.dp)
+                    .fillMaxWidth(0.78f)
+                    .height(48.dp),
                 contentScale = ContentScale.Fit
             )
             }
@@ -5977,81 +5962,24 @@ private fun PlayActionRow(
 
 
     Box(
-
-
-
         modifier = Modifier
-
-
-
             .fillMaxWidth()
-
-
-
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-
-
-
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center
-
-
-
     ) {
-
-
-
         MinecraftButton(
-
-
-
             onClick = {
-
-
-
                 com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
-
-
-
                 onPlayClick()
-
-
-
             },
-
-
-
             style = MinecraftButtonStyle.GREEN,
-
-
-
             isLoading = isLaunching,
-
-
-
             text = "PLAY",
-
-
-
-            fontSize = 20.sp,
-
-
-
+            fontSize = 18.sp,
             modifier = Modifier
-
-
-
                 .fillMaxWidth()
-
-
-
-                .height(52.dp)
-
-
-
+                .height(48.dp)
         )
-
-
-
     }
 
 
@@ -6121,10 +6049,7 @@ private fun InstalledVersionsSection(
 
 
             .fillMaxWidth()
-
-
-
-            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
 
 
 
@@ -7702,11 +7627,17 @@ fun CompactBackgroundDownloadBar(
 
 
 
-    val hasActiveTasks = relevantTasks.isNotEmpty() || ((activeInstaller != null || isPreparing) && !showForegroundDialog)
+    val horizonState by com.movtery.zalithlauncher.game.horizon.HorizonManager.installState.collectAsStateWithLifecycle()
+    val isHorizonActive = horizonState is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Preparing ||
+            horizonState is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Downloading ||
+            horizonState is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Configuring ||
+            horizonState is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Finalizing
 
-
+    val hasActiveTasks = relevantTasks.isNotEmpty() || ((activeInstaller != null || isPreparing) && !showForegroundDialog) || isHorizonActive
 
     if (!hasActiveTasks) return
+
+    val isHorizonOnly = isHorizonActive && activeInstaller == null && !isPreparing && relevantTasks.isEmpty()
 
 
 
@@ -7762,58 +7693,50 @@ fun CompactBackgroundDownloadBar(
 
 
 
-    val progress = currentTask?.progress?.collectAsStateWithLifecycle()?.value ?: if (isPreparing) -1f else 0f
+    val progress = if (isHorizonOnly) {
+        when (val s = horizonState) {
+            is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Downloading -> s.percent
+            is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Configuring -> s.percent
+            else -> -1f
+        }
+    } else {
+        currentTask?.progress?.collectAsStateWithLifecycle()?.value ?: if (isPreparing) -1f else 0f
+    }
 
-
+    val horizonMessage = if (isHorizonOnly) {
+        when (val s = horizonState) {
+            is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Downloading -> {
+                val dlMb = "%.1f".format(java.util.Locale.US, s.currentBytes / (1024f * 1024f))
+                val totMb = "%.1f".format(java.util.Locale.US, s.totalBytes / (1024f * 1024f))
+                "Downloading files ($dlMb MB / $totMb MB)"
+            }
+            is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Configuring -> {
+                if (s.currentStep.isNotBlank()) "Configuring: ${s.currentStep}" else "Configuring runtime..."
+            }
+            is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Preparing -> "Preparing environment..."
+            is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Finalizing -> "Finalizing setup..."
+            else -> null
+        }
+    } else null
 
     val message = currentTask?.message?.collectAsStateWithLifecycle()?.value
-
-
-
     val speed = currentTask?.rateBytesPerSec?.collectAsStateWithLifecycle()?.value
 
-
-
-
-
-
-
     Box(
-
-
-
         modifier = Modifier
-
-
-
             .fillMaxWidth()
-
-
-
             .padding(horizontal = 12.dp, vertical = 3.dp)
-
-
-
             .clip(RoundedCornerShape(3.dp))
-
-
-
             .background(Color(0xFF1E1E20))
-
-
-
             .border(BorderStroke(1.dp, Color(0xFF383838)), RoundedCornerShape(3.dp))
-
-
-
-            .clickable { onExpand() }
-
-
-
+            .clickable {
+                if (isHorizonOnly) {
+                    HorizonSetupNavState.showDialog = true
+                } else {
+                    onExpand()
+                }
+            }
             .padding(horizontal = 12.dp, vertical = 7.dp)
-
-
-
     ) {
 
 
@@ -7946,7 +7869,18 @@ fun CompactBackgroundDownloadBar(
 
 
 
-                    if (activeInstallName != null) {
+                    if (isHorizonOnly) {
+                        Text(
+                            text = "HORIZON (MINECRAFT RUST) • ${horizonMessage ?: "SETTING UP..."}",
+                            modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
+                            color = Color.White,
+                            fontFamily = MinecraftFontFamily,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    } else if (activeInstallName != null) {
 
 
 

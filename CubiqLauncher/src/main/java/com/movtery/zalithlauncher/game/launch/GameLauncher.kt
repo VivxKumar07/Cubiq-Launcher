@@ -184,11 +184,9 @@ class GameLauncher(
             put("sort.patch", "true")
         }
 
-        //Jna
-        jnaDir?.let { dir ->
-            val dirPath = dir.absolutePath
-            put("jna.boot.library.path", dirPath) //覆盖父类添加的jna路径
-        }
+        // JNA
+        val jnaPath = jnaDir?.absolutePath ?: PathManager.DIR_NATIVE_LIB
+        put("jna.boot.library.path", jnaPath)
     }
 
     override fun chdir(): String {
@@ -308,14 +306,6 @@ class GameLauncher(
 
         disableSplash(gameDirPath)
 
-        val mcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
-        // Deploy in-game Cubiq Friends Fabric client mod if available
-        com.movtery.zalithlauncher.friends.CubiqFriendsManager.installInGameMod(
-            context = activity,
-            gameDir = gameDirPath,
-            mcVersion = mcVer
-        )
-
         //初始化运行环境
         this.runtime = runtime
         val launchArgs = LaunchArgs(
@@ -417,7 +407,7 @@ class GameLauncher(
                 }
             }
         }
-        return defaultRuntime
+        return defaultRuntime.ifEmpty { "Internal-17" }
     }
 
     /**
@@ -482,7 +472,13 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
 
     envMap += renderer.getRendererEnv().value
 
-    val sysEgl = if (File("/system/lib64/libEGL.so").exists()) "/system/lib64/libEGL.so" else "/system/lib/libEGL.so"
+    val libDirName = if (com.movtery.zalithlauncher.utils.device.Architecture.is64BitsDevice) "lib64" else "lib"
+    val sysEgl = listOf(
+        "/system/$libDirName/libEGL.so",
+        "/vendor/$libDirName/libEGL.so",
+        "/system/lib/libEGL.so",
+        "libEGL.so"
+    ).firstOrNull { File(it).exists() } ?: "libEGL.so"
 
     if (renderer == LTWRenderer) {
         if (rendererLibPath != null) {

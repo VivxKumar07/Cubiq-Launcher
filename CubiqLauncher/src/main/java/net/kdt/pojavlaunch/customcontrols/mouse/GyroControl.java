@@ -80,7 +80,7 @@ public class GyroControl implements SensorEventListener, GrabListener {
         mLastGyroTimestamp = 0L;
         mSensorManager.registerListener(this, mSensor, 1000 * AllSettings.getGyroSampleRate().getValue());
         mCorrectionListener.enable();
-        mShouldHandleEvents = true;
+        mShouldHandleEvents = CallbackBridge.isGrabbing();
         CallbackBridge.addGrabListener(this);
     }
 
@@ -96,7 +96,7 @@ public class GyroControl implements SensorEventListener, GrabListener {
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        if (!mShouldHandleEvents) return;
+        if (!mShouldHandleEvents || !CallbackBridge.isGrabbing()) return;
 
         if (sensorEvent.sensor.getType() == Sensor.TYPE_GYROSCOPE) {
             if (mLastGyroTimestamp == 0L) {
@@ -156,9 +156,6 @@ public class GyroControl implements SensorEventListener, GrabListener {
             if (CallbackBridge.isGrabbing()) {
                 CallbackBridge.sendCursorDelta(deltaX, deltaY);
             }
-            CallbackBridge.mouseX += deltaX;
-            CallbackBridge.mouseY += deltaY;
-            CallbackBridge.sendCursorPos(CallbackBridge.mouseX, CallbackBridge.mouseY);
         }
     }
 
@@ -199,7 +196,7 @@ public class GyroControl implements SensorEventListener, GrabListener {
     @Override
     public void onGrabState(boolean isGrabbing) {
         mWarmup = ROTATION_VECTOR_WARMUP_PERIOD;
-        mShouldHandleEvents = true;
+        mShouldHandleEvents = isGrabbing;
     }
 
 

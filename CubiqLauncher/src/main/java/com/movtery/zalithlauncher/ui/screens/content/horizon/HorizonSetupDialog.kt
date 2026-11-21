@@ -52,11 +52,7 @@ fun HorizonSetupDialog(
     var forceReinstall by remember { mutableStateOf(false) }
     val isAlreadyInstalled = remember(installState, forceReinstall) { HorizonManager.isInstalled(context) }
 
-    Dialog(onDismissRequest = {
-        if (installState !is HorizonManager.InstallState.Downloading && installState !is HorizonManager.InstallState.Configuring) {
-            onDismiss()
-        }
-    }) {
+    Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
                 .widthIn(max = 480.dp)
@@ -309,10 +305,7 @@ fun HorizonSetupDialog(
                                         .size(28.dp)
                                         .clip(CircleShape)
                                         .background(Color(0xFF1F222B))
-                                        .clickable {
-                                            HorizonManager.cancelSetup()
-                                            onDismiss()
-                                        },
+                                        .clickable { onDismiss() },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
@@ -339,8 +332,8 @@ fun HorizonSetupDialog(
                                 val step2Active = state is HorizonManager.InstallState.Downloading
                                 val step2Done = state is HorizonManager.InstallState.Configuring || state is HorizonManager.InstallState.Finalizing
                                 val dlBytes = (state as? HorizonManager.InstallState.Downloading)?.let {
-                                    val mbCurrent = (it.currentBytes / (1024 * 1024)).toInt()
-                                    val mbTotal = (it.totalBytes / (1024 * 1024)).toInt().coerceAtLeast(1)
+                                    val mbCurrent = "%.1f".format(java.util.Locale.US, it.currentBytes / (1024f * 1024f))
+                                    val mbTotal = "%.1f".format(java.util.Locale.US, it.totalBytes / (1024f * 1024f))
                                     " ($mbCurrent MB / $mbTotal MB)"
                                 } ?: ""
 
@@ -369,17 +362,63 @@ fun HorizonSetupDialog(
 
                                 val step3Active = state is HorizonManager.InstallState.Configuring
                                 val step3Done = state is HorizonManager.InstallState.Finalizing
+                                val configStep = (state as? HorizonManager.InstallState.Configuring)?.currentStep
+                                val configPct = (state as? HorizonManager.InstallState.Configuring)?.percent ?: 0f
+
                                 ProgressStepRow(
-                                    label = "Configuring runtime",
+                                    label = if (!configStep.isNullOrBlank()) "Configuring: $configStep" else "Configuring runtime",
                                     isDone = step3Done,
-                                    isActive = step3Active
+                                    isActive = step3Active,
+                                    percentText = if (step3Active) "${(configPct * 100).toInt()}%" else null
                                 )
+
+                                if (step3Active) {
+                                    LinearProgressIndicator(
+                                        progress = { configPct },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(start = 28.dp, end = 4.dp)
+                                            .height(5.dp)
+                                            .clip(RoundedCornerShape(3.dp)),
+                                        color = Color(0xFF22C55E),
+                                        trackColor = Color(0xFF2E323D)
+                                    )
+                                }
 
                                 val step4Active = state is HorizonManager.InstallState.Finalizing
                                 ProgressStepRow(
                                     label = "Finalizing setup",
                                     isDone = false,
                                     isActive = step4Active
+                                )
+                            }
+
+                            // Background / Cancel Controls
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                MinecraftButton(
+                                    onClick = {
+                                        HorizonManager.cancelSetup()
+                                        onDismiss()
+                                    },
+                                    text = "Cancel",
+                                    style = MinecraftButtonStyle.STONE,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(38.dp)
+                                )
+
+                                MinecraftButton(
+                                    onClick = onDismiss,
+                                    text = "Run in Background",
+                                    style = MinecraftButtonStyle.GREEN,
+                                    modifier = Modifier
+                                        .weight(1.3f)
+                                        .height(38.dp)
                                 )
                             }
                         }

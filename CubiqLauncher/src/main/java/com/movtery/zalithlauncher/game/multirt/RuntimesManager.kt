@@ -115,14 +115,14 @@ object RuntimesManager {
         when (loaderInfo?.loader) {
             com.movtery.zalithlauncher.game.addons.modloader.ModLoader.BABRIC -> return 17
             com.movtery.zalithlauncher.game.addons.modloader.ModLoader.CLEANROOM -> {
-                return if (loaderInfo.version.isBiggerTo("0.4.4-alpha")) 25 else 21
+                return 21
             }
             com.movtery.zalithlauncher.game.addons.modloader.ModLoader.NEOFORGE -> {
                 val mcVer = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
-                val firstNum = mcVer.split('.').firstOrNull()?.filter { it.isDigit() }?.toIntOrNull() ?: 0
                 return when {
-                    firstNum >= 26 || mcVer.contains("26.") || mcVer.contains("27.") -> 25
-                    mcVer.contains("1.20.5") || mcVer.contains("1.20.6") || mcVer.contains("1.21") -> 21
+                    mcVer.contains("1.20.5") || mcVer.contains("1.20.6") || mcVer.contains("1.21") ||
+                    mcVer.startsWith("24w") || mcVer.startsWith("25w") || mcVer.startsWith("26w") ||
+                    mcVer.contains("26.") || mcVer.contains("27.") -> 21
                     else -> 17
                 }
             }
@@ -130,10 +130,10 @@ object RuntimesManager {
         }
 
         val mcVersionStr = version.getVersionInfo()?.minecraftVersion ?: version.getVersionName()
-        val firstNum = mcVersionStr.split('.').firstOrNull()?.filter { it.isDigit() }?.toIntOrNull() ?: 0
         return when {
-            firstNum >= 26 || mcVersionStr.contains("26.") || mcVersionStr.contains("27.") -> 25
-            mcVersionStr.contains("1.20.5") || mcVersionStr.contains("1.20.6") || mcVersionStr.contains("1.21") -> 21
+            mcVersionStr.contains("1.20.5") || mcVersionStr.contains("1.20.6") || mcVersionStr.contains("1.21") ||
+            mcVersionStr.startsWith("24w") || mcVersionStr.startsWith("25w") || mcVersionStr.startsWith("26w") ||
+            mcVersionStr.contains("26.") || mcVersionStr.contains("27.") -> 21
             mcVersionStr.contains("1.17") || mcVersionStr.contains("1.18") || mcVersionStr.contains("1.19") || mcVersionStr.contains("1.20") -> 17
             else -> 8
         }

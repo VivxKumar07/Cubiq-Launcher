@@ -66,21 +66,18 @@ fun InGameCaptureHud(
     val activity = context as? Activity
     val currentCtrl = AllSettings.controlLayout.getValue()
     val isPocket = currentCtrl.contains("pocket", ignoreCase = true)
-    val isMojo = currentCtrl.contains("mojo", ignoreCase = true)
     val isZl1 = currentCtrl.contains("zl1", ignoreCase = true) ||
             currentCtrl.contains("zalith 1", ignoreCase = true) ||
             currentCtrl.contains("zalith1", ignoreCase = true)
 
     val posSetting = when {
         isPocket -> AllSettings.hudCapturePosPocket
-        isMojo -> AllSettings.hudCapturePosMojo
         isZl1 -> AllSettings.hudCapturePosZl1
         else -> AllSettings.hudCapturePosZl2
     }
 
     val defaultOffset = when {
         isPocket -> Offset(80f, 14f)
-        isMojo -> Offset(280f, 14f)
         isZl1 -> Offset(340f, 14f)
         else -> Offset(140f, 14f)
     }

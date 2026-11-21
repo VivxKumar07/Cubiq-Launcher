@@ -142,7 +142,7 @@ fun MultiplayerScreen(
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val tabs = listOf("CUBIQ FRIENDS", "TERRACOTTA SETTINGS", "HOW TO PLAY (TUTORIAL)")
+                val tabs = listOf("TERRACOTTA SETTINGS", "HOW TO PLAY (TUTORIAL)")
                 tabs.forEachIndexed { index, title ->
                     val isSelected = activeSubTab == index
                     com.movtery.zalithlauncher.ui.components.MinecraftButton(
@@ -170,14 +170,6 @@ fun MultiplayerScreen(
             ) {
                 when (activeSubTab) {
                     0 -> {
-                        com.movtery.zalithlauncher.friends.ui.CubiqFriendsContent(
-                            modifier = Modifier.fillMaxSize(),
-                            onJoinFriendWorld = { friend ->
-                                eventViewModel.sendToast(androidText("Connecting to ${friend.name} (${friend.hostAddress ?: "LAN"}:${friend.hostPort ?: 25565})..."))
-                            }
-                        )
-                    }
-                    1 -> {
                         MainMenu(
                             modifier = Modifier.fillMaxSize(),
                             eventViewModel = eventViewModel,

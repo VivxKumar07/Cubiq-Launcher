@@ -12,13 +12,13 @@ import com.movtery.zalithlauncher.databinding.ActivityZl1CustomControlsBinding;
 import com.movtery.zalithlauncher.databinding.ViewZl1ControlMenuBinding;
 import com.movtery.zalithlauncher.ui.subassembly.menu.ControlMenu;
 
-import git.artdeell.mojo.BaseActivity;
+import androidx.appcompat.app.AppCompatActivity;
 import net.kdt.pojavlaunch.customcontrols.ControlLayout;
 import net.kdt.pojavlaunch.customcontrols.EditorExitable;
 
 import java.io.IOException;
 
-public class CustomControlsActivity extends BaseActivity implements EditorExitable {
+public class CustomControlsActivity extends AppCompatActivity implements EditorExitable {
 	public static final String BUNDLE_CONTROL_PATH = "control_path";
 	private ActivityZl1CustomControlsBinding binding;
 	private String mControlPath = null;

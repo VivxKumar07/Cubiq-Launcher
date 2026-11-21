@@ -97,8 +97,6 @@ class GameHandler(
         logState = if (logState == LogState.CLOSE) LogState.SHOW else LogState.CLOSE
     }
 
-    var onOpenCubiqFriends: () -> Unit = {}
-
     override suspend fun execute(
         surface: Surface,
         screenSize: IntSize,
@@ -257,7 +255,7 @@ class GameHandler(
     override fun ComposableLayout(
         textInputMode: TextInputMode
     ) {
-        if (ControlManager.isZl1ControlModeActive() || ControlManager.isMojoControlModeActive()) {
+        if (ControlManager.isZl1ControlModeActive()) {
             LogBox(
                 enableLog = logState.value,
                 onClose = { logState = LogState.CLOSE },

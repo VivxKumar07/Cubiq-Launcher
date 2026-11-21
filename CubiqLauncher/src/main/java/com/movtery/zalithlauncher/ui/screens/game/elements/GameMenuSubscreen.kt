@@ -113,7 +113,6 @@ fun GameMenuSubscreen(
     onSwitchLog: () -> Unit,
     enableTerracotta: Boolean,
     onOpenTerracottaMenu: () -> Unit,
-    onOpenCubiqFriends: () -> Unit = {},
     onRefreshWindowSize: () -> Unit,
     onInputMethod: () -> Unit,
     onSendKeycode: () -> Unit,
@@ -212,7 +211,6 @@ private fun GameActionContent(
     onSwitchLog: () -> Unit,
     enableTerracotta: Boolean,
     onOpenTerracottaMenu: () -> Unit,
-    onOpenCubiqFriends: () -> Unit = {},
     onRefreshWindowSize: () -> Unit,
     onShowToast: (AndroidStringText, Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -263,20 +261,7 @@ private fun GameActionContent(
 
 
 
-        // Cubiq Friends (CS Launcher style in-game multiplayer friends)
-        item {
-            MenuTextButton(
-                modifier = Modifier.fillMaxWidth(),
-                text = "Cubiq Friends",
-                onClick = onOpenCubiqFriends,
-                color = color,
-                contentColor = contentColor,
-            )
-        }
 
-        item {
-            Spacer(modifier = Modifier.height(8.dp))
-        }
 
         //开启菜单悬浮窗
         item {

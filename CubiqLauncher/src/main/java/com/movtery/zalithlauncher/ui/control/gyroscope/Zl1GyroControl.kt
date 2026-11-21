@@ -62,7 +62,7 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
             1_000 * AllSettings.gyroscopeSampleRate.getValue()
         )
         correctionListener.enable()
-        shouldHandleEvents = alwaysHandle || try { CallbackBridge.isGrabbing() } catch (_: Throwable) { true }
+        shouldHandleEvents = alwaysHandle || try { CallbackBridge.isGrabbing() } catch (_: Throwable) { false }
         try { CallbackBridge.addGrabListener(this) } catch (_: Throwable) {}
     }
 
@@ -78,7 +78,7 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
     }
 
     override fun onSensorChanged(event: SensorEvent) {
-        if (!shouldHandleEvents) return
+        if (!shouldHandleEvents || (!forceAlwaysHandle && !try { CallbackBridge.isGrabbing() } catch (_: Throwable) { false })) return
 
         if (event.sensor.type == Sensor.TYPE_GYROSCOPE) {
             if (lastGyroTimestamp == 0L) {
@@ -134,14 +134,9 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
         if (updatePosition) {
             onDeltaListener?.invoke(deltaX, deltaY)
             try {
-                if (CallbackBridge.isGrabbing()) {
+                if (forceAlwaysHandle || CallbackBridge.isGrabbing()) {
                     // In-game aim: smooth relative camera rotation
                     CallbackBridge.sendCursorDelta(deltaX, deltaY)
-                } else {
-                    // In-menu aim: absolute pointer positioning
-                    CallbackBridge.mouseX += deltaX
-                    CallbackBridge.mouseY += deltaY
-                    CallbackBridge.sendCursorPos(CallbackBridge.mouseX, CallbackBridge.mouseY)
                 }
             } catch (ignored: Throwable) {}
         }
@@ -179,7 +174,7 @@ class Zl1GyroControl(context: Context) : SensorEventListener, GrabListener {
 
     override fun onGrabState(isGrabbing: Boolean) {
         warmup = ROTATION_VECTOR_WARMUP_PERIOD
-        shouldHandleEvents = true
+        shouldHandleEvents = forceAlwaysHandle || isGrabbing
     }
 
     private fun damperValue(newAngleDifference: FloatArray) {

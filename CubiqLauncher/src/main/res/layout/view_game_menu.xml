@@ -81,18 +81,7 @@
                 android:paddingHorizontal="@dimen/_8sdp"
                 app:ripple_for_text="true"/>
 
-            <com.movtery.zalithlauncher.ui.view.AnimTextView
-                android:id="@+id/cubiq_friends_btn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/_8sdp"
-                android:background="@drawable/background_item"
-                android:text="Cubiq Friends"
-                android:textColor="#55FF55"
-                android:gravity="center_horizontal"
-                android:paddingVertical="@dimen/_12sdp"
-                android:paddingHorizontal="@dimen/_8sdp"
-                app:ripple_for_text="true"/>
+
 
             <View
                 android:layout_width="match_parent"

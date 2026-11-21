@@ -165,7 +165,6 @@ import com.movtery.zalithlauncher.game.account.Account
 import com.movtery.zalithlauncher.game.control.ControlManager
 
 import com.movtery.zalithlauncher.ui.control.zl1.ZL1InGameController
-import com.movtery.zalithlauncher.ui.control.mojo.MojoInGameController
 
 import org.greenrobot.eventbus.EventBus
 
@@ -732,17 +731,10 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
     private var applySizeToSurface: ((width: Int, height: Int) -> Unit)? = null
 
     private var zl1Controller: ZL1InGameController? = null
-    private var mojoController: MojoInGameController? = null
-    var showCubiqFriendsDialog by mutableStateOf(false)
 
     private val isZl1GameMode: Boolean
         get() = runCatching {
             withHandler { type } == HandlerType.GAME && ControlManager.isZl1ControlModeActive()
-        }.getOrDefault(false)
-
-    private val isMojoGameMode: Boolean
-        get() = runCatching {
-            withHandler { type } == HandlerType.GAME && ControlManager.isMojoControlModeActive()
         }.getOrDefault(false)
 
 
@@ -997,17 +989,8 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
             override fun handleOnBackPressed() {
 
-                if (showCubiqFriendsDialog) {
-                    showCubiqFriendsDialog = false
-                    return
-                }
-
                 if (isZl1GameMode) {
                     if (zl1Controller?.handleBackPressed() == true) return
-                }
-
-                if (isMojoGameMode) {
-                    if (mojoController?.handleBackPressed() == true) return
                 }
 
                 if (vmViewModel.textInputMode == TextInputMode.ENABLE) {
@@ -1057,12 +1040,6 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
                 ObserveFullScreenSetting(AllSettings.gameFullScreen.state)
 
                 Screen {
-                    LaunchedEffect(Unit) {
-                        (vmViewModel.session.handler as? GameHandler)?.onOpenCubiqFriends = {
-                            showCubiqFriendsDialog = true
-                        }
-                    }
-
                     withHandler {
                         ComposableLayout(vmViewModel.textInputMode)
                     }
@@ -1071,23 +1048,6 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
                         com.movtery.zalithlauncher.ui.screens.game.elements.InGameCaptureHud(
                             modifier = Modifier,
                             alpha = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0.25f, 0.9f)
-                        )
-                    }
-
-                    // Cubiq Friends in-game toast card and modal dialog
-                    com.movtery.zalithlauncher.friends.ui.CubiqFriendsInGameToast(
-                        modifier = Modifier,
-                        onJoin = { friend ->
-                            Toast.makeText(this@VMActivity, "Connecting to ${friend.name} (${friend.hostAddress ?: "LAN"}:${friend.hostPort ?: 25565})...", Toast.LENGTH_LONG).show()
-                        }
-                    )
-
-                    if (showCubiqFriendsDialog) {
-                        com.movtery.zalithlauncher.friends.ui.CubiqFriendsDialog(
-                            onDismissRequest = { showCubiqFriendsDialog = false },
-                            onJoinFriendWorld = { friend ->
-                                Toast.makeText(this@VMActivity, "Connecting to ${friend.name} (${friend.hostAddress ?: "LAN"}:${friend.hostPort ?: 25565})...", Toast.LENGTH_LONG).show()
-                            }
                         )
                     }
 
@@ -1455,8 +1415,6 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
         stopAllService()
         zl1Controller?.onDestroy()
         zl1Controller = null
-        mojoController?.onDestroy()
-        mojoController = null
         runCatching {
             CallbackBridge.nativeSetWindowAttrib(0x00020001, 1)
         }
@@ -2047,45 +2005,9 @@ class VMActivity : BaseAppCompatActivity(), SurfaceTextureListener, SurfaceHolde
 
                             onToggleLog = {
                                 (vmViewModel.session.handler as? GameHandler)?.toggleLogState()
-                            },
-                            onOpenCubiqFriends = {
-                                showCubiqFriendsDialog = true
                             }
                         ).also { zl1Controller = it }
                         controller.rootBinding.root
-                    } else if (isMojoGameMode) {
-                        val controller = mojoController ?: MojoInGameController(
-                            activity = this@VMActivity,
-                            lifecycleScope = lifecycleScope,
-                            useTouchControllerProxy = (vmViewModel.session.handler as? GameHandler)?.enableTouchProxy == true,
-                            useSurfaceView = shouldUseSurfaceView,
-                            surfaceCallback = this@VMActivity,
-                            textureListener = this@VMActivity,
-                            insetsListener = insetsListener,
-                            renderViewCreatedListener = { renderView, isSurface ->
-                                gameSurfaceView = renderView
-                                applySizeToSurface = if (isSurface) {
-                                    val surfaceView = renderView as SurfaceView
-                                    { width, height ->
-                                        surfaceView.post {
-                                            surfaceView.holder.setFixedSize(width, height)
-                                        }
-                                    }
-                                } else {
-                                    val textureView = renderView as TextureView
-                                    { width, height ->
-                                        textureView.surfaceTexture?.setDefaultBufferSize(width, height)
-                                    }
-                                }
-                            },
-                            onToggleLog = {
-                                (vmViewModel.session.handler as? GameHandler)?.toggleLogState()
-                            },
-                            onOpenCubiqFriends = {
-                                showCubiqFriendsDialog = true
-                            }
-                        ).also { mojoController = it }
-                        controller.rootView
                     } else {
 
                         val view = if (shouldUseSurfaceView) {

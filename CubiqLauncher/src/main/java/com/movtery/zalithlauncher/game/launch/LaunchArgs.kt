@@ -77,9 +77,16 @@ class LaunchArgs(
         argsList.addAll(NativePluginManager.getJVMEnv())
 
         if (runtime.javaVersion > 8) {
-            argsList.add("--add-exports")
-            val pkg: String = gameManifest.mainClass.substring(0, gameManifest.mainClass.lastIndexOf("."))
-            argsList.add("$pkg/$pkg=ALL-UNNAMED")
+            argsList.add("--add-exports=java.base/sun.security.util=ALL-UNNAMED")
+            argsList.add("--add-opens=java.base/java.lang=ALL-UNNAMED")
+            argsList.add("--add-opens=java.base/java.lang.reflect=ALL-UNNAMED")
+            argsList.add("--add-opens=java.base/java.util=ALL-UNNAMED")
+            argsList.add("--add-opens=java.base/java.nio=ALL-UNNAMED")
+            argsList.add("--add-opens=java.base/sun.nio.ch=ALL-UNNAMED")
+        }
+
+        if (Architecture.is32BitsDevice) {
+            argsList.add("-Djdk.util.jar.enableMultiRelease=false")
         }
 
         argsList.add("mio.Wrapper")

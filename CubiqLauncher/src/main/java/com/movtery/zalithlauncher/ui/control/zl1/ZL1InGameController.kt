@@ -73,8 +73,7 @@ class ZL1InGameController(
     textureListener: TextureView.SurfaceTextureListener,
     insetsListener: View.OnApplyWindowInsetsListener,
     renderViewCreatedListener: MinecraftGLSurface.RenderViewCreatedListener,
-    private val onToggleLog: () -> Unit,
-    private val onOpenCubiqFriends: () -> Unit = {}
+    private val onToggleLog: () -> Unit
 ) : ControlButtonMenuListener, EditorExitable {
 
     companion object {
@@ -411,7 +410,6 @@ class ZL1InGameController(
             binding.forceClose.setOnClickListener(this)
             binding.logOutput.setOnClickListener(this)
             binding.sendCustomKey.setOnClickListener(this)
-            binding.cubiqFriendsBtn.setOnClickListener(this)
             binding.openMemoryInfo.setOnCheckedChangeListener(this)
             binding.openMemoryInfoLayout.setOnClickListener(this)
             binding.openFpsInfo.setOnCheckedChangeListener(this)
@@ -542,10 +540,6 @@ class ZL1InGameController(
                     onToggleLog()
                 }
                 binding.sendCustomKey -> dialogSendCustomKey()
-                binding.cubiqFriendsBtn -> {
-                    rootBinding.mainDrawerOptions.closeDrawer(rootBinding.mainNavigationView)
-                    onOpenCubiqFriends()
-                }
                 binding.openMemoryInfoLayout -> MenuUtils.toggleSwitchState(binding.openMemoryInfo)
                 binding.openFpsInfoLayout -> MenuUtils.toggleSwitchState(binding.openFpsInfo)
                 binding.resolutionScalerRemove -> MenuUtils.adjustSeekbar(binding.resolutionScaler, -1)

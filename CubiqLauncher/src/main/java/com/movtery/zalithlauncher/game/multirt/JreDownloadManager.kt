@@ -98,7 +98,11 @@ object JreDownloadManager {
                                 platformBinsInputStream = bStream,
                                 name = runtimeName,
                                 binPackVersion = "1.0.0",
-                                updateProgress = { p, _ -> onProgress(50 + p / 2, "Unpacking files ($p%)...", 0L) }
+                                updateProgress = { _, args ->
+                                    val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
+                                    val msg = if (entry.isNotEmpty()) "Unpacking $entry..." else "Unpacking runtime files..."
+                                    onProgress(75, msg, 0L)
+                                }
                             )
                         }
                     }
@@ -165,7 +169,11 @@ object JreDownloadManager {
                                         platformBinsInputStream = bStream,
                                         name = runtimeName,
                                         binPackVersion = "1.0.0",
-                                        updateProgress = { p, _ -> onProgress(85 + (p * 15 / 100), "Unpacking files ($p%)...", 0L) }
+                                        updateProgress = { _, args ->
+                                            val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
+                                            val msg = if (entry.isNotEmpty()) "Unpacking $entry..." else "Unpacking runtime files..."
+                                            onProgress(92, msg, 0L)
+                                        }
                                     )
                                 }
                             }
@@ -181,7 +189,11 @@ object JreDownloadManager {
                             nativeLibDir = nativeLibDir,
                             inputStream = stream,
                             name = runtimeName,
-                            updateProgress = { p, _ -> onProgress(85 + (p * 15 / 100), "Unpacking files ($p%)...", 0L) }
+                            updateProgress = { _, args ->
+                                val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
+                                val msg = if (entry.isNotEmpty()) "Unpacking $entry..." else "Unpacking runtime files..."
+                                onProgress(92, msg, 0L)
+                            }
                         )
                     }
                 }
@@ -299,9 +311,10 @@ object JreDownloadManager {
                                         platformBinsInputStream = bStream,
                                         name = runtimeName,
                                         binPackVersion = "1.0.0",
-                                        updateProgress = { p, _ ->
-                                            val overallP = (88 + (p * 12 / 100)).coerceIn(88, 99)
-                                            onProgress(overallP, "Assembling runtime files ($p%)...", 0L)
+                                        updateProgress = { _, args ->
+                                            val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
+                                            val msg = if (entry.isNotEmpty()) "Assembling: $entry" else "Assembling runtime files..."
+                                            onProgress(95, msg, 0L)
                                         }
                                     )
                                 }
@@ -339,9 +352,10 @@ object JreDownloadManager {
                         platformBinsInputStream = bStream,
                         name = runtimeName,
                         binPackVersion = "1.0.0",
-                        updateProgress = { p, _ ->
-                            val overallP = (88 + (p * 12 / 100)).coerceIn(88, 99)
-                            onProgress(overallP, "Assembling runtime files ($p%)...", 0L)
+                        updateProgress = { _, args ->
+                            val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
+                            val msg = if (entry.isNotEmpty()) "Assembling: $entry" else "Assembling runtime files..."
+                            onProgress(95, msg, 0L)
                         }
                     )
                 }
@@ -431,8 +445,10 @@ object JreDownloadManager {
                     nativeLibDir = nativeLibDir,
                     inputStream = inputStream,
                     name = name,
-                    updateProgress = { progress, _ ->
-                        onProgress(progress, "Installing custom runtime ($progress%)...")
+                    updateProgress = { _, args ->
+                        val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
+                        val msg = if (entry.isNotEmpty()) "Installing: $entry" else "Installing custom runtime..."
+                        onProgress(60, msg)
                     }
                 )
             }
@@ -578,8 +594,9 @@ object JreDownloadManager {
                         }
 
                         if (totalBytes > 0) {
-                            val percent = (downloadedBytes * 100 / totalBytes).toInt().coerceIn(0, 100)
-                            val dlMb = "%.1f".format(java.util.Locale.US, downloadedBytes / (1024f * 1024f))
+                            val clampedDl = downloadedBytes.coerceAtMost(totalBytes)
+                            val percent = (clampedDl * 100 / totalBytes).toInt().coerceIn(0, 100)
+                            val dlMb = "%.1f".format(java.util.Locale.US, clampedDl / (1024f * 1024f))
                             val totMb = "%.1f".format(java.util.Locale.US, totalBytes / (1024f * 1024f))
                             onProgress(percent, "$dlMb MB / $totMb MB", currentSpeed)
                         } else {

@@ -127,7 +127,7 @@ private fun progressFor(snapshot: BatchProgress, sizesFullyKnown: Boolean, hasFi
         (snapshot.downloadedBytes.toFloat() / snapshot.totalBytes).coerceIn(0f, 1f)
 
     hasFileCount && snapshot.totalFiles > 0 ->
-        snapshot.downloadedFiles.toFloat() / snapshot.totalFiles
+        (snapshot.downloadedFiles.toFloat() / snapshot.totalFiles.toFloat()).coerceIn(0f, 1f)
 
     else -> -1f
 }

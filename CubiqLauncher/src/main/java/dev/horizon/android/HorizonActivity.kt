@@ -470,7 +470,6 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
         title = "Minecraft Rust Edition"
 
         net.kdt.pojavlaunch.Tools.updateWindowSize(this)
-        git.artdeell.mojo.Tools.init(this)
         ControlManager.checkDefaultAndRefresh(this)
 
         setupInputBridge()
@@ -483,7 +482,6 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         net.kdt.pojavlaunch.Tools.updateWindowSize(this)
-        git.artdeell.mojo.Tools.init(this)
         attachOverlayIfNeeded()
     }
 
@@ -491,7 +489,6 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
             net.kdt.pojavlaunch.Tools.updateWindowSize(this)
-            git.artdeell.mojo.Tools.init(this)
             attachOverlayIfNeeded()
         }
     }
@@ -895,14 +892,12 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
 
         var drawerLayoutRef by remember { mutableStateOf<DrawerLayout?>(null) }
         var isDrawerOpen by remember { mutableStateOf(false) }
-        var showCubiqFriendsDialog by remember { mutableStateOf(false) }
 
         val isModalOpen = isMenuOpen ||
                 isDrawerOpen ||
                 forceCloseState == ForceCloseOperation.Show ||
                 replacementControlState == ReplacementControlState.Show ||
                 sendKeycodeState == SendKeycodeState.ShowDialog ||
-                showCubiqFriendsDialog ||
                 showLogs
         val isUiGameplayGrabbing = !showSplash && !isModalOpen && !isEditingControls
 
@@ -940,11 +935,6 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                     virtualMouseOverride = !newHide
                     ZLBridgeStates.changeCursorMode(if (!newHide) CURSOR_ENABLED else CURSOR_DISABLED)
                     Toast.makeText(this@HorizonActivity, if (newHide) "Mouse Disabled" else "Mouse Enabled", Toast.LENGTH_SHORT).show()
-                }
-
-                binding.cubiqFriendsBtn.setOnClickListener {
-                    drawerLayout.closeDrawer(navContainer)
-                    showCubiqFriendsDialog = true
                 }
 
                 binding.replacementCustomcontrol.setOnClickListener {
@@ -1102,12 +1092,9 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
             val gyro = if (gyroAvailable && gyroActive && !showSplash) {
                 Zl1GyroControl(this@HorizonActivity).apply {
                     onDeltaListener = { dx, dy ->
-                        if (!isModalOpen) {
-                            if (!isVirtualMouseMode) {
-                                dispatchRelativeMotion(dx, dy)
-                            } else {
-                                dispatchCursorMove(lastCursorX + dx, lastCursorY + dy)
-                            }
+                        // Match Java edition: Only apply gyro when grabbing during active gameplay, never in menus or virtual mouse
+                        if (!isModalOpen && !isVirtualMouseMode && isUiGameplayGrabbing && CallbackBridge.isGrabbing()) {
+                            dispatchRelativeMotion(dx, dy)
                         }
                     }
                     enable(alwaysHandle = true)
@@ -1345,124 +1332,15 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                 }
             }
 
-            val isMojoLayout = remember(activeLayoutName, layoutReloadVersion) {
-                activeLayoutName.contains("mojo", ignoreCase = true) ||
-                ControlManager.isMojoLayoutFile(layoutFile)
+            val isZl1Layout = remember(activeLayoutName, layoutReloadVersion) {
+                activeLayoutName.contains("zalith_1", ignoreCase = true) ||
+                activeLayoutName.contains("zl1", ignoreCase = true) ||
+                activeLayoutName.equals("default.json", ignoreCase = true) ||
+                ControlManager.isZl1LayoutFile(layoutFile)
             }
 
-            val isZl1Layout = remember(activeLayoutName, layoutReloadVersion, isMojoLayout) {
-                !isMojoLayout && (
-                    activeLayoutName.contains("zalith_1", ignoreCase = true) ||
-                    activeLayoutName.contains("zl1", ignoreCase = true) ||
-                    activeLayoutName.equals("default.json", ignoreCase = true) ||
-                    ControlManager.isZl1LayoutFile(layoutFile)
-                )
-            }
-
-            // 1. Controls layer: Mojo ControlLayout OR ZL1 ControlLayout OR Pocket Edition / Zalith 2 ControlBoxLayout / ControlEditor layer
-            if (isMojoLayout) {
-                // Attach the authentic Mojo floating draggable gear icon with remembered position
-                DisposableEffect(Unit) {
-                    val wrapper = GameMenuViewWrapper(
-                        this@HorizonActivity,
-                        {
-                            drawerLayoutRef?.let { drawer ->
-                                val nav = drawer.getChildAt(1)
-                                if (nav != null) {
-                                    if (drawer.isDrawerOpen(nav)) drawer.closeDrawer(nav)
-                                    else drawer.openDrawer(nav)
-                                }
-                            }
-                        },
-                        showInfo = true
-                    )
-                    wrapper.setVisibility(true)
-                    onDispose {
-                        wrapper.release()
-                    }
-                }
-
-                Box(modifier = Modifier.fillMaxSize()) {
-                    mouseOrTouchLayer()
-                    AndroidView(
-                        modifier = Modifier.fillMaxSize(),
-                        factory = { ctx ->
-                            val drawerLayout = DrawerLayout(ctx).apply {
-                                layoutParams = ViewGroup.LayoutParams(
-                                    ViewGroup.LayoutParams.MATCH_PARENT,
-                                    ViewGroup.LayoutParams.MATCH_PARENT
-                                )
-                                setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
-                                addDrawerListener(object : DrawerLayout.SimpleDrawerListener() {
-                                    override fun onDrawerOpened(drawerView: View) {
-                                        isDrawerOpen = true
-                                    }
-                                    override fun onDrawerClosed(drawerView: View) {
-                                        isDrawerOpen = false
-                                    }
-                                })
-                            }
-
-                            val contentFrame = FrameLayout(ctx).apply {
-                                layoutParams = DrawerLayout.LayoutParams(
-                                    ViewGroup.LayoutParams.MATCH_PARENT,
-                                    ViewGroup.LayoutParams.MATCH_PARENT
-                                )
-                            }
-
-                            val mojoLayout = git.artdeell.mojo.input.ControlLayout(ctx).apply {
-                                layoutParams = FrameLayout.LayoutParams(
-                                    ViewGroup.LayoutParams.MATCH_PARENT,
-                                    ViewGroup.LayoutParams.MATCH_PARENT
-                                )
-                                runCatching {
-                                    if (layoutFile.exists()) {
-                                        loadLayout(layoutFile.absolutePath)
-                                    } else {
-                                        val defFile = File(PathManager.DIR_CONTROL_LAYOUTS, "mojo_layout.json")
-                                        if (!defFile.exists()) {
-                                            ctx.copyAssetFile("mojo_layout.json", defFile, false)
-                                        }
-                                        if (defFile.exists()) {
-                                            loadLayout(defFile.absolutePath)
-                                        }
-                                    }
-                                }
-                                setMenuListener {
-                                    val nav = drawerLayout.getChildAt(1)
-                                    if (nav != null) {
-                                        if (drawerLayout.isDrawerOpen(nav)) drawerLayout.closeDrawer(nav)
-                                        else drawerLayout.openDrawer(nav)
-                                    }
-                                }
-                            }
-                            contentFrame.addView(mojoLayout)
-                            drawerLayout.addView(contentFrame)
-
-                            val navContainer = FrameLayout(ctx).apply {
-                                layoutParams = DrawerLayout.LayoutParams(
-                                    Tools.dpToPx(320f).toInt(),
-                                    ViewGroup.LayoutParams.MATCH_PARENT
-                                ).apply {
-                                    gravity = GravityCompat.END
-                                }
-                            }
-
-                            val menuBinding = ViewGameMenuBinding.inflate(layoutInflater, navContainer, true)
-                            setupDrawerMenuBinding(menuBinding, drawerLayout, navContainer, layoutFile)
-
-                            drawerLayout.addView(navContainer)
-                            drawerLayoutRef = drawerLayout
-                            drawerLayout
-                        },
-                        update = { drawer ->
-                            val contentFrame = drawer.getChildAt(0) as? FrameLayout
-                            val mojoLayout = contentFrame?.getChildAt(0) as? git.artdeell.mojo.input.ControlLayout
-                            mojoLayout?.alpha = controlsOpacity
-                        }
-                    )
-                }
-            } else if (isZl1Layout) {
+            // 1. Controls layer: ZL1 ControlLayout OR Pocket Edition / Zalith 2 ControlBoxLayout / ControlEditor layer
+            if (isZl1Layout) {
                 // Attach the authentic ZL1 floating draggable gear icon with remembered position
                 DisposableEffect(Unit) {
                     val wrapper = GameMenuViewWrapper(
@@ -1667,7 +1545,7 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
             }
 
             // Authentic Zalith Launcher 2 In-Game Menu (GameMenuSubscreen - used for ZL2 & Pocket Edition)
-            if (!isZl1Layout && !isMojoLayout) {
+            if (!isZl1Layout) {
                 GameMenuSubscreen(
                     state = if (isMenuOpen) MenuState.SHOW else MenuState.HIDE,
                     controlMenuTabIndex = controlMenuTabIndex,
@@ -1682,10 +1560,6 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                     },
                     enableTerracotta = false,
                     onOpenTerracottaMenu = {},
-                    onOpenCubiqFriends = {
-                        isMenuOpen = false
-                        showCubiqFriendsDialog = true
-                    },
                     onRefreshWindowSize = { refreshGameResolution() },
                     onInputMethod = {
                         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
@@ -1791,27 +1665,6 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                 )
             }
 
-            // Cubiq Friends in-game toast card and modal dialog
-            com.movtery.zalithlauncher.friends.ui.CubiqFriendsInGameToast(
-                modifier = Modifier,
-                onJoin = { friend ->
-                    Toast.makeText(this@HorizonActivity, "Connecting to ${friend.name} (${friend.hostAddress ?: "LAN"}:${friend.hostPort ?: 25565})...", Toast.LENGTH_LONG).show()
-                }
-            )
-
-            if (showCubiqFriendsDialog) {
-                com.movtery.zalithlauncher.friends.ui.CubiqFriendsDialog(
-                    onDismissRequest = { showCubiqFriendsDialog = false },
-                    onJoinFriendWorld = { friend ->
-                        Toast.makeText(this@HorizonActivity, "Connecting to ${friend.name} (${friend.hostAddress ?: "LAN"}:${friend.hostPort ?: 25565})...", Toast.LENGTH_LONG).show()
-                    }
-                )
-            }
-
-            androidx.activity.compose.BackHandler(enabled = showCubiqFriendsDialog) {
-                showCubiqFriendsDialog = false
-            }
-
             // Splash Screen Overlay
             AnimatedVisibility(
                 visible = showSplash,
@@ -1862,7 +1715,6 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
     override fun onResume() {
         super.onResume()
         net.kdt.pojavlaunch.Tools.updateWindowSize(this)
-        git.artdeell.mojo.Tools.init(this)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
         attachOverlayIfNeeded()
     }

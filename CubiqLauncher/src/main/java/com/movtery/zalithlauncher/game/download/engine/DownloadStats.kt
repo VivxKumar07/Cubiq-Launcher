@@ -96,13 +96,21 @@ class DownloadStats {
     }
 
     /** 先刷新测速再产出快照，调用方无需单独触发采样 */
-    fun snapshotProgress(): BatchProgress = BatchProgress(
-        downloadedBytes = downloaded.get(),
-        totalBytes = expectedTotalBytes,
-        downloadedFiles = downloadedFiles,
-        totalFiles = totalFiles,
-        speedBytesPerSec = refreshSpeed()
-    )
+    fun snapshotProgress(): BatchProgress {
+        val dl = downloaded.get()
+        val exp = expectedTotalBytes
+        // Ensure downloaded bytes never exceed total bytes and total bytes accounts for all downloaded bytes
+        val safeTot = if (exp > 0) maxOf(exp, dl) else exp
+        val safeDl = if (safeTot > 0) dl.coerceAtMost(safeTot) else dl
+        val safeDlFiles = if (totalFiles > 0) downloadedFiles.coerceAtMost(totalFiles) else downloadedFiles
+        return BatchProgress(
+            downloadedBytes = safeDl,
+            totalBytes = safeTot,
+            downloadedFiles = safeDlFiles,
+            totalFiles = totalFiles,
+            speedBytesPerSec = refreshSpeed()
+        )
+    }
 
     private var blockStartNanos = System.nanoTime()
     private var blockStartBytes = 0L

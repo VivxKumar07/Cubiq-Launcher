@@ -271,89 +271,99 @@ fun AboutInfoScreen(
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "🦀 HORIZON & MINECRAFT RUST EDITION",
+                            text = "🎮 AUTHENTIC ZL1 CONTROLS & PARITY",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color(0xFF55FF55)
                         )
                         Text(
-                            text = "• Direct Launch: Tapping Play on Rust Edition starts the game instantly without opening any intermediate launcher screens.",
+                            text = "• Authentic ZL1 Experience: The classic Zalith Launcher 1 controls layout, in-game drawer, and floating gear menu are back and fully tuned across both Java and Rust editions.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Custom Loading Screen: Seamless black launch splash with 'Cubiq Launcher — Minecraft Java but in Rust'.",
+                            text = "• Pixel-Perfect Touch & Hotbar: Fixed touch desync on all scaled resolutions so your hotbar and button taps register instantly where you press.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Dedicated Rust Settings & Mods: Tune Vulkan/OpenGL renderers, resolution scaling, worker threads, and toggle .hmod mods directly in Cubiq.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• One-Tap File Repair: Instant 'Re-check files' to verify engine tables and assets if anything ever gets corrupted.",
+                            text = "• Streamlined Control Engine: Paused experimental control experiments to deliver maximum stability and authentic, responsive controls.",
                             style = MaterialTheme.typography.bodySmall
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "🎮 CONTROLS, GYROSCOPE & MOUSE REMAPPING",
+                            text = "🎯 SILKY SMOOTH GYRO AIMING (NO MENU DRIFT)",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color(0xFF55FF55)
                         )
                         Text(
-                            text = "• Universal ZL1 Gyroscope Default: ZL1 gyro engine is now enabled by default and serves as the sole gyro mechanism across ALL control schemes (ZL1, ZL2, Mojo, Pocket Edition).",
+                            text = "• Zero Menu Drift: Gyroscope aiming now activates exclusively during active gameplay looking. Your cursor will never drift or glitch when opening inventory, chat, or pause menus.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Zalith Launcher 1 (ZL1) Controls Restored: ZL1 control layout is preserved and unpacked by default alongside ZL2, Mojo Launcher, and Pocket Edition.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• Interactive Key & Mouse Remap Popup: Remapping now opens a dedicated popup with 1-tap hardware button/key detection and category tabs.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• Custom Mouse Cursor Packs: Choose from Classic, Obsidian, Crosshair, Bedrock Arrow, Emerald, or import any custom .png/.zip cursor.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• Fixed Hotbar Touch Desync: Resolved coordinate mismatch on scaled resolutions (like 60%) so hotbar slot taps always register accurately.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• No More Double Typing: Fixed chat typing where phone keyboards typed duplicate letters (like '//' instead of '/').",
+                            text = "• Universal ZL1 Fusion Engine: Enjoy authentic rotation-vector sensor fusion with configurable sensitivity across all layouts.",
                             style = MaterialTheme.typography.bodySmall
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "☕ JAVA EDITION & MINECRAFT 26.3 LINKER FIX",
+                            text = "📱 PERFECT DISPLAY SCALING FOR ALL SCREENS",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color(0xFF55FF55)
                         )
                         Text(
-                            text = "• Native Library Resolution: Resolved java.library.path and Pojav library loader to explicitly include APK DIR_NATIVE_LIB, permanently fixing libpojavexec.so and libSDL3.so linking errors.",
+                            text = "• Adaptive Screen Proportions: Whether you're on a compact Redmi 8, OnePlus, Google Pixel, Samsung Galaxy, or tablet, the portrait layout scales seamlessly with uniform margins and no oversized cards.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Rust Minecraft (Horizon) CWD Fix: Set process working directory and HOME/HORIZON_HOME environment variables, resolving (os error 2) resource preparation failure.",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                        Text(
-                            text = "• Zero Regressions: Complete compatibility across legacy and modern versions, with full support for LTW, MobileGlues, and Krypton renderers.",
+                            text = "• Refined Typography & Layout: Balanced Java Edition header logos, responsive action rows, and sharp installation badges.",
                             style = MaterialTheme.typography.bodySmall
                         )
 
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "📱 SYSTEM BARS & ELY.BY DIALOG FIXES",
+                            text = "⚡ REAL DOWNLOAD ENGINE & BACKGROUND DOWNLOADS",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color(0xFF55FF55)
                         )
                         Text(
-                            text = "• Portrait Mode System Bars: Restored Android status bar and bottom gestural hint bar in portrait mode without awkward letterboxing.",
+                            text = "• Real & Accurate Progress: Say goodbye to glitched numbers or downloaded MB exceeding total MB. All downloads now report real MBs, clamped progress, and live transfer rates.",
                             style = MaterialTheme.typography.bodySmall
                         )
                         Text(
-                            text = "• Landscape Ely.by Login Dialog: Soft keyboard resize with IME padding keeps input fields visible, and Back press dismisses keyboard instead of the entire dialog.",
+                            text = "• Horizon Background Downloads: Horizon setup now features a dedicated 'Run in Background' option with real-time status in the compact bottom bar.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "📹 BUILT-IN SCREEN RECORDER & CAPTURE HUD",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFF55FF55)
+                        )
+                        Text(
+                            text = "• Android 14 MediaProjection Service: Record high-framerate gameplay clips directly in-game without third-party apps failing or crashing.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• Clean Organized Storage: Recordings save straight to Movies/Cubiq and screenshots to Pictures/Cubiq with saved notification alerts.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "🦀 MINECRAFT RUST EDITION (HORIZON 26.3)",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color(0xFF55FF55)
+                        )
+                        Text(
+                            text = "• Direct Launch: Instant startup into Minecraft Rust with our custom black launch splash screen.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• Dedicated Settings & Mods: Tune Vulkan/OpenGL renderers, resolution scaler, worker threads, and toggle .hmod mods directly in Cubiq.",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "• One-Tap Repair: Built-in 'Re-check files' to quickly verify engine tables and assets whenever needed.",
                             style = MaterialTheme.typography.bodySmall
                         )
 

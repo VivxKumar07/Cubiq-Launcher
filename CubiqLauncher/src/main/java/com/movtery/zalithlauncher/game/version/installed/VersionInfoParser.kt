@@ -52,8 +52,14 @@ class VersionInfoParser(private val version: Version) {
      * 构建并返回最终合并后的 [GameManifest]
      */
     fun build(): GameManifest {
+        val versionDir = version.getVersionPath()
+        val primaryJson = File(versionDir, "${version.getVersionName()}.json")
+        val jsonFile = if (primaryJson.exists()) primaryJson else {
+            versionDir.listFiles()?.firstOrNull { it.extension == "json" } ?: primaryJson
+        }
+
         val manifest = gameManifest ?: GSON.fromJson(
-            File(version.getVersionPath(), "${version.getVersionName()}.json").readText(),
+            jsonFile.readText(),
             GameManifest::class.java
         )
 

@@ -104,10 +104,26 @@ object CubiqScreenRecorder {
     fun startRecording(context: Context, resultCode: Int, data: Intent, resWidth: Int = 1280, resHeight: Int = 720, fps: Int = 30, bitrate: Int = 6): Boolean {
         if (isRecording) return true
         return try {
+            val serviceIntent = Intent(context, CubiqScreenRecordService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+
             val projectionManager = context.getSystemService(Context.MEDIA_PROJECTION_SERVICE) as? MediaProjectionManager
                 ?: return false
-            val projection = projectionManager.getMediaProjection(resultCode, data) ?: return false
+            val projection = projectionManager.getMediaProjection(resultCode, data) ?: run {
+                runCatching { context.stopService(serviceIntent) }
+                return false
+            }
             mediaProjection = projection
+
+            projection.registerCallback(object : MediaProjection.Callback() {
+                override fun onStop() {
+                    stopRecording(context)
+                }
+            }, Handler(Looper.getMainLooper()))
 
             val metrics = context.resources.displayMetrics
             // Enforce even dimensions required by H.264
@@ -115,11 +131,10 @@ object CubiqScreenRecorder {
             val height = ((if (resHeight > 0) resHeight else metrics.heightPixels) / 2) * 2
             val dpi = metrics.densityDpi
 
-            val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), "Cubiq")
-            if (!dir.exists()) dir.mkdirs()
+            val tempDir = File(context.cacheDir, "recordings").apply { if (!exists()) mkdirs() }
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val outputFile = File(dir, "Recording_$timeStamp.mp4")
-            currentOutputFile = outputFile
+            val tempFile = File(tempDir, "Recording_$timeStamp.mp4")
+            currentOutputFile = tempFile
 
             @Suppress("DEPRECATION")
             val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -135,7 +150,7 @@ object CubiqScreenRecorder {
             recorder.setVideoSize(width, height)
             recorder.setVideoFrameRate(fps.coerceIn(15, 60))
             recorder.setVideoEncodingBitRate((bitrate * 1_000_000).coerceIn(1_000_000, 20_000_000))
-            recorder.setOutputFile(outputFile.absolutePath)
+            recorder.setOutputFile(tempFile.absolutePath)
             recorder.prepare()
 
             val surface = recorder.surface
@@ -160,9 +175,47 @@ object CubiqScreenRecorder {
         }
     }
 
+    private fun exportVideo(context: Context, sourceFile: File): File? {
+        val fileName = sourceFile.name
+        val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES), "Cubiq")
+        if (!dir.exists()) dir.mkdirs()
+        val destFile = File(dir, fileName)
+
+        try {
+            sourceFile.inputStream().use { input ->
+                FileOutputStream(destFile).use { output ->
+                    input.copyTo(output)
+                }
+            }
+        } catch (_: Exception) {}
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            runCatching {
+                val values = ContentValues().apply {
+                    put(MediaStore.Video.Media.DISPLAY_NAME, fileName)
+                    put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+                    put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES + "/Cubiq")
+                }
+                context.contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)?.let { uri ->
+                    sourceFile.inputStream().use { input ->
+                        context.contentResolver.openOutputStream(uri)?.use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                }
+            }
+        }
+
+        MediaScannerConnection.scanFile(context, arrayOf(destFile.absolutePath), arrayOf("video/mp4"), null)
+        return if (destFile.exists() && destFile.length() > 0) destFile else sourceFile
+    }
+
     fun stopRecording(context: Context): File? {
         val file = currentOutputFile
         try {
+            val serviceIntent = Intent(context, CubiqScreenRecordService::class.java)
+            runCatching { context.stopService(serviceIntent) }
+
             if (isRecording) {
                 runCatching { mediaRecorder?.stop() }
                 runCatching { mediaRecorder?.reset() }
@@ -180,8 +233,9 @@ object CubiqScreenRecorder {
             currentOutputFile = null
         }
         if (file != null && file.exists() && file.length() > 0) {
-            MediaScannerConnection.scanFile(context, arrayOf(file.absolutePath), arrayOf("video/mp4"), null)
-            return file
+            val exported = exportVideo(context, file)
+            runCatching { file.delete() }
+            return exported
         }
         return null
     }

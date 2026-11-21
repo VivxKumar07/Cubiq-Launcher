@@ -126,12 +126,14 @@ public class HotbarView extends View implements View.OnLayoutChangeListener, Run
     }
 
     private void adaptiveReset() {
+        int dmW = Tools.currentDisplayMetrics != null ? Tools.currentDisplayMetrics.widthPixels : CallbackBridge.physicalWidth;
+        int dmH = Tools.currentDisplayMetrics != null ? Tools.currentDisplayMetrics.heightPixels : CallbackBridge.physicalHeight;
         ViewGroup.MarginLayoutParams marginLayoutParams = getMarginLayoutParams();
         int height;
         marginLayoutParams.width = mWidth = mcScale(180);
         marginLayoutParams.height = height = mcScale(20);
-        marginLayoutParams.leftMargin = (CallbackBridge.physicalWidth / 2) - (mWidth / 2);
-        marginLayoutParams.topMargin = CallbackBridge.physicalHeight - height;
+        marginLayoutParams.leftMargin = (dmW / 2) - (mWidth / 2);
+        marginLayoutParams.topMargin = dmH - height;
         setLayoutParams(marginLayoutParams);
     }
 

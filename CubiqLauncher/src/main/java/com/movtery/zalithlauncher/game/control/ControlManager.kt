@@ -78,7 +78,6 @@ object ControlManager {
             } else null
         }.getOrNull()?.takeIf { it.isNotBlank() } ?: when (file.name) {
             "zalith_1_layout.json" -> "Zalith Launcher 1 Controls"
-            "mojo_layout.json" -> "Mojo Launcher Controls"
             "zalith_2_layout.json" -> "Zalith Launcher 2 Controls"
             "pocket_edition_layout.json" -> "Pocket Edition Controls"
             else -> file.nameWithoutExtension.replace("_", " ").replace("-", " ")
@@ -111,9 +110,9 @@ object ControlManager {
      */
     fun checkDefaultAndRefresh(context: Context) {
         scope.launch(Dispatchers.IO) {
-            // Delete corrupt or empty legacy files if present
+            // Delete corrupt, legacy, or removed files if present
             runCatching {
-                val legacyFiles = listOf("default_layout.json", "default.json")
+                val legacyFiles = listOf("default_layout.json", "default.json", "mojo_layout.json")
                 for (legacy in legacyFiles) {
                     val f = File(PathManager.DIR_CONTROL_LAYOUTS, legacy)
                     if (f.exists()) f.delete()
@@ -122,7 +121,6 @@ object ControlManager {
 
             val defaultPresets = listOf(
                 "zalith_1_layout.json",
-                "mojo_layout.json",
                 "zalith_2_layout.json",
                 "pocket_edition_layout.json"
             )
@@ -173,13 +171,11 @@ object ControlManager {
                     val rawText = runCatching { file.readText() }.getOrDefault("")
                     val isCustom = isLegacyOrThirdPartyLayout(rawText) ||
                             file.name.contains("zl1", ignoreCase = true) ||
-                            file.name.contains("zalith_1", ignoreCase = true) ||
-                            file.name.contains("mojo", ignoreCase = true)
+                            file.name.contains("zalith_1", ignoreCase = true)
                     if (isCustom) {
                         isSupport = true
                         val authorTag = when {
                             file.name.contains("zl1", ignoreCase = true) || file.name.contains("zalith_1", ignoreCase = true) -> "ZL1 Controls"
-                            file.name.contains("mojo", ignoreCase = true) -> "Mojo Controls"
                             else -> "Custom / Pojav"
                         }
                         com.movtery.layer_controller.layout.EmptyControlLayout.copy(
@@ -304,7 +300,6 @@ object ControlManager {
     fun isZl1LayoutFile(file: File?): Boolean {
         if (file == null || !file.exists() || !file.isFile) return false
         if (file.name.equals("zalith_1_layout.json", ignoreCase = true)) return true
-        if (file.name.contains("mojo", ignoreCase = true)) return false
         return runCatching {
             val content = file.readText()
             !content.contains("\"controlDataList\"") &&
@@ -312,18 +307,6 @@ object ControlManager {
                     content.contains("mControlInfoDataList"))
         }.getOrDefault(false)
     }
-
-    fun isMojoLayoutFile(file: File?): Boolean {
-        if (file == null || !file.exists() || !file.isFile) return false
-        if (file.name.equals("mojo_layout.json", ignoreCase = true)) return true
-        if (file.name.contains("mojo", ignoreCase = true)) return true
-        return runCatching {
-            val content = file.readText()
-            content.contains("dynamicX") || content.contains("\${margin}")
-        }.getOrDefault(false)
-    }
-
-    fun isMojoControlModeActive(): Boolean = isMojoLayoutFile(getSelectedLayoutFile())
 
     fun getSelectedLayoutFile(): File? {
         val selected = _selectedLayout.value?.file

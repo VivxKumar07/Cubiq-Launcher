@@ -543,7 +543,7 @@ private class GameViewModel(
 
                             val layoutName = currentControlFile?.name ?: ""
 
-                            val isTargetLayout = layoutName.contains("mojo", ignoreCase = true) || layoutName.contains("zalith_1", ignoreCase = true)
+                            val isTargetLayout = layoutName.contains("zalith_1", ignoreCase = true)
 
                             if (isTargetLayout) {
 
@@ -615,11 +615,9 @@ private class GameViewModel(
 
                     delay(10L.milliseconds) //刻意等待一会再加载
 
-                    val isMojo = layoutFile?.let { it.name.contains("mojo", ignoreCase = true) || runCatching { it.readText().contains("mControlDataList") }.getOrDefault(false) } ?: false
-
+                    val isZl1 = layoutFile?.let { it.name.contains("zalith_1", ignoreCase = true) || runCatching { it.readText().contains("mControlDataList") }.getOrDefault(false) } ?: false
                     var l = getLayout(layoutFile)
-
-                    if (!isMojo && (l === EmptyControlLayout || l.layers.isEmpty())) {
+                    if (!isZl1 && (l === EmptyControlLayout || l.layers.isEmpty())) {
 
                         val fallback: File? = File(PathManager.DIR_CONTROL_LAYOUTS, "pocket_edition_layout.json")
 
@@ -1440,11 +1438,7 @@ fun GameScreen(
             onSwitchLog = { onLogStateChange(logState.next()) },
 
             enableTerracotta = AllSettings.enableTerracotta.state,
-
             onOpenTerracottaMenu = { terracottaViewModel.openMenu() },
-
-            onOpenCubiqFriends = { gameHandler.onOpenCubiqFriends() },
-
             onRefreshWindowSize = { eventViewModel.sendEvent(EventViewModel.Event.Game.RefreshSize) },
 
             onInputMethod = {

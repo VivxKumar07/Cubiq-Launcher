@@ -61,7 +61,10 @@ object HorizonManager {
             val currentItem: String,
             val percent: Float
         ) : InstallState()
-        object Configuring : InstallState()
+        data class Configuring(
+            val currentStep: String = "",
+            val percent: Float = 0f
+        ) : InstallState()
         object Finalizing : InstallState()
         object Success : InstallState()
         data class Failed(val error: String) : InstallState()
@@ -400,11 +403,12 @@ object HorizonManager {
 
                     downloadFileWithProgress(clientUrl, downloadedJar) { chunk ->
                         downloadedBytes += chunk
-                        val pct = (downloadedBytes.toFloat() / clientSize).coerceIn(0.05f, 0.45f)
+                        val safeBytes = if (clientSize > 0) downloadedBytes.coerceAtMost(clientSize) else downloadedBytes
+                        val pct = if (clientSize > 0) (safeBytes.toFloat() / clientSize.toFloat()).coerceIn(0f, 1f) else 0f
                         _installState.value = InstallState.Downloading(
-                            currentBytes = downloadedBytes,
+                            currentBytes = safeBytes,
                             totalBytes = clientSize,
-                            currentItem = "client.jar",
+                            currentItem = "Minecraft $VANILLA_VERSION client.jar",
                             percent = pct
                         )
                     }
@@ -412,13 +416,11 @@ object HorizonManager {
                 }
 
                 // Configuring / Preparing resources
-                _installState.value = InstallState.Configuring
+                _installState.value = InstallState.Configuring("Extracting textures and models...", 0.05f)
                 prepareResourcesFromJar(context, clientJar, stage) { step, pct ->
-                    _installState.value = InstallState.Downloading(
-                        currentBytes = (pct * 100).toLong(),
-                        totalBytes = 100L,
-                        currentItem = step,
-                        percent = pct
+                    _installState.value = InstallState.Configuring(
+                        currentStep = step,
+                        percent = pct.coerceIn(0f, 1f)
                     )
                 }
 
