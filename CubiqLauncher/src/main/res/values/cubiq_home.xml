@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cubiq_home_play" formatted="false">PLAY</string>
+    <string name="cubiq_home_play_title" formatted="false">Play</string>
+    <string name="cubiq_home_installations" formatted="false">Installations</string>
+    <string name="cubiq_home_skins" formatted="false">Skins</string>
+    <string name="cubiq_home_mods" formatted="false">Mods</string>
+    <string name="cubiq_home_settings" formatted="false">Settings</string>
+    <string name="cubiq_home_latest_release" formatted="false">Latest Release</string>
+    <string name="cubiq_home_selected_version" formatted="false">Selected Version</string>
+    <string name="cubiq_home_manage_installations" formatted="false">+ Manage Installations</string>
+    <string name="cubiq_home_player" formatted="false">Player</string>
+    <string name="cubiq_home_no_active_account" formatted="false">(No Active Account)</string>
+    <string name="cubiq_home_active" formatted="false">ACTIVE</string>
+    <string name="cubiq_home_files" formatted="false">FILES</string>
+    <string name="cubiq_home_multiplayer" formatted="false">MULTIPLAYER</string>
+    <string name="cubiq_home_rotate_screen" formatted="false">Rotate Screen</string>
+    <string name="cubiq_home_auto_on" formatted="false">AUTO: ON</string>
+    <string name="cubiq_home_auto_off" formatted="false">AUTO: OFF</string>
+    <string name="cubiq_home_wait_download" formatted="false">Please wait for the game to finish downloading...</string>
+    <string name="cubiq_home_account_required" formatted="false">Please create an account first!</string>
+    <string name="cubiq_home_installation_required" formatted="false">Please create an installation first!</string>
+    <string name="cubiq_home_download_installation_first" formatted="false">Please download this installation in Installations tab first!</string>
+    <string name="cubiq_home_account_switched">Switched to %1$s</string>
+    <string name="cubiq_home_account_count_saved">%1$d Saved</string>
+    <string name="cubiq_home_no_saved_accounts" formatted="false">No saved accounts yet.\nAdd an account below to play!</string>
+    <string name="cubiq_home_microsoft_login_failed">Microsoft Login Failed: %1$s</string>
+    <string name="cubiq_home_microsoft_login_success" formatted="false">Successfully logged into Microsoft Account!</string>
+    <string name="cubiq_home_add_microsoft_account" formatted="false">Add Microsoft Account</string>
+    <string name="cubiq_home_microsoft_sign_in" formatted="false">Official Mojang / Xbox sign in</string>
+    <string name="cubiq_home_add_elyby_account" formatted="false">Add Ely.by Account</string>
+    <string name="cubiq_home_elyby_summary" formatted="false">Custom skins, capes &amp; authlib login</string>
+    <string name="cubiq_home_add_offline_account" formatted="false">Add Offline Account</string>
+    <string name="cubiq_home_offline_summary" formatted="false">Play locally without signing in</string>
+    <string name="cubiq_home_manage_accounts_settings" formatted="false">Manage Accounts &amp; Settings</string>
+    <string name="cubiq_home_offline_account_title" formatted="false">ADD OFFLINE ACCOUNT</string>
+    <string name="cubiq_home_offline_account_prompt" formatted="false">Enter username for local offline play:</string>
+    <string name="cubiq_home_username" formatted="false">Username</string>
+    <string name="cubiq_home_account_added">Account \'%1$s\' added!</string>
+    <string name="cubiq_home_username_empty" formatted="false">Username cannot be empty</string>
+    <string name="cubiq_home_create" formatted="false">CREATE</string>
+    <string name="cubiq_home_cancel" formatted="false">CANCEL</string>
+    <string name="cubiq_home_hero_art_description" formatted="false">Minecraft Version Hero Artwork</string>
+    <string name="cubiq_home_java_edition_description" formatted="false">Minecraft Java Edition</string>
+    <string name="cubiq_home_loading_block_description" formatted="false">Loading Block</string>
+    <string name="cubiq_home_loading_cubiq" formatted="false">LOADING CUBIQ...</string>
+    <string name="cubiq_home_section_installations" formatted="false">YOUR INSTALLATIONS</string>
+    <string name="cubiq_home_add_new" formatted="false">+ ADD NEW</string>
+    <string name="cubiq_home_no_custom_installations" formatted="false">No custom installations yet</string>
+    <string name="cubiq_home_create_installation" formatted="false">+ CREATE INSTALLATION</string>
+    <string name="cubiq_home_vanilla" formatted="false">Vanilla</string>
+    <string name="cubiq_home_new_version">New: %1$s</string>
+    <string name="cubiq_home_switch_screen" formatted="false">Switch &amp; Play</string>
+    <string name="cubiq_home_fork_notice_title" formatted="false">UNOFFICIAL FORK NOTICE</string>
+    <string name="cubiq_home_gpl_attribution" formatted="false">GPLv3 Open Source Attribution</string>
+    <string name="cubiq_home_fork_description" formatted="false">Cubiq Launcher is an independent, unofficial fork of Zalith Launcher 2, licensed under the GNU General Public License v3.0 (GPLv3).</string>
+    <string name="cubiq_home_fork_disclaimer" formatted="false">This launcher is NOT affiliated with, endorsed by, or supported by the original Zalith Launcher authors, Mojang Studios, or Microsoft Corporation.</string>
+    <string name="cubiq_home_fork_support" formatted="false">All modifications and source code comply with GPLv3. For support or bug reports, please use the official Cubiq Launcher community.</string>
+    <string name="cubiq_home_dont_show_again" formatted="false">DON\'T SHOW AGAIN</string>
+    <string name="cubiq_home_understood" formatted="false">I UNDERSTOOD</string>
+    <string name="cubiq_home_new_short" formatted="false">New...</string>
+    <string name="cubiq_home_modpack" formatted="false">Modpack</string>
+    <string name="cubiq_home_search_installations" formatted="false">Search installations...</string>
+    <string name="cubiq_home_versions_label" formatted="false">VERSIONS:</string>
+    <string name="cubiq_home_releases" formatted="false">Releases</string>
+    <string name="cubiq_home_snapshots" formatted="false">Snapshots</string>
+    <string name="cubiq_home_modded" formatted="false">Modded</string>
+    <string name="cubiq_home_no_installations" formatted="false">NO INSTALLATIONS FOUND</string>
+    <string name="cubiq_home_no_installations_hint" formatted="false">Click \'+ New...\' above to download and install any version of Minecraft!</string>
+    <string name="cubiq_home_active_installation">Active installation: %1$s</string>
+    <string name="cubiq_home_deleted_installation">Deleted %1$s</string>
+    <string name="cubiq_home_installation_ready" formatted="false">INSTALLATION READY</string>
+    <string name="cubiq_home_installation_ready_message">Installation \'%1$s\' is configured and ready to play or download!</string>
+    <string name="cubiq_home_ok" formatted="false">OK</string>
+    <string name="cubiq_home_play_installation" formatted="false">Play Installation</string>
+    <string name="cubiq_home_select_active" formatted="false">Select as Active</string>
+    <string name="cubiq_home_add_shortcut" formatted="false">Add Shortcut to Home Screen</string>
+    <string name="cubiq_home_manage_installation" formatted="false">Manage Installation</string>
+    <string name="cubiq_home_change_icon" formatted="false">Change Icon</string>
+    <string name="cubiq_home_toggle_manage_mods" formatted="false">Toggle / Manage Mods</string>
+    <string name="cubiq_home_delete_installation" formatted="false">Delete Installation</string>
+    <string name="cubiq_home_manage_mods" formatted="false">MANAGE MODS</string>
+    <string name="cubiq_home_active_count">%1$d/%2$d ACTIVE</string>
+    <string name="cubiq_home_search_mods" formatted="false">Search mods...</string>
+    <string name="cubiq_home_enabled_all_mods" formatted="false">Enabled all mods</string>
+    <string name="cubiq_home_all_on" formatted="false">ALL ON</string>
+    <string name="cubiq_home_disabled_all_mods" formatted="false">Disabled all mods</string>
+    <string name="cubiq_home_all_off" formatted="false">ALL OFF</string>
+    <string name="cubiq_home_no_mods_folder" formatted="false">No mods found in \'mods/\' folder.</string>
+    <string name="cubiq_home_no_matching_mods" formatted="false">No matching mods.</string>
+    <string name="cubiq_home_active_jar" formatted="false">.jar (ACTIVE)</string>
+    <string name="cubiq_home_inactive_jar" formatted="false">.jar.disabled (INACTIVE)</string>
+    <string name="cubiq_home_done" formatted="false">DONE</string>
+    <string name="cubiq_home_create_new_installation" formatted="false">CREATE NEW INSTALLATION</string>
+    <string name="cubiq_home_installation_icon" formatted="false">INSTALLATION ICON</string>
+    <string name="cubiq_home_installation_name" formatted="false">INSTALLATION NAME</string>
+    <string name="cubiq_home_minecraft_version" formatted="false">MINECRAFT VERSION</string>
+    <string name="cubiq_home_search_version" formatted="false">Search version (1.20, 1.16, 1.10...)</string>
+    <string name="cubiq_home_all_snapshots" formatted="false">All (Snapshots)</string>
+    <string name="cubiq_home_mod_loader" formatted="false">MOD LOADER</string>
+    <string name="cubiq_home_want_modpack" formatted="false">WANT A MODPACK PROFILE?</string>
+    <string name="cubiq_home_browse_modpacks" formatted="false">Browse CurseForge &amp; Modrinth modpacks directly</string>
+    <string name="cubiq_home_browse" formatted="false">BROWSE →</string>
+    <string name="cubiq_home_launch_download_first" formatted="false">Version is not downloaded yet! Starting download...</string>
+    <string name="cubiq_home_icon_folder_resolve_error">Could not resolve icon folder for %1$s</string>
+    <string name="cubiq_home_icon_folder_create_error">Could not create icon folder: %1$s</string>
+    <string name="cubiq_home_icon_decode_error" formatted="false">Could not decode selected installation icon</string>
+    <string name="cubiq_home_icon_write_error" formatted="false">Could not write installation icon</string>
+    <string name="cubiq_home_download_back" formatted="false">&lt; BACK</string>
+    <string name="cubiq_home_download_hub" formatted="false">DOWNLOAD HUB</string>
+    <string name="cubiq_home_search_assets" formatted="false">Search</string>
+    <string name="cubiq_home_clear" formatted="false">Clear</string>
+    <string name="cubiq_home_search_modpacks" formatted="false">Search mods / packs...</string>
+    <string name="cubiq_home_all_versions" formatted="false">All Versions</string>
+    <string name="cubiq_home_version_abbr">Ver: %1$s</string>
+    <string name="cubiq_home_filter_by_version" formatted="false">FILTER BY VERSION</string>
+    <string name="cubiq_home_version_examples" formatted="false">e.g. 1.21.4, 1.20.1</string>
+    <string name="cubiq_home_apply" formatted="false">APPLY</string>
+    <string name="cubiq_home_all_loaders" formatted="false">All Loaders</string>
+    <string name="cubiq_home_loader_filter">Loader: %1$s</string>
+    <string name="cubiq_home_all_categories" formatted="false">All Categories</string>
+    <string name="cubiq_home_category_filter">Category: %1$s</string>
+    <string name="cubiq_home_sort_filter">Sort: %1$s</string>
+    <string name="cubiq_home_manage_version">MANAGE: %1$s</string>
+    <string name="cubiq_home_export" formatted="false">EXPORT</string>
+    <string name="cubiq_home_execute_jar" formatted="false">Execute .jar</string>
+    <string name="cubiq_home_unknown_error" formatted="false">Unknown error</string>
+    <string name="cubiq_home_renderer_companion_required" formatted="false">MobileGlues renderer requires the companion standalone app to be installed on your device.</string>
+    <string name="cubiq_home_renderer_incompatible">The selected renderer \'%1$s\' is incompatible with Minecraft %2$s (%3$s).</string>
+    <string name="cubiq_home_renderer_warning_title" formatted="false">Incompatible Renderer Warning</string>
+    <string name="cubiq_home_renderer_fallback_prompt">%1$s\n\nSuggested Fallback Renderer:\n• %2$s (%3$s)\n\nWould you like to switch to %4$s and launch?</string>
+    <string name="cubiq_home_accounts" formatted="false">ACCOUNTS</string>
+    <string name="cubiq_home_auto_on_short" formatted="false">AUTO ON</string>
+    <string name="cubiq_home_auto_off_short" formatted="false">AUTO OFF</string>
+    <string name="cubiq_home_version_icon" formatted="false">Version Icon</string>
+    <string name="cubiq_home_horizon_downloading_files">Downloading files (%1$s MB / %2$s MB)</string>
+    <string name="cubiq_home_horizon_configuring_step">Configuring: %1$s</string>
+    <string name="cubiq_home_horizon_configuring" formatted="false">Configuring runtime...</string>
+    <string name="cubiq_home_horizon_preparing" formatted="false">Preparing environment...</string>
+    <string name="cubiq_home_horizon_finalizing" formatted="false">Finalizing setup...</string>
+    <string name="cubiq_home_horizon_status">HORIZON (MINECRAFT RUST) • %1$s</string>
+    <string name="cubiq_home_horizon_setting_up" formatted="false">SETTING UP...</string>
+    <string name="cubiq_home_preparing_install_with_message">PREPARING %1$s • %2$s</string>
+    <string name="cubiq_home_preparing_install">PREPARING %1$s...</string>
+    <string name="cubiq_home_downloading_install_with_message">DOWNLOADING %1$s • %2$s</string>
+    <string name="cubiq_home_downloading_install">DOWNLOADING %1$s</string>
+    <string name="cubiq_home_preparing_game" formatted="false">PREPARING GAME INSTALLATION...</string>
+    <string name="cubiq_home_downloading_game" formatted="false">DOWNLOADING GAME FILES...</string>
+    <string name="cubiq_home_view" formatted="false">VIEW</string>
+    <string name="cubiq_home_no_crash_log_at">No crash log file found at: %1$s</string>
+    <string name="cubiq_home_failed_read_log" formatted="false">Failed to read log file.</string>
+    <string name="cubiq_home_crash_detected" formatted="false">GAME CRASH DETECTED</string>
+    <string name="cubiq_home_crash_signal">Terminated by system signal (Code %1$d)</string>
+    <string name="cubiq_home_crash_exit">JVM exited abnormally with code %1$d</string>
+    <string name="cubiq_home_crash_explanation" formatted="false">The previous Minecraft session crashed. You can review the log output below or share it for troubleshooting:</string>
+    <string name="cubiq_home_log_not_exist" formatted="false">Log file does not exist</string>
+    <string name="cubiq_home_share_log" formatted="false">SHARE LOG</string>
+    <string name="cubiq_home_log_copied" formatted="false">Copied full log to clipboard!</string>
+    <string name="cubiq_home_log_not_found" formatted="false">Log file not found</string>
+    <string name="cubiq_home_copy_log" formatted="false">COPY LOG</string>
+    <string name="cubiq_home_dismiss" formatted="false">DISMISS</string>
+    <string name="cubiq_home_installing_title">INSTALLING %1$s</string>
+    <string name="cubiq_home_search_button" formatted="false">SEARCH</string>
+    <string name="cubiq_home_loading_text">LOADING...</string>
+    <string name="cubiq_home_latest_release_with_version">Latest Release (%1$s)</string>
+    <string name="cubiq_home_crash_log">Crash Log</string>
+    <string name="cubiq_home_download_speed">%1$s/s</string>
+</resources>

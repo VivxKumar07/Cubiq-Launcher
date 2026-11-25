@@ -267,15 +267,15 @@ fun LaunchGameOperation(
             val reason = if (renderer.getUniqueIdentifier() == com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.PACKAGE_NAME &&
                 !com.movtery.zalithlauncher.game.renderer.renderers.MobileGluesRenderer.isInstalled(activity)
             ) {
-                "MobileGlues renderer requires the companion standalone app to be installed on your device."
+                stringResource(R.string.cubiq_home_renderer_companion_required)
             } else {
-                "The selected renderer '${renderer.getRendererName()}' is incompatible with Minecraft $mcVer (${renderer.getCompatibilityDescription()})."
+                stringResource(R.string.cubiq_home_renderer_incompatible, renderer.getRendererName(), mcVer, renderer.getCompatibilityDescription())
             }
 
             SimpleAlertDialog(
-                title = "Incompatible Renderer Warning",
-                text = "$reason\n\nSuggested Fallback Renderer:\n• ${fallback.getRendererName()} (${fallback.getCompatibilityDescription()})\n\nWould you like to switch to ${fallback.getRendererName()} and launch?",
-                confirmText = "Switch & Play",
+                title = stringResource(R.string.cubiq_home_renderer_warning_title),
+                text = stringResource(R.string.cubiq_home_renderer_fallback_prompt, reason, fallback.getRendererName(), fallback.getCompatibilityDescription(), fallback.getRendererName()),
+                confirmText = stringResource(R.string.cubiq_home_switch_screen),
                 onConfirm = {
                     com.movtery.zalithlauncher.game.renderer.Renderers.setCurrentRenderer(fallback.getUniqueIdentifier())
                     version.getVersionConfig().apply {
@@ -388,7 +388,7 @@ fun LaunchGameOperation(
                 val inheritedJar = version.getInheritedClientJar(targetMcVer)
                 val isDownloaded = (clientJar.exists() && clientJar.length() > 0) || (inheritedJar != null && inheritedJar.exists() && inheritedJar.length() > 0)
                 if (!isDownloaded) {
-                    android.widget.Toast.makeText(activity, "Version is not downloaded yet! Starting download...", android.widget.Toast.LENGTH_LONG).show()
+                    android.widget.Toast.makeText(activity, activity.getString(R.string.cubiq_home_launch_download_first), android.widget.Toast.LENGTH_LONG).show()
                     runCatching {
                         val downloadTask = com.movtery.zalithlauncher.game.version.download.MinecraftDownloader(
                             context = activity,

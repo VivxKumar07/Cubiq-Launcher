@@ -20,14 +20,14 @@ class CubiqScreenRecordService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "Screen Recording",
+                getString(R.string.cubiq_game_record_channel),
                 NotificationManager.IMPORTANCE_LOW
             )
             manager.createNotificationChannel(channel)
         }
         val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Cubiq Screen Recorder")
-            .setContentText("Recording gameplay...")
+            .setContentTitle(getString(R.string.cubiq_game_record_notification_title))
+            .setContentText(getString(R.string.cubiq_game_record_notification_text))
             .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
             .build()

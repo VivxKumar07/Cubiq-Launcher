@@ -103,8 +103,8 @@ fun GameSettingsScreen(
                         modifier = Modifier.fillMaxWidth(),
                         position = CardPosition.Middle,
                         unit = AllSettings.showGameLoadingDialog,
-                        title = "Show Game Loading Dialog",
-                        summary = "Display a loading dialog with spinner while Minecraft is starting up until the title screen appears"
+                        title = stringResource(R.string.cubiq_secondary_game_loading),
+                        summary = stringResource(R.string.cubiq_secondary_game_loading_summary)
                     )
 
                     SwitchSettingsCard(

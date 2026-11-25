@@ -1292,6 +1292,7 @@ object AllSettings : SettingsRegistry() {
      */
 
     val launcherFont = stringSetting("launcherFont", "minecraft")
+    val launcherChinesePixelFont = boolSetting("launcherChinesePixelFont", true)
 
 
 

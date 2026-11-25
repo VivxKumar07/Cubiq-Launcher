@@ -214,7 +214,7 @@ fun AboutInfoScreen(
 
                             title = BuildKeys.LAUNCHER_NAME,
 
-                            text = "v${BuildConfig.VERSION_NAME.removeSuffix("-debug")} (Release) • Unofficial Fork of Zalith Launcher 2",
+                            text = stringResource(R.string.cubiq_secondary_about_fork, BuildConfig.VERSION_NAME.removeSuffix("-debug")),
                             button = {
 
                                 Button(
@@ -245,7 +245,7 @@ fun AboutInfoScreen(
 
                         Text(
 
-                            text = "Notice: Cubiq Launcher is an unofficial version (fork) of Zalith Launcher 2, modified under the GNU General Public License v3.",
+                            text = stringResource(R.string.cubiq_secondary_about_notice),
 
                             style = MaterialTheme.typography.bodySmall,
 
@@ -843,7 +843,7 @@ private fun LinkIconItem(
 
                             painter = painterResource(R.drawable.ic_copyright_outlined),
 
-                            contentDescription = "License"
+                            contentDescription = stringResource(R.string.cubiq_secondary_about_license)
 
                         )
 
@@ -1217,7 +1217,7 @@ private fun LibraryInfoItem(
 
                         ),
 
-                        text = "Licensed under the ${info.license.name}",
+                        text = stringResource(R.string.cubiq_secondary_about_licensed, info.license.name),
 
                         style = MaterialTheme.typography.bodySmall.copy(
 

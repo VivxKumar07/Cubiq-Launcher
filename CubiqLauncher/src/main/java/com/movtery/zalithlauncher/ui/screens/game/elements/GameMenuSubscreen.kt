@@ -249,7 +249,7 @@ private fun GameActionContent(
         item {
             MenuSwitchButton(
                 modifier = Modifier.fillMaxWidth(),
-                text = "Screen Recorder / HUD",
+                text = stringResource(R.string.settings_km_recorder_hud_title),
                 switch = AllSettings.hudScreenCaptureTools.state,
                 onSwitch = {
                     AllSettings.hudScreenCaptureTools.save(it)
@@ -456,7 +456,7 @@ private fun CustomResolutionContent(
             }
             MenuTextButton(
                 modifier = Modifier.fillMaxWidth(),
-                text = "Apply Resolution",
+                text = stringResource(R.string.cubiq_game_apply_resolution),
                 onClick = {
                     AllSettings.customResolutionWidth.save(widthState)
                     AllSettings.customResolutionHeight.save(heightState)
@@ -574,7 +574,7 @@ private fun ControlOverview(
         item {
             MenuSliderLayout(
                 modifier = Modifier.fillMaxWidth(),
-                title = "Overall Controls Button Size",
+                title = stringResource(R.string.cubiq_game_control_button_size),
                 value = AllSettings.controlsButtonScale.state,
                 valueRange = AllSettings.controlsButtonScale.floatRange,
                 onValueChange = { AllSettings.controlsButtonScale.updateState(it) },

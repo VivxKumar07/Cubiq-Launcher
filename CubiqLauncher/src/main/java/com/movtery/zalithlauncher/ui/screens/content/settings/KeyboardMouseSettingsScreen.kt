@@ -5,8 +5,7 @@
 package com.movtery.zalithlauncher.ui.screens.content.settings
 
 import android.widget.Toast
-import androidx.compose.ui.platform.LocalContext
-import com.movtery.zalithlauncher.ui.components.MinecraftPixelBorderContainer
+import android.content.Context
 
 
 import android.view.Window
@@ -134,9 +133,9 @@ fun KeyboardMouseSettingsScreen(
                 AllSettings.customCursorUri.save(uri.toString())
                 AllSettings.customCursorPack.save("Custom Imported")
                 selectedCursorPack = "Custom Imported"
-                Toast.makeText(context, "Custom cursor imported successfully!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_km_cursor_imported), Toast.LENGTH_SHORT).show()
             }.onFailure {
-                Toast.makeText(context, "Failed to import cursor: ${it.localizedMessage}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_km_cursor_import_failed, it.localizedMessage), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -208,7 +207,7 @@ fun KeyboardMouseSettingsScreen(
                 AllSettings.mouseRemapBindings.save(mouseJson)
                 val kbJson = keyboardMappings.entries.joinToString(";") { "${it.key}=${it.value}" }
                 AllSettings.keyboardRemapBindings.save(kbJson)
-                Toast.makeText(context, "Bound $target to $newBinding", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_km_binding_saved, context.remapDisplayLabel(target), context.remapDisplayLabel(newBinding)), Toast.LENGTH_SHORT).show()
             },
             onResetTarget = { target ->
                 val defaultVal = when (target) {
@@ -243,7 +242,7 @@ fun KeyboardMouseSettingsScreen(
                 AllSettings.mouseRemapBindings.save(mouseJson)
                 val kbJson = keyboardMappings.entries.joinToString(";") { "${it.key}=${it.value}" }
                 AllSettings.keyboardRemapBindings.save(kbJson)
-                Toast.makeText(context, "Reset $target to default", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_km_binding_reset, context.remapDisplayLabel(target)), Toast.LENGTH_SHORT).show()
             },
             onResetAll = {
                 mouseMappings.clear()
@@ -276,7 +275,7 @@ fun KeyboardMouseSettingsScreen(
                 AllSettings.mouseRemapBindings.save(mouseJson)
                 val kbJson = keyboardMappings.entries.joinToString(";") { "${it.key}=${it.value}" }
                 AllSettings.keyboardRemapBindings.save(kbJson)
-                Toast.makeText(context, "Reset all mappings to default", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_km_all_reset), Toast.LENGTH_SHORT).show()
             }
         )
     }
@@ -293,7 +292,7 @@ fun KeyboardMouseSettingsScreen(
                 mouseMappings[key] = newBinding
                 val mouseJson = mouseMappings.entries.joinToString(";") { "${it.key}=${it.value}" }
                 AllSettings.mouseRemapBindings.save(mouseJson)
-                Toast.makeText(context, "Added extra button: $newBinding", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_km_extra_added, context.remapDisplayLabel(newBinding)), Toast.LENGTH_SHORT).show()
             },
             onResetTarget = { showExtraButtonDetector = false },
             onResetAll = { showExtraButtonDetector = false }
@@ -339,8 +338,8 @@ fun KeyboardMouseSettingsScreen(
                     )
                     SettingsCard(
                         position = CardPosition.Bottom,
-                        title = "\ud83c\udfae Remap Buttons & Keys",
-                        summary = "Open remap popup to select buttons or press a key/mouse button to identify",
+                        title = stringResource(R.string.cubiq_km_remap_card),
+                        summary = stringResource(R.string.cubiq_km_remap_card_desc),
                         onClick = {
                             activeRemapTarget = if (selectedCategory == RemapCategory.MOUSE) "btn_left" else "Move Forward"
                         }
@@ -360,7 +359,7 @@ fun KeyboardMouseSettingsScreen(
                     CheckChip(
                         selected = selectedCategory == RemapCategory.KEYBOARD,
                         label = {
-                            Text("⌨️ Keyboard Keys", fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                            Text(stringResource(R.string.cubiq_km_keyboard_keys), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
                         },
                         onClick = { selectedCategory = RemapCategory.KEYBOARD }
                     )
@@ -368,7 +367,7 @@ fun KeyboardMouseSettingsScreen(
                     CheckChip(
                         selected = selectedCategory == RemapCategory.MOUSE,
                         label = {
-                            Text("🖱️ Mouse Buttons", fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                            Text(stringResource(R.string.cubiq_km_mouse_buttons), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
                         },
                         onClick = { selectedCategory = RemapCategory.MOUSE }
                     )
@@ -385,44 +384,44 @@ fun KeyboardMouseSettingsScreen(
                     ) {
                         SettingsCard(
                             position = CardPosition.Top,
-                            title = "Left Mouse Button (Primary)",
-                            summary = "Action: ${mouseMappings["btn_left"]}",
+                            title = stringResource(R.string.cubiq_km_left_mouse),
+                            summary = stringResource(R.string.cubiq_km_binding_action, mouseMappings["btn_left"]?.let { context.remapDisplayLabel(it) } ?: stringResource(R.string.cubiq_km_label_none)),
                             onClick = { activeRemapTarget = "btn_left" }
                         )
 
                         SettingsCard(
                             position = CardPosition.Middle,
-                            title = "Right Mouse Button (Secondary)",
-                            summary = "Action: ${mouseMappings["btn_right"]}",
+                            title = stringResource(R.string.cubiq_km_right_mouse),
+                            summary = stringResource(R.string.cubiq_km_binding_action, mouseMappings["btn_right"]?.let { context.remapDisplayLabel(it) } ?: stringResource(R.string.cubiq_km_label_none)),
                             onClick = { activeRemapTarget = "btn_right" }
                         )
 
                         SettingsCard(
                             position = CardPosition.Middle,
-                            title = "Middle Click (Scroll Wheel)",
-                            summary = "Action: ${mouseMappings["btn_middle"]}",
+                            title = stringResource(R.string.cubiq_km_middle_mouse),
+                            summary = stringResource(R.string.cubiq_km_binding_action, mouseMappings["btn_middle"]?.let { context.remapDisplayLabel(it) } ?: stringResource(R.string.cubiq_km_label_none)),
                             onClick = { activeRemapTarget = "btn_middle" }
                         )
 
                         SettingsCard(
                             position = CardPosition.Middle,
-                            title = "Mouse Side Button 1 (Back / X1)",
-                            summary = "Action: ${mouseMappings["btn_side_1"]}",
+                            title = stringResource(R.string.cubiq_km_side_x1),
+                            summary = stringResource(R.string.cubiq_km_binding_action, mouseMappings["btn_side_1"]?.let { context.remapDisplayLabel(it) } ?: stringResource(R.string.cubiq_km_label_none)),
                             onClick = { activeRemapTarget = "btn_side_1" }
                         )
 
                         SettingsCard(
                             position = CardPosition.Middle,
-                            title = "Mouse Side Button 2 (Forward / X2)",
-                            summary = "Action: ${mouseMappings["btn_side_2"]}",
+                            title = stringResource(R.string.cubiq_km_side_x2),
+                            summary = stringResource(R.string.cubiq_km_binding_action, mouseMappings["btn_side_2"]?.let { context.remapDisplayLabel(it) } ?: stringResource(R.string.cubiq_km_label_none)),
                             onClick = { activeRemapTarget = "btn_side_2" }
                         )
 
                         // Button to detect custom hardware side buttons
                         SettingsCard(
                             position = CardPosition.Bottom,
-                            title = "+ Detect & Map Extra Mouse Button",
-                            summary = "Click here and press any extra side/DPI button on your mouse to detect and bind it",
+                            title = stringResource(R.string.cubiq_km_detect_extra),
+                            summary = stringResource(R.string.cubiq_km_detect_extra_desc),
                             onClick = { showExtraButtonDetector = true }
                         )
                     }
@@ -448,8 +447,8 @@ fun KeyboardMouseSettingsScreen(
 
                             SettingsCard(
                                 position = position,
-                                title = entry.key,
-                                summary = "Assigned Key: [ ${entry.value} ]",
+                                title = context.remapDisplayLabel(entry.key),
+                                summary = stringResource(R.string.cubiq_km_assigned_key, context.remapDisplayLabel(entry.value)),
                                 onClick = { activeRemapTarget = entry.key }
                             )
                         }
@@ -466,7 +465,7 @@ fun KeyboardMouseSettingsScreen(
                         .offset { IntOffset(x = 0, y = yOffset.roundToPx()) }
                 ) {
                     Text(
-                        text = "MOUSE CURSOR & PACKS",
+                        text = stringResource(R.string.cubiq_km_cursor_packs),
                         color = Color(0xFF55FF55),
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -492,15 +491,15 @@ fun KeyboardMouseSettingsScreen(
                             }
                             SettingsCard(
                                 position = pos,
-                                title = pack + if (isSelected) "  (Active)" else "",
-                                summary = if (isSelected) "Currently selected cursor pack" else "Click to activate pack",
+                                title = if (isSelected) stringResource(R.string.cubiq_km_pack_active_label, context.remapDisplayLabel(pack)) else context.remapDisplayLabel(pack),
+                                summary = if (isSelected) stringResource(R.string.cubiq_km_cursor_pack_active) else stringResource(R.string.cubiq_km_cursor_pack_select),
                                 onClick = {
                                     selectedCursorPack = pack
                                     AllSettings.customCursorPack.save(pack)
                                     if (pack == "Default Classic") {
                                         com.movtery.zalithlauncher.ui.control.mouse.arrowPointerFile.delete()
                                     }
-                                    Toast.makeText(context, "Cursor pack: $pack activated", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.cubiq_km_pack_activated, context.remapDisplayLabel(pack)), Toast.LENGTH_SHORT).show()
                                 }
                             )
                         }
@@ -508,8 +507,8 @@ fun KeyboardMouseSettingsScreen(
                         // Custom Cursor Pack Import
                         SettingsCard(
                             position = CardPosition.Middle,
-                            title = "+ Import Custom Cursor (.png / .zip)",
-                            summary = "Select an image or cursor zip from your storage to use as mouse pointer",
+                            title = stringResource(R.string.cubiq_km_cursor_import),
+                            summary = stringResource(R.string.cubiq_km_cursor_import_desc),
                             onClick = {
                                 cursorPickerLauncher.launch("image/*")
                             }
@@ -518,8 +517,8 @@ fun KeyboardMouseSettingsScreen(
                         // Cursor Size Slider
                         IntSliderSettingsCard(
                             position = CardPosition.Bottom,
-                            title = "Cursor Scale: ${cursorScale.toInt()}%",
-                            summary = "Adjust on-screen virtual pointer scale",
+                            title = stringResource(R.string.cubiq_km_cursor_scale, cursorScale.toInt()),
+                            summary = stringResource(R.string.cubiq_km_cursor_scale_desc),
                             valueRange = 50f..200f,
                             unit = AllSettings.mouseCaptureSensitivity,
                             suffix = "%",
@@ -549,28 +548,29 @@ fun RemapBindingDialog(
     onResetTarget: (target: String) -> Unit,
     onResetAll: () -> Unit
 ) {
-    val allActionItems = remember {
+    val context = LocalContext.current
+    val allActionItems = run {
         listOf(
-            RemapActionItem("btn_left", "Mouse Buttons", "Left Mouse Button (Attack / Destroy)", "Attack / Destroy (Btn 1)"),
-            RemapActionItem("btn_right", "Mouse Buttons", "Right Mouse Button (Use / Place Block)", "Use Item / Place Block (Btn 2)"),
-            RemapActionItem("btn_middle", "Mouse Buttons", "Middle Click (Pick Block)", "Pick Block (Btn 3)"),
-            RemapActionItem("btn_side_1", "Mouse Buttons", "Mouse Side Button 1 (Back / X1)", "Sprint (Key L-CTRL)"),
-            RemapActionItem("btn_side_2", "Mouse Buttons", "Mouse Side Button 2 (Forward / X2)", "Sneak (Key L-SHIFT)"),
-            RemapActionItem("Move Forward", "Movement", "Move Forward", "W"),
-            RemapActionItem("Move Backward", "Movement", "Move Backward", "S"),
-            RemapActionItem("Strafe Left", "Movement", "Strafe Left", "A"),
-            RemapActionItem("Strafe Right", "Movement", "Strafe Right", "D"),
-            RemapActionItem("Jump", "Movement", "Jump", "SPACE"),
-            RemapActionItem("Sneak", "Movement", "Sneak", "L-SHIFT"),
-            RemapActionItem("Sprint", "Movement", "Sprint", "L-CTRL"),
-            RemapActionItem("Inventory", "Gameplay", "Inventory", "E"),
-            RemapActionItem("Drop Item", "Gameplay", "Drop Item", "Q"),
-            RemapActionItem("Swap Hand", "Gameplay", "Swap Hand (Offhand)", "F"),
-            RemapActionItem("Open Chat", "Gameplay", "Open Chat", "T"),
-            RemapActionItem("Player List", "Gameplay", "Player List", "TAB"),
-            RemapActionItem("Perspective", "Gameplay", "Perspective", "F5"),
-            RemapActionItem("Fullscreen", "Gameplay", "Fullscreen", "F11"),
-            RemapActionItem("Zoom", "Gameplay", "Zoom", "C")
+            RemapActionItem("btn_left", "Mouse Buttons", stringResource(R.string.cubiq_km_action_left_mouse), "Attack / Destroy (Btn 1)"),
+            RemapActionItem("btn_right", "Mouse Buttons", stringResource(R.string.cubiq_km_action_right_mouse), "Use Item / Place Block (Btn 2)"),
+            RemapActionItem("btn_middle", "Mouse Buttons", stringResource(R.string.cubiq_km_action_middle_mouse), "Pick Block (Btn 3)"),
+            RemapActionItem("btn_side_1", "Mouse Buttons", stringResource(R.string.cubiq_km_side_x1), "Sprint (Key L-CTRL)"),
+            RemapActionItem("btn_side_2", "Mouse Buttons", stringResource(R.string.cubiq_km_side_x2), "Sneak (Key L-SHIFT)"),
+            RemapActionItem("Move Forward", "Movement", context.remapDisplayLabel("Move Forward"), "W"),
+            RemapActionItem("Move Backward", "Movement", context.remapDisplayLabel("Move Backward"), "S"),
+            RemapActionItem("Strafe Left", "Movement", context.remapDisplayLabel("Strafe Left"), "A"),
+            RemapActionItem("Strafe Right", "Movement", context.remapDisplayLabel("Strafe Right"), "D"),
+            RemapActionItem("Jump", "Movement", context.remapDisplayLabel("Jump"), "SPACE"),
+            RemapActionItem("Sneak", "Movement", context.remapDisplayLabel("Sneak"), "L-SHIFT"),
+            RemapActionItem("Sprint", "Movement", context.remapDisplayLabel("Sprint"), "L-CTRL"),
+            RemapActionItem("Inventory", "Gameplay", context.remapDisplayLabel("Inventory"), "E"),
+            RemapActionItem("Drop Item", "Gameplay", context.remapDisplayLabel("Drop Item"), "Q"),
+            RemapActionItem("Swap Hand", "Gameplay", stringResource(R.string.cubiq_km_swap_offhand), "F"),
+            RemapActionItem("Open Chat", "Gameplay", context.remapDisplayLabel("Open Chat"), "T"),
+            RemapActionItem("Player List", "Gameplay", context.remapDisplayLabel("Player List"), "TAB"),
+            RemapActionItem("Perspective", "Gameplay", context.remapDisplayLabel("Perspective"), "F5"),
+            RemapActionItem("Fullscreen", "Gameplay", context.remapDisplayLabel("Fullscreen"), "F11"),
+            RemapActionItem("Zoom", "Gameplay", context.remapDisplayLabel("Zoom"), "C")
         )
     }
 
@@ -726,7 +726,7 @@ fun RemapBindingDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "REMAP BUTTONS & KEYS",
+                        text = stringResource(R.string.cubiq_km_remap_title),
                         color = Color(0xFF55FF55),
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -740,7 +740,7 @@ fun RemapBindingDialog(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_close),
-                            contentDescription = "Close",
+                            contentDescription = stringResource(R.string.generic_close),
                             tint = Color(0xFFAAAAAA),
                             modifier = Modifier.size(16.dp)
                         )
@@ -762,7 +762,7 @@ fun RemapBindingDialog(
                     ) {
                         Column {
                             Text(
-                                text = "SELECT ACTION TO REMAP:",
+                                text = stringResource(R.string.cubiq_km_select_action),
                                 color = Color(0xFF888888),
                                 fontSize = 10.sp,
                                 fontFamily = MinecraftFontFamily
@@ -798,7 +798,7 @@ fun RemapBindingDialog(
                                             fontSize = 11.sp
                                         )
                                         Text(
-                                            text = "[ ${bound ?: item.defaultVal} ]",
+                                            text = "[ ${context.remapDisplayLabel(bound ?: item.defaultVal)} ]",
                                             color = Color(0xFFAAAAAA),
                                             fontFamily = MinecraftFontFamily,
                                             fontSize = 10.sp,
@@ -831,7 +831,7 @@ fun RemapBindingDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Currently Bound To:",
+                            text = stringResource(R.string.cubiq_km_currently_bound),
                             color = Color(0xFF888888),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 11.sp
@@ -844,7 +844,7 @@ fun RemapBindingDialog(
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = selectedBinding.ifEmpty { "None" },
+                                text = context.remapDisplayLabel(selectedBinding.ifEmpty { "None" }),
                                 color = Color(0xFF55FF55),
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
@@ -886,7 +886,7 @@ fun RemapBindingDialog(
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
-                                text = if (isDetecting) "🎯 LISTENING... PRESS ANY KEY OR MOUSE BUTTON" else "🔘 AUTO DETECT WHICH BUTTON PRESSED",
+                                text = if (isDetecting) stringResource(R.string.cubiq_km_detect_listening) else stringResource(R.string.cubiq_km_detect_auto),
                                 color = if (isDetecting) Color(0xFF55FF55) else Color.White,
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
@@ -894,7 +894,7 @@ fun RemapBindingDialog(
                             )
                         }
                         Text(
-                            text = if (isDetecting) "Press any keyboard key or click any mouse button (including side buttons) now!" else "Click here to identify which button is pressed and map it automatically",
+                            text = if (isDetecting) stringResource(R.string.cubiq_km_detect_listening_desc) else stringResource(R.string.cubiq_km_detect_auto_desc),
                             color = if (isDetecting) Color(0xFFAAFFAA) else Color(0xFF888888),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 10.sp
@@ -904,7 +904,7 @@ fun RemapBindingDialog(
 
                 // Mapping Radio List (Pojav / ZL1 Style in Cubiq Theme)
                 Text(
-                    text = "MAPPING (SELECT KEY):",
+                    text = stringResource(R.string.cubiq_km_select_key),
                     color = Color(0xFFAAAAAA),
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
@@ -957,7 +957,7 @@ fun RemapBindingDialog(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = catTitle,
+                                text = context.remapDisplayLabel(catTitle),
                                 color = if (isTabSelected) Color.White else Color(0xFFAAAAAA),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 9.5.sp,
@@ -1011,7 +1011,7 @@ fun RemapBindingDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = item,
+                                text = context.remapDisplayLabel(item),
                                 color = if (isSelected) Color(0xFF55FF55) else Color(0xFFCCCCCC),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 11.sp,
@@ -1054,7 +1054,7 @@ fun RemapBindingDialog(
                         style = MinecraftButtonStyle.STONE,
                         modifier = Modifier.height(34.dp)
                     ) {
-                        Text("Reset All", fontSize = 10.5.sp, fontFamily = MinecraftFontFamily, color = Color(0xFFFF6666))
+                        Text(stringResource(R.string.cubiq_km_reset_all), fontSize = 10.5.sp, fontFamily = MinecraftFontFamily, color = Color(0xFFFF6666))
                     }
 
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1063,7 +1063,7 @@ fun RemapBindingDialog(
                             style = MinecraftButtonStyle.STONE,
                             modifier = Modifier.height(34.dp)
                         ) {
-                            Text("Reset Action", fontSize = 10.5.sp, fontFamily = MinecraftFontFamily)
+                            Text(stringResource(R.string.cubiq_km_reset_action), fontSize = 10.5.sp, fontFamily = MinecraftFontFamily)
                         }
 
                         MinecraftButton(
@@ -1071,11 +1071,103 @@ fun RemapBindingDialog(
                             style = MinecraftButtonStyle.GREEN,
                             modifier = Modifier.height(34.dp)
                         ) {
-                            Text("Done", fontSize = 10.5.sp, fontFamily = MinecraftFontFamily)
+                            Text(stringResource(R.string.generic_done), fontSize = 10.5.sp, fontFamily = MinecraftFontFamily)
                         }
                     }
                 }
             }
         }
     }
+}
+
+internal fun Context.remapDisplayLabel(id: String): String = when (id) {
+    "All" -> getString(R.string.cubiq_km_label_all)
+    "Mouse" -> getString(R.string.cubiq_km_label_mouse)
+    "D-Pad" -> getString(R.string.cubiq_km_label_dpad)
+    "Move" -> getString(R.string.cubiq_km_label_move)
+    "Letters" -> getString(R.string.cubiq_km_label_letters)
+    "Numbers" -> getString(R.string.cubiq_km_label_numbers)
+    "F-Keys" -> getString(R.string.cubiq_km_label_function_keys)
+    "Primary Action (Attack / Mine)" -> getString(R.string.cubiq_km_label_primary)
+    "Secondary Action (Use / Place)" -> getString(R.string.cubiq_km_label_secondary)
+    "Pick Block" -> getString(R.string.cubiq_km_label_pick_block)
+    "Scroll Next Hotbar Slot" -> getString(R.string.cubiq_km_label_hotbar_next)
+    "Scroll Prev Hotbar Slot" -> getString(R.string.cubiq_km_label_hotbar_previous)
+    "Walk Forward" -> getString(R.string.cubiq_km_label_walk_forward)
+    "Walk Backward" -> getString(R.string.cubiq_km_label_walk_backward)
+    "Move Forward" -> getString(R.string.cubiq_km_label_forward)
+    "Move Backward" -> getString(R.string.cubiq_km_label_backward)
+    "Strafe Left" -> getString(R.string.cubiq_km_label_strafe_left)
+    "Strafe Right" -> getString(R.string.cubiq_km_label_strafe_right)
+    "Jump" -> getString(R.string.cubiq_km_label_jump)
+    "Sneak" -> getString(R.string.cubiq_km_label_sneak)
+    "Sprint" -> getString(R.string.cubiq_km_label_sprint)
+    "Inventory" -> getString(R.string.cubiq_km_label_inventory)
+    "Drop Item" -> getString(R.string.cubiq_km_label_drop)
+    "Swap Hand" -> getString(R.string.cubiq_km_label_swap)
+    "Chat" -> getString(R.string.cubiq_km_label_chat)
+    "Open Chat" -> getString(R.string.cubiq_km_label_open_chat)
+    "Player List" -> getString(R.string.cubiq_km_label_players)
+    "Perspective" -> getString(R.string.cubiq_km_label_perspective)
+    "Change Perspective" -> getString(R.string.cubiq_km_label_change_perspective)
+    "Debug Screen" -> getString(R.string.cubiq_km_label_debug_screen)
+    "Fullscreen" -> getString(R.string.cubiq_km_label_fullscreen)
+    "Zoom" -> getString(R.string.cubiq_km_label_zoom)
+    "Left Click (Button 1)" -> getString(R.string.cubiq_km_label_click_left)
+    "Right Click (Button 2)" -> getString(R.string.cubiq_km_label_click_right)
+    "Middle Click (Button 3)" -> getString(R.string.cubiq_km_label_click_middle)
+    "Mouse 4 (Back)" -> getString(R.string.cubiq_km_label_mouse4)
+    "Mouse 5 (Forward)" -> getString(R.string.cubiq_km_label_mouse5)
+    "Mouse Wheel Up" -> getString(R.string.cubiq_km_label_wheel_up)
+    "Mouse Wheel Down" -> getString(R.string.cubiq_km_label_wheel_down)
+    "DPAD_UP" -> getString(R.string.cubiq_km_label_dpad_up)
+    "DPAD_DOWN" -> getString(R.string.cubiq_km_label_dpad_down)
+    "DPAD_LEFT" -> getString(R.string.cubiq_km_label_dpad_left)
+    "DPAD_RIGHT" -> getString(R.string.cubiq_km_label_dpad_right)
+    "Up Arrow" -> getString(R.string.cubiq_km_label_arrow_up)
+    "Down Arrow" -> getString(R.string.cubiq_km_label_arrow_down)
+    "Left Arrow" -> getString(R.string.cubiq_km_label_arrow_left)
+    "Right Arrow" -> getString(R.string.cubiq_km_label_arrow_right)
+    "Space" -> getString(R.string.cubiq_km_label_space)
+    "Left Shift" -> getString(R.string.cubiq_km_label_left_shift)
+    "Right Shift" -> getString(R.string.cubiq_km_label_right_shift)
+    "Left Control" -> getString(R.string.cubiq_km_label_left_control)
+    "Right Control" -> getString(R.string.cubiq_km_label_right_control)
+    "Left Alt" -> getString(R.string.cubiq_km_label_left_alt)
+    "Right Alt" -> getString(R.string.cubiq_km_label_right_alt)
+    "Enter" -> getString(R.string.cubiq_km_label_enter)
+    "Backspace" -> getString(R.string.cubiq_km_label_backspace)
+    "Attack / Destroy (Btn 1)" -> getString(R.string.cubiq_km_label_attack)
+    "Use Item / Place Block (Btn 2)" -> getString(R.string.cubiq_km_label_use)
+    "Pick Block (Btn 3)" -> getString(R.string.cubiq_km_label_pick)
+    "Sprint (Key L-CTRL)" -> getString(R.string.cubiq_km_label_sprint_ctrl)
+    "Sneak (Key L-SHIFT)" -> getString(R.string.cubiq_km_label_sneak_shift)
+    "Mouse Left Click" -> getString(R.string.cubiq_km_label_mouse_left)
+    "Mouse Right Click" -> getString(R.string.cubiq_km_label_mouse_right)
+    "Mouse Middle Click" -> getString(R.string.cubiq_km_label_mouse_middle)
+    "Mouse Button 4 (Back)" -> getString(R.string.cubiq_km_label_mouse_button_4)
+    "Mouse Button 5 (Forward)" -> getString(R.string.cubiq_km_label_mouse_button_5)
+    "SPACE" -> getString(R.string.cubiq_km_label_space_caps)
+    "L-SHIFT" -> getString(R.string.cubiq_km_label_l_shift)
+    "R-SHIFT" -> getString(R.string.cubiq_km_label_r_shift)
+    "L-CTRL" -> getString(R.string.cubiq_km_label_l_ctrl)
+    "R-CTRL" -> getString(R.string.cubiq_km_label_r_ctrl)
+    "L-ALT" -> getString(R.string.cubiq_km_label_l_alt)
+    "R-ALT" -> getString(R.string.cubiq_km_label_r_alt)
+    "ENTER" -> getString(R.string.cubiq_km_label_enter_caps)
+    "BACKSPACE" -> getString(R.string.cubiq_km_label_backspace_caps)
+    "None" -> getString(R.string.cubiq_km_label_none)
+    "Default" -> getString(R.string.cubiq_km_label_default)
+    "Default Classic" -> getString(R.string.cubiq_km_label_cursor_classic)
+    "Modern Obsidian" -> getString(R.string.cubiq_km_label_cursor_obsidian)
+    "Precision Crosshair" -> getString(R.string.cubiq_km_label_cursor_crosshair)
+    "Bedrock Arrow" -> getString(R.string.cubiq_km_label_cursor_bedrock)
+    "Chroma Emerald" -> getString(R.string.cubiq_km_label_cursor_emerald)
+    "Custom Imported" -> getString(R.string.cubiq_km_label_cursor_custom)
+    "btn_left" -> getString(R.string.cubiq_km_left_mouse)
+    "btn_right" -> getString(R.string.cubiq_km_right_mouse)
+    "btn_middle" -> getString(R.string.cubiq_km_middle_mouse)
+    "btn_side_1" -> getString(R.string.cubiq_km_side_x1)
+    "btn_side_2" -> getString(R.string.cubiq_km_side_x2)
+    else -> if (id.startsWith("Key ") && id.length == 5) getString(R.string.cubiq_km_letter_key, id.last().toString()) else id
 }

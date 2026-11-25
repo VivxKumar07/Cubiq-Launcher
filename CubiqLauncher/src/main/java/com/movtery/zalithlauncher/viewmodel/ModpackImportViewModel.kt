@@ -266,7 +266,7 @@ fun ModpackImportOperation(
                             }
                             UnsupportedPackReason.WorldArchive -> {
                                 Text(
-                                    text = "This archive is a Minecraft World Save, not a Modpack.\n\nIt has been automatically imported into your saves (.minecraft/saves) folder! You can find and load it in Singleplayer.",
+                                    text = stringResource(R.string.cubiq_progress_import_world),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -304,7 +304,7 @@ fun ModpackImportOperation(
                 is DownloadFailedException -> stringResource(R.string.download_install_error_download_failed)
                 else -> when {
                     th.isProcessStartRefused() -> stringResource(R.string.download_install_error_process_start)
-                    else -> th.localizedMessage ?: th.message ?: th::class.qualifiedName ?: "Unknown error"
+                    else -> th.localizedMessage ?: th.message ?: th::class.qualifiedName ?: stringResource(R.string.cubiq_progress_unknown_error)
                 }
             }
             val dismiss = {

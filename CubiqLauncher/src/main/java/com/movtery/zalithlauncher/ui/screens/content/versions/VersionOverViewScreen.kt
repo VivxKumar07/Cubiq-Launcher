@@ -591,7 +591,7 @@ private fun VersionManagementLayout(
 
                 CubiqActionButton(
 
-                    text = "Change Icon",
+                    text = stringResource(R.string.cubiq_secondary_version_change_icon),
 
                     onClick = onChangeIcon
 
@@ -689,7 +689,7 @@ private fun VersionQuickActions(
 
                     .padding(top = 4.dp, bottom = 8.dp),
 
-                text = "GAME FILES & DIRECTORIES",
+                text = stringResource(R.string.cubiq_secondary_version_game_directories),
 
                 style = MaterialTheme.typography.labelLarge
 
@@ -711,7 +711,7 @@ private fun VersionQuickActions(
 
                 style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.GREEN,
 
-                text = "📁 OPEN GAME FILES (.MINECRAFT)",
+                text = stringResource(R.string.cubiq_secondary_version_open_game_files),
 
                 fontSize = 12.sp,
 

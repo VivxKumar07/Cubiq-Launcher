@@ -24,7 +24,9 @@ import androidx.annotation.CallSuper
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
+import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.launch.Launcher
+import com.movtery.zalithlauncher.ui.androidText
 import com.movtery.zalithlauncher.ui.control.input.TextInputMode
 import com.movtery.zalithlauncher.viewmodel.ErrorViewModel
 import com.movtery.zalithlauncher.viewmodel.EventViewModel
@@ -58,8 +60,8 @@ abstract class AbstractHandler(
                 com.movtery.zalithlauncher.utils.logging.Logger.error("AbstractHandler", "Game launch execution failed", th)
                 errorViewModel.showError(
                     ErrorViewModel.ThrowableMessage(
-                        title = com.movtery.zalithlauncher.ui.androidText("Game Launch Error"),
-                        message = com.movtery.zalithlauncher.ui.androidText(th.localizedMessage ?: th.message ?: th.toString())
+                        title = androidText(R.string.cubiq_progress_launch_error),
+                        message = androidText(th.localizedMessage ?: th.message ?: th.toString())
                     )
                 )
                 onExit(-1)

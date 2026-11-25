@@ -51,6 +51,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import kotlin.math.roundToInt
@@ -107,18 +109,18 @@ fun MinecraftSkinsScreen(
         "Kai" to "Kai"
     )
 
-    val presetCapes = remember {
+    val presetCapes = run {
         listOf(
-            CapePreset("None", "None", null),
-            CapePreset("Migrator", "Migrator", "capes/migrator.png"),
-            CapePreset("15th_anniversary", "15th Anniv.", "capes/15th_anniversary.png"),
-            CapePreset("cherry", "Cherry", "capes/cherry.png"),
+            CapePreset("None", stringResource(R.string.cubiq_skins_cape_none), null),
+            CapePreset("Migrator", stringResource(R.string.cubiq_skins_cape_migrator), "capes/migrator.png"),
+            CapePreset("15th_anniversary", stringResource(R.string.cubiq_skins_cape_anniversary), "capes/15th_anniversary.png"),
+            CapePreset("cherry", stringResource(R.string.cubiq_skins_cape_cherry), "capes/cherry.png"),
             CapePreset("minecon_2011", "Minecon 11", "capes/minecon_2011.png"),
             CapePreset("minecon_2012", "Minecon 12", "capes/minecon_2012.png"),
             CapePreset("minecon_2013", "Minecon 13", "capes/minecon_2013.png"),
             CapePreset("minecon_2015", "Minecon 15", "capes/minecon_2015.png"),
             CapePreset("minecon_2016", "Minecon 16", "capes/minecon_2016.png"),
-            CapePreset("vanilla", "Vanilla", "capes/vanilla.png")
+            CapePreset("vanilla", stringResource(R.string.cubiq_skins_cape_vanilla), "capes/vanilla.png")
         )
     }
 
@@ -152,11 +154,11 @@ fun MinecraftSkinsScreen(
                     }
                     withContext(Dispatchers.Main) {
                         selectedSkinPreset = "Current"
-                        Toast.makeText(context, "Custom skin applied successfully!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_skins_skin_applied), Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Failed to apply skin: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_skins_skin_failed, e.message), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -183,11 +185,11 @@ fun MinecraftSkinsScreen(
                     }
                     withContext(Dispatchers.Main) {
                         selectedCapeId = "Custom"
-                        Toast.makeText(context, "Custom cape applied successfully!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_skins_cape_applied), Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Failed to apply cape: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_skins_cape_failed, e.message), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -203,7 +205,7 @@ fun MinecraftSkinsScreen(
                 AccountsManager.refreshWardrobe()
                 withContext(Dispatchers.Main) {
                     selectedCapeId = "None"
-                    Toast.makeText(context, "Cape removed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.cubiq_skins_cape_removed), Toast.LENGTH_SHORT).show()
                 }
             } else if (preset.assetPath != null) {
                 runCatching {
@@ -217,11 +219,11 @@ fun MinecraftSkinsScreen(
                     AccountsManager.refreshWardrobe()
                     withContext(Dispatchers.Main) {
                         selectedCapeId = preset.id
-                        Toast.makeText(context, "${preset.name} Cape equipped!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_skins_cape_equipped, preset.name), Toast.LENGTH_SHORT).show()
                     }
                 }.onFailure { e ->
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(context, "Failed to equip cape: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_skins_cape_equip_failed, e.message), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -291,9 +293,9 @@ fun MinecraftSkinsScreen(
             ) {
                 Text(
                     text = if (selectedWardrobeTab == 0) {
-                        if (selectedSkinPreset == "Current") (account?.username ?: "Player (Active)") else selectedSkinPreset
+                        if (selectedSkinPreset == "Current") (account?.username ?: stringResource(R.string.cubiq_skins_active_player)) else selectedSkinPreset
                     } else {
-                        if (activeCapeFile != null) "Active Cape Equipped" else "No Cape Equipped"
+                        if (activeCapeFile != null) stringResource(R.string.cubiq_skins_cape_equipped_label) else stringResource(R.string.cubiq_skins_cape_empty_label)
                     },
                     color = Color.White,
                     fontFamily = MinecraftFontFamily,
@@ -303,9 +305,9 @@ fun MinecraftSkinsScreen(
 
                 Text(
                     text = if (selectedWardrobeTab == 0) {
-                        if (isSlimModel) "Slim Model (3px Arms) • Drag 360°" else "Classic Model (4px Arms) • Drag 360°"
+                        if (isSlimModel) stringResource(R.string.cubiq_skins_slim_preview) else stringResource(R.string.cubiq_skins_classic_preview)
                     } else {
-                        "Waving Cape Physics • Drag 360°"
+                        stringResource(R.string.cubiq_skins_cape_preview)
                     },
                     color = Color(0xFF55FF55),
                     fontFamily = MinecraftFontFamily,
@@ -347,7 +349,7 @@ fun MinecraftSkinsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "SKINS",
+                        text = stringResource(R.string.cubiq_skins_skins),
                         color = if (selectedWardrobeTab == 0) Color(0xFF55FF55) else Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -376,7 +378,7 @@ fun MinecraftSkinsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "CAPES",
+                        text = stringResource(R.string.cubiq_skins_capes),
                         color = if (selectedWardrobeTab == 1) Color(0xFF55FF55) else Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -388,7 +390,7 @@ fun MinecraftSkinsScreen(
             if (selectedWardrobeTab == 0) {
                 // ==================== SKINS SUB-TAB ====================
                 Text(
-                    text = "PLAYER MODEL",
+                    text = stringResource(R.string.cubiq_skins_player_model),
                     color = Color(0xFFAAAAAA),
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
@@ -424,7 +426,7 @@ fun MinecraftSkinsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "CLASSIC (4px)",
+                            text = stringResource(R.string.cubiq_skins_classic),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
@@ -457,7 +459,7 @@ fun MinecraftSkinsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "SLIM (3px)",
+                            text = stringResource(R.string.cubiq_skins_slim),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
@@ -473,7 +475,7 @@ fun MinecraftSkinsScreen(
                         skinPickerLauncher.launch("image/png")
                     },
                     style = MinecraftButtonStyle.GREEN,
-                    text = "+ BROWSE CUSTOM SKIN (.PNG)",
+                    text = stringResource(R.string.cubiq_skins_browse_skin),
                     fontSize = 11.5.sp,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -482,7 +484,7 @@ fun MinecraftSkinsScreen(
 
                 // Official Character Library
                 Text(
-                    text = "OFFICIAL CHARACTERS LIBRARY",
+                    text = stringResource(R.string.cubiq_skins_character_library),
                     color = Color(0xFFAAAAAA),
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
@@ -516,7 +518,7 @@ fun MinecraftSkinsScreen(
                                     com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper.playClickSound()
                                     selectedSkinPreset = label
                                     if (label != "Current") {
-                                        Toast.makeText(context, "$label skin selected", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.cubiq_skins_skin_selected, label), Toast.LENGTH_SHORT).show()
                                     }
                                 }
                                 .padding(8.dp),
@@ -556,7 +558,7 @@ fun MinecraftSkinsScreen(
                                 }
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = if (isCurrentSkin) "CURRENT" else label,
+                                    text = if (isCurrentSkin) stringResource(R.string.cubiq_skins_current) else label,
                                     color = if (isSelected) Color(0xFF55FF55) else Color.White,
                                     fontFamily = MinecraftFontFamily,
                                     fontSize = 10.sp,
@@ -564,7 +566,7 @@ fun MinecraftSkinsScreen(
                                 )
                                 if (isSelected) {
                                     Text(
-                                        text = "ACTIVE",
+                                        text = stringResource(R.string.cubiq_skins_active),
                                         color = Color(0xFF55FF55),
                                         fontFamily = MinecraftFontFamily,
                                         fontSize = 8.sp,
@@ -580,7 +582,7 @@ fun MinecraftSkinsScreen(
             } else {
                 // ==================== CAPES SUB-TAB ====================
                 Text(
-                    text = "CUSTOM CAPES",
+                    text = stringResource(R.string.cubiq_skins_custom_capes),
                     color = Color(0xFFAAAAAA),
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
@@ -594,7 +596,7 @@ fun MinecraftSkinsScreen(
                         capePickerLauncher.launch("image/png")
                     },
                     style = MinecraftButtonStyle.GREEN,
-                    text = "+ BROWSE CUSTOM CAPE (.PNG)",
+                    text = stringResource(R.string.cubiq_skins_browse_cape),
                     fontSize = 11.5.sp,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -603,7 +605,7 @@ fun MinecraftSkinsScreen(
 
                 // Official Cape Library
                 Text(
-                    text = "OFFICIAL CAPES LIBRARY",
+                    text = stringResource(R.string.cubiq_skins_cape_library),
                     color = Color(0xFFAAAAAA),
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
@@ -662,7 +664,7 @@ fun MinecraftSkinsScreen(
                                 ) {
                                     if (preset.id == "None") {
                                         Text(
-                                            text = "NONE",
+                                            text = stringResource(R.string.cubiq_skins_none),
                                             color = Color(0xFFAAAAAA),
                                             fontFamily = MinecraftFontFamily,
                                             fontWeight = FontWeight.Bold,
@@ -694,7 +696,7 @@ fun MinecraftSkinsScreen(
 
                                 if (isSelected) {
                                     Text(
-                                        text = "ACTIVE",
+                                        text = stringResource(R.string.cubiq_skins_active),
                                         color = Color(0xFF55FF55),
                                         fontFamily = MinecraftFontFamily,
                                         fontSize = 8.sp,
@@ -732,7 +734,7 @@ fun MinecraftSkinsScreen(
                         .fillMaxHeight()
                 ) {
                     Text(
-                        text = "SKINS & WARDROBE",
+                        text = stringResource(R.string.cubiq_skins_wardrobe),
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -764,14 +766,14 @@ fun MinecraftSkinsScreen(
             ) {
                 // Header
                 Text(
-                    text = "SKINS & WARDROBE",
+                    text = stringResource(R.string.cubiq_skins_wardrobe),
                     color = Color.White,
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 15.sp
                 )
                 Text(
-                    text = "Full body 3D preview & official Minecraft skins & capes",
+                    text = stringResource(R.string.cubiq_skins_wardrobe_desc),
                     color = Color(0xFF888888),
                     fontFamily = MinecraftFontFamily,
                     fontSize = 11.sp

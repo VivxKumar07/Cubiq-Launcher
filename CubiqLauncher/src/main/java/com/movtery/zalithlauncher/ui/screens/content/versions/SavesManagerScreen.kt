@@ -887,13 +887,17 @@ private fun SaveOperationMenu(
             DropdownMenuItem(
                 enabled = saveValid,
                 text = {
-                    Text(text = if (allowCommands) "Disable Commands / Cheats" else "Allow Commands / Admin (/op)")
+                    Text(stringResource(if (allowCommands) {
+                        R.string.cubiq_secondary_save_commands_disable
+                    } else {
+                        R.string.cubiq_secondary_save_commands_enable
+                    }))
                 },
                 leadingIcon = {
                     Icon(
                         modifier = Modifier.size(20.dp),
                         painter = painterResource(R.drawable.ic_terminal_outlined),
-                        contentDescription = "Commands / Admin"
+                        contentDescription = stringResource(R.string.cubiq_secondary_save_commands)
                     )
                 },
                 onClick = {

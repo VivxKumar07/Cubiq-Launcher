@@ -52,6 +52,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+
+import androidx.compose.ui.res.stringResource
 import coil3.compose.AsyncImage
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -65,7 +67,7 @@ import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 data class MinecraftServerEntry(
     val name: String,
     val address: String,
-    val motd: String,
+    val motd: Int,
     val pingMs: Int = 32
 )
 
@@ -94,11 +96,11 @@ fun MinecraftRealmsScreen(
 
     val servers = remember {
         mutableStateListOf(
-            MinecraftServerEntry("Skillora SMP", "paid51.skilloraclouds.com:20015", "Official Skillora Community Server", 24),
-            MinecraftServerEntry("Hypixel Network", "mc.hypixel.net", "The #1 Minecraft Minigame Server", 28),
-            MinecraftServerEntry("CubeCraft Games", "play.cubecraft.net", "Skyblock, EggWars, Lucky Islands", 35),
-            MinecraftServerEntry("Complex Gaming", "hub.mc-complex.com", "Pixelmon, Skyblock, Factions, Survival", 42),
-            MinecraftServerEntry("Wynncraft", "play.wynncraft.com", "The premier Minecraft MMORPG Experience", 31)
+            MinecraftServerEntry("Skillora SMP", "paid51.skilloraclouds.com:20015", R.string.cubiq_realms_server_skillora, 24),
+            MinecraftServerEntry("Hypixel Network", "mc.hypixel.net", R.string.cubiq_realms_server_hypixel, 28),
+            MinecraftServerEntry("CubeCraft Games", "play.cubecraft.net", R.string.cubiq_realms_server_cubecraft, 35),
+            MinecraftServerEntry("Complex Gaming", "hub.mc-complex.com", R.string.cubiq_realms_server_complex, 42),
+            MinecraftServerEntry("Wynncraft", "play.wynncraft.com", R.string.cubiq_realms_server_wynncraft, 31)
         )
     }
 
@@ -147,14 +149,14 @@ fun MinecraftRealmsScreen(
                 MinecraftButton(
                     onClick = { selectedTab = 0 },
                     style = if (selectedTab == 0) MinecraftButtonStyle.GREEN else MinecraftButtonStyle.DARK,
-                    text = "SERVERS & REALMS",
+                    text = stringResource(R.string.cubiq_realms_servers_realms),
                     fontSize = 10.5.sp,
                     modifier = Modifier.weight(1f).height(32.dp)
                 )
                 MinecraftButton(
                     onClick = { selectedTab = 1 },
                     style = if (selectedTab == 1) MinecraftButtonStyle.GREEN else MinecraftButtonStyle.DARK,
-                    text = "FRIENDS SYSTEM",
+                    text = stringResource(R.string.cubiq_realms_friends_system),
                     fontSize = 10.5.sp,
                     modifier = Modifier.weight(1f).height(32.dp)
                 )
@@ -171,7 +173,7 @@ fun MinecraftRealmsScreen(
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_mc_hero_latest),
-                        contentDescription = "Realms Banner",
+                        contentDescription = stringResource(R.string.cubiq_realms_realms_banner),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -192,7 +194,7 @@ fun MinecraftRealmsScreen(
                     ) {
                         Column {
                             Text(
-                                text = "MINECRAFT REALMS & MULTIPLAYER",
+                                text = stringResource(R.string.cubiq_realms_realms_multiplayer),
                                 color = Color(0xFF55FF55),
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
@@ -200,7 +202,7 @@ fun MinecraftRealmsScreen(
                             )
                             Spacer(modifier = Modifier.height(3.dp))
                             Text(
-                                text = "Play always-online worlds with friends on PC and Mobile!",
+                                text = stringResource(R.string.cubiq_realms_realms_multiplayer_desc),
                                 color = Color(0xFFCCCCCC),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 10.5.sp
@@ -213,14 +215,14 @@ fun MinecraftRealmsScreen(
                                     onOpenLink("https://www.minecraft.net/realms")
                                 },
                                 style = MinecraftButtonStyle.GREEN,
-                                text = "TRY REALMS PLUS",
+                                text = stringResource(R.string.cubiq_realms_try_plus),
                                 fontSize = 10.sp,
                                 modifier = Modifier.height(30.dp)
                             )
                             MinecraftButton(
                                 onClick = { showAddServerDialog = true },
                                 style = MinecraftButtonStyle.STONE,
-                                text = "+ ADD SERVER",
+                                text = stringResource(R.string.cubiq_realms_add_server_short),
                                 fontSize = 10.sp,
                                 modifier = Modifier.height(30.dp)
                             )
@@ -237,14 +239,14 @@ fun MinecraftRealmsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "FEATURED MULTIPLAYER SERVERS",
+                        text = stringResource(R.string.cubiq_realms_featured),
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
                     Text(
-                        text = "${servers.size} SERVERS",
+                        text = stringResource(R.string.cubiq_realms_server_count, servers.size),
                         color = Color(0xFF888888),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 10.sp
@@ -296,7 +298,7 @@ fun MinecraftRealmsScreen(
                                         fontSize = 10.5.sp
                                     )
                                     Text(
-                                        text = srv.motd,
+                                        text = stringResource(srv.motd),
                                         color = Color(0xFF888888),
                                         fontFamily = MinecraftFontFamily,
                                         fontSize = 9.5.sp,
@@ -310,7 +312,7 @@ fun MinecraftRealmsScreen(
                                     onLaunchGame(currentVersion)
                                 },
                                 style = MinecraftButtonStyle.GREEN,
-                                text = "JOIN",
+                                text = stringResource(R.string.cubiq_realms_join),
                                 fontSize = 11.sp,
                                 modifier = Modifier
                                     .width(65.dp)
@@ -331,7 +333,7 @@ fun MinecraftRealmsScreen(
                 ) {
                     Image(
                         painter = painterResource(R.drawable.img_mc_hero_latest),
-                        contentDescription = "Friends Banner",
+                        contentDescription = stringResource(R.string.cubiq_realms_friends_banner),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -352,7 +354,7 @@ fun MinecraftRealmsScreen(
                     ) {
                         Column {
                             Text(
-                                text = "YOUR WORLD. YOUR FRIENDS. YOUR ADVENTURE!",
+                                text = stringResource(R.string.cubiq_realms_adventure),
                                 color = Color(0xFF55FF55),
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
@@ -360,7 +362,7 @@ fun MinecraftRealmsScreen(
                             )
                             Spacer(modifier = Modifier.height(3.dp))
                             Text(
-                                text = "Send friend requests directly through Cubiq Launcher and invite your friends to join your Minecraft world!",
+                                text = stringResource(R.string.cubiq_realms_adventure_desc),
                                 color = Color(0xFFCCCCCC),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 10.sp
@@ -371,19 +373,19 @@ fun MinecraftRealmsScreen(
                             MinecraftButton(
                                 onClick = { showAddFriendDialog = true },
                                 style = MinecraftButtonStyle.GREEN,
-                                text = "+ ADD FRIEND",
+                                text = stringResource(R.string.cubiq_realms_add_friend_plus),
                                 fontSize = 10.sp,
                                 modifier = Modifier.height(30.dp)
                             )
                             MinecraftButton(
                                 onClick = {
                                     val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    val clip = ClipData.newPlainText("Cubiq LAN IP", "cubiq://connect/${account?.username ?: "Player"}")
+                                    val clip = ClipData.newPlainText(context.getString(R.string.cubiq_realms_clip_lan_ip), "cubiq://connect/${account?.username ?: "Player"}")
                                     cm.setPrimaryClip(clip)
-                                    Toast.makeText(context, "Copied friend invite link!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.cubiq_realms_friend_link_copied), Toast.LENGTH_SHORT).show()
                                 },
                                 style = MinecraftButtonStyle.STONE,
-                                text = "SHARE INVITE LINK",
+                                text = stringResource(R.string.cubiq_realms_share_invite),
                                 fontSize = 10.sp,
                                 modifier = Modifier.height(30.dp)
                             )
@@ -400,14 +402,14 @@ fun MinecraftRealmsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "ONLINE & SAVED FRIENDS",
+                        text = stringResource(R.string.cubiq_realms_friends_list),
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp
                     )
                     Text(
-                        text = "${friends.size} FRIENDS",
+                        text = stringResource(R.string.cubiq_realms_friend_count, friends.size),
                         color = Color(0xFF888888),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 10.sp
@@ -425,7 +427,7 @@ fun MinecraftRealmsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No friends added yet. Tap '+ ADD FRIEND' to add your friends!",
+                            text = stringResource(R.string.cubiq_realms_friends_empty),
                             color = Color(0xFF777777),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 11.sp
@@ -491,14 +493,21 @@ fun MinecraftRealmsScreen(
                                             )
                                         }
                                         Text(
-                                            text = friend.status,
+                                            text = when (friend.status) {
+                                                "Playing on Skillora SMP" -> stringResource(R.string.cubiq_realms_status_skillora)
+                                                "In Local World (LAN)" -> stringResource(R.string.cubiq_realms_status_lan)
+                                                "Online" -> stringResource(R.string.cubiq_realms_status_online)
+                                                "Offline (Last seen 2h ago)" -> stringResource(R.string.cubiq_realms_status_offline)
+                                                "Playing on World" -> stringResource(R.string.cubiq_realms_status_playing)
+                                                else -> friend.status
+                                            },
                                             color = if (friend.isOnline) Color(0xFF55FF55) else Color(0xFF888888),
                                             fontFamily = MinecraftFontFamily,
                                             fontSize = 10.sp
                                         )
                                         if (friend.worldIp.isNotBlank()) {
                                             Text(
-                                                text = "Server: ${friend.worldIp}",
+                                                text = stringResource(R.string.cubiq_realms_friend_server, friend.worldIp),
                                                 color = Color(0xFFAAAAAA),
                                                 fontFamily = MinecraftFontFamily,
                                                 fontSize = 9.sp
@@ -514,11 +523,11 @@ fun MinecraftRealmsScreen(
                                     if (friend.worldIp.isNotBlank()) {
                                         MinecraftButton(
                                             onClick = {
-                                                Toast.makeText(context, "Joining ${friend.username}'s world at ${friend.worldIp}...", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, context.getString(R.string.cubiq_realms_joining_world, friend.username, friend.worldIp), Toast.LENGTH_SHORT).show()
                                                 onLaunchGame(currentVersion)
                                             },
                                             style = MinecraftButtonStyle.GREEN,
-                                            text = "JOIN",
+                                            text = stringResource(R.string.cubiq_realms_join),
                                             fontSize = 10.sp,
                                             modifier = Modifier.width(60.dp).height(30.dp)
                                         )
@@ -526,12 +535,12 @@ fun MinecraftRealmsScreen(
                                         MinecraftButton(
                                             onClick = {
                                                 val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                                val clip = ClipData.newPlainText("Minecraft World Invite", "Join my Minecraft world on Cubiq Launcher! IP: localhost:25565")
+                                                val clip = ClipData.newPlainText(context.getString(R.string.cubiq_realms_clip_world_invite), context.getString(R.string.cubiq_realms_world_invite_msg))
                                                 cm.setPrimaryClip(clip)
-                                                Toast.makeText(context, "World invite copied! Send to ${friend.username}", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, context.getString(R.string.cubiq_realms_world_invite_copied, friend.username), Toast.LENGTH_SHORT).show()
                                             },
                                             style = MinecraftButtonStyle.STONE,
-                                            text = "INVITE",
+                                            text = stringResource(R.string.cubiq_realms_invite),
                                             fontSize = 10.sp,
                                             modifier = Modifier.width(62.dp).height(30.dp)
                                         )
@@ -541,7 +550,7 @@ fun MinecraftRealmsScreen(
                                         onClick = {
                                             friends.remove(friend)
                                             saveFriends()
-                                            Toast.makeText(context, "Removed ${friend.username}", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, context.getString(R.string.cubiq_realms_friend_removed, friend.username), Toast.LENGTH_SHORT).show()
                                         },
                                         style = MinecraftButtonStyle.RED,
                                         text = "✖",
@@ -566,7 +575,7 @@ fun MinecraftRealmsScreen(
                 containerColor = Color(0xFF1E1E20),
                 title = {
                     Text(
-                        text = "ADD MINECRAFT FRIEND",
+                        text = stringResource(R.string.cubiq_realms_add_minecraft_friend),
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -579,7 +588,7 @@ fun MinecraftRealmsScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "FRIEND'S MINECRAFT USERNAME",
+                            text = stringResource(R.string.cubiq_realms_friend_username),
                             color = Color(0xFFAAAAAA),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 10.5.sp
@@ -609,7 +618,7 @@ fun MinecraftRealmsScreen(
                         }
 
                         Text(
-                            text = "OPTIONAL WORLD / SERVER IP (FOR QUICK JOIN)",
+                            text = stringResource(R.string.cubiq_realms_world_ip_optional),
                             color = Color(0xFFAAAAAA),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 10.5.sp
@@ -652,11 +661,11 @@ fun MinecraftRealmsScreen(
                                 friends.add(0, newFriend)
                                 saveFriends()
                                 showAddFriendDialog = false
-                                Toast.makeText(context, "Added ${friendName.trim()} to friends!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_realms_friend_added, friendName.trim()), Toast.LENGTH_SHORT).show()
                             }
                         },
                         style = MinecraftButtonStyle.GREEN,
-                        text = "ADD FRIEND",
+                        text = stringResource(R.string.cubiq_realms_add_friend),
                         fontSize = 11.5.sp,
                         modifier = Modifier.height(34.dp)
                     )
@@ -665,7 +674,7 @@ fun MinecraftRealmsScreen(
                     MinecraftButton(
                         onClick = { showAddFriendDialog = false },
                         style = MinecraftButtonStyle.STONE,
-                        text = "CANCEL",
+                        text = stringResource(R.string.cubiq_realms_cancel),
                         fontSize = 11.5.sp,
                         modifier = Modifier.height(34.dp)
                     )
@@ -683,7 +692,7 @@ fun MinecraftRealmsScreen(
                 containerColor = Color(0xFF1E1E20),
                 title = {
                     Text(
-                        text = "ADD MULTIPLAYER SERVER",
+                        text = stringResource(R.string.cubiq_realms_add_multiplayer),
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -696,7 +705,7 @@ fun MinecraftRealmsScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            text = "SERVER NAME",
+                            text = stringResource(R.string.cubiq_realms_server_name),
                             color = Color(0xFFAAAAAA),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 10.5.sp
@@ -726,7 +735,7 @@ fun MinecraftRealmsScreen(
                         }
 
                         Text(
-                            text = "SERVER ADDRESS (IP / DOMAIN)",
+                            text = stringResource(R.string.cubiq_realms_server_address),
                             color = Color(0xFFAAAAAA),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 10.5.sp
@@ -760,13 +769,13 @@ fun MinecraftRealmsScreen(
                     MinecraftButton(
                         onClick = {
                             if (srvName.isNotBlank() && srvAddr.isNotBlank()) {
-                                servers.add(MinecraftServerEntry(srvName.trim(), srvAddr.trim(), "Custom Multiplayer Server"))
+                                servers.add(MinecraftServerEntry(srvName.trim(), srvAddr.trim(), R.string.cubiq_realms_custom_server))
                                 showAddServerDialog = false
-                                Toast.makeText(context, "Added $srvName", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_realms_server_added, srvName), Toast.LENGTH_SHORT).show()
                             }
                         },
                         style = MinecraftButtonStyle.GREEN,
-                        text = "ADD",
+                        text = stringResource(R.string.cubiq_realms_add),
                         fontSize = 11.5.sp,
                         modifier = Modifier.height(34.dp)
                     )
@@ -775,7 +784,7 @@ fun MinecraftRealmsScreen(
                     MinecraftButton(
                         onClick = { showAddServerDialog = false },
                         style = MinecraftButtonStyle.STONE,
-                        text = "CANCEL",
+                        text = stringResource(R.string.cubiq_realms_cancel),
                         fontSize = 11.5.sp,
                         modifier = Modifier.height(34.dp)
                     )

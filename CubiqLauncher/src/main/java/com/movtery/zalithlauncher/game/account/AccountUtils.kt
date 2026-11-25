@@ -453,7 +453,7 @@ fun getAccountTypeName(account: Account): String {
     return if (account.isMicrosoftAccount()) {
         stringResource(R.string.account_type_microsoft)
     } else if (account.isAuthServerAccount()) {
-        account.accountType ?: "Unknown"
+        account.accountType ?: stringResource(R.string.generic_unknown)
     } else {
         stringResource(R.string.account_type_local)
     }

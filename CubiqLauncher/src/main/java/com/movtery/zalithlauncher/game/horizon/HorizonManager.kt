@@ -2,6 +2,7 @@ package com.movtery.zalithlauncher.game.horizon
 
 import android.content.Context
 import android.content.Intent
+import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.utils.logging.Logger
 import dev.horizon.android.HorizonActivity
@@ -204,12 +205,12 @@ object HorizonManager {
         targetDir.mkdirs()
 
         // 1. Unpack engine-data.zip tables
-        onProgress("Unpacking engine data tables...", 0.05f)
+        onProgress(context.getString(R.string.cubiq_horizon_engine_unpacking), 0.05f)
         unpackEngineData(context, targetDir)
         prepareEngineData(context)
 
         // 2. Extract client.jar assets and data preserving hierarchy
-        onProgress("Extracting Minecraft client assets & data...", 0.15f)
+        onProgress(context.getString(R.string.cubiq_horizon_extracting_assets), 0.15f)
         ZipFile(clientJar).use { zip ->
             val total = zip.size()
             var count = 0
@@ -229,14 +230,14 @@ object HorizonManager {
                 }
                 if (count % 400 == 0) {
                     val pct = 0.15f + 0.45f * (count.toFloat() / total.coerceAtLeast(1))
-                    onProgress("Extracting client assets ($count / $total)...", pct)
+                    onProgress(context.getString(R.string.cubiq_horizon_extracting_client_assets, count, total), pct)
                 }
             }
         }
 
         // 3. Rebuild aggregated tables
-        onProgress("Aggregating block tags and worldgen tables...", 0.65f)
-        rebuildAggregatedResources(targetDir) { step, pct ->
+        onProgress(context.getString(R.string.cubiq_horizon_aggregating_tables), 0.65f)
+        rebuildAggregatedResources(context, targetDir) { step, pct ->
             onProgress(step, 0.65f + 0.25f * pct)
         }
 
@@ -249,34 +250,34 @@ object HorizonManager {
         }
 
         // 5. Finalize metadata markers
-        onProgress("Finalizing metadata markers...", 0.95f)
+        onProgress(context.getString(R.string.cubiq_horizon_finalizing_metadata), 0.95f)
         File(targetDir, "android-downloads-v2.json").writeText("{\"schema\":2}", Charsets.UTF_8)
         File(targetDir, "audio-complete.json").writeText("{}", Charsets.UTF_8)
 
         Logger.info("HorizonManager", "Completed preparation of Horizon resources in ${targetDir.absolutePath}")
     }
 
-    private fun rebuildAggregatedResources(root: File, onStep: (String, Float) -> Unit) {
+    private fun rebuildAggregatedResources(context: Context, root: File, onStep: (String, Float) -> Unit) {
         val totalSteps = WORLDGEN_TABLES.size + ROOT_TAG_TABLES.size + 1
         var current = 0
 
         // Root tables (block-tags, damage-tags, damage-types)
         for ((name, source) in ROOT_TAG_TABLES) {
             current++
-            onStep("Building $name...", current.toFloat() / totalSteps)
+            onStep(context.getString(R.string.cubiq_horizon_building_table, name), current.toFloat() / totalSteps)
             aggregate(root, source, "$name.json")
         }
 
         // Worldgen tables
         for ((name, source) in WORLDGEN_TABLES) {
             current++
-            onStep("Building worldgen/$name...", current.toFloat() / totalSteps)
+            onStep(context.getString(R.string.cubiq_horizon_building_worldgen, name), current.toFloat() / totalSteps)
             aggregate(root, source, "worldgen/$name.json")
         }
 
         // Copy structure NBTs
         current++
-        onStep("Copying structure templates...", current.toFloat() / totalSteps)
+        onStep(context.getString(R.string.cubiq_horizon_copying_structures), current.toFloat() / totalSteps)
         val structureBase = File(root, "data/minecraft/structure")
         if (structureBase.exists() && structureBase.isDirectory) {
             val destBase = File(root, "worldgen/structure/minecraft")
@@ -365,7 +366,7 @@ object HorizonManager {
                     _installState.value = InstallState.Downloading(
                         currentBytes = 0,
                         totalBytes = 35_000_000L,
-                        currentItem = "Resolving Minecraft $VANILLA_VERSION...",
+                        currentItem = context.getString(R.string.cubiq_horizon_resolving_version, VANILLA_VERSION),
                         percent = 0.05f
                     )
 
@@ -389,7 +390,7 @@ object HorizonManager {
                         }
                     }
                     if (versionMetaUrl == null) {
-                        throw IllegalStateException("Failed to resolve official Minecraft 26.3 metadata URL")
+                        throw IllegalStateException(context.getString(R.string.cubiq_horizon_failed_metadata))
                     }
 
                     val versionMetaJson = JSONObject(fetchString(versionMetaUrl))
@@ -408,7 +409,7 @@ object HorizonManager {
                         _installState.value = InstallState.Downloading(
                             currentBytes = safeBytes,
                             totalBytes = clientSize,
-                            currentItem = "Minecraft $VANILLA_VERSION client.jar",
+                            currentItem = context.getString(R.string.cubiq_horizon_client_jar, VANILLA_VERSION),
                             percent = pct
                         )
                     }
@@ -416,7 +417,7 @@ object HorizonManager {
                 }
 
                 // Configuring / Preparing resources
-                _installState.value = InstallState.Configuring("Extracting textures and models...", 0.05f)
+                _installState.value = InstallState.Configuring(context.getString(R.string.cubiq_horizon_extracting_textures), 0.05f)
                 prepareResourcesFromJar(context, clientJar, stage) { step, pct ->
                     _installState.value = InstallState.Configuring(
                         currentStep = step,
@@ -434,7 +435,7 @@ object HorizonManager {
 
             } catch (e: Exception) {
                 Logger.error("HorizonManager", "Setup failed: ${e.message}", e)
-                _installState.value = InstallState.Failed(e.message ?: "Unknown setup error")
+                _installState.value = InstallState.Failed(e.message ?: context.getString(R.string.cubiq_horizon_unknown_setup_error))
             }
         }
     }

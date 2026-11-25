@@ -19,6 +19,7 @@
 package com.movtery.zalithlauncher.filemanager.ui
 
 import android.app.ActivityManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
@@ -41,6 +42,7 @@ import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.filemanager.FileManagerLauncher
 import com.movtery.zalithlauncher.filemanager.os.FmLog
 import com.movtery.zalithlauncher.filemanager.viewmodel.FileManagerViewModel
+import com.movtery.zalithlauncher.setting.enums.withLauncherLanguage
 import com.movtery.zalithlauncher.setting.loadAllSettings
 import com.movtery.zalithlauncher.ui.theme.ZalithLauncherTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -80,6 +82,10 @@ class FileManagerActivity : ComponentActivity() {
             }
             set(DEFAULT_ARGS_KEY, bundle)
         }
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase.withLauncherLanguage())
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

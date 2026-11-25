@@ -399,7 +399,7 @@ private fun ImportFileOperation(
                 launch(Dispatchers.IO) {
                     uris.forEach { uri ->
                         try {
-                            val fileName = context.getFileName(uri) ?: throw IOException("Failed to get file name")
+                            val fileName = context.getFileName(uri) ?: throw IOException(context.getString(R.string.cubiq_game_file_name_unavailable))
                             val outputFile = File(targetDir, fileName)
                             context.copyLocalFile(uri, outputFile)
                             onImported()

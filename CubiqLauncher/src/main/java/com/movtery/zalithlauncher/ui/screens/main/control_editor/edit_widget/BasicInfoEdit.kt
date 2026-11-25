@@ -116,7 +116,7 @@ fun EditWidgetInfo(
                     item {
                         InfoLayoutSliderItem(
                             modifier = Modifier.fillMaxWidth(),
-                            title = "Button Opacity",
+                            title = stringResource(R.string.cubiq_game_editor_button_opacity),
                             value = (data.opacity ?: 1.0f) * 100f,
                             onValueChange = {
                                 data.opacity = (it / 100f).coerceIn(0.1f, 1.0f)
@@ -157,14 +157,39 @@ fun EditWidgetInfo(
                     item {
                         InfoLayoutListItem(
                             modifier = Modifier.fillMaxWidth(),
-                            title = "Button Icon",
+                            title = stringResource(R.string.cubiq_game_editor_button_icon),
                             items = iconOptions,
                             selectedItem = data.icon,
                             onItemSelected = {
                                 data.icon = it
                                 onPreviewRequested()
                             },
-                            getItemText = { it ?: "None (Text Only)" }
+                            getItemText = { icon ->
+                                when (icon) {
+                                    null -> stringResource(R.string.cubiq_game_editor_no_icon)
+                                    "attack" -> stringResource(R.string.cubiq_game_icon_attack)
+                                    "use_item" -> stringResource(R.string.cubiq_game_icon_use_item)
+                                    "jump" -> stringResource(R.string.cubiq_game_icon_jump)
+                                    "sneak", "sneak_button_be2" -> stringResource(R.string.cubiq_game_icon_sneak)
+                                    "sprint" -> stringResource(R.string.cubiq_game_icon_sprint)
+                                    "inventory" -> stringResource(R.string.cubiq_game_icon_inventory)
+                                    "chat" -> stringResource(R.string.cubiq_game_icon_chat)
+                                    "pause" -> stringResource(R.string.cubiq_game_icon_pause)
+                                    "f3_debug" -> stringResource(R.string.cubiq_game_icon_f3_debug)
+                                    "keyboard" -> stringResource(R.string.cubiq_game_icon_keyboard)
+                                    "perspective" -> stringResource(R.string.cubiq_game_icon_perspective)
+                                    "gui" -> stringResource(R.string.cubiq_game_icon_gui)
+                                    "menu_button" -> stringResource(R.string.game_menu_title)
+                                    "swap_hands" -> stringResource(R.string.cubiq_game_icon_swap_hands)
+                                    "dismount" -> stringResource(R.string.cubiq_game_icon_dismount)
+                                    "pick_block" -> stringResource(R.string.cubiq_game_icon_pick_block)
+                                    "forward_button_be2" -> stringResource(R.string.cubiq_game_icon_forward)
+                                    "backward_button_be2" -> stringResource(R.string.cubiq_game_icon_backward)
+                                    "left_button_be2" -> stringResource(R.string.cubiq_game_icon_left)
+                                    "right_button_be2" -> stringResource(R.string.cubiq_game_icon_right)
+                                    else -> icon
+                                }
+                            }
                         )
                     }
                 }

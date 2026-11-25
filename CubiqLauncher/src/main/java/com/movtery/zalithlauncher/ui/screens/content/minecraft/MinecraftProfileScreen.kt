@@ -71,6 +71,8 @@ import androidx.compose.ui.text.TextStyle
 
 import androidx.compose.ui.unit.IntOffset
 
+import androidx.compose.ui.res.stringResource
+
 import androidx.compose.foundation.layout.Spacer
 
 import androidx.compose.foundation.layout.fillMaxSize
@@ -198,6 +200,10 @@ import com.movtery.zalithlauncher.game.account.AccountsManager
 import com.movtery.zalithlauncher.game.account.auth_server.AuthServerHelper
 
 import com.movtery.zalithlauncher.game.account.getAccountTypeName
+import com.movtery.zalithlauncher.ui.screens.content.settings.LauncherChinesePixelFontCard
+import com.movtery.zalithlauncher.ui.screens.content.settings.LauncherLanguageCard
+import com.movtery.zalithlauncher.ui.screens.content.settings.layouts.CardPosition
+import com.movtery.zalithlauncher.ui.screens.content.settings.remapDisplayLabel
 
 import com.movtery.zalithlauncher.game.account.localLogin
 
@@ -265,27 +271,27 @@ import java.io.File
 
 
 
-private enum class SettingsTab(val title: String) {
+private enum class SettingsTab(val title: Int) {
 
-    RENDERER("RENDERER"),
+    RENDERER(R.string.cubiq_profile_tab_renderer),
 
-    GAME("GAME"),
+    GAME(R.string.cubiq_profile_tab_game),
 
-    CONTROLS("CONTROLS"),
+    CONTROLS(R.string.cubiq_profile_tab_controls),
 
-    GAMEPAD("GAMEPAD"),
+    GAMEPAD(R.string.cubiq_profile_tab_gamepad),
 
-    KEYBOARD_MOUSE("KEYBOARD & MOUSE"),
+    KEYBOARD_MOUSE(R.string.cubiq_profile_tab_keyboard),
 
-    SCREEN_RECORDING("RECORDING"),
+    SCREEN_RECORDING(R.string.cubiq_profile_tab_recording),
 
-    LAUNCHER("LAUNCHER"),
+    LAUNCHER(R.string.cubiq_profile_tab_launcher),
 
-    JAVA("JAVA"),
+    JAVA(R.string.cubiq_profile_tab_java),
 
-    LAYOUTS("CONTROLS (LAYOUTS)"),
+    LAYOUTS(R.string.cubiq_profile_tab_layouts),
 
-    ABOUT("ABOUT")
+    ABOUT(R.string.cubiq_profile_tab_about)
 
 }
 
@@ -636,7 +642,7 @@ fun MinecraftProfileScreen(
 
                             scope.launch(Dispatchers.Main) {
 
-                                Toast.makeText(context, "Invalid control layout JSON", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_invalid_controls), Toast.LENGTH_SHORT).show()
 
                             }
 
@@ -646,7 +652,7 @@ fun MinecraftProfileScreen(
 
                             scope.launch(Dispatchers.Main) {
 
-                                Toast.makeText(context, "Failed to import controls: ${e.message}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_import_controls_failure, e.message), Toast.LENGTH_SHORT).show()
 
                             }
 
@@ -658,7 +664,7 @@ fun MinecraftProfileScreen(
 
                             scope.launch(Dispatchers.Main) {
 
-                                Toast.makeText(context, "Control layout imported successfully!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_import_controls_success), Toast.LENGTH_SHORT).show()
 
                             }
 
@@ -762,7 +768,7 @@ fun MinecraftProfileScreen(
 
                             msDeviceCodeText = null
 
-                            Toast.makeText(context, "Microsoft Login Failed: ${err.message.toAndroidString(context)}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_profile_microsoft_failure, err.message.toAndroidString(context)), Toast.LENGTH_LONG).show()
 
                         },
 
@@ -772,7 +778,7 @@ fun MinecraftProfileScreen(
 
                             msDeviceCodeText = null
 
-                            Toast.makeText(context, "Successfully logged into Microsoft Account!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_profile_microsoft_success), Toast.LENGTH_SHORT).show()
 
                         },
 
@@ -798,7 +804,7 @@ fun MinecraftProfileScreen(
 
                     AccountsManager.reloadAccounts()
 
-                    Toast.makeText(context, "Switched to ${acc.username}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.cubiq_profile_switch_account, acc.username), Toast.LENGTH_SHORT).show()
 
                 },
 
@@ -818,7 +824,7 @@ fun MinecraftProfileScreen(
 
             Text(
 
-                text = "CUBIQ LAUNCHER SETTINGS",
+                text = stringResource(R.string.cubiq_profile_title),
 
                 color = Color(0xFFAAAAAA),
 
@@ -980,7 +986,7 @@ fun MinecraftProfileScreen(
 
                         Text(
 
-                            text = tab.title,
+                            text = stringResource(tab.title),
 
                             color = if (isTabSelected) Color.White else Color(0xFFCCCCCC),
 
@@ -1282,7 +1288,7 @@ fun MinecraftProfileScreen(
 
                                     gamepadConfigRefreshed = !gamepadConfigRefreshed
 
-                                    Toast.makeText(context, "Mappings reset to defaults", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.cubiq_profile_reset_mappings), Toast.LENGTH_SHORT).show()
 
                                 }
 
@@ -1686,7 +1692,7 @@ fun MicrosoftLoginDialog(
 
             Text(
 
-                text = "MICROSOFT LOGIN",
+                text = stringResource(R.string.cubiq_profile_microsoft_login),
 
                 fontFamily = MinecraftFontFamily,
 
@@ -1726,7 +1732,7 @@ fun MicrosoftLoginDialog(
 
                     Text(
 
-                        text = "Connecting to Microsoft authentication service...",
+                        text = stringResource(R.string.cubiq_profile_connect_microsoft),
 
                         fontFamily = MinecraftFontFamily,
 
@@ -1742,7 +1748,7 @@ fun MicrosoftLoginDialog(
 
                     Text(
 
-                        text = "1. Open the activation page:\n${msVerificationUrl ?: "https://www.microsoft.com/link"}\n\n2. Enter this code to sign in:",
+                        text = stringResource(R.string.cubiq_profile_microsoft_device_instructions, msVerificationUrl ?: "https://www.microsoft.com/link"),
 
                         fontFamily = MinecraftFontFamily,
 
@@ -1806,7 +1812,7 @@ fun MicrosoftLoginDialog(
 
                                 com.movtery.zalithlauncher.utils.copyText(
 
-                                    "Microsoft Device Code",
+                                    context.getString(R.string.cubiq_profile_device_code),
 
                                     msDeviceCodeText,
 
@@ -1820,7 +1826,7 @@ fun MicrosoftLoginDialog(
 
                             style = MinecraftButtonStyle.STONE,
 
-                            text = "COPY CODE",
+                            text = stringResource(R.string.cubiq_profile_copy_code),
 
                             fontSize = 10.5.sp,
 
@@ -1852,7 +1858,7 @@ fun MicrosoftLoginDialog(
 
                             style = MinecraftButtonStyle.GREEN,
 
-                            text = "OPEN BROWSER",
+                            text = stringResource(R.string.cubiq_profile_open_browser),
 
                             fontSize = 10.5.sp,
 
@@ -1870,7 +1876,7 @@ fun MicrosoftLoginDialog(
 
                     Text(
 
-                        text = "Waiting for browser authorization...",
+                        text = stringResource(R.string.cubiq_profile_wait_browser),
 
                         color = Color(0xFF888888),
 
@@ -1894,7 +1900,7 @@ fun MicrosoftLoginDialog(
 
                 style = MinecraftButtonStyle.RED,
 
-                text = "CANCEL",
+                text = stringResource(R.string.cubiq_profile_cancel),
 
                 fontSize = 11.5.sp,
 
@@ -1954,7 +1960,7 @@ fun ElybyLoginDialog(
                 Text("E", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
             }
             Text(
-                text = "ADD ELY.BY ACCOUNT",
+                text = stringResource(R.string.cubiq_profile_add_ely),
                 color = Color.White,
                 fontFamily = MinecraftFontFamily,
                 fontWeight = FontWeight.Bold,
@@ -1969,7 +1975,7 @@ fun ElybyLoginDialog(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_close),
-                    contentDescription = "Close",
+                    contentDescription = stringResource(R.string.generic_close),
                     tint = Color(0xFFAAAAAA),
                     modifier = Modifier.size(16.dp)
                 )
@@ -1985,7 +1991,7 @@ fun ElybyLoginDialog(
             verticalArrangement = Arrangement.spacedBy(if (isLandscape) 6.dp else 10.dp)
         ) {
             Text(
-                text = if (isLandscape) "Sign in with your Ely.by account:" else "Sign in with your Ely.by username/email and password for custom skins, capes, and authlib integration:",
+                text = if (isLandscape) stringResource(R.string.cubiq_profile_ely_short) else stringResource(R.string.cubiq_profile_ely_long),
                 color = Color(0xFFCCCCCC),
                 fontFamily = MinecraftFontFamily,
                 fontSize = if (isLandscape) 10.5.sp else 11.5.sp
@@ -1994,7 +2000,7 @@ fun ElybyLoginDialog(
             OutlinedTextField(
                 value = emailOrUsername,
                 onValueChange = { emailOrUsername = it; errorMessage = null },
-                placeholder = { Text("Username or Email", color = Color(0xFF666666), fontSize = 12.sp) },
+                placeholder = { Text(stringResource(R.string.cubiq_profile_username_email), color = Color(0xFF666666), fontSize = 12.sp) },
                 singleLine = true,
                 enabled = !isLoading,
                 modifier = Modifier.fillMaxWidth(),
@@ -2011,13 +2017,13 @@ fun ElybyLoginDialog(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it; errorMessage = null },
-                placeholder = { Text("Password", color = Color(0xFF666666), fontSize = 12.sp) },
+                placeholder = { Text(stringResource(R.string.cubiq_profile_password), color = Color(0xFF666666), fontSize = 12.sp) },
                 singleLine = true,
                 enabled = !isLoading,
                 visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else androidx.compose.ui.text.input.PasswordVisualTransformation(),
                 trailingIcon = {
                     Text(
-                        text = if (passwordVisible) "HIDE" else "SHOW",
+                        text = if (passwordVisible) stringResource(R.string.cubiq_profile_hide_upper) else stringResource(R.string.cubiq_profile_show_upper),
                         color = Color(0xFF0284C7),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 10.sp,
@@ -2053,13 +2059,13 @@ fun ElybyLoginDialog(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Don't have an account?",
+                    text = stringResource(R.string.cubiq_profile_no_account_question),
                     color = Color(0xFF888888),
                     fontFamily = MinecraftFontFamily,
                     fontSize = 10.5.sp
                 )
                 Text(
-                    text = "Register at Ely.by \u2197",
+                    text = stringResource(R.string.cubiq_profile_ely_register),
                     color = Color(0xFF38BDF8),
                     fontFamily = MinecraftFontFamily,
                     fontSize = 10.5.sp,
@@ -2088,7 +2094,7 @@ fun ElybyLoginDialog(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Authenticating with Ely.by...",
+                        text = stringResource(R.string.cubiq_profile_ely_authenticating),
                         color = Color(0xFFCCCCCC),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 11.sp
@@ -2106,7 +2112,7 @@ fun ElybyLoginDialog(
             MinecraftButton(
                 onClick = onDismiss,
                 style = MinecraftButtonStyle.STONE,
-                text = "CANCEL",
+                text = stringResource(R.string.cubiq_profile_cancel),
                 fontSize = 11.5.sp,
                 modifier = Modifier
                     .width(84.dp)
@@ -2119,7 +2125,7 @@ fun ElybyLoginDialog(
                 onClick = {
                     val trimmedUser = emailOrUsername.trim()
                     if (trimmedUser.isBlank() || password.isBlank()) {
-                        errorMessage = "Please enter username/email and password"
+                        errorMessage = context.getString(R.string.cubiq_profile_ely_required)
                         return@MinecraftButton
                     }
                     isLoading = true
@@ -2139,14 +2145,14 @@ fun ElybyLoginDialog(
                             }
                             withContext(Dispatchers.Main) {
                                 isLoading = false
-                                Toast.makeText(context, "Logged in as ${acc.username}!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_account_login_success, acc.username), Toast.LENGTH_SHORT).show()
                                 onSuccess()
                             }
                         },
                         onFailed = { th ->
                             scope.launch(Dispatchers.Main) {
                                 isLoading = false
-                                errorMessage = th.localizedMessage ?: "Authentication failed"
+                                errorMessage = th.localizedMessage ?: context.getString(R.string.cubiq_profile_auth_failure)
                             }
                         }
                     )
@@ -2157,7 +2163,7 @@ fun ElybyLoginDialog(
                     }
                 },
                 style = MinecraftButtonStyle.GREEN,
-                text = if (isLoading) "WAIT..." else "LOGIN",
+                text = if (isLoading) stringResource(R.string.cubiq_profile_wait) else stringResource(R.string.cubiq_profile_login),
                 fontSize = 11.5.sp,
                 modifier = Modifier
                     .width(84.dp)
@@ -2200,7 +2206,7 @@ private fun AddOfflineAccountDialog(
 
             Text(
 
-                text = "ADD OFFLINE ACCOUNT",
+                text = stringResource(R.string.cubiq_profile_add_offline),
 
                 color = Color.White,
 
@@ -2220,7 +2226,7 @@ private fun AddOfflineAccountDialog(
 
                 Text(
 
-                    text = "Enter username for local offline play:",
+                    text = stringResource(R.string.cubiq_profile_offline_prompt),
 
                     color = Color(0xFFCCCCCC),
 
@@ -2236,7 +2242,7 @@ private fun AddOfflineAccountDialog(
 
                     onValueChange = onUsernameChange,
 
-                    placeholder = { Text("Username", color = Color(0xFF666666), fontSize = 12.sp) },
+                    placeholder = { Text(stringResource(R.string.cubiq_profile_username), color = Color(0xFF666666), fontSize = 12.sp) },
 
                     singleLine = true,
 
@@ -2292,7 +2298,7 @@ private fun AddOfflineAccountDialog(
 
                             AccountsManager.setCurrentAccount(account)
 
-                            Toast.makeText(context, "Account '$trimmed' added!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_profile_account_added, trimmed), Toast.LENGTH_SHORT).show()
 
                             onCreated()
 
@@ -2300,7 +2306,7 @@ private fun AddOfflineAccountDialog(
 
                     } else {
 
-                        Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_profile_missing_username), Toast.LENGTH_SHORT).show()
 
                     }
 
@@ -2308,7 +2314,7 @@ private fun AddOfflineAccountDialog(
 
                 style = MinecraftButtonStyle.GREEN,
 
-                text = "CREATE",
+                text = stringResource(R.string.cubiq_profile_create),
 
                 fontSize = 11.5.sp,
 
@@ -2330,7 +2336,7 @@ private fun AddOfflineAccountDialog(
 
                 style = MinecraftButtonStyle.STONE,
 
-                text = "CANCEL",
+                text = stringResource(R.string.cubiq_profile_cancel),
 
                 fontSize = 11.5.sp,
 
@@ -2387,7 +2393,7 @@ private fun ManageOfflineAccountDialog(
 
             Text(
 
-                text = "MANAGE OFFLINE ACCOUNT",
+                text = stringResource(R.string.cubiq_profile_manage_offline),
 
                 color = Color(0xFF55FF55),
 
@@ -2403,7 +2409,7 @@ private fun ManageOfflineAccountDialog(
 
             Text(
 
-                text = "Edit username or customize skins and capes for '${account.username}':",
+                text = stringResource(R.string.cubiq_profile_edit_account_prompt, account.username),
 
                 color = Color(0xFFAAAAAA),
 
@@ -2421,7 +2427,7 @@ private fun ManageOfflineAccountDialog(
 
             Text(
 
-                text = "PLAYER USERNAME",
+                text = stringResource(R.string.cubiq_profile_player_username),
 
                 color = Color.White,
 
@@ -2456,7 +2462,7 @@ private fun ManageOfflineAccountDialog(
                         contentAlignment = Alignment.CenterStart
                     ) {
                         if (username.isEmpty()) {
-                            Text("Enter username", color = Color(0xFF666666), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                            Text(stringResource(R.string.cubiq_profile_enter_username), color = Color(0xFF666666), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
                         }
                         innerTextField()
                     }
@@ -2483,7 +2489,7 @@ private fun ManageOfflineAccountDialog(
 
                 style = MinecraftButtonStyle.GREEN,
 
-                text = "CUSTOMIZE SKINS & CAPES",
+                text = stringResource(R.string.cubiq_profile_customize_appearance),
 
                 modifier = Modifier
 
@@ -2513,7 +2519,7 @@ private fun ManageOfflineAccountDialog(
 
                     style = MinecraftButtonStyle.STONE,
 
-                    text = "CANCEL",
+                    text = stringResource(R.string.cubiq_profile_cancel),
 
                     modifier = Modifier
 
@@ -2545,13 +2551,13 @@ private fun ManageOfflineAccountDialog(
 
                             AccountsManager.refreshWardrobe()
 
-                            Toast.makeText(context, "Username updated to $trimmed", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_profile_username_updated, trimmed), Toast.LENGTH_SHORT).show()
 
                             onDismiss()
 
                         } else {
 
-                            Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_profile_missing_username), Toast.LENGTH_SHORT).show()
 
                         }
 
@@ -2559,7 +2565,7 @@ private fun ManageOfflineAccountDialog(
 
                     style = MinecraftButtonStyle.GREEN,
 
-                    text = "SAVE",
+                    text = stringResource(R.string.cubiq_profile_save),
 
                     modifier = Modifier
 
@@ -2610,7 +2616,7 @@ private fun DeleteAccountConfirmDialog(
 
             Text(
 
-                text = "DELETE ACCOUNT?",
+                text = stringResource(R.string.cubiq_profile_delete_account_title),
 
                 color = Color(0xFFFF5555),
 
@@ -2628,7 +2634,7 @@ private fun DeleteAccountConfirmDialog(
 
             Text(
 
-                text = "Are you sure you want to remove account '${account.username}'?",
+                text = stringResource(R.string.cubiq_profile_delete_account_confirm, account.username),
 
                 color = Color(0xFFCCCCCC),
 
@@ -2674,7 +2680,7 @@ private fun DeleteAccountConfirmDialog(
 
                         withContext(Dispatchers.Main) {
 
-                            Toast.makeText(context, "Account deleted", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_profile_account_deleted), Toast.LENGTH_SHORT).show()
 
                             onDeleted()
 
@@ -2686,7 +2692,7 @@ private fun DeleteAccountConfirmDialog(
 
                 style = MinecraftButtonStyle.RED,
 
-                text = "DELETE",
+                text = stringResource(R.string.cubiq_profile_delete),
 
                 fontSize = 11.5.sp,
 
@@ -2714,7 +2720,7 @@ private fun DeleteAccountConfirmDialog(
 
                 style = MinecraftButtonStyle.STONE,
 
-                text = "CANCEL",
+                text = stringResource(R.string.cubiq_profile_cancel),
 
                 fontSize = 11.5.sp,
 
@@ -2825,7 +2831,7 @@ private fun CreateGamepadConfigDialog(
 
             Text(
 
-                text = "NEW GAMEPAD PROFILE",
+                text = stringResource(R.string.cubiq_profile_new_gamepad_profile),
 
                 color = Color.White,
 
@@ -2845,7 +2851,7 @@ private fun CreateGamepadConfigDialog(
 
                 Text(
 
-                    text = "Enter profile name:",
+                    text = stringResource(R.string.cubiq_profile_enter_profile_name),
 
                     color = Color(0xFFCCCCCC),
 
@@ -2861,7 +2867,7 @@ private fun CreateGamepadConfigDialog(
 
                     onValueChange = onConfigNameChange,
 
-                    placeholder = { Text("Profile Name", color = Color(0xFF666666), fontSize = 12.sp) },
+                    placeholder = { Text(stringResource(R.string.cubiq_profile_profile_name), color = Color(0xFF666666), fontSize = 12.sp) },
 
                     singleLine = true,
 
@@ -2903,13 +2909,13 @@ private fun CreateGamepadConfigDialog(
 
                             onContainsConfig = {
 
-                                Toast.makeText(context, "Profile name already exists!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_duplicate_profile), Toast.LENGTH_SHORT).show()
 
                             },
 
                             onFinished = {
 
-                                Toast.makeText(context, "Gamepad Profile created!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_profile_created), Toast.LENGTH_SHORT).show()
 
                                 onCreated()
 
@@ -2919,7 +2925,7 @@ private fun CreateGamepadConfigDialog(
 
                     } else {
 
-                        Toast.makeText(context, "Name cannot be empty", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_profile_missing_name), Toast.LENGTH_SHORT).show()
 
                     }
 
@@ -2927,7 +2933,7 @@ private fun CreateGamepadConfigDialog(
 
                 style = MinecraftButtonStyle.GREEN,
 
-                text = "CREATE",
+                text = stringResource(R.string.cubiq_profile_create),
 
                 fontSize = 11.5.sp,
 
@@ -2949,7 +2955,7 @@ private fun CreateGamepadConfigDialog(
 
                 style = MinecraftButtonStyle.STONE,
 
-                text = "CANCEL",
+                text = stringResource(R.string.cubiq_profile_cancel),
 
                 fontSize = 11.5.sp,
 
@@ -2987,6 +2993,7 @@ private fun CreateTouchLayoutDialog(
 
     val scope = rememberCoroutineScope()
 
+    val templateLabels = mapOf("Zalith Launcher 1 Controls" to R.string.cubiq_profile_layout_zl1, "Zalith Launcher 2 Controls" to R.string.cubiq_profile_layout_zl2, "Pocket Edition Controls" to R.string.cubiq_profile_layout_pe)
     var selectedTemplate by remember { mutableStateOf("Plain Java Controls") }
 
     AlertDialog(
@@ -3004,7 +3011,7 @@ private fun CreateTouchLayoutDialog(
 
             Text(
 
-                text = "CREATE NEW TOUCH LAYOUT",
+                text = stringResource(R.string.cubiq_profile_new_touch_layout),
 
                 color = Color.White,
 
@@ -3024,7 +3031,7 @@ private fun CreateTouchLayoutDialog(
 
                 Text(
 
-                    text = "Enter layout name:",
+                    text = stringResource(R.string.cubiq_profile_enter_layout_name),
 
                     color = Color(0xFFCCCCCC),
 
@@ -3040,7 +3047,7 @@ private fun CreateTouchLayoutDialog(
 
                     onValueChange = onLayoutNameChange,
 
-                    placeholder = { Text("Layout Name (e.g. PvP, Bedrock Touch)", color = Color(0xFF666666), fontSize = 12.sp) },
+                    placeholder = { Text(stringResource(R.string.cubiq_profile_layout_name_example), color = Color(0xFF666666), fontSize = 12.sp) },
 
                     singleLine = true,
 
@@ -3070,7 +3077,7 @@ private fun CreateTouchLayoutDialog(
 
                 Text(
 
-                    text = "Base Layout Template:",
+                    text = stringResource(R.string.cubiq_profile_base_template),
 
                     color = Color(0xFFCCCCCC),
 
@@ -3120,7 +3127,7 @@ private fun CreateTouchLayoutDialog(
 
                             Text(
 
-                                text = template,
+                                text = stringResource(templateLabels.getValue(template)),
 
                                 color = if (isSel) Color(0xFF55FF55) else Color.White,
 
@@ -3135,10 +3142,10 @@ private fun CreateTouchLayoutDialog(
                             Text(
 
                                 text = when (template) {
-                                    "Zalith Launcher 1 Controls" -> "Original Zalith 1 PvP-focused control layout"
-                                    "Zalith Launcher 2 Controls" -> "Standard Zalith Launcher 2 layered controls"
-                                    "Pocket Edition Controls" -> "Bedrock mobile controls layout (~65% opacity)"
-                                    else -> "Custom touch control layout"
+                                    "Zalith Launcher 1 Controls" -> stringResource(R.string.cubiq_profile_layout_zl1_desc)
+                                    "Zalith Launcher 2 Controls" -> stringResource(R.string.cubiq_profile_layout_zl2_desc)
+                                    "Pocket Edition Controls" -> stringResource(R.string.cubiq_profile_layout_pe_desc)
+                                    else -> stringResource(R.string.cubiq_profile_layout_custom_desc)
                                 },
 
                                 color = Color(0xFF888888),
@@ -3207,7 +3214,7 @@ private fun CreateTouchLayoutDialog(
                                     file.writeText(jobj.toString(2))
                                     ControlManager.refresh()
                                     withContext(Dispatchers.Main) {
-                                        Toast.makeText(context, "Layout '${layoutName.trim()}' created from $selectedTemplate!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.cubiq_profile_layout_created, layoutName.trim(), templateLabels[selectedTemplate]?.let { context.getString(it) } ?: selectedTemplate), Toast.LENGTH_SHORT).show()
                                         onCreated()
                                     }
                                     return@launch
@@ -3259,7 +3266,7 @@ private fun CreateTouchLayoutDialog(
 
                                 withContext(Dispatchers.Main) {
 
-                                    Toast.makeText(context, "Layout '${layoutName.trim()}' created from $selectedTemplate!", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.cubiq_profile_layout_created, layoutName.trim(), templateLabels[selectedTemplate]?.let { context.getString(it) } ?: selectedTemplate), Toast.LENGTH_SHORT).show()
 
                                     onCreated()
 
@@ -3269,7 +3276,7 @@ private fun CreateTouchLayoutDialog(
 
                                 withContext(Dispatchers.Main) {
 
-                                    Toast.makeText(context, "Failed to create layout: ${e.message}", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.cubiq_profile_layout_creation_failed, e.message), Toast.LENGTH_SHORT).show()
 
                                 }
 
@@ -3279,7 +3286,7 @@ private fun CreateTouchLayoutDialog(
 
                     } else {
 
-                        Toast.makeText(context, "Layout name cannot be empty", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_profile_missing_layout_name), Toast.LENGTH_SHORT).show()
 
                     }
 
@@ -3287,7 +3294,7 @@ private fun CreateTouchLayoutDialog(
 
                 style = MinecraftButtonStyle.GREEN,
 
-                text = "CREATE",
+                text = stringResource(R.string.cubiq_profile_create),
 
                 fontSize = 11.5.sp,
 
@@ -3309,7 +3316,7 @@ private fun CreateTouchLayoutDialog(
 
                 style = MinecraftButtonStyle.STONE,
 
-                text = "CANCEL",
+                text = stringResource(R.string.cubiq_profile_cancel),
 
                 fontSize = 11.5.sp,
 
@@ -3409,7 +3416,7 @@ private fun AccountSection(
 
                         painter = painterResource(R.drawable.ic_person_outlined),
 
-                        contentDescription = "No Account",
+                        contentDescription = stringResource(R.string.cubiq_profile_no_account),
 
                         tint = Color(0xFF888888),
 
@@ -3429,7 +3436,7 @@ private fun AccountSection(
 
             Text(
 
-                text = account?.username ?: "NO ACTIVE ACCOUNT",
+                text = account?.username ?: stringResource(R.string.cubiq_profile_no_active_account),
 
                 color = Color.White,
 
@@ -3449,7 +3456,7 @@ private fun AccountSection(
 
             Text(
 
-                text = if (account != null) "Type: ${getAccountTypeName(account)}" else "Add an account below to play Minecraft",
+                text = if (account != null) stringResource(R.string.cubiq_profile_account_type, getAccountTypeName(account)) else stringResource(R.string.cubiq_profile_add_account_hint),
 
                 color = if (account != null) Color(0xFF55FF55) else Color(0xFFFF5555),
 
@@ -3479,7 +3486,7 @@ private fun AccountSection(
 
                     style = MinecraftButtonStyle.GREEN,
 
-                    text = if (isLoggingInMicrosoft) "LOGGING IN..." else "+ MICROSOFT",
+                    text = if (isLoggingInMicrosoft) stringResource(R.string.cubiq_profile_logging_in) else stringResource(R.string.cubiq_profile_add_microsoft_short),
 
                     fontSize = 9.5.sp,
 
@@ -3499,7 +3506,7 @@ private fun AccountSection(
 
                     style = MinecraftButtonStyle.STONE,
 
-                    text = "+ ELY.BY",
+                    text = stringResource(R.string.cubiq_profile_add_ely_short),
 
                     fontSize = 9.5.sp,
 
@@ -3519,7 +3526,7 @@ private fun AccountSection(
 
                     style = MinecraftButtonStyle.STONE,
 
-                    text = "+ OFFLINE",
+                    text = stringResource(R.string.cubiq_profile_add_offline_short),
 
                     fontSize = 9.5.sp,
 
@@ -3545,7 +3552,7 @@ private fun AccountSection(
 
     Text(
 
-        text = "SAVED ACCOUNTS (${accountsList.size})",
+        text = stringResource(R.string.cubiq_profile_saved_accounts, accountsList.size),
 
         color = Color(0xFFAAAAAA),
 
@@ -3585,7 +3592,7 @@ private fun AccountSection(
 
             Text(
 
-                text = "No saved accounts yet. Click '+ ADD NEW ACCOUNT' above.",
+                text = stringResource(R.string.cubiq_profile_no_saved_accounts),
 
                 color = Color(0xFF888888),
 
@@ -3782,7 +3789,7 @@ private fun AccountSection(
 
                             Text(
 
-                                text = "MANAGE",
+                                text = stringResource(R.string.cubiq_profile_manage),
 
                                 color = Color.White,
 
@@ -3806,7 +3813,7 @@ private fun AccountSection(
 
                                 painter = painterResource(R.drawable.ic_microsoft_logo),
 
-                                contentDescription = "Microsoft Account",
+                                contentDescription = stringResource(R.string.cubiq_profile_microsoft_account),
 
                                 modifier = Modifier.size(18.dp)
 
@@ -3818,7 +3825,7 @@ private fun AccountSection(
 
                                 painter = painterResource(R.drawable.ic_elyby_logo),
 
-                                contentDescription = "Ely.by Account",
+                                contentDescription = stringResource(R.string.cubiq_profile_ely_account),
 
                                 modifier = Modifier.size(18.dp)
 
@@ -3854,7 +3861,7 @@ private fun AccountSection(
 
                                 painter = painterResource(R.drawable.ic_delete_outlined),
 
-                                contentDescription = "Delete Account",
+                                contentDescription = stringResource(R.string.cubiq_profile_delete_account),
 
                                 tint = Color(0xFFFF5555),
 
@@ -3960,9 +3967,9 @@ private fun GameSettingsTab(
 
             ) {
 
-                Text("RAM Allocation", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.cubiq_profile_memory_allocation), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp, fontWeight = FontWeight.Bold)
 
-                Text("${ramValue.toInt()} MB (${String.format(java.util.Locale.ROOT, "%.1f", ramValue / 1024f)} GB)", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.cubiq_profile_memory_size, ramValue.toInt(), String.format(java.util.Locale.ROOT, "%.1f", ramValue / 1024f)), color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 11.sp, fontWeight = FontWeight.Bold)
 
             }
 
@@ -4014,7 +4021,7 @@ private fun GameSettingsTab(
 
                         Text(
 
-                            text = if (presetMb >= 1024f) "${(presetMb / 1024f).toInt()} GB" else "${presetMb.toInt()} MB",
+                            text = if (presetMb >= 1024f) stringResource(R.string.cubiq_profile_memory_gb, (presetMb / 1024f).toInt()) else stringResource(R.string.cubiq_profile_memory_mb, presetMb.toInt()),
 
                             color = if (isPresetSel) Color(0xFF55FF55) else Color.White,
 
@@ -4046,7 +4053,7 @@ private fun GameSettingsTab(
 
                     AllSettings.ramAllocation.save(ramValue.toInt())
 
-                    Toast.makeText(context, "Memory set to ${ramValue.toInt()} MB", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.cubiq_profile_memory_set, ramValue.toInt()), Toast.LENGTH_SHORT).show()
 
                 },
 
@@ -4072,9 +4079,9 @@ private fun GameSettingsTab(
 
             ) {
 
-                Text("512 MB", color = Color(0xFF666666), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                Text(stringResource(R.string.cubiq_profile_memory_mb, 512), color = Color(0xFF666666), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
 
-                Text("Max: ${maxRam.toInt()} MB", color = Color(0xFF666666), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                Text(stringResource(R.string.cubiq_profile_memory_max, maxRam.toInt()), color = Color(0xFF666666), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
 
             }
 
@@ -4096,9 +4103,9 @@ private fun GameSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Auto-Pick Java Runtime", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_auto_java), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
-                Text("Automatically selects best Java 8/17/21 for the version", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_auto_java_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -4139,8 +4146,8 @@ private fun GameSettingsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Show Startup Loading Dialog", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Display a Minecraft-styled loading popup while the game initializes", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_startup_dialog), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_startup_dialog_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
             }
             Switch(
                 checked = AllSettings.showGameLoadingDialog.state,
@@ -4172,9 +4179,9 @@ private fun GameSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Version Isolation", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_version_isolation), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
-                Text("Isolate mods, resource packs and configs per version", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_version_isolation_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -4222,9 +4229,9 @@ private fun GameSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Fast Launch (Skip Verification)", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_fast_launch), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
-                Text("Dramatically speeds up startup by skipping SHA-1 hash checks", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_fast_launch_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -4300,7 +4307,7 @@ private fun GameSettingsTab(
 
                 Text(
 
-                    text = "ADVANCED JVM & CONSOLE OPTIONS",
+                    text = stringResource(R.string.cubiq_profile_advanced_jvm),
 
                     color = Color.White,
 
@@ -4316,7 +4323,7 @@ private fun GameSettingsTab(
 
             Text(
 
-                text = if (showAdvancedGameOptions) "Hide" else "Show",
+                text = if (showAdvancedGameOptions) stringResource(R.string.cubiq_profile_hide) else stringResource(R.string.cubiq_profile_show),
 
                 color = Color(0xFF888888),
 
@@ -4368,7 +4375,7 @@ private fun GameSettingsTab(
 
                         },
 
-                        label = { Text("Exact Memory (MB)", color = Color(0xFF888888), fontSize = 10.sp) },
+                        label = { Text(stringResource(R.string.cubiq_profile_exact_memory), color = Color(0xFF888888), fontSize = 10.sp) },
 
                         singleLine = true,
 
@@ -4406,7 +4413,7 @@ private fun GameSettingsTab(
 
                                 AllSettings.ramAllocation.save(clamped.toInt())
 
-                                Toast.makeText(context, "Memory set to ${clamped.toInt()} MB", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_memory_set, clamped.toInt()), Toast.LENGTH_SHORT).show()
 
                             }
 
@@ -4414,7 +4421,7 @@ private fun GameSettingsTab(
 
                         style = MinecraftButtonStyle.GREEN,
 
-                        text = "SET MB",
+                        text = stringResource(R.string.cubiq_profile_set_memory),
 
                         fontSize = 10.5.sp,
 
@@ -4434,7 +4441,7 @@ private fun GameSettingsTab(
 
                 Column {
 
-                    Text("Custom JVM Arguments", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                    Text(stringResource(R.string.cubiq_profile_jvm_arguments), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
 
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -4486,7 +4493,7 @@ private fun GameSettingsTab(
 
                 Column {
 
-                    Text("Version Custom Subtitle", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                    Text(stringResource(R.string.cubiq_profile_version_subtitle), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
 
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -4548,9 +4555,9 @@ private fun GameSettingsTab(
 
                     Column(modifier = Modifier.weight(1f)) {
 
-                        Text("Show Console Log on Launch", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_show_console), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
 
-                        Text("Displays runtime log window during game execution", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_show_console_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
 
                     }
 
@@ -4596,9 +4603,9 @@ private fun GameSettingsTab(
 
                     ) {
 
-                        Text("Console Log Text Size", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_console_size), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
 
-                        Text("${logTextSize.toInt()} sp", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_console_sp, logTextSize.toInt()), color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
 
                     }
 
@@ -4646,9 +4653,9 @@ private fun GameSettingsTab(
 
                     ) {
 
-                        Text("Log Buffer Flush Interval", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_log_flush_interval), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
 
-                        Text("${flushInterval.toInt()} ms", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_log_ms, flushInterval.toInt()), color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 11.5.sp)
 
                     }
 
@@ -4770,7 +4777,7 @@ private fun VideoSettingsTab(
 
         Column {
 
-            Text("Graphics Renderer", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+            Text(stringResource(R.string.cubiq_profile_renderer), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
 
             Spacer(modifier = Modifier.height(6.dp))
 
@@ -4778,13 +4785,9 @@ private fun VideoSettingsTab(
 
             if (showCustomRendererDialog) {
                 SimpleAlertDialog(
-                    title = "Download Custom Renderers",
-                    text = "How to Install Custom Renderers:\n\n" +
-                            "1. Tap 'Go to GitHub' below to open the FCL Renderer Plugin releases page.\n\n" +
-                            "2. Download the renderer APK you need (such as LTW, Zink, MobileGlues, Angle, VirGL).\n\n" +
-                            "3. Install the APK on your device and launch it once to complete setup if needed.\n\n" +
-                            "4. Close and reopen Cubiq Launcher. The new renderer will automatically appear in your renderers list!",
-                    confirmText = "Go to GitHub",
+                    title = stringResource(R.string.cubiq_profile_download_renderer_dialog),
+                    text = stringResource(R.string.cubiq_profile_renderer_instructions),
+                    confirmText = stringResource(R.string.cubiq_profile_github_open),
                     dismissText = androidx.compose.ui.res.stringResource(com.movtery.zalithlauncher.R.string.generic_cancel),
                     onConfirm = {
                         showCustomRendererDialog = false
@@ -4804,7 +4807,7 @@ private fun VideoSettingsTab(
             MinecraftButton(
                 onClick = { showCustomRendererDialog = true },
                 style = MinecraftButtonStyle.STONE,
-                text = "DOWNLOAD CUSTOM RENDERERS",
+                text = stringResource(R.string.cubiq_profile_download_renderer),
                 fontSize = 11.sp,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -4885,7 +4888,7 @@ private fun VideoSettingsTab(
 
                                     Text(
 
-                                        text = "RECOMMENDED",
+                                        text = stringResource(R.string.cubiq_profile_recommended),
 
                                         color = Color(0xFF55FF55),
 
@@ -4983,7 +4986,7 @@ private fun VideoSettingsTab(
                         }
                     },
                     style = if (isInstalled) MinecraftButtonStyle.GREEN else MinecraftButtonStyle.STONE,
-                    text = if (isInstalled) "MOBILEGLUES INSTALLED (OPEN SETTINGS)" else "DOWNLOAD MOBILEGLUES COMPANION APP",
+                    text = if (isInstalled) stringResource(R.string.cubiq_profile_mobileglues_open) else stringResource(R.string.cubiq_profile_mobileglues_download),
                     fontSize = 11.sp,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -5009,9 +5012,9 @@ private fun VideoSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Game Fullscreen", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_game_fullscreen), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
-                Text("Extend game view into notch/cutout area", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_game_fullscreen_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -5057,7 +5060,7 @@ private fun VideoSettingsTab(
 
             ) {
 
-                Text("Resolution Scaling", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.cubiq_profile_resolution_scale), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp, fontWeight = FontWeight.Bold)
 
                 Text("${resolutionRatio.toInt()}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
@@ -5107,9 +5110,9 @@ private fun VideoSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Sustained Performance", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_sustained_performance), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
-                Text("Maintains stable FPS on thermal-throttling chips", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_sustained_performance_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -5185,7 +5188,7 @@ private fun VideoSettingsTab(
 
                 Text(
 
-                    text = "ADVANCED GRAPHICS & DRIVERS",
+                    text = stringResource(R.string.cubiq_profile_advanced_graphics),
 
                     color = Color.White,
 
@@ -5201,7 +5204,7 @@ private fun VideoSettingsTab(
 
             Text(
 
-                text = if (showAdvancedVideoOptions) "Hide" else "Show",
+                text = if (showAdvancedVideoOptions) stringResource(R.string.cubiq_profile_hide) else stringResource(R.string.cubiq_profile_show),
 
                 color = Color(0xFF888888),
 
@@ -5233,7 +5236,7 @@ private fun VideoSettingsTab(
 
                 Column {
 
-                    Text("Custom Resolution (Width x Height)", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                    Text(stringResource(R.string.cubiq_profile_custom_resolution), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
 
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -5259,7 +5262,7 @@ private fun VideoSettingsTab(
 
                             },
 
-                            placeholder = { Text("Width (e.g. 1920)", color = Color(0xFF666666), fontSize = 11.sp) },
+                            placeholder = { Text(stringResource(R.string.cubiq_profile_width_hint), color = Color(0xFF666666), fontSize = 11.sp) },
 
                             singleLine = true,
 
@@ -5297,7 +5300,7 @@ private fun VideoSettingsTab(
 
                             },
 
-                            placeholder = { Text("Height (e.g. 1080)", color = Color(0xFF666666), fontSize = 11.sp) },
+                            placeholder = { Text(stringResource(R.string.cubiq_profile_height_hint), color = Color(0xFF666666), fontSize = 11.sp) },
 
                             singleLine = true,
 
@@ -5341,9 +5344,9 @@ private fun VideoSettingsTab(
 
                     Column(modifier = Modifier.weight(1f)) {
 
-                        Text("Use SurfaceView Rendering", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_surface_view), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
 
-                        Text("Improves frame pacing and reduces battery drain", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_surface_view_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
 
                     }
 
@@ -5411,11 +5414,11 @@ private fun VideoSettingsTab(
 
                                 AllSettings.vulkanDriver.save(name)
 
-                                Toast.makeText(context, "Loaded custom driver: $name", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_driver_loaded, name), Toast.LENGTH_SHORT).show()
 
                             }.onFailure { e ->
 
-                                Toast.makeText(context, "Import failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_driver_import_fail, e.message), Toast.LENGTH_SHORT).show()
 
                             }
 
@@ -5435,7 +5438,7 @@ private fun VideoSettingsTab(
 
                     ) {
 
-                        Text("Turnip Vulkan Driver", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_turnip), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
 
                         Box(
 
@@ -5451,7 +5454,7 @@ private fun VideoSettingsTab(
 
                         ) {
 
-                            Text("+ IMPORT TURNIP", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 9.sp)
+                            Text(stringResource(R.string.cubiq_profile_import_turnip), color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 9.sp)
 
                         }
 
@@ -5525,7 +5528,7 @@ private fun VideoSettingsTab(
 
                                 Text(
 
-                                    text = driver.summary ?: if (driver.isLauncher) "Bundled Turnip driver for Adreno GPUs" else "Custom driver: ${driver.path}",
+                                    text = driver.summary ?: if (driver.isLauncher) stringResource(R.string.cubiq_profile_turnip_bundled) else stringResource(R.string.cubiq_profile_custom_driver, driver.path),
 
                                     color = if (isDriverSel) Color(0xFFCCCCCC) else Color(0xFF888888),
 
@@ -5583,9 +5586,9 @@ private fun VideoSettingsTab(
 
                     Column(modifier = Modifier.weight(1f)) {
 
-                        Text("Use System Vulkan Driver", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_system_vulkan), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
 
-                        Text("Bypasses Turnip and uses Qualcomm/Mali system driver", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_system_vulkan_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
 
                     }
 
@@ -5633,9 +5636,9 @@ private fun VideoSettingsTab(
 
                     Column(modifier = Modifier.weight(1f)) {
 
-                        Text("Vsync (Zink)", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_vsync), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
 
-                        Text("Syncs frame rate to screen refresh rate", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_vsync_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
 
                     }
 
@@ -5683,9 +5686,9 @@ private fun VideoSettingsTab(
 
                     Column(modifier = Modifier.weight(1f)) {
 
-                        Text("Shader Logging & Dump", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_shader_logging), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.5.sp)
 
-                        Text("Dumps compiled shaders to storage for debugging", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                        Text(stringResource(R.string.cubiq_profile_shader_logging_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
 
                     }
 
@@ -5803,7 +5806,7 @@ private fun ControlsSettingsTab(
 
     ) {
 
-        Text("Virtual Mouse Control Mode", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+        Text(stringResource(R.string.cubiq_profile_virtual_mouse_mode), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
 
 
 
@@ -5815,7 +5818,7 @@ private fun ControlsSettingsTab(
 
         ) {
 
-            val modes = listOf(MouseControlMode.SLIDE to "Slide Mode", MouseControlMode.CLICK to "Click Mode")
+            val modes = listOf(MouseControlMode.SLIDE to stringResource(R.string.cubiq_profile_slide_mode), MouseControlMode.CLICK to stringResource(R.string.cubiq_profile_click_mode))
 
             modes.forEach { (mode, label) ->
 
@@ -5887,7 +5890,7 @@ private fun ControlsSettingsTab(
 
             ) {
 
-                Text("Virtual Mouse Sensitivity", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_virtual_mouse_sens), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
                 Text("${cursorSensitivity.toInt()}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
@@ -5935,7 +5938,7 @@ private fun ControlsSettingsTab(
 
             ) {
 
-                Text("Virtual Mouse Pointer Size", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_virtual_pointer_size), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
                 Text("${mouseSize} dp", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
@@ -5985,9 +5988,9 @@ private fun ControlsSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Tap Screen to Click", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_tap_click), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
-                Text("Single tap fires left mouse click", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_tap_click_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -6035,9 +6038,9 @@ private fun ControlsSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Physical Mouse Capture", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_mouse_capture), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
-                Text("Direct hardware mouse lock & cursor hiding", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_mouse_capture_game_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -6085,9 +6088,9 @@ private fun ControlsSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Touch Screen Gestures (Bedrock Touch)", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_touch_gestures), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
-                Text("Tap to place blocks & select inventory slots, hold to break blocks & attack", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_touch_gestures_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -6135,9 +6138,9 @@ private fun ControlsSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Gyroscope Aiming", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_gyro_aim), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
-                Text("Aim camera with device motion sensors", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_gyro_aim_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -6183,7 +6186,7 @@ private fun ControlsSettingsTab(
 
                 ) {
 
-                    Text("Gyroscope Sensitivity", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                    Text(stringResource(R.string.cubiq_profile_gyro_sens), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
                     Text("${gyroscopeSensitivity.toInt()}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
@@ -6235,6 +6238,9 @@ private fun LauncherSettingsTab(
 
 ) {
 
+    LauncherLanguageCard(CardPosition.Single)
+    LauncherChinesePixelFontCard(CardPosition.Single)
+
     Column(
 
         modifier = Modifier
@@ -6265,9 +6271,9 @@ private fun LauncherSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Launcher Fullscreen", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                Text(stringResource(R.string.cubiq_profile_launcher_fullscreen), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
 
-                Text("Hide Android system status & navigation bars", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_launcher_fullscreen_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -6345,11 +6351,11 @@ private fun LauncherSettingsTab(
 
                         FontManager.setFont(FontManager.FONT_CUSTOM, target.absolutePath)
 
-                        Toast.makeText(context, "Loaded custom font: $name", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_profile_font_loaded, name), Toast.LENGTH_SHORT).show()
 
                     }.onFailure { e ->
 
-                        Toast.makeText(context, "Failed to load font: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_profile_font_load_failed, e.message), Toast.LENGTH_SHORT).show()
 
                     }
 
@@ -6371,9 +6377,9 @@ private fun LauncherSettingsTab(
 
                 Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
 
-                    Text("Launcher Font Style", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                    Text(stringResource(R.string.cubiq_profile_launcher_font), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
 
-                    Text("Select a preset typography or load custom font", color = Color(0xFF888888), fontFamily = MinecraftFontFamily, fontSize = 10.sp, lineHeight = 14.sp)
+                    Text(stringResource(R.string.cubiq_profile_launcher_font_desc), color = Color(0xFF888888), fontFamily = MinecraftFontFamily, fontSize = 10.sp, lineHeight = 14.sp)
 
                 }
 
@@ -6393,7 +6399,7 @@ private fun LauncherSettingsTab(
 
                     Text(
 
-                        "+ BROWSE FONT",
+                        stringResource(R.string.cubiq_profile_browse_fonts),
 
                         color = Color(0xFF55FF55),
 
@@ -6419,17 +6425,17 @@ private fun LauncherSettingsTab(
 
             val fontOptions = listOf(
 
-                Triple(FontManager.FONT_MINECRAFT, "Minecraft Pixel", "Authentic retro Minecraft pixel font"),
+                Triple(FontManager.FONT_MINECRAFT, stringResource(R.string.cubiq_profile_font_pixel), stringResource(R.string.cubiq_profile_font_pixel_desc)),
 
-                Triple(FontManager.FONT_SANS, "Modern Sans", "Clean, high-legibility modern sans-serif font"),
+                Triple(FontManager.FONT_SANS, stringResource(R.string.cubiq_profile_font_sans), stringResource(R.string.cubiq_profile_font_sans_desc)),
 
-                Triple(FontManager.FONT_MONOSPACE, "Monospace Code", "Developer monospaced terminal font"),
+                Triple(FontManager.FONT_MONOSPACE, stringResource(R.string.cubiq_profile_font_mono), stringResource(R.string.cubiq_profile_font_mono_desc)),
 
-                Triple(FontManager.FONT_SERIF, "Serif Classical", "Book-style elegant serif typeface"),
+                Triple(FontManager.FONT_SERIF, stringResource(R.string.cubiq_profile_font_serif), stringResource(R.string.cubiq_profile_font_serif_desc)),
 
-                Triple(FontManager.FONT_SYSTEM, "System Default", "Native Android operating system font"),
+                Triple(FontManager.FONT_SYSTEM, stringResource(R.string.cubiq_profile_font_system), stringResource(R.string.cubiq_profile_font_system_desc)),
 
-                Triple(FontManager.FONT_CUSTOM, "Custom Font", FontManager.customFontPath.ifBlank { "Tap to choose a .ttf or .otf file from storage" })
+                Triple(FontManager.FONT_CUSTOM, stringResource(R.string.cubiq_profile_font_custom), FontManager.customFontPath.ifBlank { stringResource(R.string.cubiq_profile_font_custom_desc) })
 
             )
 
@@ -6467,7 +6473,7 @@ private fun LauncherSettingsTab(
 
                                 FontManager.setFont(type, "")
 
-                                Toast.makeText(context, "Switched font to $name", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_font_switched, name), Toast.LENGTH_SHORT).show()
 
                             }
 
@@ -6527,7 +6533,7 @@ private fun LauncherSettingsTab(
 
                                 FontManager.setFont(type, "")
 
-                                Toast.makeText(context, "Switched font to $name", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_profile_font_switched, name), Toast.LENGTH_SHORT).show()
 
                             }
 
@@ -6637,9 +6643,9 @@ private fun GamepadSettingsTab(
 
             Column(modifier = Modifier.weight(1f)) {
 
-                Text("Enable Gamepad Support", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
+                Text(stringResource(R.string.cubiq_profile_gamepad_enable), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.5.sp)
 
-                Text("Connect external Xbox, PlayStation, Switch, or generic Bluetooth controllers", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_gamepad_enable_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
             }
 
@@ -6675,7 +6681,7 @@ private fun GamepadSettingsTab(
 
         // 2. Gamepad Input Mode
 
-        Text("Gamepad Input Mode", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+        Text(stringResource(R.string.cubiq_profile_gamepad_input), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
 
         Row(
 
@@ -6723,7 +6729,7 @@ private fun GamepadSettingsTab(
 
                     Text(
 
-                        text = if (mode == GamepadInputMode.Mapped) "MAPPED INPUT" else "DIRECT SDL PASS",
+                        text = if (mode == GamepadInputMode.Mapped) stringResource(R.string.cubiq_profile_gamepad_mapped) else stringResource(R.string.cubiq_profile_gamepad_direct),
 
                         color = Color.White,
 
@@ -6755,7 +6761,7 @@ private fun GamepadSettingsTab(
 
             ) {
 
-                Text("Analog Stick Deadzone", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_gamepad_deadzone), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
                 Text("${gamepadDeadZone.toInt()}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
@@ -6803,7 +6809,7 @@ private fun GamepadSettingsTab(
 
             ) {
 
-                Text("Right Stick Camera Sensitivity", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_gamepad_camera_sens), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
                 Text("${gamepadCameraSens.toInt()}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
@@ -6849,7 +6855,7 @@ private fun GamepadSettingsTab(
 
             ) {
 
-                Text("Menu Cursor Sensitivity", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_gamepad_cursor_sens), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
                 Text("${gamepadCursorSens.toInt()}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
@@ -6899,7 +6905,7 @@ private fun GamepadSettingsTab(
 
             Text(
 
-                text = "Profile: ${currentMapping?.name ?: "Default"}",
+                text = stringResource(R.string.cubiq_profile_gamepad_current_profile, currentMapping?.name ?: stringResource(R.string.cubiq_profile_gamepad_default_profile)),
 
                 color = Color(0xFF55FF55),
 
@@ -6919,7 +6925,7 @@ private fun GamepadSettingsTab(
 
                     style = MinecraftButtonStyle.STONE,
 
-                    text = "+ NEW PROFILE",
+                    text = stringResource(R.string.cubiq_profile_new_profile_button),
 
                     fontSize = 10.sp,
 
@@ -6937,7 +6943,7 @@ private fun GamepadSettingsTab(
 
                     style = MinecraftButtonStyle.RED,
 
-                    text = "RESET ALL",
+                    text = stringResource(R.string.cubiq_profile_reset_all),
 
                     fontSize = 10.sp,
 
@@ -6993,7 +6999,7 @@ private fun GamepadSettingsTab(
 
                 Text(
 
-                    text = "IN-GAME BINDINGS",
+                    text = stringResource(R.string.cubiq_profile_game_bindings),
 
                     color = Color.White,
 
@@ -7037,7 +7043,7 @@ private fun GamepadSettingsTab(
 
                 Text(
 
-                    text = "IN-MENU BINDINGS",
+                    text = stringResource(R.string.cubiq_profile_menu_bindings),
 
                     color = Color.White,
 
@@ -7059,7 +7065,7 @@ private fun GamepadSettingsTab(
 
         Text(
 
-            text = "INDIVIDUAL BUTTON MAPPINGS (${if (editGamepadKeyInGame) "IN-GAME" else "IN-MENU"})",
+            text = stringResource(R.string.cubiq_profile_individual_mappings, if (editGamepadKeyInGame) stringResource(R.string.cubiq_profile_mapping_ingame) else stringResource(R.string.cubiq_profile_mapping_inmenu)),
 
             color = Color(0xFFAAAAAA),
 
@@ -7074,6 +7080,24 @@ private fun GamepadSettingsTab(
 
 
         GamepadMap.entries.forEach { btn ->
+            val buttonLabel = stringResource(when (btn) {
+                GamepadMap.ButtonA -> R.string.cubiq_profile_gamepad_button_a
+                GamepadMap.ButtonB -> R.string.cubiq_profile_gamepad_button_b
+                GamepadMap.ButtonX -> R.string.cubiq_profile_gamepad_button_x
+                GamepadMap.ButtonY -> R.string.cubiq_profile_gamepad_button_y
+                GamepadMap.ButtonStart -> R.string.cubiq_profile_gamepad_button_start
+                GamepadMap.ButtonSelect -> R.string.cubiq_profile_gamepad_button_select
+                GamepadMap.ButtonLB -> R.string.cubiq_profile_gamepad_button_lb
+                GamepadMap.ButtonRB -> R.string.cubiq_profile_gamepad_button_rb
+                GamepadMap.ButtonLT -> R.string.cubiq_profile_gamepad_button_lt
+                GamepadMap.ButtonRT -> R.string.cubiq_profile_gamepad_button_rt
+                GamepadMap.DPadUp -> R.string.cubiq_profile_gamepad_dpad_up
+                GamepadMap.DPadDown -> R.string.cubiq_profile_gamepad_dpad_down
+                GamepadMap.DPadLeft -> R.string.cubiq_profile_gamepad_dpad_left
+                GamepadMap.DPadRight -> R.string.cubiq_profile_gamepad_dpad_right
+                GamepadMap.StickLeftClick -> R.string.cubiq_profile_gamepad_stick_left_click
+                GamepadMap.StickRightClick -> R.string.cubiq_profile_gamepad_stick_right_click
+            })
 
             val boundCodes = remember(btn, editGamepadKeyInGame, gamepadConfigRefreshed) {
 
@@ -7089,7 +7113,7 @@ private fun GamepadSettingsTab(
 
             } else {
 
-                "Unbound (Click to assign)"
+                stringResource(R.string.cubiq_profile_unbound)
 
             }
 
@@ -7129,7 +7153,7 @@ private fun GamepadSettingsTab(
 
                         painter = painterResource(btn.getIconRes()),
 
-                        contentDescription = btn.name,
+                        contentDescription = buttonLabel,
 
                         modifier = Modifier.size(24.dp)
 
@@ -7141,7 +7165,7 @@ private fun GamepadSettingsTab(
 
                         Text(
 
-                            text = btn.name.replace("_", " "),
+                            text = buttonLabel,
 
                             color = Color.White,
 
@@ -7173,7 +7197,7 @@ private fun GamepadSettingsTab(
 
                     painter = painterResource(R.drawable.ic_arrow_right_rounded),
 
-                    contentDescription = "Edit",
+                    contentDescription = stringResource(R.string.generic_edit),
 
                     tint = Color(0xFF888888),
 
@@ -7215,7 +7239,7 @@ private fun KeyboardMouseSettingsTab(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text(
-            text = "Hardware Keyboard & Mouse Settings",
+            text = stringResource(R.string.cubiq_profile_hardware_input),
             color = Color.White,
             fontFamily = MinecraftFontFamily,
             fontWeight = FontWeight.Bold,
@@ -7223,7 +7247,7 @@ private fun KeyboardMouseSettingsTab(
         )
 
         Text(
-            text = "Manage external USB or Bluetooth keyboard and mouse connected to your device.",
+            text = stringResource(R.string.cubiq_profile_hardware_input_desc),
             color = Color(0xFFAAAAAA),
             fontFamily = MinecraftFontFamily,
             fontSize = 10.5.sp
@@ -7238,8 +7262,8 @@ private fun KeyboardMouseSettingsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Physical Mouse Capture", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Capture external mouse cursor for authentic PC look & aim", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_mouse_capture), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_mouse_capture_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
             }
             Switch(
                 checked = physicalMouseMode,
@@ -7259,7 +7283,7 @@ private fun KeyboardMouseSettingsTab(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Mouse Pointer Sensitivity", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_pointer_sens), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
                 Text("${mouseCaptureSensitivity.toInt()}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
             }
             Slider(
@@ -7281,8 +7305,8 @@ private fun KeyboardMouseSettingsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Hide Android System Cursor", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Hides the OS mouse cursor so only in-game crosshair is visible", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_hide_system_cursor), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_hide_system_cursor_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
             }
             Switch(
                 checked = hideMouse,
@@ -7303,8 +7327,8 @@ private fun KeyboardMouseSettingsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Enable Mouse Button Clicks", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Allow physical left, right, and middle clicks", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_enable_mouse_clicks), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_enable_mouse_clicks_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
             }
             Switch(
                 checked = enableMouseClick,
@@ -7324,7 +7348,7 @@ private fun KeyboardMouseSettingsTab(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Cursor Size", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_cursor_size), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
                 Text("${mouseSize} dp", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
             }
             Slider(
@@ -7342,7 +7366,7 @@ private fun KeyboardMouseSettingsTab(
 
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "MOUSE BUTTON REMAPPING",
+            text = stringResource(R.string.cubiq_profile_mouse_remapping),
             color = Color(0xFFAAAAAA),
             fontFamily = MinecraftFontFamily,
             fontWeight = FontWeight.Bold,
@@ -7513,7 +7537,7 @@ private fun KeyboardMouseSettingsTab(
                 )
             }
 
-            val displayedKeys = remember(selectedCategory, searchQuery) {
+            val displayedKeys = remember(selectedCategory, searchQuery, androidx.compose.ui.platform.LocalConfiguration.current) {
                 allAvailableKeys.filter { key ->
                     val matchesCategory = when (selectedCategory) {
                         "Mouse" -> key.startsWith("Left Click") || key.startsWith("Right Click") || key.startsWith("Middle Click") || key.startsWith("Mouse")
@@ -7524,7 +7548,7 @@ private fun KeyboardMouseSettingsTab(
                         "F-Keys" -> key.startsWith("F") && key.length in 2..3 && key.drop(1).all { it.isDigit() }
                         else -> true
                     }
-                    val matchesSearch = searchQuery.isBlank() || key.contains(searchQuery, ignoreCase = true)
+                    val matchesSearch = searchQuery.isBlank() || key.contains(searchQuery, ignoreCase = true) || context.remapDisplayLabel(key).contains(searchQuery, ignoreCase = true)
                     matchesCategory && matchesSearch
                 }
             }
@@ -7561,13 +7585,13 @@ private fun KeyboardMouseSettingsTab(
                         ) {
                             Column(modifier = Modifier.weight(1f, fill = false)) {
                                 Text(
-                                    text = "Remap Key",
+                                    text = stringResource(R.string.cubiq_profile_remap_key),
                                     color = Color.Gray,
                                     fontSize = 10.5.sp,
                                     fontFamily = MinecraftFontFamily
                                 )
                                 Text(
-                                    text = action,
+                                    text = context.remapDisplayLabel(action),
                                     color = Color.White,
                                     fontFamily = MinecraftFontFamily,
                                     fontWeight = FontWeight.Bold,
@@ -7612,7 +7636,7 @@ private fun KeyboardMouseSettingsTab(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (isListening) "⚡ LISTENING... Press Any Key or Mouse" else "🔍 AUTO DETECT (Hardware Key / Mouse)",
+                                text = if (isListening) stringResource(R.string.cubiq_profile_listening) else stringResource(R.string.cubiq_profile_auto_detect),
                                 color = if (isListening) Color.White else Color(0xFF55FF55),
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
@@ -7625,7 +7649,7 @@ private fun KeyboardMouseSettingsTab(
                         // Dropdown Button (Mapping Selector)
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
-                                text = "MAPPING (SELECT KEY):",
+                                text = stringResource(R.string.cubiq_profile_select_mapping),
                                 color = Color(0xFFAAAAAA),
                                 fontSize = 10.5.sp,
                                 fontFamily = MinecraftFontFamily,
@@ -7644,7 +7668,7 @@ private fun KeyboardMouseSettingsTab(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = selectedLabel,
+                                    text = context.remapDisplayLabel(selectedLabel),
                                     color = Color.White,
                                     fontFamily = MinecraftFontFamily,
                                     fontWeight = FontWeight.Bold,
@@ -7694,7 +7718,7 @@ private fun KeyboardMouseSettingsTab(
                                                 .padding(horizontal = 7.dp, vertical = 3.dp)
                                         ) {
                                             Text(
-                                                text = cat,
+                                                text = context.remapDisplayLabel(cat),
                                                 color = if (isChosen) Color.White else Color(0xFFAAAAAA),
                                                 fontFamily = MinecraftFontFamily,
                                                 fontSize = 9.5.sp,
@@ -7729,7 +7753,7 @@ private fun KeyboardMouseSettingsTab(
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                text = keyItem,
+                                                text = context.remapDisplayLabel(keyItem),
                                                 color = if (isSelected) Color(0xFF55FF55) else Color(0xFFCCCCCC),
                                                 fontFamily = MinecraftFontFamily,
                                                 fontSize = 11.sp,
@@ -7773,13 +7797,13 @@ private fun KeyboardMouseSettingsTab(
                                     .height(34.dp),
                                 style = MinecraftButtonStyle.STONE
                             ) {
-                                Text("CANCEL", fontFamily = MinecraftFontFamily, fontSize = 11.sp, color = Color.White)
+                                Text(stringResource(R.string.cubiq_profile_cancel), fontFamily = MinecraftFontFamily, fontSize = 11.sp, color = Color.White)
                             }
                             MinecraftButton(
                                 onClick = {
                                     val code = com.movtery.zalithlauncher.ui.control.input.KeyboardRemapManager.getActionKeyCode(selectedLabel, 0)
                                     com.movtery.zalithlauncher.ui.control.input.KeyboardRemapManager.saveBinding(action, code, selectedLabel, context)
-                                    Toast.makeText(context, "$action remapped to $selectedLabel", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.cubiq_profile_binding_remapped, context.remapDisplayLabel(action), context.remapDisplayLabel(selectedLabel)), Toast.LENGTH_SHORT).show()
                                     remapRefreshKey++
                                     activeRemapAction = null
                                 },
@@ -7788,7 +7812,7 @@ private fun KeyboardMouseSettingsTab(
                                     .height(34.dp),
                                 style = MinecraftButtonStyle.GREEN
                             ) {
-                                Text("SAVE BINDING", fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color.White)
+                                Text(stringResource(R.string.cubiq_profile_save_binding), fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp, color = Color.White)
                             }
                         }
                     }
@@ -7811,8 +7835,8 @@ private fun KeyboardMouseSettingsTab(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = action, color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                    Text(text = currentBound, color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                    Text(text = context.remapDisplayLabel(action), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Text(text = context.remapDisplayLabel(currentBound), color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
                 }
                 MinecraftButton(
                     onClick = {
@@ -7821,7 +7845,7 @@ private fun KeyboardMouseSettingsTab(
                         activeRemapIsMouse = true
                     },
                     style = MinecraftButtonStyle.STONE,
-                    text = "REMAP",
+                    text = stringResource(R.string.cubiq_profile_remap),
                     fontSize = 9.5.sp,
                     modifier = Modifier.height(30.dp).widthIn(min = 68.dp)
                 )
@@ -7830,7 +7854,7 @@ private fun KeyboardMouseSettingsTab(
 
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            text = "KEYBOARD SHORTCUT REMAPPING",
+            text = stringResource(R.string.cubiq_profile_keyboard_remapping),
             color = Color(0xFFAAAAAA),
             fontFamily = MinecraftFontFamily,
             fontWeight = FontWeight.Bold,
@@ -7871,8 +7895,8 @@ private fun KeyboardMouseSettingsTab(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = action, color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                    Text(text = currentBound, color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
+                    Text(text = context.remapDisplayLabel(action), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Text(text = context.remapDisplayLabel(currentBound), color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 9.5.sp)
                 }
                 MinecraftButton(
                     onClick = {
@@ -7881,7 +7905,7 @@ private fun KeyboardMouseSettingsTab(
                         activeRemapIsMouse = false
                     },
                     style = MinecraftButtonStyle.STONE,
-                    text = "REMAP",
+                    text = stringResource(R.string.cubiq_profile_remap),
                     fontSize = 9.5.sp,
                     modifier = Modifier.height(30.dp).widthIn(min = 68.dp)
                 )
@@ -7919,7 +7943,7 @@ private fun ScreenRecordingSettingsTab(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text(
-            text = "Screen Recording & Capture Settings",
+            text = stringResource(R.string.cubiq_profile_capture_settings),
             color = Color.White,
             fontFamily = MinecraftFontFamily,
             fontWeight = FontWeight.Bold,
@@ -7927,7 +7951,7 @@ private fun ScreenRecordingSettingsTab(
         )
 
         Text(
-            text = "Configure built-in gameplay video recorder, audio source, resolution and screenshot options.",
+            text = stringResource(R.string.cubiq_profile_capture_settings_desc),
             color = Color(0xFFAAAAAA),
             fontFamily = MinecraftFontFamily,
             fontSize = 10.5.sp
@@ -7942,8 +7966,8 @@ private fun ScreenRecordingSettingsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Show Capture Tools on HUD", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Display draggable in-game recording & screenshot pill on HUD", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_capture_hud), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_capture_hud_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
             }
             Switch(
                 checked = hudScreenCaptureTools,
@@ -7969,11 +7993,11 @@ private fun ScreenRecordingSettingsTab(
         val isMidRange = totalRamGb in 4..6
         val isHighEnd = totalRamGb > 6
 
-        val availableResolutions = remember(isLowEnd, isMidRange, isHighEnd) {
+        val availableResolutions = run {
             when {
                 isLowEnd -> listOf("720p" to "720p HD")
                 isMidRange -> listOf("720p" to "720p HD", "1080p" to "1080p FHD")
-                else -> listOf("720p" to "720p HD", "1080p" to "1080p FHD", "native" to "Native Screen")
+                else -> listOf("720p" to "720p HD", "1080p" to "1080p FHD", "native" to stringResource(R.string.cubiq_profile_native_resolution))
             }
         }
 
@@ -8002,7 +8026,7 @@ private fun ScreenRecordingSettingsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "⚡ Hardware Profile: ${totalRamGb}GB RAM (${if (isLowEnd) "Safe Low-End" else if (isMidRange) "Balanced Mid-Range" else "High-End Unlocked"}), max ${availableResolutions.last().second} @ ${availableFps.last().second}",
+                text = stringResource(R.string.cubiq_profile_hardware_profile, totalRamGb, if (isLowEnd) stringResource(R.string.cubiq_profile_hardware_low) else if (isMidRange) stringResource(R.string.cubiq_profile_hardware_middle) else stringResource(R.string.cubiq_profile_hardware_high), availableResolutions.last().second, availableFps.last().second),
                 color = Color(0xFF77FF77),
                 fontFamily = MinecraftFontFamily,
                 fontSize = 10.5.sp
@@ -8011,7 +8035,7 @@ private fun ScreenRecordingSettingsTab(
 
         // Video Resolution Selector
         Column {
-            Text("Video Resolution", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Text(stringResource(R.string.cubiq_profile_video_resolution), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(6.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 availableResolutions.forEach { (resKey, label) ->
@@ -8034,7 +8058,7 @@ private fun ScreenRecordingSettingsTab(
 
         // Recording Framerate
         Column {
-            Text("Recording Framerate", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Text(stringResource(R.string.cubiq_profile_record_fps), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(6.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 availableFps.forEach { (fpsVal, label) ->
@@ -8061,8 +8085,8 @@ private fun ScreenRecordingSettingsTab(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Video Bitrate", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
-                Text("${recordBitrate} Mbps", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_video_bitrate), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_record_mbps, recordBitrate), color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
             }
             Slider(
                 value = recordBitrate.toFloat().coerceIn(2f, maxBitrate),
@@ -8078,10 +8102,10 @@ private fun ScreenRecordingSettingsTab(
 
         // Audio Source Selector
         Column {
-            Text("Audio Source", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            Text(stringResource(R.string.cubiq_profile_audio_source), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             Spacer(modifier = Modifier.height(6.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                val sources = listOf("both" to "Game + Mic", "internal" to "Game Only", "mic" to "Mic Only", "mute" to "Mute")
+                val sources = listOf("both" to stringResource(R.string.cubiq_profile_audio_both), "internal" to stringResource(R.string.cubiq_profile_audio_game), "mic" to stringResource(R.string.cubiq_profile_audio_mic), "mute" to stringResource(R.string.cubiq_profile_audio_mute))
                 sources.forEach { (srcKey, label) ->
                     val isSel = recordAudioSource == srcKey
                     Box(
@@ -8107,8 +8131,8 @@ private fun ScreenRecordingSettingsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Capture Audio Shutter Sound", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Plays click feedback sound when taking screenshots or starting recording", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_shutter_sound), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_shutter_sound_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
             }
             Switch(
                 checked = hudCaptureSound,
@@ -8129,8 +8153,8 @@ private fun ScreenRecordingSettingsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Auto-Save to Media Gallery", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Save video recordings to Movies and screenshots to Pictures automatically", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_save_to_gallery), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_save_to_gallery_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
             }
             Switch(
                 checked = hudSaveToGallery,
@@ -8151,8 +8175,8 @@ private fun ScreenRecordingSettingsTab(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Display Recording Timer on HUD", color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                Text("Shows dynamic REC 00:00 counter while recording gameplay", color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                Text(stringResource(R.string.cubiq_profile_rec_timer), color = Color.White, fontFamily = MinecraftFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_rec_timer_desc), color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
             }
             Switch(
                 checked = hudShowRecordTimer,
@@ -8227,11 +8251,11 @@ private fun JavaSettingsTab(
 
                         AllSettings.javaRuntime.save(cleanName)
 
-                        Toast.makeText(context, "Successfully imported $cleanName!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_profile_jre_imported, cleanName), Toast.LENGTH_SHORT).show()
 
                     } else {
 
-                        Toast.makeText(context, "Failed to import custom JRE archive", Toast.LENGTH_LONG).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_profile_jre_import_failed), Toast.LENGTH_LONG).show()
 
                     }
 
@@ -8249,7 +8273,7 @@ private fun JavaSettingsTab(
         if (uri != null) {
             val activity = context as? Activity
             if (activity == null) {
-                Toast.makeText(context, "Unable to execute JAR from this screen", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_profile_jar_not_available), Toast.LENGTH_LONG).show()
             } else {
                 executeJarWithUri(
                     activity = activity,
@@ -8294,7 +8318,7 @@ private fun JavaSettingsTab(
 
                 Text(
 
-                    text = "INSTALLED JAVA RUNTIMES",
+                    text = stringResource(R.string.cubiq_profile_installed_runtimes),
 
                     color = Color.White,
 
@@ -8308,7 +8332,7 @@ private fun JavaSettingsTab(
 
                 Text(
 
-                    text = "Import archives (.tar.xz, .zip, .tar.gz) or pick runtime",
+                    text = stringResource(R.string.cubiq_profile_runtime_import_hint),
 
                     color = Color(0xFF888888),
 
@@ -8331,7 +8355,7 @@ private fun JavaSettingsTab(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        "+ IMPORT JRE",
+                        stringResource(R.string.cubiq_profile_import_jre),
                         color = Color(0xFF55FF55),
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -8349,7 +8373,7 @@ private fun JavaSettingsTab(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        "EXECUTE JAR",
+                        stringResource(R.string.cubiq_profile_execute_jar),
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -8368,7 +8392,7 @@ private fun JavaSettingsTab(
 
             Text(
 
-                text = "Unpacking and registering runtime archive...",
+                text = stringResource(R.string.cubiq_profile_extract_runtime),
 
                 color = Color(0xFF55FF55),
 
@@ -8390,7 +8414,7 @@ private fun JavaSettingsTab(
 
             Text(
 
-                text = "No custom Java runtimes installed. Internal runtime will be used automatically.",
+                text = stringResource(R.string.cubiq_profile_no_custom_runtime),
 
                 color = Color(0xFF888888),
 
@@ -8432,7 +8456,7 @@ private fun JavaSettingsTab(
 
                             AllSettings.javaRuntime.save(rt.name)
 
-                            Toast.makeText(context, "Java Runtime set to ${rt.name}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_profile_runtime_set, rt.name), Toast.LENGTH_SHORT).show()
 
                         }
 
@@ -8462,7 +8486,7 @@ private fun JavaSettingsTab(
 
                         Text(
 
-                            text = "Java Version: ${rt.versionString ?: rt.javaVersion} • ${rt.arch ?: "default"}",
+                            text = stringResource(R.string.cubiq_profile_java_version, rt.versionString ?: rt.javaVersion, rt.arch ?: stringResource(R.string.cubiq_profile_runtime_default_arch)),
 
                             color = Color(0xFF888888),
 
@@ -8478,7 +8502,7 @@ private fun JavaSettingsTab(
 
                     if (isSelected) {
 
-                        Text("ACTIVE", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.cubiq_profile_active), color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 10.sp, fontWeight = FontWeight.Bold)
 
                     }
 
@@ -8548,7 +8572,7 @@ private fun LayoutsSettingsTab(
 
         Text(
 
-            text = "TOUCH CONTROLS & LAYOUT MANAGEMENT",
+            text = stringResource(R.string.cubiq_profile_touch_management),
 
             color = Color.White,
 
@@ -8570,7 +8594,7 @@ private fun LayoutsSettingsTab(
 
             style = MinecraftButtonStyle.GREEN,
 
-            text = "LAUNCH ON-SCREEN CONTROL EDITOR",
+            text = stringResource(R.string.cubiq_profile_launch_control_editor),
 
             fontSize = 11.5.sp,
 
@@ -8596,7 +8620,7 @@ private fun LayoutsSettingsTab(
 
             ) {
 
-                Text("Virtual Controls Opacity", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_control_opacity), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
                 Text("${controlsOpacity}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
 
@@ -8640,7 +8664,7 @@ private fun LayoutsSettingsTab(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Overall Controls Button Size", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
+                Text(stringResource(R.string.cubiq_profile_button_scale), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 12.sp)
                 Text("${controlsButtonScale}%", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 12.sp)
             }
 
@@ -8675,7 +8699,7 @@ private fun LayoutsSettingsTab(
 
                 style = MinecraftButtonStyle.STONE,
 
-                text = "+ NEW",
+                text = stringResource(R.string.cubiq_profile_new),
 
                 fontSize = 10.sp,
 
@@ -8693,7 +8717,7 @@ private fun LayoutsSettingsTab(
 
                 style = MinecraftButtonStyle.STONE,
 
-                text = "IMPORT",
+                text = stringResource(R.string.cubiq_profile_import),
 
                 fontSize = 10.sp,
 
@@ -8719,7 +8743,7 @@ private fun LayoutsSettingsTab(
 
                     } else {
 
-                        Toast.makeText(context, "No active layout to export", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_profile_no_layout_export), Toast.LENGTH_SHORT).show()
 
                     }
 
@@ -8727,7 +8751,7 @@ private fun LayoutsSettingsTab(
 
                 style = MinecraftButtonStyle.STONE,
 
-                text = "EXPORT",
+                text = stringResource(R.string.cubiq_profile_export),
 
                 fontSize = 10.sp,
 
@@ -8745,7 +8769,7 @@ private fun LayoutsSettingsTab(
 
         Text(
 
-            text = "SAVED LAYOUTS (${controlLayouts.size})",
+            text = stringResource(R.string.cubiq_profile_saved_layouts, controlLayouts.size),
 
             color = Color(0xFFAAAAAA),
 
@@ -8765,7 +8789,7 @@ private fun LayoutsSettingsTab(
 
             Text(
 
-                text = "No custom layouts found. Default layout will be used.",
+                text = stringResource(R.string.cubiq_profile_no_custom_layout),
 
                 color = Color(0xFF888888),
 
@@ -8782,9 +8806,9 @@ private fun LayoutsSettingsTab(
                 val isSelected = activeControlLayoutName == data.file.name
 
                 val layoutName = when {
-                    data.file.name == "zalith_1_layout.json" -> "Zalith Launcher 1 Controls"
-                    data.file.name == "zalith_2_layout.json" -> "Zalith Launcher 2 Controls"
-                    data.file.name == "pocket_edition_layout.json" -> "Pocket Edition Controls"
+                    data.file.name == "zalith_1_layout.json" -> stringResource(R.string.cubiq_profile_layout_zl1)
+                    data.file.name == "zalith_2_layout.json" -> stringResource(R.string.cubiq_profile_layout_zl2)
+                    data.file.name == "pocket_edition_layout.json" -> stringResource(R.string.cubiq_profile_layout_pe)
                     data.isSupport && data.controlLayout.info.name.translate(locale).isNotBlank() -> data.controlLayout.info.name.translate(locale)
                     else -> data.file.name.removeSuffix(".json").replace("_", " ")
                 }
@@ -8817,7 +8841,7 @@ private fun LayoutsSettingsTab(
 
                             AllSettings.controlLayout.save(data.file.name)
 
-                            Toast.makeText(context, "Active Layout: $layoutName", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_profile_active_layout, layoutName), Toast.LENGTH_SHORT).show()
 
                         }
 
@@ -8847,7 +8871,7 @@ private fun LayoutsSettingsTab(
 
                         Text(
 
-                            text = "Author: $authorName • File: ${data.file.name}",
+                            text = stringResource(R.string.cubiq_profile_layout_author, authorName, data.file.name),
 
                             color = Color(0xFF888888),
 
@@ -8871,7 +8895,7 @@ private fun LayoutsSettingsTab(
 
                         if (isSelected) {
 
-                            Text("ACTIVE", color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.cubiq_profile_active), color = Color(0xFF55FF55), fontFamily = MinecraftFontFamily, fontSize = 10.sp, fontWeight = FontWeight.Bold)
 
                         }
 
@@ -8883,7 +8907,7 @@ private fun LayoutsSettingsTab(
 
                             style = MinecraftButtonStyle.STONE,
 
-                            text = "SHARE",
+                            text = stringResource(R.string.cubiq_profile_share),
 
                             fontSize = 9.sp,
 
@@ -8901,13 +8925,13 @@ private fun LayoutsSettingsTab(
 
                                     ControlManager.deleteControl(data)
 
-                                    Toast.makeText(context, "Deleted ${data.file.name}", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.cubiq_profile_file_deleted, data.file.name), Toast.LENGTH_SHORT).show()
 
                                 },
 
                                 style = MinecraftButtonStyle.RED,
 
-                                text = "DEL",
+                                text = stringResource(R.string.cubiq_profile_delete_short),
 
                                 fontSize = 9.sp,
 
@@ -8963,7 +8987,7 @@ private fun AboutSettingsTab(backStackViewModel: com.movtery.zalithlauncher.view
 
             painter = painterResource(R.drawable.img_cubiq_emblem),
 
-            contentDescription = "Cubiq Emblem",
+            contentDescription = stringResource(R.string.cubiq_profile_emblem),
 
             modifier = Modifier.size(56.dp)
 
@@ -8973,7 +8997,7 @@ private fun AboutSettingsTab(backStackViewModel: com.movtery.zalithlauncher.view
 
         Text(
 
-            text = "CUBIQ LAUNCHER",
+            text = stringResource(R.string.cubiq_profile_brand),
 
             color = Color.White,
 
@@ -8989,7 +9013,7 @@ private fun AboutSettingsTab(backStackViewModel: com.movtery.zalithlauncher.view
 
         Text(
 
-            text = "v1.2.0 (Release)",
+            text = stringResource(R.string.cubiq_profile_release),
 
             color = Color(0xFF55FF55),
 
@@ -9005,7 +9029,7 @@ private fun AboutSettingsTab(backStackViewModel: com.movtery.zalithlauncher.view
 
         Text(
 
-            text = "Architecture: ${BuildKeys.BUILD_ARCH}",
+            text = stringResource(R.string.cubiq_profile_architecture, BuildKeys.BUILD_ARCH),
 
             color = Color(0xFF888888),
 
@@ -9041,7 +9065,7 @@ private fun AboutSettingsTab(backStackViewModel: com.movtery.zalithlauncher.view
 
                 Text(
 
-                    text = "GPLv3 FORK ATTRIBUTION",
+                    text = stringResource(R.string.cubiq_profile_gpl_attribution),
 
                     color = Color(0xFFFFAA00),
 
@@ -9055,7 +9079,7 @@ private fun AboutSettingsTab(backStackViewModel: com.movtery.zalithlauncher.view
 
                 Text(
 
-                    text = "Cubiq Launcher is an independent, unofficial fork of Zalith Launcher 2 created by MovTery & contributors, licensed under the GNU General Public License v3.0 (GPLv3).\nAll modifications, improvements, and custom modules are published under GPLv3.",
+                    text = stringResource(R.string.cubiq_profile_gpl_terms),
 
                     color = Color(0xFFAAAAAA),
 

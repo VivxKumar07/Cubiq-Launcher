@@ -641,8 +641,8 @@ private fun VersionsLayout(
                                 IconTextButton(
                                     onClick = { executeJarLauncher.launch("*/*") },
                                     painter = painterResource(R.drawable.ic_terminal_outlined),
-                                    contentDescription = "Execute .jar",
-                                    text = "Execute .jar"
+                                    contentDescription = stringResource(R.string.cubiq_home_execute_jar),
+                                    text = stringResource(R.string.cubiq_home_execute_jar)
                                 )
                             }
                         }

@@ -627,14 +627,14 @@ private fun ServerListHeader(
         ) {
             Column {
                 Text(
-                    text = "PLAY MULTIPLAYER",
+                    text = stringResource(R.string.cubiq_secondary_server_play),
                     color = Color.White,
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
                 Text(
-                    text = "Minecraft Java Edition Server List",
+                    text = stringResource(R.string.cubiq_secondary_server_list),
                     color = Color(0xFF9E9E9E),
                     fontFamily = MinecraftFontFamily,
                     fontSize = 10.5.sp
@@ -645,7 +645,7 @@ private fun ServerListHeader(
                 MinecraftButton(
                     onClick = onAddServer,
                     style = MinecraftButtonStyle.GREEN,
-                    text = "+ ADD SERVER",
+                    text = stringResource(R.string.cubiq_secondary_server_add),
                     fontSize = 11.sp,
                     modifier = Modifier.height(34.dp)
                 )
@@ -681,7 +681,7 @@ private fun ServerListHeader(
                     onValueChange = onSearchNameChange,
                     hint = {
                         Text(
-                            text = "Search servers by name or IP...",
+                            text = stringResource(R.string.cubiq_secondary_server_search),
                             color = Color(0xFF888888),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 12.sp
@@ -745,7 +745,7 @@ private fun ServerListBody(
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    text = "No matching servers found",
+                    text = stringResource(R.string.cubiq_secondary_server_no_matches),
                     color = Color(0xFF888888),
                     fontFamily = MinecraftFontFamily,
                     fontSize = 13.sp
@@ -756,7 +756,7 @@ private fun ServerListBody(
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "No servers added yet",
+                    text = stringResource(R.string.cubiq_secondary_server_empty),
                     color = Color(0xFF888888),
                     fontFamily = MinecraftFontFamily,
                     fontSize = 13.sp
@@ -846,7 +846,7 @@ private fun ServerItem(
                                     signalStrength = signalStrength
                                 )
                                 Text(
-                                    text = "${ot.result.pingMs}ms",
+                                    text = stringResource(R.string.cubiq_secondary_server_ping, ot.result.pingMs),
                                     color = Color(0xFF55FF55),
                                     fontFamily = MinecraftFontFamily,
                                     fontSize = 10.sp
@@ -866,7 +866,7 @@ private fun ServerItem(
                     if (ot is ServerData.Operation.Loaded) {
                         val players = ot.result.status.players
                         Text(
-                            text = "Players: ${players.online}/${players.max}",
+                            text = stringResource(R.string.cubiq_secondary_server_players, players.online, players.max),
                             color = Color(0xFF55FFFF),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 10.5.sp
@@ -897,7 +897,7 @@ private fun ServerItem(
                 }
                 is ServerData.Operation.Failed -> {
                     Text(
-                        text = "Can't connect to server",
+                        text = stringResource(R.string.cubiq_secondary_server_connect_failed),
                         color = Color(0xFFFF5555),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 11.sp
@@ -915,7 +915,7 @@ private fun ServerItem(
                 MinecraftButton(
                     onClick = onPlay,
                     style = MinecraftButtonStyle.GREEN,
-                    text = "▶ JOIN SERVER",
+                    text = stringResource(R.string.cubiq_secondary_server_join),
                     fontSize = 12.sp,
                     modifier = Modifier
                         .weight(1f)

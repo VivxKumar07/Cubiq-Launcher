@@ -99,8 +99,10 @@ import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.graphics.toArgb
 
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 
 import androidx.compose.ui.viewinterop.AndroidView
+import com.movtery.zalithlauncher.R
 
 import androidx.webkit.WebViewAssetLoader
 
@@ -738,7 +740,7 @@ fun SkinPreview3D(
 
                     model = com.movtery.zalithlauncher.R.drawable.mc_loading_spinner,
 
-                    contentDescription = "Loading skin preview...",
+                    contentDescription = stringResource(R.string.cubiq_secondary_skin_preview_loading),
 
                     modifier = Modifier.size(48.dp)
 

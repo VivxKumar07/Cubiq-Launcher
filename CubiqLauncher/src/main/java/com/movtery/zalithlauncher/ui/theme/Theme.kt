@@ -689,7 +689,7 @@ fun ZalithLauncherTheme(
         MaterialExpressiveTheme(
             colorScheme = currentDisplayScheme,
             motionScheme = MotionScheme.expressive(),
-            typography = AppTypography,
+            typography = launcherTypography(),
             shapes = CubiqShapes,
             content = content
         )

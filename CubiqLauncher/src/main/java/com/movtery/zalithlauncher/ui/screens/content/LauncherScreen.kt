@@ -20,6 +20,8 @@
 
 package com.movtery.zalithlauncher.ui.screens.content
 
+import androidx.compose.ui.res.stringResource
+
 import com.movtery.zalithlauncher.setting.AllSettings
 
 import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonHomeBanner
@@ -736,7 +738,7 @@ fun LauncherScreen(
 
 
 
-                Toast.makeText(context, "Please wait for the game to finish downloading...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_home_wait_download), Toast.LENGTH_SHORT).show()
 
 
 
@@ -744,7 +746,7 @@ fun LauncherScreen(
 
 
 
-                Toast.makeText(context, "Please create an account first!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_home_account_required), Toast.LENGTH_SHORT).show()
 
 
 
@@ -762,7 +764,7 @@ fun LauncherScreen(
 
                 val targetVersion = currentVersion ?: allVersions.firstOrNull()
                 if (targetVersion == null) {
-                    Toast.makeText(context, "Please create an installation first!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.cubiq_home_installation_required), Toast.LENGTH_SHORT).show()
                     LauncherNavState.activeTab = 0
                 } else {
                     onLaunchGame(targetVersion)
@@ -794,7 +796,7 @@ fun LauncherScreen(
 
 
 
-                Toast.makeText(context, "Please wait for the game to finish downloading...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_home_wait_download), Toast.LENGTH_SHORT).show()
 
 
 
@@ -802,7 +804,7 @@ fun LauncherScreen(
 
 
 
-                Toast.makeText(context, "Please create an account first!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.cubiq_home_account_required), Toast.LENGTH_SHORT).show()
 
 
 
@@ -838,7 +840,7 @@ fun LauncherScreen(
 
 
 
-                    Toast.makeText(context, "Please download this installation in Installations tab first!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.cubiq_home_download_installation_first), Toast.LENGTH_SHORT).show()
 
 
 
@@ -1207,7 +1209,7 @@ fun LauncherScreen(
 
 
 
-                        Toast.makeText(context, "Switched to ${selectedAcc.username}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_home_account_switched, selectedAcc.username), Toast.LENGTH_SHORT).show()
 
 
 
@@ -1547,7 +1549,7 @@ fun LauncherScreen(
 
 
 
-                                            Toast.makeText(context, "Please wait for the game to finish downloading...", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, context.getString(R.string.cubiq_home_wait_download), Toast.LENGTH_SHORT).show()
 
 
 
@@ -1555,7 +1557,7 @@ fun LauncherScreen(
 
 
 
-                                            Toast.makeText(context, "Please create an account first!", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, context.getString(R.string.cubiq_home_account_required), Toast.LENGTH_SHORT).show()
 
 
 
@@ -1573,7 +1575,7 @@ fun LauncherScreen(
 
                                             val targetVersion = currentVersion ?: allVersions.firstOrNull()
                                             if (targetVersion == null) {
-                                                Toast.makeText(context, "Please create an installation first!", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, context.getString(R.string.cubiq_home_installation_required), Toast.LENGTH_SHORT).show()
                                                 LauncherNavState.activeTab = 0
                                             } else {
                                                 onLaunchGame(targetVersion)
@@ -1605,7 +1607,7 @@ fun LauncherScreen(
 
 
 
-                                            Toast.makeText(context, "Please wait for the game to finish downloading...", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, context.getString(R.string.cubiq_home_wait_download), Toast.LENGTH_SHORT).show()
 
 
 
@@ -1613,7 +1615,7 @@ fun LauncherScreen(
 
 
 
-                                            Toast.makeText(context, "Please create an account first!", Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(context, context.getString(R.string.cubiq_home_account_required), Toast.LENGTH_SHORT).show()
 
 
 
@@ -1649,7 +1651,7 @@ fun LauncherScreen(
 
 
 
-                                                Toast.makeText(context, "Please download this installation in Installations tab first!", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, context.getString(R.string.cubiq_home_download_installation_first), Toast.LENGTH_SHORT).show()
 
 
 
@@ -1844,7 +1846,7 @@ fun LauncherScreen(
 
 
 
-                                                                        text = "Latest Release (${MinecraftOfficialContentManager.latestReleaseVersion.value})",
+                                                                        text = stringResource(R.string.cubiq_home_latest_release_with_version, MinecraftOfficialContentManager.latestReleaseVersion.value),
 
 
 
@@ -1992,7 +1994,7 @@ fun LauncherScreen(
 
 
 
-                                                                    text = "+ Manage Installations",
+                                                                    text = stringResource(R.string.cubiq_home_manage_installations),
 
 
 
@@ -2400,7 +2402,7 @@ private fun MinecraftLaunchLoadingOverlay() {
 
 
 
-                contentDescription = "Minecraft Java Edition",
+                contentDescription = stringResource(R.string.cubiq_home_java_edition_description),
 
 
 
@@ -2480,7 +2482,7 @@ private fun MinecraftLaunchLoadingOverlay() {
 
 
 
-                    contentDescription = "Loading Block",
+                    contentDescription = stringResource(R.string.cubiq_home_loading_block_description),
 
 
 
@@ -2588,7 +2590,7 @@ private fun MinecraftLaunchLoadingOverlay() {
 
 
 
-                text = "LOADING CUBIQ...",
+                text = stringResource(R.string.cubiq_home_loading_cubiq),
 
 
 
@@ -2864,7 +2866,7 @@ private fun TopAccountHeader(
                     } else {
                         Image(
                             painter = painterResource(R.drawable.ic_mc_pc_profile),
-                            contentDescription = "Steve Face",
+                            contentDescription = stringResource(R.string.cubiq_home_player),
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(RoundedCornerShape(4.dp)),
@@ -2918,7 +2920,7 @@ private fun TopAccountHeader(
 
 
 
-                            text = account?.username ?: "Player",
+                            text = account?.username ?: stringResource(R.string.cubiq_home_player),
 
 
 
@@ -2986,7 +2988,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = account?.let { "(${getAccountTypeName(it)})" } ?: "(No Active Account)",
+                        text = account?.let { "(${getAccountTypeName(it)})" } ?: stringResource(R.string.cubiq_home_no_active_account),
 
 
 
@@ -3126,7 +3128,7 @@ private fun TopAccountHeader(
 
 
 
-                        contentDescription = "Rotate Screen",
+                        contentDescription = stringResource(R.string.cubiq_home_rotate_screen),
 
 
 
@@ -3198,7 +3200,7 @@ private fun TopAccountHeader(
 
 
 
-                    text = "FILES",
+                    text = stringResource(R.string.cubiq_home_files),
 
 
 
@@ -3254,7 +3256,7 @@ private fun TopAccountHeader(
 
 
 
-                    text = "MULTIPLAYER",
+                    text = stringResource(R.string.cubiq_home_multiplayer),
 
 
 
@@ -3410,7 +3412,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = "ACCOUNTS",
+                        text = stringResource(R.string.cubiq_home_accounts),
 
 
 
@@ -3466,7 +3468,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = "${accountsList.size} Saved",
+                        text = stringResource(R.string.cubiq_home_account_count_saved, accountsList.size),
 
 
 
@@ -3582,7 +3584,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = "No saved accounts yet.\nAdd an account below to play!",
+                        text = stringResource(R.string.cubiq_home_no_saved_accounts),
 
 
 
@@ -3818,7 +3820,7 @@ private fun TopAccountHeader(
 
 
 
-                                        text = "ACTIVE",
+                                        text = stringResource(R.string.cubiq_home_active),
 
 
 
@@ -4042,7 +4044,7 @@ private fun TopAccountHeader(
 
 
 
-                                Toast.makeText(context, "Microsoft Login Failed: ${err.message.toAndroidString(context)}", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_home_microsoft_login_failed, err.message.toAndroidString(context)), Toast.LENGTH_LONG).show()
 
 
 
@@ -4062,7 +4064,7 @@ private fun TopAccountHeader(
 
 
 
-                                Toast.makeText(context, "Successfully logged into Microsoft Account!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_home_microsoft_login_success), Toast.LENGTH_SHORT).show()
 
 
 
@@ -4158,7 +4160,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = "Add Microsoft Account",
+                        text = stringResource(R.string.cubiq_home_add_microsoft_account),
 
 
 
@@ -4186,7 +4188,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = "Official Mojang / Xbox sign in",
+                        text = stringResource(R.string.cubiq_home_microsoft_sign_in),
 
 
 
@@ -4330,7 +4332,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = "Add Ely.by Account",
+                        text = stringResource(R.string.cubiq_home_add_elyby_account),
 
 
 
@@ -4358,7 +4360,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = "Custom skins, capes & authlib login",
+                        text = stringResource(R.string.cubiq_home_elyby_summary),
 
 
 
@@ -4502,7 +4504,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = "Add Offline Account",
+                        text = stringResource(R.string.cubiq_home_add_offline_account),
 
 
 
@@ -4530,7 +4532,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = "Play locally without signing in",
+                        text = stringResource(R.string.cubiq_home_offline_summary),
 
 
 
@@ -4658,7 +4660,7 @@ private fun TopAccountHeader(
 
 
 
-                    text = "Manage Accounts & Settings",
+                    text = stringResource(R.string.cubiq_home_manage_accounts_settings),
 
 
 
@@ -4794,7 +4796,7 @@ private fun TopAccountHeader(
 
 
 
-                    text = "ADD OFFLINE ACCOUNT",
+                    text = stringResource(R.string.cubiq_home_offline_account_title),
 
 
 
@@ -4834,7 +4836,7 @@ private fun TopAccountHeader(
 
 
 
-                        text = "Enter username for local offline play:",
+                        text = stringResource(R.string.cubiq_home_offline_account_prompt),
 
 
 
@@ -4866,7 +4868,7 @@ private fun TopAccountHeader(
 
 
 
-                        placeholder = { Text("Username", color = Color(0xFF666666), fontSize = 12.sp) },
+                        placeholder = { Text(stringResource(R.string.cubiq_home_username), color = Color(0xFF666666), fontSize = 12.sp) },
 
 
 
@@ -4978,7 +4980,7 @@ private fun TopAccountHeader(
 
 
 
-                                Toast.makeText(context, "Account '$trimmed' added!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_home_account_added, trimmed), Toast.LENGTH_SHORT).show()
 
 
 
@@ -4998,7 +5000,7 @@ private fun TopAccountHeader(
 
 
 
-                            Toast.makeText(context, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_home_username_empty), Toast.LENGTH_SHORT).show()
 
 
 
@@ -5014,7 +5016,7 @@ private fun TopAccountHeader(
 
 
 
-                    text = "CREATE",
+                    text = stringResource(R.string.cubiq_home_create),
 
 
 
@@ -5058,7 +5060,7 @@ private fun TopAccountHeader(
 
 
 
-                    text = "CANCEL",
+                    text = stringResource(R.string.cubiq_home_cancel),
 
 
 
@@ -5142,15 +5144,15 @@ private fun SubNavigationTabs(
 
 
 
-        Pair("Play", -1),
+        Pair(stringResource(R.string.cubiq_home_play_title), -1),
 
 
 
-        Pair("Installations", 0),
+        Pair(stringResource(R.string.cubiq_home_installations), 0),
 
 
 
-        Pair("Skins", 1),
+        Pair(stringResource(R.string.cubiq_home_skins), 1),
 
 
 
@@ -5466,7 +5468,7 @@ private fun HeroMinecraftCard(
 
 
 
-                contentDescription = "Minecraft Version Hero Artwork",
+                contentDescription = stringResource(R.string.cubiq_home_hero_art_description),
 
 
 
@@ -5499,7 +5501,7 @@ private fun HeroMinecraftCard(
 
 
 
-                contentDescription = "Minecraft Java Edition",
+                contentDescription = stringResource(R.string.cubiq_home_java_edition_description),
 
 
 
@@ -5542,7 +5544,7 @@ private fun HeroMinecraftCard(
                             .background(if (autoScroll) Color(0xFF55FF55) else Color(0xFF777777))
                     )
                     Text(
-                        text = if (autoScroll) "AUTO ON" else "AUTO OFF",
+                        text = stringResource(if (autoScroll) R.string.cubiq_home_auto_on_short else R.string.cubiq_home_auto_off_short),
                         color = if (autoScroll) Color(0xFF55FF55) else Color(0xFFCCCCCC),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 9.sp,
@@ -5713,7 +5715,7 @@ private fun HeroMinecraftCard(
 
 
 
-                            contentDescription = "Selected Version Icon",
+                            contentDescription = stringResource(R.string.cubiq_home_version_icon),
 
 
 
@@ -5741,7 +5743,7 @@ private fun HeroMinecraftCard(
 
 
 
-                            contentDescription = "Selected Version Icon",
+                            contentDescription = stringResource(R.string.cubiq_home_version_icon),
 
 
 
@@ -5777,7 +5779,7 @@ private fun HeroMinecraftCard(
 
 
 
-                            text = if (version == null) "Latest Release" else "Selected Version",
+                            text = stringResource(if (version == null) R.string.cubiq_home_latest_release else R.string.cubiq_home_selected_version),
 
 
 
@@ -5974,7 +5976,7 @@ private fun PlayActionRow(
             },
             style = MinecraftButtonStyle.GREEN,
             isLoading = isLaunching,
-            text = "PLAY",
+            text = stringResource(R.string.cubiq_home_play),
             fontSize = 18.sp,
             modifier = Modifier
                 .fillMaxWidth()
@@ -6081,7 +6083,7 @@ private fun InstalledVersionsSection(
 
 
 
-                text = "YOUR INSTALLATIONS",
+                text = stringResource(R.string.cubiq_home_section_installations),
 
 
 
@@ -6109,7 +6111,7 @@ private fun InstalledVersionsSection(
 
 
 
-                text = "+ ADD NEW",
+                text = stringResource(R.string.cubiq_home_add_new),
 
 
 
@@ -6249,7 +6251,7 @@ private fun InstalledVersionsSection(
 
 
 
-                        text = "No custom installations yet",
+                        text = stringResource(R.string.cubiq_home_no_custom_installations),
 
 
 
@@ -6297,7 +6299,7 @@ private fun InstalledVersionsSection(
 
 
 
-                        text = "+ CREATE INSTALLATION",
+                        text = stringResource(R.string.cubiq_home_create_installation),
 
 
 
@@ -6593,7 +6595,7 @@ private fun InstalledVersionsSection(
 
 
 
-                            val loaderName = ver.getVersionInfo()?.loaderInfo?.loader?.displayName ?: "Vanilla"
+                            val loaderName = ver.getVersionInfo()?.loaderInfo?.loader?.displayName ?: stringResource(R.string.cubiq_home_vanilla)
 
 
 
@@ -6653,7 +6655,7 @@ private fun InstalledVersionsSection(
 
 
 
-                                    text = "● ACTIVE",
+                                    text = "● " + stringResource(R.string.cubiq_home_active),
 
 
 
@@ -6713,7 +6715,7 @@ private fun InstalledVersionsSection(
 
 
 
-                            text = "PLAY",
+                            text = stringResource(R.string.cubiq_home_play),
 
 
 
@@ -7708,13 +7710,13 @@ fun CompactBackgroundDownloadBar(
             is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Downloading -> {
                 val dlMb = "%.1f".format(java.util.Locale.US, s.currentBytes / (1024f * 1024f))
                 val totMb = "%.1f".format(java.util.Locale.US, s.totalBytes / (1024f * 1024f))
-                "Downloading files ($dlMb MB / $totMb MB)"
+                stringResource(R.string.cubiq_home_horizon_downloading_files, dlMb, totMb)
             }
             is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Configuring -> {
-                if (s.currentStep.isNotBlank()) "Configuring: ${s.currentStep}" else "Configuring runtime..."
+                if (s.currentStep.isNotBlank()) stringResource(R.string.cubiq_home_horizon_configuring_step, s.currentStep) else stringResource(R.string.cubiq_home_horizon_configuring)
             }
-            is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Preparing -> "Preparing environment..."
-            is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Finalizing -> "Finalizing setup..."
+            is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Preparing -> stringResource(R.string.cubiq_home_horizon_preparing)
+            is com.movtery.zalithlauncher.game.horizon.HorizonManager.InstallState.Finalizing -> stringResource(R.string.cubiq_home_horizon_finalizing)
             else -> null
         }
     } else null
@@ -7871,7 +7873,7 @@ fun CompactBackgroundDownloadBar(
 
                     if (isHorizonOnly) {
                         Text(
-                            text = "HORIZON (MINECRAFT RUST) • ${horizonMessage ?: "SETTING UP..."}",
+                            text = stringResource(R.string.cubiq_home_horizon_status, horizonMessage ?: stringResource(R.string.cubiq_home_horizon_setting_up)),
                             modifier = Modifier.weight(1f, fill = false).padding(end = 8.dp),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
@@ -7892,11 +7894,11 @@ fun CompactBackgroundDownloadBar(
 
 
 
-                            if (!msgText.isNullOrBlank()) "PREPARING ${activeInstallName!!.uppercase()} • $msgText"
+                            if (!msgText.isNullOrBlank()) stringResource(R.string.cubiq_home_preparing_install_with_message, activeInstallName!!.uppercase(), msgText)
 
 
 
-                            else "PREPARING ${activeInstallName!!.uppercase()}..."
+                            else stringResource(R.string.cubiq_home_preparing_install, activeInstallName!!.uppercase())
 
 
 
@@ -7908,11 +7910,11 @@ fun CompactBackgroundDownloadBar(
 
 
 
-                            if (!msgText.isNullOrBlank()) "DOWNLOADING ${activeInstallName!!.uppercase()} • $msgText"
+                            if (!msgText.isNullOrBlank()) stringResource(R.string.cubiq_home_downloading_install_with_message, activeInstallName!!.uppercase(), msgText)
 
 
 
-                            else "DOWNLOADING ${activeInstallName!!.uppercase()}"
+                            else stringResource(R.string.cubiq_home_downloading_install, activeInstallName!!.uppercase())
 
 
 
@@ -8012,7 +8014,7 @@ fun CompactBackgroundDownloadBar(
 
 
 
-                            text = if (isPreparing) "PREPARING GAME INSTALLATION..." else "DOWNLOADING GAME FILES...",
+                            text = stringResource(if (isPreparing) R.string.cubiq_home_preparing_game else R.string.cubiq_home_downloading_game),
 
 
 
@@ -8068,7 +8070,7 @@ fun CompactBackgroundDownloadBar(
 
 
 
-                            text = "${formatFileSize(spd)}/s",
+                            text = stringResource(R.string.cubiq_home_download_speed, formatFileSize(spd)),
 
 
 
@@ -8256,7 +8258,7 @@ fun CompactBackgroundDownloadBar(
 
 
 
-                    text = "VIEW",
+                    text = stringResource(R.string.cubiq_home_view),
 
 
 
@@ -8360,7 +8362,7 @@ fun PersistentCrashDialog(
 
 
 
-                "No crash log file found at: $logPath"
+                context.getString(R.string.cubiq_home_no_crash_log_at, logPath)
 
 
 
@@ -8368,7 +8370,7 @@ fun PersistentCrashDialog(
 
 
 
-        }.getOrDefault("Failed to read log file.")
+        }.getOrDefault(context.getString(R.string.cubiq_home_failed_read_log))
 
 
 
@@ -8500,7 +8502,7 @@ fun PersistentCrashDialog(
 
 
 
-                            text = "GAME CRASH DETECTED",
+                            text = stringResource(R.string.cubiq_home_crash_detected),
 
 
 
@@ -8528,7 +8530,7 @@ fun PersistentCrashDialog(
 
 
 
-                            text = if (isSignal) "Terminated by system signal (Code $exitCode)" else "JVM exited abnormally with code $exitCode",
+                            text = stringResource(if (isSignal) R.string.cubiq_home_crash_signal else R.string.cubiq_home_crash_exit, exitCode),
 
 
 
@@ -8592,7 +8594,7 @@ fun PersistentCrashDialog(
 
 
 
-                    text = "The previous Minecraft session crashed. You can review the log output below or share it for troubleshooting:",
+                    text = stringResource(R.string.cubiq_home_crash_explanation),
 
 
 
@@ -8740,7 +8742,7 @@ fun PersistentCrashDialog(
 
 
 
-                                Toast.makeText(context, "Log file does not exist", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_home_log_not_exist), Toast.LENGTH_SHORT).show()
 
 
 
@@ -8756,7 +8758,7 @@ fun PersistentCrashDialog(
 
 
 
-                        text = "SHARE LOG",
+                        text = stringResource(R.string.cubiq_home_share_log),
 
 
 
@@ -8796,11 +8798,11 @@ fun PersistentCrashDialog(
 
 
 
-                                com.movtery.zalithlauncher.utils.copyText("Crash Log", logFile.readText(), context, true)
+                                com.movtery.zalithlauncher.utils.copyText(context.getString(R.string.cubiq_home_crash_log), logFile.readText(), context, true)
 
 
 
-                                Toast.makeText(context, "Copied full log to clipboard!", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_home_log_copied), Toast.LENGTH_SHORT).show()
 
 
 
@@ -8808,7 +8810,7 @@ fun PersistentCrashDialog(
 
 
 
-                                Toast.makeText(context, "Log file not found", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_home_log_not_found), Toast.LENGTH_SHORT).show()
 
 
 
@@ -8824,7 +8826,7 @@ fun PersistentCrashDialog(
 
 
 
-                        text = "COPY LOG",
+                        text = stringResource(R.string.cubiq_home_copy_log),
 
 
 
@@ -8864,7 +8866,7 @@ fun PersistentCrashDialog(
 
 
 
-                        text = "DISMISS",
+                        text = stringResource(R.string.cubiq_home_dismiss),
 
 
 
@@ -8968,7 +8970,7 @@ fun InstallationDownloadForegroundDialog() {
 
 
 
-                title = "INSTALLING ${activeInstallName?.uppercase() ?: "MINECRAFT"}",
+                title = stringResource(R.string.cubiq_home_installing_title, activeInstallName?.uppercase() ?: "MINECRAFT"),
 
 
 
@@ -9028,7 +9030,7 @@ fun InstallationDownloadForegroundDialog() {
 
 
 
-                title = "INSTALLING ${activeInstallName?.uppercase() ?: "MINECRAFT"}",
+                title = stringResource(R.string.cubiq_home_installing_title, activeInstallName?.uppercase() ?: "MINECRAFT"),
 
 
 

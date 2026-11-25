@@ -437,7 +437,7 @@ fun SearchAssetsScreen(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_search),
-                                contentDescription = "Search",
+                                contentDescription = stringResource(R.string.cubiq_home_search_assets),
                                 tint = Color(0xFF888888),
                                 modifier = Modifier.size(16.dp)
                             )
@@ -458,7 +458,7 @@ fun SearchAssetsScreen(
                                 decorationBox = { innerTextField ->
                                     if (viewModel.searchFilter.searchName.isEmpty()) {
                                         Text(
-                                            text = "Search mods / packs...",
+                                            text = stringResource(R.string.cubiq_home_search_modpacks),
                                             color = Color(0xFF666666),
                                             fontFamily = MinecraftFontFamily,
                                             fontSize = 11.sp
@@ -470,7 +470,7 @@ fun SearchAssetsScreen(
                             if (viewModel.searchFilter.searchName.isNotEmpty()) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_close),
-                                    contentDescription = "Clear",
+                                    contentDescription = stringResource(R.string.cubiq_home_clear),
                                     tint = Color(0xFFAAAAAA),
                                     modifier = Modifier
                                         .size(16.dp)
@@ -486,7 +486,7 @@ fun SearchAssetsScreen(
                     MinecraftButton(
                         onClick = { viewModel.resetSearch() },
                         style = MinecraftButtonStyle.GREEN,
-                        text = "SEARCH",
+                        text = stringResource(R.string.cubiq_home_search_button),
                         fontSize = 10.5.sp,
                         modifier = Modifier
                             .width(76.dp)
@@ -547,7 +547,7 @@ fun SearchAssetsScreen(
                     // Version Filter Chip
                     item {
                         var showVerDialog by remember { mutableStateOf(false) }
-                        val curVer = viewModel.searchFilter.gameVersion.ifBlank { "All Versions" }
+                        val curVer = viewModel.searchFilter.gameVersion.ifBlank { stringResource(R.string.cubiq_home_all_versions) }
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(2.dp))
@@ -560,7 +560,7 @@ fun SearchAssetsScreen(
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "Ver: $curVer",
+                                text = stringResource(R.string.cubiq_home_version_abbr, curVer),
                                 color = if (viewModel.searchFilter.gameVersion.isNotBlank()) Color(0xFF55FF55) else Color(0xFFCCCCCC),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 10.sp
@@ -574,7 +574,7 @@ fun SearchAssetsScreen(
                                 containerColor = Color(0xFF1E1E20),
                                 title = {
                                     Text(
-                                        text = "FILTER BY VERSION",
+                                        text = stringResource(R.string.cubiq_home_filter_by_version),
                                         color = Color.White,
                                         fontFamily = MinecraftFontFamily,
                                         fontSize = 14.sp
@@ -585,7 +585,7 @@ fun SearchAssetsScreen(
                                         androidx.compose.material3.OutlinedTextField(
                                             value = verInput,
                                             onValueChange = { verInput = it },
-                                            placeholder = { Text("e.g. 1.21.4, 1.20.1", color = Color(0xFF666666)) },
+                                            placeholder = { Text(stringResource(R.string.cubiq_home_version_examples), color = Color(0xFF666666)) },
                                             singleLine = true,
                                             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
                                                 focusedBorderColor = Color(0xFF55FF55),
@@ -622,7 +622,7 @@ fun SearchAssetsScreen(
                                             showVerDialog = false
                                         },
                                         style = MinecraftButtonStyle.GREEN,
-                                        text = "APPLY",
+                                        text = stringResource(R.string.cubiq_home_apply),
                                         fontSize = 11.sp,
                                         modifier = Modifier.width(76.dp).height(32.dp)
                                     )
@@ -635,7 +635,7 @@ fun SearchAssetsScreen(
                                             showVerDialog = false
                                         },
                                         style = MinecraftButtonStyle.STONE,
-                                        text = "CLEAR",
+                                        text = stringResource(R.string.cubiq_home_clear),
                                         fontSize = 11.sp,
                                         modifier = Modifier.width(76.dp).height(32.dp)
                                     )
@@ -648,7 +648,7 @@ fun SearchAssetsScreen(
                     if (enableModLoader && modloaders.isNotEmpty()) {
                         item {
                             var showLoaderMenu by remember { mutableStateOf(false) }
-                            val currentLoaderName = viewModel.searchFilter.modloader?.getDisplayName() ?: "All Loaders"
+                            val currentLoaderName = viewModel.searchFilter.modloader?.getDisplayName() ?: stringResource(R.string.cubiq_home_all_loaders)
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(2.dp))
@@ -661,7 +661,7 @@ fun SearchAssetsScreen(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "Loader: $currentLoaderName",
+                                    text = stringResource(R.string.cubiq_home_loader_filter, currentLoaderName),
                                     color = if (viewModel.searchFilter.modloader != null) Color(0xFF55FF55) else Color(0xFFCCCCCC),
                                     fontFamily = MinecraftFontFamily,
                                     fontSize = 10.sp
@@ -673,7 +673,7 @@ fun SearchAssetsScreen(
                                     modifier = Modifier.background(Color(0xFF1E1E20))
                                 ) {
                                     androidx.compose.material3.DropdownMenuItem(
-                                        text = { Text("All Loaders", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.sp) },
+                                        text = { Text(stringResource(R.string.cubiq_home_all_loaders), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.sp) },
                                         onClick = {
                                             viewModel.researchWithFilter(viewModel.searchFilter.copy(modloader = null))
                                             showLoaderMenu = false
@@ -698,7 +698,7 @@ fun SearchAssetsScreen(
                         item {
                             var showCatMenu by remember { mutableStateOf(false) }
                             val currentCategory = viewModel.searchFilter.categories.firstOrNull()
-                            val currentCategoryName = currentCategory?.let { stringResource(it.getDisplayName()) } ?: "All Categories"
+                            val currentCategoryName = currentCategory?.let { stringResource(it.getDisplayName()) } ?: stringResource(R.string.cubiq_home_all_categories)
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(2.dp))
@@ -711,7 +711,7 @@ fun SearchAssetsScreen(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "Category: $currentCategoryName",
+                                    text = stringResource(R.string.cubiq_home_category_filter, currentCategoryName),
                                     color = if (currentCategory != null) Color(0xFF55FF55) else Color(0xFFCCCCCC),
                                     fontFamily = MinecraftFontFamily,
                                     fontSize = 10.sp
@@ -725,7 +725,7 @@ fun SearchAssetsScreen(
                                         .heightIn(max = 280.dp)
                                 ) {
                                     androidx.compose.material3.DropdownMenuItem(
-                                        text = { Text("All Categories", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.sp) },
+                                        text = { Text(stringResource(R.string.cubiq_home_all_categories), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 11.sp) },
                                         onClick = {
                                             viewModel.researchWithFilter(viewModel.searchFilter.copy(categories = emptyList()))
                                             showCatMenu = false
@@ -759,7 +759,7 @@ fun SearchAssetsScreen(
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                text = "Sort: $currentSortName",
+                                text = stringResource(R.string.cubiq_home_sort_filter, currentSortName),
                                 color = Color(0xFFCCCCCC),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 10.sp

@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -198,7 +199,7 @@ private fun Zl1InGameDrawerContent(
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
-                text = if (isInEditor) "Edit Control Layout" else "Game Menu",
+                text = stringResource(if (isInEditor) R.string.cubiq_game_editor_title else R.string.game_menu_title),
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
@@ -209,24 +210,24 @@ private fun Zl1InGameDrawerContent(
 
         if (!isInEditor) {
             // Debug section
-            Zl1CategoryHeader(title = "Debug")
+            Zl1CategoryHeader(title = stringResource(R.string.cubiq_game_debug))
 
-            Zl1ButtonItem(text = "Force Close") {
+            Zl1ButtonItem(text = stringResource(R.string.game_button_force_close)) {
                 onDismiss()
                 onForceClose()
             }
-            Zl1ButtonItem(text = "Log Output") {
+            Zl1ButtonItem(text = stringResource(R.string.game_button_log_output)) {
                 onDismiss()
                 onViewLogs()
             }
-            Zl1ButtonItem(text = "Send Custom Key Code") {
+            Zl1ButtonItem(text = stringResource(R.string.game_menu_option_send_keycode)) {
                 onDismiss()
                 onSendKeycode()
             }
 
             // Real-time info switches
             Zl1SwitchItem(
-                title = "Real-time Memory Info Display",
+                title = stringResource(R.string.game_menu_option_switch_memory),
                 checked = showMemory
             ) {
                 showMemory = it
@@ -234,7 +235,7 @@ private fun Zl1InGameDrawerContent(
             }
 
             Zl1SwitchItem(
-                title = "Show real-time FPS",
+                title = stringResource(R.string.game_menu_option_switch_fps),
                 checked = showFps
             ) {
                 showFps = it
@@ -245,7 +246,7 @@ private fun Zl1InGameDrawerContent(
             val scaledW = (baseW * resRatio / 100f).toInt().coerceAtLeast(1)
             val scaledH = (baseH * resRatio / 100f).toInt().coerceAtLeast(1)
             Zl1SliderItem(
-                title = "Resolution Scaling ($scaledW x $scaledH)",
+                title = stringResource(R.string.cubiq_game_resolution_preview, scaledW, scaledH),
                 value = resRatio,
                 range = 25f..300f,
                 unit = "%",
@@ -257,10 +258,10 @@ private fun Zl1InGameDrawerContent(
             }
 
             // Control Category
-            Zl1CategoryHeader(title = "Control")
+            Zl1CategoryHeader(title = stringResource(R.string.cubiq_game_control))
 
             Zl1SwitchItem(
-                title = "Disable Gestures",
+                title = stringResource(R.string.cubiq_game_disable_gestures),
                 checked = gesturesDisabled
             ) {
                 gesturesDisabled = it
@@ -268,7 +269,7 @@ private fun Zl1InGameDrawerContent(
             }
 
             Zl1SwitchItem(
-                title = "Disable Double Tap to Swap Items",
+                title = stringResource(R.string.cubiq_game_disable_double_tap),
                 checked = doubleTapDisabled
             ) {
                 doubleTapDisabled = it
@@ -277,7 +278,7 @@ private fun Zl1InGameDrawerContent(
 
             if (!gesturesDisabled) {
                 Zl1SliderItem(
-                    title = "Long Press Trigger Delay",
+                    title = stringResource(R.string.settings_control_gesture_long_press_delay_title),
                     value = gestureDelay,
                     range = 100f..1000f,
                     unit = " ms",
@@ -289,7 +290,7 @@ private fun Zl1InGameDrawerContent(
             }
 
             Zl1SliderItem(
-                title = "Virtual Mouse Speed",
+                title = stringResource(R.string.cubiq_game_virtual_mouse_speed),
                 value = mouseSpeed,
                 range = 25f..300f,
                 unit = " %",
@@ -299,26 +300,26 @@ private fun Zl1InGameDrawerContent(
                 AllSettings.mouseCaptureSensitivity.save(it.toInt())
             }
 
-            Zl1ButtonItem(text = "Custom Virtual Mouse") {
+            Zl1ButtonItem(text = stringResource(R.string.cubiq_game_custom_mouse)) {
                 onDismiss()
                 onSelectCustomMouse()
             }
 
-            Zl1ButtonItem(text = "Replace Control Layout") {
+            Zl1ButtonItem(text = stringResource(R.string.game_menu_option_replacement_control)) {
                 onDismiss()
                 onReplaceControl()
             }
 
-            Zl1ButtonItem(text = "Edit Control Layout") {
+            Zl1ButtonItem(text = stringResource(R.string.cubiq_game_editor_title)) {
                 onDismiss()
                 onStartEditControls()
             }
 
             // Gyro controls Category
-            Zl1CategoryHeader(title = "Gyro controls")
+            Zl1CategoryHeader(title = stringResource(R.string.settings_control_gyroscope_title))
 
             Zl1SwitchItem(
-                title = "Enable Gyroscope Control",
+                title = stringResource(R.string.cubiq_game_enable_gyro),
                 checked = gyroEnabled
             ) {
                 gyroEnabled = it
@@ -327,7 +328,7 @@ private fun Zl1InGameDrawerContent(
 
             if (gyroEnabled) {
                 Zl1SliderItem(
-                    title = "Gyro Sensitivity",
+                    title = stringResource(R.string.settings_control_gyroscope_sensitivity_title),
                     value = gyroSensitivity,
                     range = 25f..300f,
                     unit = " %",
@@ -338,7 +339,7 @@ private fun Zl1InGameDrawerContent(
                 }
 
                 Zl1SwitchItem(
-                    title = "Invert X Axis",
+                    title = stringResource(R.string.settings_control_gyroscope_invert_x_title),
                     checked = gyroInvertX
                 ) {
                     gyroInvertX = it
@@ -346,7 +347,7 @@ private fun Zl1InGameDrawerContent(
                 }
 
                 Zl1SwitchItem(
-                    title = "Invert Y Axis",
+                    title = stringResource(R.string.settings_control_gyroscope_invert_y_title),
                     checked = gyroInvertY
                 ) {
                     gyroInvertY = it
@@ -355,23 +356,23 @@ private fun Zl1InGameDrawerContent(
             }
 
             // Hotbar Detection Box Category
-            Zl1CategoryHeader(title = "Hotbar Detection Box")
+            Zl1CategoryHeader(title = stringResource(R.string.cubiq_game_hotbar_detection_box))
 
             Text(
-                text = "Hotbar Detection Mode",
+                text = stringResource(R.string.cubiq_game_hotbar_detection_mode),
                 color = Color(0xFFB8BCC6),
                 fontSize = 11.sp,
                 modifier = Modifier.padding(top = 2.dp, bottom = 2.dp)
             )
             Zl1ModeOptionItem(
-                label = "Adaptive (may be inaccurate)",
+                label = stringResource(R.string.game_menu_option_hotbar_rule_auto),
                 selected = hotbarRule == HotbarRule.Auto
             ) {
                 hotbarRule = HotbarRule.Auto
                 AllSettings.hotbarRule.save(HotbarRule.Auto)
             }
             Zl1ModeOptionItem(
-                label = "Manual Adjustment",
+                label = stringResource(R.string.cubiq_game_manual_adjustment),
                 selected = hotbarRule == HotbarRule.Custom
             ) {
                 hotbarRule = HotbarRule.Custom
@@ -380,7 +381,7 @@ private fun Zl1InGameDrawerContent(
 
             if (hotbarRule == HotbarRule.Custom) {
                 Zl1SliderItem(
-                    title = "Hotbar Width",
+                    title = stringResource(R.string.game_menu_option_hotbar_width),
                     value = hotbarWidth,
                     range = 0f..1000f,
                     unit = " px",
@@ -390,7 +391,7 @@ private fun Zl1InGameDrawerContent(
                     AllSettings.hotbarWidth.save(it.toInt())
                 }
                 Zl1SliderItem(
-                    title = "Hotbar Height",
+                    title = stringResource(R.string.game_menu_option_hotbar_height),
                     value = hotbarHeight,
                     range = 0f..1000f,
                     unit = " px",
@@ -402,40 +403,40 @@ private fun Zl1InGameDrawerContent(
             }
         } else {
             // In-Editor Actions
-            Zl1CategoryHeader(title = "Edit Control Layout")
+            Zl1CategoryHeader(title = stringResource(R.string.cubiq_game_editor_title))
 
-            Zl1ButtonItem(text = "Add Button") {
+            Zl1ButtonItem(text = stringResource(R.string.control_editor_menu_new_widget_button)) {
                 onDismiss()
                 onAddButton()
             }
-            Zl1ButtonItem(text = "Add Drawer") {
+            Zl1ButtonItem(text = stringResource(R.string.cubiq_game_editor_add_drawer)) {
                 onDismiss()
                 onAddDrawer()
             }
-            Zl1ButtonItem(text = "Add Joystick") {
+            Zl1ButtonItem(text = stringResource(R.string.control_editor_menu_new_widget_joystick)) {
                 onDismiss()
                 onAddJoystick()
             }
 
-            Zl1CategoryHeader(title = "Save")
+            Zl1CategoryHeader(title = stringResource(R.string.generic_save))
 
-            Zl1ButtonItem(text = "Load") {
+            Zl1ButtonItem(text = stringResource(R.string.cubiq_game_editor_load)) {
                 onDismiss()
                 onLoadLayout()
             }
-            Zl1ButtonItem(text = "Save") {
+            Zl1ButtonItem(text = stringResource(R.string.generic_save)) {
                 onDismiss()
                 onSaveLayout()
             }
-            Zl1ButtonItem(text = "Save and Exit") {
+            Zl1ButtonItem(text = stringResource(R.string.control_editor_menu_save_and_exit)) {
                 onDismiss()
                 onSaveAndExit()
             }
 
-            Zl1CategoryHeader(title = "Control Layout")
+            Zl1CategoryHeader(title = stringResource(R.string.cubiq_game_editor_layout))
 
             Zl1SwitchItem(
-                title = "Button Snapping",
+                title = stringResource(R.string.cubiq_game_editor_snapping),
                 checked = buttonSnapping
             ) {
                 buttonSnapping = it
@@ -443,7 +444,7 @@ private fun Zl1InGameDrawerContent(
             }
 
             Zl1SliderItem(
-                title = "Button Snapping Distance",
+                title = stringResource(R.string.cubiq_game_editor_snapping_distance),
                 value = snappingDist,
                 range = 2f..30f,
                 unit = " dp",
@@ -453,12 +454,12 @@ private fun Zl1InGameDrawerContent(
                 AllSettings.buttonSnappingDistance.save(it.toInt().coerceIn(2, 64))
             }
 
-            Zl1ButtonItem(text = "Select Default Control Layout") {
+            Zl1ButtonItem(text = stringResource(R.string.cubiq_game_editor_default_layout)) {
                 onDismiss()
                 onSelectDefaultLayout()
             }
 
-            Zl1ButtonItem(text = "Exit Editor") {
+            Zl1ButtonItem(text = stringResource(R.string.cubiq_game_editor_exit)) {
                 onDismiss()
                 onLeaveEditor()
             }
@@ -685,14 +686,14 @@ fun Zl1FloatingMenuPill(
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_sharp_settings_24),
-                contentDescription = "ZL1 Game Menu",
+                contentDescription = stringResource(R.string.cubiq_game_zl1_menu),
                 tint = Color.White,
                 modifier = Modifier.size(20.dp)
             )
         }
         if (showFps) {
             Text(
-                text = "FPS: ${gameFps ?: 0}",
+                text = stringResource(R.string.cubiq_game_fps, gameFps ?: 0),
                 color = Color.White,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -701,7 +702,7 @@ fun Zl1FloatingMenuPill(
         }
         if (showMemory && memLabel.isNotEmpty()) {
             Text(
-                text = "M: $memLabel",
+                text = stringResource(R.string.cubiq_game_memory, memLabel),
                 color = Color(0xFFB8BCC6),
                 fontSize = 10.sp,
                 modifier = Modifier.padding(start = 4.dp, end = 4.dp)
@@ -722,11 +723,11 @@ fun Zl1CustomMouseDialog(
     val context = LocalContext.current
     val packs = remember {
         listOf(
-            "Default Classic",
-            "Precision Crosshair",
-            "Bedrock Arrow",
-            "Chroma Emerald",
-            "Modern Obsidian"
+            "Default Classic" to R.string.cubiq_game_cursor_default,
+            "Precision Crosshair" to R.string.cubiq_game_cursor_crosshair,
+            "Bedrock Arrow" to R.string.cubiq_game_cursor_arrow,
+            "Chroma Emerald" to R.string.cubiq_game_cursor_emerald,
+            "Modern Obsidian" to R.string.cubiq_game_cursor_obsidian
         )
     }
     var selected by remember(visible) { mutableStateOf(AllSettings.customCursorPack.state) }
@@ -741,15 +742,16 @@ fun Zl1CustomMouseDialog(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "Custom Virtual Mouse",
+                text = stringResource(R.string.cubiq_game_custom_mouse),
                 color = Color.White,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
             HorizontalDivider(color = Color(0x33FFFFFF), thickness = 1.dp)
-            packs.forEach { pack ->
+            packs.forEach { (pack, labelRes) ->
+                val packLabel = stringResource(labelRes)
                 Zl1ModeOptionItem(
-                    label = pack,
+                    label = packLabel,
                     selected = selected == pack
                 ) {
                     selected = pack
@@ -757,7 +759,11 @@ fun Zl1CustomMouseDialog(
                     if (pack == "Default Classic") {
                         runCatching { com.movtery.zalithlauncher.ui.control.mouse.arrowPointerFile.delete() }
                     }
-                    android.widget.Toast.makeText(context, "Cursor: $pack", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(
+                        context,
+                        context.getString(R.string.cubiq_game_cursor_selected, packLabel),
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
             Row(
@@ -767,7 +773,7 @@ fun Zl1CustomMouseDialog(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onDismiss) {
-                    Text("Close", color = Color(0xFF26A69A), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.generic_close), color = Color(0xFF26A69A), fontWeight = FontWeight.Bold)
                 }
             }
         }

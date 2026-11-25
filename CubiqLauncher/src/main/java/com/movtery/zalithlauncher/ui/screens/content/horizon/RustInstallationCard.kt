@@ -32,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,7 +85,7 @@ fun JavaRustEngineSelector(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_java),
-                    contentDescription = "Java Logo",
+                    contentDescription = stringResource(R.string.cubiq_horizon_engine_java_logo),
                     tint = Color.Unspecified,
                     modifier = Modifier.size(16.dp)
                 )
@@ -125,7 +126,7 @@ fun JavaRustEngineSelector(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_rust_logo),
-                    contentDescription = "Rust Logo",
+                    contentDescription = stringResource(R.string.cubiq_horizon_engine_rust_logo),
                     tint = Color.Unspecified,
                     modifier = Modifier.size(20.dp)
                 )
@@ -181,7 +182,7 @@ fun RustInstallationCard(
             ) {
                 Image(
                     painter = painterResource(R.drawable.ic_horizon_logo),
-                    contentDescription = "Horizon Icon",
+                    contentDescription = stringResource(R.string.cubiq_horizon_horizon_icon),
                     modifier = Modifier
                         .size(38.dp)
                         .clip(CircleShape)
@@ -191,7 +192,7 @@ fun RustInstallationCard(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
-                        text = "Minecraft Rust (26.3)",
+                        text = stringResource(R.string.cubiq_horizon_game_name),
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -200,7 +201,7 @@ fun RustInstallationCard(
                     )
 
                     Text(
-                        text = "Horizon · Rust Edition",
+                        text = stringResource(R.string.cubiq_horizon_game_subtitle),
                         color = Color(0xFF9E9E9E),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 11.sp,
@@ -225,7 +226,7 @@ fun RustInstallationCard(
                         .width(64.dp)
                 ) {
                     Text(
-                        text = "Play",
+                        text = stringResource(R.string.cubiq_horizon_play),
                         color = Color.White,
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -246,12 +247,12 @@ fun RustInstallationCard(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_settings_filled),
-                            contentDescription = "Settings",
+                            contentDescription = stringResource(R.string.cubiq_horizon_settings),
                             tint = Color.White,
                             modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = "Settings",
+                            text = stringResource(R.string.cubiq_horizon_settings),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
@@ -275,7 +276,7 @@ fun RustInstallationCard(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_more_vert),
-                            contentDescription = "Options",
+                            contentDescription = stringResource(R.string.cubiq_horizon_options),
                             tint = Color.White,
                             modifier = Modifier.size(16.dp)
                         )
@@ -289,7 +290,7 @@ fun RustInstallationCard(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = "Add Shortcut to Home Screen",
+                                    text = stringResource(R.string.cubiq_horizon_add_shortcut),
                                     color = Color(0xFF77DDFF),
                                     fontFamily = MinecraftFontFamily,
                                     fontSize = 12.sp
@@ -303,7 +304,7 @@ fun RustInstallationCard(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = "Re-check files",
+                                    text = stringResource(R.string.cubiq_horizon_recheck_files),
                                     color = Color.White,
                                     fontFamily = MinecraftFontFamily,
                                     fontSize = 12.sp
@@ -317,7 +318,7 @@ fun RustInstallationCard(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = "Horizon Settings",
+                                    text = stringResource(R.string.cubiq_horizon_settings_title),
                                     color = Color.White,
                                     fontFamily = MinecraftFontFamily,
                                     fontSize = 12.sp

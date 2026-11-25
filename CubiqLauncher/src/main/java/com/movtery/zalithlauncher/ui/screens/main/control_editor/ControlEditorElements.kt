@@ -469,7 +469,7 @@ private fun EditorMenuContent(
                 MenuTextButton(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isPreviewMode.not(),
-                    text = "Switch Movement (Joystick / D-Pad)",
+                    text = stringResource(R.string.cubiq_game_editor_switch_movement),
                     onClick = {
                         onToggleMovement()
                         closeScreen()
@@ -485,7 +485,7 @@ private fun EditorMenuContent(
                 MenuTextButton(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isPreviewMode.not(),
-                    text = "Mirror for Left-Handed",
+                    text = stringResource(R.string.cubiq_game_editor_mirror),
                     onClick = {
                         onMirrorLayout()
                         closeScreen()
@@ -501,7 +501,7 @@ private fun EditorMenuContent(
                 MenuTextButton(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = isPreviewMode.not(),
-                    text = "Reset Layout to Default",
+                    text = stringResource(R.string.cubiq_game_editor_reset_layout),
                     onClick = {
                         onResetToDefault()
                         closeScreen()

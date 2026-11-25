@@ -720,7 +720,7 @@ private fun TaskMenu(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "ACTIVE DOWNLOAD TASKS",
+                                text = stringResource(R.string.cubiq_progress_active_downloads),
                                 color = Color.White,
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
@@ -776,7 +776,7 @@ private fun TaskMenu(
                                 changeExpandedState()
                             },
                             style = MinecraftButtonStyle.GREEN,
-                            text = "DOWNLOAD IN BACKGROUND",
+                            text = stringResource(R.string.cubiq_progress_download_background),
                             fontSize = 12.sp,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -821,7 +821,7 @@ private fun TaskItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "EXECUTING: ",
+                        text = stringResource(R.string.cubiq_progress_executing),
                         color = Color(0xFF55FF55),
                         fontFamily = MinecraftFontFamily,
                         fontWeight = FontWeight.Bold,
@@ -847,7 +847,7 @@ private fun TaskItem(
                         )
                     } else {
                         Text(
-                            text = "Downloading assets...",
+                            text = stringResource(R.string.cubiq_progress_downloading_assets),
                             color = Color(0xFFCCCCCC),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 11.sp
@@ -862,13 +862,13 @@ private fun TaskItem(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "TOTAL PROGRESS",
+                            text = stringResource(R.string.cubiq_progress_total),
                             color = Color(0xFFAAAAAA),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 9.5.sp
                         )
                         Text(
-                            text = if (taskProgress >= 0f) "${(taskProgress * 100).toInt()}%" else "Working...",
+                            text = if (taskProgress >= 0f) "${(taskProgress * 100).toInt()}%" else stringResource(R.string.cubiq_progress_working),
                             color = Color(0xFF55FF55),
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
@@ -904,14 +904,14 @@ private fun TaskItem(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "CURRENT FILE PROGRESS",
+                            text = stringResource(R.string.cubiq_progress_current_file),
                             color = Color(0xFFAAAAAA),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 9.5.sp
                         )
                         val subPct = if (currentFileProgress >= 0f) "${(currentFileProgress * 100).toInt()}%"
                         else if (taskProgress >= 0f) "${((taskProgress * 1000) % 100).toInt()}%"
-                        else "Downloading..."
+                        else stringResource(R.string.cubiq_progress_downloading)
                         Text(
                             text = subPct,
                             color = Color(0xFF38BAFF),
@@ -948,9 +948,9 @@ private fun TaskItem(
 
                 // Speed indicator if available
                 rateBytesPerSec?.let { bytes ->
-                    val speedText = remember(bytes) { "${formatFileSize(bytes)}/s" }
+                    val speedText = remember(bytes) { formatFileSize(bytes) }
                     Text(
-                        text = "Speed: $speedText",
+                        text = stringResource(R.string.cubiq_progress_speed, speedText),
                         color = Color(0xFF888888),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 9.5.sp

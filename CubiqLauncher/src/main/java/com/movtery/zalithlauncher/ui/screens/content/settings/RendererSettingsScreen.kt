@@ -128,13 +128,9 @@ fun RendererSettingsScreen(
                     if (showCustomRendererDialog) {
                         val ctx = LocalContext.current
                         SimpleAlertDialog(
-                            title = "Download Custom Renderers",
-                            text = "How to Install Custom Renderers:\n\n" +
-                                    "1. Tap 'Go to GitHub' below to open the FCL Renderer Plugin releases page.\n\n" +
-                                    "2. Download the renderer APK you need (such as LTW, Zink, MobileGlues, Angle, VirGL).\n\n" +
-                                    "3. Install the APK on your device and launch it once to complete setup if needed.\n\n" +
-                                    "4. Close and reopen Cubiq Launcher. The new renderer will automatically appear in your renderers list!",
-                            confirmText = "Go to GitHub",
+                            title = stringResource(R.string.cubiq_secondary_renderer_custom),
+                            text = stringResource(R.string.cubiq_secondary_renderer_install_steps),
+                            confirmText = stringResource(R.string.cubiq_secondary_renderer_github),
                             dismissText = stringResource(R.string.generic_cancel),
                             onConfirm = {
                                 showCustomRendererDialog = false
@@ -167,19 +163,19 @@ fun RendererSettingsScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = "Download Custom Renderers",
+                                    text = stringResource(R.string.cubiq_secondary_renderer_custom),
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = "Install external renderer plugins (LTW, Zink, Angle, VirGL) via companion APKs from GitHub.",
+                                    text = stringResource(R.string.cubiq_secondary_renderer_custom_summary),
                                     style = MaterialTheme.typography.bodySmall,
                                     modifier = Modifier.alpha(0.75f)
                                 )
                             }
                             Icon(
                                 painter = painterResource(R.drawable.ic_download_2_filled),
-                                contentDescription = "Download Custom Renderers",
+                                contentDescription = stringResource(R.string.cubiq_secondary_renderer_custom),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -277,19 +273,19 @@ fun RendererSettingsScreen(
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = if (isInstalled) "MobileGlues Companion App: Installed" else "Download MobileGlues Companion App",
+                                        text = if (isInstalled) stringResource(R.string.cubiq_secondary_renderer_mg_installed) else stringResource(R.string.cubiq_secondary_renderer_mg_get_app),
                                         style = MaterialTheme.typography.titleSmall,
                                         color = if (isInstalled) androidx.compose.ui.graphics.Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
                                     )
                                     Text(
-                                        text = if (isInstalled) "Tap to open MobileGlues configuration and companion app." else "Official MobileGlues APK release on GitHub. Required to enable MobileGlues rendering engine.",
+                                        text = if (isInstalled) stringResource(R.string.cubiq_secondary_renderer_mg_open_summary) else stringResource(R.string.cubiq_secondary_renderer_mg_download_summary),
                                         style = MaterialTheme.typography.bodySmall,
                                         modifier = Modifier.alpha(0.75f)
                                     )
                                 }
                                 Icon(
                                     painter = painterResource(if (isInstalled) R.drawable.ic_settings_filled else R.drawable.ic_download_2_filled),
-                                    contentDescription = if (isInstalled) "Settings" else "Download MobileGlues",
+                                    contentDescription = if (isInstalled) stringResource(R.string.cubiq_secondary_renderer_mg_settings) else stringResource(R.string.cubiq_secondary_renderer_mg_get),
                                     tint = if (isInstalled) androidx.compose.ui.graphics.Color(0xFF4CAF50) else MaterialTheme.colorScheme.primary
                                 )
                             }

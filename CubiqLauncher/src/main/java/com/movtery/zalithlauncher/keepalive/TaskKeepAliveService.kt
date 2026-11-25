@@ -83,12 +83,12 @@ class TaskKeepAliveService : Service() {
         )
 
         val notification: Notification = NotificationCompat.Builder(this, data.channelId)
-            .setContentTitle("Cubiq Download Service")
-            .setContentText("Game Files Are Being Downloaded")
+            .setContentTitle(getString(R.string.cubiq_game_download_service_title))
+            .setContentText(getString(R.string.cubiq_game_download_service_running))
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .addAction(R.drawable.ic_close, "Terminate", terminatePendingIntent)
+            .addAction(R.drawable.ic_close, getString(R.string.cubiq_game_download_service_stop), terminatePendingIntent)
             .build()
 
         try {

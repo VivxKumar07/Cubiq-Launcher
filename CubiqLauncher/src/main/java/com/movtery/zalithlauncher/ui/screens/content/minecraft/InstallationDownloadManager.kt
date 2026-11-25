@@ -97,12 +97,16 @@ object InstallationDownloadManager {
 
         val initialTasks = listOf(
             TitledTask(
-                title = androidText("Java Runtime Environment (Java $targetMajor)"),
+                title = androidText(R.string.cubiq_progress_install_java_title, targetMajor),
                 runningIcon = R.drawable.ic_java,
                 task = jreTask
             ),
             TitledTask(
-                title = androidText(if (isVanilla) "Resolving Version Metadata" else "Resolving $loader Loader"),
+                title = if (isVanilla) {
+                    androidText(R.string.cubiq_progress_install_metadata_title)
+                } else {
+                    androidText(R.string.cubiq_progress_install_loader_title, loader)
+                },
                 runningIcon = R.drawable.ic_extension_outlined,
                 task = loaderTask
             )
@@ -133,7 +137,7 @@ object InstallationDownloadManager {
                     if (jre != null) {
                         runCatching {
                             jreTask.updateProgress(-1f)
-                            jreTask.updateMessage(androidText("Unpacking Java $targetMajor from local assets..."))
+                            jreTask.updateMessage(androidText(R.string.cubiq_progress_install_java_local, targetMajor))
                             val task = com.movtery.zalithlauncher.components.jre.UnpackJreTask(context, jre)
                             if (!task.isCheckFailed()) {
                                 task.run()
@@ -143,7 +147,7 @@ object InstallationDownloadManager {
                     }
                     if (!installed) {
                         jreTask.updateProgress(0f)
-                        jreTask.updateMessage(androidText("Connecting to Java $targetMajor download mirrors..."))
+                        jreTask.updateMessage(androidText(R.string.cubiq_progress_install_java_connect, targetMajor))
                         val success = JreDownloadManager.downloadAndInstallJre(
                             context = context,
                             runtimeName = targetRuntimeName
@@ -157,22 +161,25 @@ object InstallationDownloadManager {
                             }
                         }
                         if (!success) {
-                            throw IllegalStateException("Failed to download Java $targetMajor. Please check your internet connection.")
+                            throw IllegalStateException(context.getString(R.string.cubiq_progress_install_java_failed, targetMajor))
                         }
                     }
                     jreTask.clearSpeed()
                     jreTask.updateProgress(1f)
                     jreTask.updateStage(TaskStage.COMPLETED)
-                    jreTask.updateMessage(androidText("Java $targetMajor ready"))
+                    jreTask.updateMessage(androidText(R.string.cubiq_progress_install_java_ready, targetMajor))
                 } else {
                     jreTask.updateStage(TaskStage.COMPLETED)
                     jreTask.updateProgress(1f)
-                    jreTask.updateMessage(androidText("Java $targetMajor verified"))
+                    jreTask.updateMessage(androidText(R.string.cubiq_progress_install_java_verified, targetMajor))
                 }
 
                 loaderTask.updateStage(TaskStage.RUNNING)
                 loaderTask.updateProgress(-1f)
-                loaderTask.updateMessage(androidText(if (isVanilla) "Resolving $version metadata..." else "Resolving $loader for $version..."))
+                loaderTask.updateMessage(
+                    if (isVanilla) androidText(R.string.cubiq_progress_install_metadata_resolve, version)
+                    else androidText(R.string.cubiq_progress_install_loader_resolve, loader, version)
+                )
 
                 var optifineVer = if (loader.equals("OptiFine", ignoreCase = true)) {
                     OptiFineVersions.fetchOptiFineList(gameVersion = version)?.firstOrNull()
@@ -196,7 +203,10 @@ object InstallationDownloadManager {
 
                 loaderTask.updateProgress(1f)
                 loaderTask.updateStage(TaskStage.COMPLETED)
-                loaderTask.updateMessage(androidText(if (isVanilla) "Metadata ready" else "$loader resolved"))
+                loaderTask.updateMessage(
+                    if (isVanilla) androidText(R.string.cubiq_progress_install_metadata_ready)
+                    else androidText(R.string.cubiq_progress_install_loader_ready, loader)
+                )
 
                 val downloadInfo = GameDownloadInfo(
                     gameVersion = version,
@@ -223,7 +233,7 @@ object InstallationDownloadManager {
                         _preparingTasksFlow.value = emptyList()
                         TaskKeepAlive.release()
                         scope.launch(Dispatchers.Main) {
-                            Toast.makeText(context, "Installation $installedVersion installed successfully!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_progress_install_success, installedVersion), Toast.LENGTH_SHORT).show()
                             onSuccess(installedVersion)
                         }
                     },
@@ -235,7 +245,7 @@ object InstallationDownloadManager {
                         _preparingTasksFlow.value = emptyList()
                         TaskKeepAlive.release()
                         scope.launch(Dispatchers.Main) {
-                            Toast.makeText(context, "Failed to install $finalVersionName: ${th.message}", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_progress_install_failed, finalVersionName, th.message), Toast.LENGTH_LONG).show()
                         }
                     },
                     onGameAlreadyInstalled = {
@@ -259,7 +269,7 @@ object InstallationDownloadManager {
                 _preparingTasksFlow.value = emptyList()
                 TaskKeepAlive.release()
                 scope.launch(Dispatchers.Main) {
-                    Toast.makeText(context, "Error setting up $loader: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, context.getString(R.string.cubiq_progress_install_setup_failed, loader, e.message), Toast.LENGTH_LONG).show()
                 }
             }
         }

@@ -75,6 +75,7 @@ import com.movtery.zalithlauncher.game.input.EfficientAndroidLWJGLKeycode
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.setting.enums.MouseControlMode
+import com.movtery.zalithlauncher.setting.enums.withLauncherLanguage
 import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import com.movtery.zalithlauncher.ui.components.MinecraftPixelDonutSpinner
 import com.movtery.zalithlauncher.ui.components.MenuState
@@ -457,6 +458,10 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
         runCatching { wm.updateViewLayout(container, params) }
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(newBase.withLauncherLanguage())
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         savedStateRegistryController.performRestore(savedInstanceState)
         super.onCreate(savedInstanceState)
@@ -467,7 +472,7 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
         window.decorView.setViewTreeSavedStateRegistryOwner(this)
         window.decorView.setViewTreeOnBackPressedDispatcherOwner(this)
 
-        title = "Minecraft Rust Edition"
+        setTitle(R.string.cubiq_horizon_title)
 
         net.kdt.pojavlaunch.Tools.updateWindowSize(this)
         ControlManager.checkDefaultAndRefresh(this)
@@ -934,7 +939,7 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                     AllSettings.hideMouse.save(newHide)
                     virtualMouseOverride = !newHide
                     ZLBridgeStates.changeCursorMode(if (!newHide) CURSOR_ENABLED else CURSOR_DISABLED)
-                    Toast.makeText(this@HorizonActivity, if (newHide) "Mouse Disabled" else "Mouse Enabled", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@HorizonActivity, if (newHide) R.string.cubiq_horizon_mouse_disabled else R.string.cubiq_horizon_mouse_enabled, Toast.LENGTH_SHORT).show()
                 }
 
                 binding.replacementCustomcontrol.setOnClickListener {
@@ -1682,7 +1687,7 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Cubiq Launcher",
+                            text = stringResource(R.string.cubiq_horizon_launcher_name),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontSize = 34.sp,
@@ -1690,7 +1695,7 @@ open class HorizonActivity : NativeActivity(), LifecycleOwner, ViewModelStoreOwn
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Minecraft Java rewritten into Rust",
+                            text = stringResource(R.string.cubiq_horizon_launcher_subtitle),
                             color = Color(0xFF4CAF50),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 15.sp,
