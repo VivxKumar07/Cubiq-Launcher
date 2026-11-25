@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="cubiq_home_play" formatted="false">启动游戏</string>
+    <string name="cubiq_home_play_title" formatted="false">游玩</string>
+    <string name="cubiq_home_installations" formatted="false">安装配置</string>
+    <string name="cubiq_home_skins" formatted="false">皮肤</string>
+    <string name="cubiq_home_mods" formatted="false">模组</string>
+    <string name="cubiq_home_settings" formatted="false">设置</string>
+    <string name="cubiq_home_latest_release" formatted="false">最新正式版</string>
+    <string name="cubiq_home_selected_version" formatted="false">已选版本</string>
+    <string name="cubiq_home_manage_installations" formatted="false">+ 管理安装配置</string>
+    <string name="cubiq_home_player" formatted="false">玩家</string>
+    <string name="cubiq_home_no_active_account" formatted="false">（无活动账号）</string>
+    <string name="cubiq_home_active" formatted="false">使用中</string>
+    <string name="cubiq_home_files" formatted="false">文件</string>
+    <string name="cubiq_home_multiplayer" formatted="false">多人游戏</string>
+    <string name="cubiq_home_rotate_screen" formatted="false">旋转屏幕</string>
+    <string name="cubiq_home_auto_on" formatted="false">自动轮播：开</string>
+    <string name="cubiq_home_auto_off" formatted="false">自动轮播：关</string>
+    <string name="cubiq_home_wait_download" formatted="false">请等待游戏文件下载完成……</string>
+    <string name="cubiq_home_account_required" formatted="false">请先添加账号！</string>
+    <string name="cubiq_home_installation_required" formatted="false">请先创建安装配置！</string>
+    <string name="cubiq_home_download_installation_first" formatted="false">请先在“安装配置”页下载此安装配置！</string>
+    <string name="cubiq_home_account_switched">已切换至 %1$s</string>
+    <string name="cubiq_home_account_count_saved">已保存 %1$d 个</string>
+    <string name="cubiq_home_no_saved_accounts" formatted="false">暂无已保存的账号。\n请在下方添加账号后开始游戏！</string>
+    <string name="cubiq_home_microsoft_login_failed">Microsoft 登录失败：%1$s</string>
+    <string name="cubiq_home_microsoft_login_success" formatted="false">Microsoft 账号登录成功！</string>
+    <string name="cubiq_home_add_microsoft_account" formatted="false">添加 Microsoft 账号</string>
+    <string name="cubiq_home_microsoft_sign_in" formatted="false">Mojang / Xbox 官方登录</string>
+    <string name="cubiq_home_add_elyby_account" formatted="false">添加 Ely.by 账号</string>
+    <string name="cubiq_home_elyby_summary" formatted="false">自定义皮肤、披风和 authlib 登录</string>
+    <string name="cubiq_home_add_offline_account" formatted="false">添加离线账号</string>
+    <string name="cubiq_home_offline_summary" formatted="false">无需登录即可本地游玩</string>
+    <string name="cubiq_home_manage_accounts_settings" formatted="false">管理账号和设置</string>
+    <string name="cubiq_home_offline_account_title" formatted="false">添加离线账号</string>
+    <string name="cubiq_home_offline_account_prompt" formatted="false">输入用于本地离线游戏的用户名：</string>
+    <string name="cubiq_home_username" formatted="false">用户名</string>
+    <string name="cubiq_home_account_added">已添加账号“%1$s”！</string>
+    <string name="cubiq_home_username_empty" formatted="false">用户名不能为空</string>
+    <string name="cubiq_home_create" formatted="false">创建</string>
+    <string name="cubiq_home_cancel" formatted="false">取消</string>
+    <string name="cubiq_home_hero_art_description" formatted="false">Minecraft 版本主视觉图</string>
+    <string name="cubiq_home_java_edition_description" formatted="false">Minecraft Java 版</string>
+    <string name="cubiq_home_loading_block_description" formatted="false">加载方块</string>
+    <string name="cubiq_home_loading_cubiq" formatted="false">正在加载 CUBIQ……</string>
+    <string name="cubiq_home_section_installations" formatted="false">你的安装配置</string>
+    <string name="cubiq_home_add_new" formatted="false">+ 新建</string>
+    <string name="cubiq_home_no_custom_installations" formatted="false">尚无自定义安装配置</string>
+    <string name="cubiq_home_create_installation" formatted="false">+ 创建安装配置</string>
+    <string name="cubiq_home_vanilla" formatted="false">原版</string>
+    <string name="cubiq_home_new_version">新增：%1$s</string>
+    <string name="cubiq_home_switch_screen" formatted="false">切换并启动</string>
+    <string name="cubiq_home_fork_notice_title" formatted="false">非官方分支声明</string>
+    <string name="cubiq_home_gpl_attribution" formatted="false">GPLv3 开源许可声明</string>
+    <string name="cubiq_home_fork_description" formatted="false">Cubiq Launcher 是 Zalith Launcher 2 的独立非官方分支，采用 GNU 通用公共许可证 3.0 版（GPLv3）授权。</string>
+    <string name="cubiq_home_fork_disclaimer" formatted="false">本启动器与 Zalith Launcher 原作者、Mojang Studios 或 Microsoft Corporation 均无关联，也未获得其认可或支持。</string>
+    <string name="cubiq_home_fork_support" formatted="false">所有修改和源代码均遵循 GPLv3。获取支持或报告问题，请前往 Cubiq Launcher 官方社区。</string>
+    <string name="cubiq_home_dont_show_again" formatted="false">不再显示</string>
+    <string name="cubiq_home_understood" formatted="false">我知道了</string>
+    <string name="cubiq_home_new_short" formatted="false">新建……</string>
+    <string name="cubiq_home_modpack" formatted="false">整合包</string>
+    <string name="cubiq_home_search_installations" formatted="false">搜索安装配置……</string>
+    <string name="cubiq_home_versions_label" formatted="false">版本：</string>
+    <string name="cubiq_home_releases" formatted="false">正式版</string>
+    <string name="cubiq_home_snapshots" formatted="false">快照版</string>
+    <string name="cubiq_home_modded" formatted="false">模组版</string>
+    <string name="cubiq_home_no_installations" formatted="false">未找到安装配置</string>
+    <string name="cubiq_home_no_installations_hint" formatted="false">点击上方“+ 新建……”按钮，下载并安装任意 Minecraft 版本！</string>
+    <string name="cubiq_home_active_installation">当前安装配置：%1$s</string>
+    <string name="cubiq_home_deleted_installation">已删除 %1$s</string>
+    <string name="cubiq_home_installation_ready" formatted="false">安装配置已就绪</string>
+    <string name="cubiq_home_installation_ready_message">安装配置“%1$s”已设置完成，可以启动游戏或下载文件！</string>
+    <string name="cubiq_home_ok" formatted="false">确定</string>
+    <string name="cubiq_home_play_installation" formatted="false">启动此安装配置</string>
+    <string name="cubiq_home_select_active" formatted="false">设为当前配置</string>
+    <string name="cubiq_home_add_shortcut" formatted="false">添加桌面快捷方式</string>
+    <string name="cubiq_home_manage_installation" formatted="false">管理安装配置</string>
+    <string name="cubiq_home_change_icon" formatted="false">更换图标</string>
+    <string name="cubiq_home_toggle_manage_mods" formatted="false">启用/管理模组</string>
+    <string name="cubiq_home_delete_installation" formatted="false">删除安装配置</string>
+    <string name="cubiq_home_manage_mods" formatted="false">管理模组</string>
+    <string name="cubiq_home_active_count">%1$d/%2$d 已启用</string>
+    <string name="cubiq_home_search_mods" formatted="false">搜索模组……</string>
+    <string name="cubiq_home_enabled_all_mods" formatted="false">已启用全部模组</string>
+    <string name="cubiq_home_all_on" formatted="false">全部启用</string>
+    <string name="cubiq_home_disabled_all_mods" formatted="false">已禁用全部模组</string>
+    <string name="cubiq_home_all_off" formatted="false">全部禁用</string>
+    <string name="cubiq_home_no_mods_folder" formatted="false">“mods/”文件夹中没有找到模组。</string>
+    <string name="cubiq_home_no_matching_mods" formatted="false">没有匹配的模组。</string>
+    <string name="cubiq_home_active_jar" formatted="false">.jar（已启用）</string>
+    <string name="cubiq_home_inactive_jar" formatted="false">.jar.disabled（已禁用）</string>
+    <string name="cubiq_home_done" formatted="false">完成</string>
+    <string name="cubiq_home_create_new_installation" formatted="false">创建新安装配置</string>
+    <string name="cubiq_home_installation_icon" formatted="false">安装配置图标</string>
+    <string name="cubiq_home_installation_name" formatted="false">安装配置名称</string>
+    <string name="cubiq_home_minecraft_version" formatted="false">Minecraft 版本</string>
+    <string name="cubiq_home_search_version" formatted="false">搜索版本（1.20、1.16、1.10……）</string>
+    <string name="cubiq_home_all_snapshots" formatted="false">全部（含快照版）</string>
+    <string name="cubiq_home_mod_loader" formatted="false">模组加载器</string>
+    <string name="cubiq_home_want_modpack" formatted="false">想创建整合包配置吗？</string>
+    <string name="cubiq_home_browse_modpacks" formatted="false">直接浏览 CurseForge 和 Modrinth 整合包</string>
+    <string name="cubiq_home_browse" formatted="false">浏览 →</string>
+    <string name="cubiq_home_launch_download_first" formatted="false">版本尚未下载！正在开始下载……</string>
+    <string name="cubiq_home_icon_folder_resolve_error">无法确定 %1$s 的图标文件夹</string>
+    <string name="cubiq_home_icon_folder_create_error">无法创建图标文件夹：%1$s</string>
+    <string name="cubiq_home_icon_decode_error" formatted="false">无法读取所选安装配置图标</string>
+    <string name="cubiq_home_icon_write_error" formatted="false">无法写入安装配置图标</string>
+    <string name="cubiq_home_download_back" formatted="false">&lt; 返回</string>
+    <string name="cubiq_home_download_hub" formatted="false">下载中心</string>
+    <string name="cubiq_home_search_assets" formatted="false">搜索</string>
+    <string name="cubiq_home_clear" formatted="false">清除</string>
+    <string name="cubiq_home_search_modpacks" formatted="false">搜索模组/整合包……</string>
+    <string name="cubiq_home_all_versions" formatted="false">所有版本</string>
+    <string name="cubiq_home_version_abbr">版本：%1$s</string>
+    <string name="cubiq_home_filter_by_version" formatted="false">按版本筛选</string>
+    <string name="cubiq_home_version_examples" formatted="false">例如：1.21.4、1.20.1</string>
+    <string name="cubiq_home_apply" formatted="false">应用</string>
+    <string name="cubiq_home_all_loaders" formatted="false">所有加载器</string>
+    <string name="cubiq_home_loader_filter">加载器：%1$s</string>
+    <string name="cubiq_home_all_categories" formatted="false">所有分类</string>
+    <string name="cubiq_home_category_filter">分类：%1$s</string>
+    <string name="cubiq_home_sort_filter">排序：%1$s</string>
+    <string name="cubiq_home_manage_version">管理：%1$s</string>
+    <string name="cubiq_home_export" formatted="false">导出</string>
+    <string name="cubiq_home_execute_jar" formatted="false">运行 .jar 文件</string>
+    <string name="cubiq_home_unknown_error" formatted="false">未知错误</string>
+    <string name="cubiq_home_renderer_companion_required" formatted="false">MobileGlues 渲染器需要在设备上安装配套的独立应用。</string>
+    <string name="cubiq_home_renderer_incompatible">所选渲染器“%1$s”与 Minecraft %2$s 不兼容（%3$s）。</string>
+    <string name="cubiq_home_renderer_warning_title" formatted="false">渲染器不兼容警告</string>
+    <string name="cubiq_home_renderer_fallback_prompt">%1$s\n\n建议使用以下备用渲染器：\n• %2$s（%3$s）\n\n要切换到 %4$s 并启动游戏吗？</string>
+    <string name="cubiq_home_accounts" formatted="false">账号</string>
+    <string name="cubiq_home_auto_on_short" formatted="false">自动轮播开</string>
+    <string name="cubiq_home_auto_off_short" formatted="false">自动轮播关</string>
+    <string name="cubiq_home_version_icon" formatted="false">版本图标</string>
+    <string name="cubiq_home_horizon_downloading_files">正在下载文件（%1$s MB / %2$s MB）</string>
+    <string name="cubiq_home_horizon_configuring_step">正在配置：%1$s</string>
+    <string name="cubiq_home_horizon_configuring" formatted="false">正在配置运行环境……</string>
+    <string name="cubiq_home_horizon_preparing" formatted="false">正在准备环境……</string>
+    <string name="cubiq_home_horizon_finalizing" formatted="false">正在完成设置……</string>
+    <string name="cubiq_home_horizon_status">HORIZON（MINECRAFT RUST）• %1$s</string>
+    <string name="cubiq_home_horizon_setting_up" formatted="false">正在设置……</string>
+    <string name="cubiq_home_preparing_install_with_message">正在准备 %1$s • %2$s</string>
+    <string name="cubiq_home_preparing_install">正在准备 %1$s……</string>
+    <string name="cubiq_home_downloading_install_with_message">正在下载 %1$s • %2$s</string>
+    <string name="cubiq_home_downloading_install">正在下载 %1$s</string>
+    <string name="cubiq_home_preparing_game" formatted="false">正在准备游戏安装……</string>
+    <string name="cubiq_home_downloading_game" formatted="false">正在下载游戏文件……</string>
+    <string name="cubiq_home_view" formatted="false">查看</string>
+    <string name="cubiq_home_no_crash_log_at">未找到崩溃日志文件：%1$s</string>
+    <string name="cubiq_home_failed_read_log" formatted="false">读取日志文件失败。</string>
+    <string name="cubiq_home_crash_detected" formatted="false">检测到游戏崩溃</string>
+    <string name="cubiq_home_crash_signal">因系统信号终止（代码 %1$d）</string>
+    <string name="cubiq_home_crash_exit">JVM 异常退出，代码：%1$d</string>
+    <string name="cubiq_home_crash_explanation" formatted="false">上一次 Minecraft 会话发生崩溃。你可以查看下方日志，或分享日志以便排查问题：</string>
+    <string name="cubiq_home_log_not_exist" formatted="false">日志文件不存在</string>
+    <string name="cubiq_home_share_log" formatted="false">分享日志</string>
+    <string name="cubiq_home_log_copied" formatted="false">完整日志已复制到剪贴板！</string>
+    <string name="cubiq_home_log_not_found" formatted="false">未找到日志文件</string>
+    <string name="cubiq_home_copy_log" formatted="false">复制日志</string>
+    <string name="cubiq_home_dismiss" formatted="false">忽略</string>
+    <string name="cubiq_home_installing_title">正在安装 %1$s</string>
+    <string name="cubiq_home_search_button" formatted="false">搜索</string>
+    <string name="cubiq_home_loading_text">正在加载……</string>
+    <string name="cubiq_home_latest_release_with_version">最新正式版（%1$s）</string>
+    <string name="cubiq_home_crash_log">崩溃日志</string>
+    <string name="cubiq_home_download_speed">%1$s/秒</string>
+</resources>

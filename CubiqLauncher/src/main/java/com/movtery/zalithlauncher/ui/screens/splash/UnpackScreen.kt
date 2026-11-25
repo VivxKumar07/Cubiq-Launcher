@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -91,7 +92,7 @@ fun UnpackScreen(
                 }
 
                 Text(
-                    text = "CUBIQ SETUP",
+                    text = stringResource(R.string.cubiq_progress_setup_title),
                     color = Color(0xFF55FF55),
                     fontFamily = MinecraftFontFamily,
                     fontSize = 14.sp,
@@ -111,9 +112,9 @@ fun UnpackScreen(
                     Text(
                         modifier = Modifier.padding(10.dp),
                         text = if (installing) {
-                            "Extracting Minecraft Java runtimes, LWJGL libraries, and native assets..."
+                            stringResource(R.string.cubiq_progress_setup_extract)
                         } else {
-                            "Cubiq requires unpacking internal Java runtimes (Java 8, 17, 21), LWJGL libraries, and native assets to run Java Edition."
+                            stringResource(R.string.cubiq_progress_setup_details)
                         },
                         color = Color(0xFFC0C0C0),
                         fontFamily = MinecraftFontFamily,
@@ -144,7 +145,7 @@ fun UnpackScreen(
                     style = MinecraftButtonStyle.GREEN,
                     enabled = !installing,
                     isLoading = installing,
-                    text = if (installing) "EXTRACTING..." else "INSTALL & PLAY",
+                    text = stringResource(if (installing) R.string.cubiq_progress_setup_extract_button else R.string.cubiq_progress_setup_play_button),
                     onClick = {
                         installing = true
                         onAgreeClick()

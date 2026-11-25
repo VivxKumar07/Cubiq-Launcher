@@ -69,7 +69,7 @@
     <!-- Unit -->
     <string name="unit_day">day</string>
     <string name="date_format">MMM d, yyyy, h:mm:ss a</string>
-    <string name="duration_format">%s Days %s Hours %s Minutes</string>
+    <string name="duration_format">%1$s Days %2$s Hours %3$s Minutes</string>
     <string name="just_now">just now</string>
     <string name="minutes_ago">%d minutes ago</string>
     <string name="hours_ago">%d hours ago</string>
@@ -616,7 +616,7 @@
     <string name="files_select_dir">Select Folder</string>
     <string name="files_current_path">Current path: %s</string>
     <string name="files_no_selectable_content">No selectable content</string>
-    <string name="file_invalid_length">Name too long! (Current: %d, Max: %d)</string>
+    <string name="file_invalid_length">Name too long! (Current: %1$d, Max: %2$d)</string>
     <string name="file_invalid_leading_or_trailing_space">Cannot start or end with a space!</string>
     <!-- Java Runtime -->
     <string name="multirt_runtime_corrupt">Corrupted Java runtime</string>
@@ -1085,6 +1085,8 @@
     <string name="settings_launcher_color_theme_style">Palette Style</string>
     <string name="settings_launcher_dark_mode_title">Dark Mode</string>
     <string name="settings_launcher_language">Language</string>
+    <string name="settings_launcher_chinese_pixel_font">Chinese pixel font</string>
+    <string name="settings_launcher_chinese_pixel_font_summary">Use Fusion Pixel for Simplified Chinese with the Minecraft pixel font style.</string>
     <string name="settings_launcher_full_screen_title">Fullscreen Mode</string>
     <string name="settings_launcher_full_screen_summary">Make the launcher pages fullscreen, ignoring safe areas like notches and punch-holes</string>
     <string name="settings_launcher_animate_speed_title">Animation Speed</string>

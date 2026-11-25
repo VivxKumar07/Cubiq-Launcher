@@ -2,6 +2,7 @@ package com.movtery.zalithlauncher.ui.screens.content.horizon
 
 import android.content.Context
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -42,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -57,14 +59,37 @@ import com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily
 import org.json.JSONObject
 import java.io.File
 
-enum class HorizonUiTab(val label: String) {
-    PLAY("Play"),
-    MODS("Mods"),
-    PACKS("Packs"),
-    SHADERS("Shaders"),
-    INSTALLED("Installed"),
-    SETTINGS("Settings")
+enum class HorizonUiTab(@StringRes val labelRes: Int) {
+    PLAY(R.string.cubiq_horizon_tab_play),
+    MODS(R.string.cubiq_horizon_tab_mods),
+    PACKS(R.string.cubiq_horizon_tab_packs),
+    SHADERS(R.string.cubiq_horizon_tab_shaders),
+    INSTALLED(R.string.cubiq_horizon_tab_installed),
+    SETTINGS(R.string.cubiq_horizon_tab_settings)
 }
+
+private val settingLabels = mapOf(
+    "Vulkan / GPU batching" to R.string.cubiq_horizon_renderer_vulkan_gpu,
+    "OpenGL ES / experimental" to R.string.cubiq_horizon_renderer_opengl,
+    "Vulkan / compatibility" to R.string.cubiq_horizon_renderer_vulkan_compatibility,
+    "Profile 0" to R.string.cubiq_horizon_profile_zero,
+    "Landscape (sensor)" to R.string.cubiq_horizon_landscape_sensor,
+    "Portrait (sensor)" to R.string.cubiq_horizon_portrait_sensor,
+    "Landscape (reversed)" to R.string.cubiq_horizon_landscape_reversed,
+    "Portrait (reversed)" to R.string.cubiq_horizon_portrait_reversed,
+    "Automatic rotation" to R.string.cubiq_horizon_automatic_rotation,
+    "Automatic" to R.string.cubiq_horizon_automatic,
+    "Touch & Android keyboard" to R.string.cubiq_horizon_touch_android_keyboard,
+    "Keyboard & mouse" to R.string.cubiq_horizon_keyboard_mouse,
+    "Controller" to R.string.cubiq_horizon_controller,
+    "Native" to R.string.cubiq_horizon_native,
+    "System default" to R.string.cubiq_horizon_system_default,
+    "Singleplayer / tap to enter server" to R.string.cubiq_horizon_server_singleplayer,
+    "Multiplayer Server: default" to R.string.cubiq_horizon_server_default,
+)
+
+@Composable
+private fun settingLabel(value: String): String = settingLabels[value]?.let { stringResource(it) } ?: value
 
 data class HorizonContentItem(
     val file: File,
@@ -226,11 +251,17 @@ fun HorizonSettingsDialog(
 
     if (showAccountDialog) {
         val currentAcc = AccountsManager.getCurrentAccount()
+        val accountTypeRes =
+            if (currentAcc?.accountType == com.movtery.zalithlauncher.game.account.AccountType.MICROSOFT.tag) {
+                R.string.cubiq_horizon_account_microsoft
+            } else {
+                R.string.cubiq_horizon_account_offline
+            }
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showAccountDialog = false },
             title = {
                 Text(
-                    text = "Microsoft / Xbox Account",
+                    text = stringResource(R.string.cubiq_horizon_account_dialog_title),
                     color = Color.White,
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold
@@ -239,19 +270,19 @@ fun HorizonSettingsDialog(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Current account: ${currentAcc?.username ?: "Offline Player"}",
+                        text = stringResource(R.string.cubiq_horizon_account_current, currentAcc?.username ?: stringResource(R.string.cubiq_horizon_account_offline_player)),
                         color = Color(0xFFDDDDDD),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 13.sp
                     )
                     Text(
-                        text = "Type: ${if (currentAcc?.accountType == com.movtery.zalithlauncher.game.account.AccountType.MICROSOFT.tag) "Microsoft Account (MSA)" else "Offline / Local"}",
+                        text = stringResource(R.string.cubiq_horizon_account_type, stringResource(accountTypeRes)),
                         color = Color(0xFFAAAAAA),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 12.sp
                     )
                     Text(
-                        text = "Minecraft Rust uses your active Cubiq Launcher account session for authentication and skin loading.",
+                        text = stringResource(R.string.cubiq_horizon_account_description),
                         color = Color(0xFF888899),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 11.sp
@@ -262,11 +293,11 @@ fun HorizonSettingsDialog(
                 MinecraftButton(
                     onClick = {
                         showAccountDialog = false
-                        Toast.makeText(context, "Account verified: ${currentAcc?.username ?: "Steve"}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.cubiq_horizon_account_verified, currentAcc?.username ?: "Steve"), Toast.LENGTH_SHORT).show()
                     },
                     style = MinecraftButtonStyle.GREEN
                 ) {
-                    Text("OK", color = Color.White, fontFamily = MinecraftFontFamily)
+                    Text(stringResource(R.string.cubiq_horizon_ok), color = Color.White, fontFamily = MinecraftFontFamily)
                 }
             },
             dismissButton = {
@@ -276,7 +307,7 @@ fun HorizonSettingsDialog(
                     },
                     style = MinecraftButtonStyle.STONE
                 ) {
-                    Text("Close", color = Color.White, fontFamily = MinecraftFontFamily)
+                    Text(stringResource(R.string.cubiq_horizon_close), color = Color.White, fontFamily = MinecraftFontFamily)
                 }
             },
             containerColor = Color(0xFF1E2026)
@@ -345,12 +376,12 @@ fun HorizonSettingsDialog(
                         ) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_rust_logo),
-                                contentDescription = "Rust Logo",
+                                contentDescription = stringResource(R.string.cubiq_horizon_engine_rust_logo),
                                 tint = Color.Unspecified,
                                 modifier = Modifier.size(24.dp)
                             )
                             Text(
-                                text = "Minecraft Rust Edition",
+                                text = stringResource(R.string.cubiq_horizon_title),
                                 color = Color.White,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
@@ -369,7 +400,7 @@ fun HorizonSettingsDialog(
                                     .padding(horizontal = 10.dp, vertical = 6.dp)
                             ) {
                                 Text(
-                                    text = "Account: $accountName",
+                                    text = stringResource(R.string.cubiq_horizon_account_label, accountName),
                                     color = Color(0xFF55FF55),
                                     fontSize = 11.sp,
                                     fontFamily = MinecraftFontFamily
@@ -389,7 +420,7 @@ fun HorizonSettingsDialog(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_close),
-                                    contentDescription = "Close",
+                                    contentDescription = stringResource(R.string.cubiq_horizon_close),
                                     tint = Color.White,
                                     modifier = Modifier.size(14.dp)
                                 )
@@ -417,7 +448,7 @@ fun HorizonSettingsDialog(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = tab.label,
+                                    text = stringResource(tab.labelRes),
                                     color = if (isSelected) Color.White else Color(0xFF9E9EAA),
                                     fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
@@ -442,7 +473,7 @@ fun HorizonSettingsDialog(
                                 ) {
                                     item {
                                         Text(
-                                            text = "Launch settings",
+                                            text = stringResource(R.string.cubiq_horizon_launch_settings),
                                             color = Color.White,
                                             fontSize = 17.sp,
                                             fontWeight = FontWeight.Bold,
@@ -454,7 +485,7 @@ fun HorizonSettingsDialog(
                                     // 1. Rendering
                                     item {
                                         HorizonDropdownRow(
-                                            label = "Rendering",
+                                            label = stringResource(R.string.cubiq_horizon_rendering),
                                             currentValue = rendering,
                                             options = listOf(
                                                 "Vulkan / GPU batching",
@@ -471,7 +502,7 @@ fun HorizonSettingsDialog(
                                     // 2. Client Resolution
                                     item {
                                         HorizonDropdownRow(
-                                            label = "Client resolution",
+                                            label = stringResource(R.string.cubiq_horizon_client_resolution),
                                             currentValue = clientResolution,
                                             options = listOf("100%", "90%", "80%", "75%", "50%"),
                                             onSelect = {
@@ -484,7 +515,7 @@ fun HorizonSettingsDialog(
                                     // 3. Profile
                                     item {
                                         HorizonDropdownRow(
-                                            label = "Profile",
+                                            label = stringResource(R.string.cubiq_horizon_profile),
                                             currentValue = profile,
                                             options = listOf("Profile 0"),
                                             onSelect = {
@@ -497,7 +528,7 @@ fun HorizonSettingsDialog(
                                     // 4. Orientation
                                     item {
                                         HorizonDropdownRow(
-                                            label = "Orientation",
+                                            label = stringResource(R.string.cubiq_horizon_orientation),
                                             currentValue = orientation,
                                             options = listOf(
                                                 "Landscape (sensor)",
@@ -516,7 +547,7 @@ fun HorizonSettingsDialog(
                                     // 5. Input
                                     item {
                                         HorizonDropdownRow(
-                                            label = "Input",
+                                            label = stringResource(R.string.cubiq_horizon_input),
                                             currentValue = inputHost,
                                             options = listOf(
                                                 "Automatic",
@@ -534,7 +565,7 @@ fun HorizonSettingsDialog(
                                     // 6. Immersive Fullscreen
                                     item {
                                         HorizonSwitchRow(
-                                            label = "Immersive fullscreen",
+                                            label = stringResource(R.string.cubiq_horizon_immersive_fullscreen),
                                             checked = immersiveFullscreen,
                                             onCheckedChange = {
                                                 immersiveFullscreen = it
@@ -546,7 +577,7 @@ fun HorizonSettingsDialog(
                                     // 7. Avoid Camera Cutout
                                     item {
                                         HorizonSwitchRow(
-                                            label = "Avoid camera cutout",
+                                            label = stringResource(R.string.cubiq_horizon_avoid_camera_cutout),
                                             checked = avoidCutout,
                                             onCheckedChange = {
                                                 avoidCutout = it
@@ -558,7 +589,7 @@ fun HorizonSettingsDialog(
                                     // 8. Aspect Ratio
                                     item {
                                         HorizonDropdownRow(
-                                            label = "Aspect ratio",
+                                            label = stringResource(R.string.cubiq_horizon_aspect_ratio),
                                             currentValue = aspectRatio,
                                             options = listOf("Native", "16:9", "4:3", "1:1"),
                                             onSelect = {
@@ -571,7 +602,7 @@ fun HorizonSettingsDialog(
                                     // 9. Display Refresh Rate
                                     item {
                                         HorizonDropdownRow(
-                                            label = "Display refresh rate",
+                                            label = stringResource(R.string.cubiq_horizon_display_refresh_rate),
                                             currentValue = refreshRate,
                                             options = listOf("System default", "60 Hz", "90 Hz", "120 Hz"),
                                             onSelect = {
@@ -584,7 +615,7 @@ fun HorizonSettingsDialog(
                                     // 10. Performance hints
                                     item {
                                         HorizonSwitchRow(
-                                            label = "Performance hints",
+                                            label = stringResource(R.string.cubiq_horizon_performance_hints),
                                             checked = performanceHints,
                                             onCheckedChange = {
                                                 performanceHints = it
@@ -596,8 +627,8 @@ fun HorizonSettingsDialog(
                                     // 11. GPU Profiling
                                     item {
                                         HorizonActionRow(
-                                            label = "GPU profiling",
-                                            actionText = if (gpuProfiling) "On / included in report" else "Off",
+                                            label = stringResource(R.string.cubiq_horizon_gpu_profiling),
+                                            actionText = if (gpuProfiling) stringResource(R.string.cubiq_horizon_on_report) else stringResource(R.string.cubiq_horizon_off),
                                             onClick = {
                                                 gpuProfiling = !gpuProfiling
                                                 saveConfig()
@@ -608,8 +639,8 @@ fun HorizonSettingsDialog(
                                     // 12. Performance recording
                                     item {
                                         HorizonActionRow(
-                                            label = "Performance recording",
-                                            actionText = if (performanceRecording) "On / up to 30 min" else "Off",
+                                            label = stringResource(R.string.cubiq_horizon_performance_recording),
+                                            actionText = if (performanceRecording) stringResource(R.string.cubiq_horizon_on_30_min) else stringResource(R.string.cubiq_horizon_off),
                                             onClick = {
                                                 performanceRecording = !performanceRecording
                                                 saveConfig()
@@ -620,10 +651,10 @@ fun HorizonSettingsDialog(
                                     // 13. Diagnostic Report
                                     item {
                                         HorizonActionRow(
-                                            label = "Diagnostic report",
-                                            actionText = "Export one ZIP to share",
+                                            label = stringResource(R.string.cubiq_horizon_diagnostic_report),
+                                            actionText = stringResource(R.string.cubiq_horizon_export_report),
                                             onClick = {
-                                                Toast.makeText(context, "Saved report to Horizon Reports folder", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, R.string.cubiq_horizon_report_saved, Toast.LENGTH_SHORT).show()
                                             }
                                         )
                                     }
@@ -631,10 +662,10 @@ fun HorizonSettingsDialog(
                                     // 14. Raw Performance Data
                                     item {
                                         HorizonActionRow(
-                                            label = "Raw performance data",
-                                            actionText = "Advanced / JSONL in Reports",
+                                            label = stringResource(R.string.cubiq_horizon_raw_performance_data),
+                                            actionText = stringResource(R.string.cubiq_horizon_jsonl_reports),
                                             onClick = {
-                                                Toast.makeText(context, "JSONL logs active in files/Reports", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, R.string.cubiq_horizon_jsonl_active, Toast.LENGTH_SHORT).show()
                                             }
                                         )
                                     }
@@ -642,8 +673,8 @@ fun HorizonSettingsDialog(
                                     // 15. Server
                                     item {
                                         HorizonActionRow(
-                                            label = "Server",
-                                            actionText = serverName,
+                                            label = stringResource(R.string.cubiq_horizon_server),
+                                            actionText = settingLabel(serverName),
                                             onClick = {
                                                 serverName = if (serverName.startsWith("Singleplayer")) "Multiplayer Server: default" else "Singleplayer / tap to enter server"
                                                 saveConfig()
@@ -666,12 +697,12 @@ fun HorizonSettingsDialog(
                                                     .background(Color(0xFF1C1D24))
                                                     .border(BorderStroke(1.dp, Color(0xFF2C2D36)), RoundedCornerShape(4.dp))
                                                     .clickable {
-                                                        Toast.makeText(context, "Diagnostics: All system tests passed", Toast.LENGTH_SHORT).show()
+                                                        Toast.makeText(context, R.string.cubiq_horizon_diagnostics_passed, Toast.LENGTH_SHORT).show()
                                                     },
                                                 contentAlignment = Alignment.CenterStart
                                             ) {
                                                 Text(
-                                                    text = "Diagnostics",
+                                                    text = stringResource(R.string.cubiq_horizon_diagnostics),
                                                     color = Color.White,
                                                     fontSize = 12.sp,
                                                     fontFamily = MinecraftFontFamily,
@@ -692,7 +723,7 @@ fun HorizonSettingsDialog(
                                                 contentAlignment = Alignment.CenterStart
                                             ) {
                                                 Text(
-                                                    text = "Microsoft / Xbox account",
+                                                    text = stringResource(R.string.cubiq_horizon_microsoft_account),
                                                     color = Color.White,
                                                     fontSize = 12.sp,
                                                     fontFamily = MinecraftFontFamily,
@@ -713,22 +744,22 @@ fun HorizonSettingsDialog(
                                 ) {
                                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                         Text(
-                                            text = "Ready to play",
+                                            text = stringResource(R.string.cubiq_horizon_ready_to_play),
                                             color = Color.White,
                                             fontSize = 20.sp,
                                             fontWeight = FontWeight.Bold,
                                             fontFamily = MinecraftFontFamily
                                         )
                                         Text(
-                                            text = "Minecraft 26.3 / Profile 0",
+                                            text = stringResource(R.string.cubiq_horizon_version_profile),
                                             color = Color(0xFFAAAAAA),
                                             fontSize = 13.sp,
                                             fontFamily = MinecraftFontFamily
                                         )
                                         Spacer(modifier = Modifier.height(10.dp))
-                                        Text("01 Open a world or join a Java server", color = Color(0xFFCCCCCC), fontSize = 12.sp, fontFamily = MinecraftFontFamily)
-                                        Text("02 Touch setup: Options > Controls", color = Color(0xFFCCCCCC), fontSize = 12.sp, fontFamily = MinecraftFontFamily)
-                                        Text("03 Find packs and .hmod in the tabs", color = Color(0xFFCCCCCC), fontSize = 12.sp, fontFamily = MinecraftFontFamily)
+                                        Text(stringResource(R.string.cubiq_horizon_open_world_or_join_server), color = Color(0xFFCCCCCC), fontSize = 12.sp, fontFamily = MinecraftFontFamily)
+                                        Text(stringResource(R.string.cubiq_horizon_touch_setup), color = Color(0xFFCCCCCC), fontSize = 12.sp, fontFamily = MinecraftFontFamily)
+                                        Text(stringResource(R.string.cubiq_horizon_find_packs), color = Color(0xFFCCCCCC), fontSize = 12.sp, fontFamily = MinecraftFontFamily)
                                     }
 
                                     Box(
@@ -745,7 +776,7 @@ fun HorizonSettingsDialog(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = "Play",
+                                            text = stringResource(R.string.cubiq_horizon_play),
                                             color = Color.White,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold,
@@ -762,7 +793,7 @@ fun HorizonSettingsDialog(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("Horizon Mods", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = MinecraftFontFamily)
+                                        Text(stringResource(R.string.cubiq_horizon_mods_title), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = MinecraftFontFamily)
                                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                             Box(
                                                 modifier = Modifier
@@ -770,7 +801,7 @@ fun HorizonSettingsDialog(
                                                     .background(Color(0xFF22C55E))
                                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                                             ) {
-                                                Text("Horizon", color = Color.White, fontSize = 11.sp, fontFamily = MinecraftFontFamily)
+                                                Text(stringResource(R.string.cubiq_horizon_horizon), color = Color.White, fontSize = 11.sp, fontFamily = MinecraftFontFamily)
                                             }
                                             Box(
                                                 modifier = Modifier
@@ -783,19 +814,19 @@ fun HorizonSettingsDialog(
                                         }
                                     }
                                     Spacer(modifier = Modifier.height(10.dp))
-                                    Text("Search / .hmod URL:", color = Color(0xFF8E8E9A), fontSize = 11.sp, fontFamily = MinecraftFontFamily)
+                                    Text(stringResource(R.string.cubiq_horizon_search_mods), color = Color(0xFF8E8E9A), fontSize = 11.sp, fontFamily = MinecraftFontFamily)
                                     Spacer(modifier = Modifier.height(10.dp))
-                                    Text("Modrinth Java mods are browse-only; Fabric/Forge/NeoForge cannot run here", color = Color(0xFF7E7E8E), fontSize = 11.sp, fontFamily = MinecraftFontFamily)
+                                    Text(stringResource(R.string.cubiq_horizon_modrinth_browse_only), color = Color(0xFF7E7E8E), fontSize = 11.sp, fontFamily = MinecraftFontFamily)
                                 }
                             }
 
                             HorizonUiTab.PACKS -> {
                                 Column(modifier = Modifier.fillMaxSize()) {
-                                    Text("Resource Packs", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = MinecraftFontFamily)
+                                    Text(stringResource(R.string.cubiq_horizon_resource_packs), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = MinecraftFontFamily)
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    Text("Verified downloads / enable in Installed", color = Color(0xFF8E8E9A), fontSize = 11.sp, fontFamily = MinecraftFontFamily)
+                                    Text(stringResource(R.string.cubiq_horizon_verified_downloads), color = Color(0xFF8E8E9A), fontSize = 11.sp, fontFamily = MinecraftFontFamily)
                                     Spacer(modifier = Modifier.height(12.dp))
-                                    listOf("Fresh Animations", "Translations for Sodium", "Motschen's Better Leaves").forEach { pack ->
+                                    listOf(stringResource(R.string.cubiq_horizon_pack_fresh_animations), stringResource(R.string.cubiq_horizon_pack_sodium_translations), stringResource(R.string.cubiq_horizon_pack_better_leaves)).forEach { pack ->
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -809,9 +840,9 @@ fun HorizonSettingsDialog(
                                                     .clip(RoundedCornerShape(3.dp))
                                                     .background(Color(0xFF1E1E26))
                                                     .padding(horizontal = 10.dp, vertical = 5.dp)
-                                                    .clickable { Toast.makeText(context, "$pack download requested", Toast.LENGTH_SHORT).show() }
+                                                    .clickable { Toast.makeText(context, context.getString(R.string.cubiq_horizon_pack_download_requested, pack), Toast.LENGTH_SHORT).show() }
                                             ) {
-                                                Text("Install", color = Color.White, fontSize = 11.sp, fontFamily = MinecraftFontFamily)
+                                                Text(stringResource(R.string.cubiq_horizon_install), color = Color.White, fontSize = 11.sp, fontFamily = MinecraftFontFamily)
                                             }
                                         }
                                     }
@@ -820,9 +851,9 @@ fun HorizonSettingsDialog(
 
                             HorizonUiTab.SHADERS -> {
                                 Column(modifier = Modifier.fillMaxSize()) {
-                                    Text("Shader Packs", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = MinecraftFontFamily)
+                                    Text(stringResource(R.string.cubiq_horizon_shader_packs), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = MinecraftFontFamily)
                                     Spacer(modifier = Modifier.height(12.dp))
-                                    Text("No Horizon shader packs match this search. Try another query or import a .hshader.", color = Color(0xFF8E8E9A), fontSize = 11.sp, fontFamily = MinecraftFontFamily)
+                                    Text(stringResource(R.string.cubiq_horizon_no_shader_packs), color = Color(0xFF8E8E9A), fontSize = 11.sp, fontFamily = MinecraftFontFamily)
                                 }
                             }
 
@@ -831,7 +862,7 @@ fun HorizonSettingsDialog(
                                     modifier = Modifier.fillMaxSize(),
                                     verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
-                                    listOf("+ Mods (0)", "+ Resource Packs (0)", "+ Shaders (0)").forEach { category ->
+                                    listOf(stringResource(R.string.cubiq_horizon_category_mods), stringResource(R.string.cubiq_horizon_category_resource_packs), stringResource(R.string.cubiq_horizon_category_shaders)).forEach { category ->
                                         Row(
                                             modifier = Modifier
                                                 .fillMaxWidth()
@@ -847,9 +878,9 @@ fun HorizonSettingsDialog(
                                                     .clip(RoundedCornerShape(3.dp))
                                                     .background(Color(0xFF22222C))
                                                     .padding(horizontal = 10.dp, vertical = 4.dp)
-                                                    .clickable { Toast.makeText(context, "Choose file to import", Toast.LENGTH_SHORT).show() }
+                                                    .clickable { Toast.makeText(context, R.string.cubiq_horizon_choose_file, Toast.LENGTH_SHORT).show() }
                                             ) {
-                                                Text("Import", color = Color.White, fontSize = 11.sp, fontFamily = MinecraftFontFamily)
+                                                Text(stringResource(R.string.cubiq_horizon_import), color = Color.White, fontSize = 11.sp, fontFamily = MinecraftFontFamily)
                                             }
                                         }
                                     }
@@ -900,7 +931,7 @@ private fun HorizonDropdownRow(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = currentValue,
+                    text = settingLabel(currentValue),
                     color = Color.White,
                     fontSize = 12.sp,
                     fontFamily = MinecraftFontFamily,
@@ -918,7 +949,7 @@ private fun HorizonDropdownRow(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = option,
+                                text = settingLabel(option),
                                 color = if (option == currentValue) Color(0xFF55FF55) else Color.White,
                                 fontSize = 12.sp,
                                 fontFamily = MinecraftFontFamily

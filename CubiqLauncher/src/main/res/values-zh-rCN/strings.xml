@@ -69,7 +69,7 @@
     <!--  单位  -->
     <string name="unit_day">天</string>
     <string name="date_format">yyyy \'年\' MM \'月\' dd \'日\' HH:mm:ss</string>
-    <string name="duration_format">%s 天 %s 小时 %s 分钟</string>
+    <string name="duration_format">%1$s 天 %2$s 小时 %3$s 分钟</string>
     <string name="just_now">刚刚</string>
     <string name="minutes_ago">%d 分钟前</string>
     <string name="hours_ago">%d 小时前</string>
@@ -615,7 +615,7 @@
     <string name="files_select_dir">选择此目录</string>
     <string name="files_current_path">当前路径：%s</string>
     <string name="files_no_selectable_content">该目录没有可选内容</string>
-    <string name="file_invalid_length">名称过长！(当前长度：%d，最大长度：%d)</string>
+    <string name="file_invalid_length">名称过长！(当前长度：%1$d，最大长度：%2$d)</string>
     <string name="file_invalid_leading_or_trailing_space">不能以空格开头或结尾！</string>
     <!--  Jre  -->
     <string name="multirt_runtime_corrupt">Java 运行环境损坏</string>
@@ -1064,6 +1064,8 @@
     <string name="settings_launcher_color_theme_style">配色风格</string>
     <string name="settings_launcher_dark_mode_title">深色模式</string>
     <string name="settings_launcher_language">语言</string>
+    <string name="settings_launcher_chinese_pixel_font">中文像素字体</string>
+    <string name="settings_launcher_chinese_pixel_font_summary">使用 Minecraft 像素字体时，简体中文以缝合像素字体显示。</string>
     <string name="settings_launcher_full_screen_title">页面全屏化</string>
     <string name="settings_launcher_full_screen_summary">使启动器的页面全屏化，忽略刘海屏、挖孔屏等屏幕的安全区</string>
     <string name="settings_launcher_animate_speed_title">动画倍速</string>
@@ -1476,4 +1478,26 @@
     <string name="guide_editor_save">完成编辑后，记得保存控制布局！</string>
     <string name="guide_tip_blank">点击空白处进入下一步</string>
     <string name="guide_tip_finish">点击空白处完成引导</string>
+
+    <!-- 物理键鼠与录屏 -->
+    <string name="settings_tab_keyboard_mouse">键盘与鼠标</string>
+    <string name="settings_km_mouse_category">物理鼠标</string>
+    <string name="settings_km_mouse_capture_title">捕获鼠标指针</string>
+    <string name="settings_km_mouse_capture_summary">锁定物理鼠标指针，让游戏内的鼠标操作接近电脑端。</string>
+    <string name="settings_km_sensitivity_title">鼠标指针灵敏度</string>
+    <string name="settings_km_sensitivity_summary">调整捕获物理鼠标后指针的移动灵敏度。</string>
+    <string name="settings_km_hide_cursor_title">隐藏虚拟指针</string>
+    <string name="settings_km_hide_cursor_summary">使用物理鼠标时隐藏屏幕上的虚拟指针。</string>
+    <string name="settings_km_keyboard_category">物理键盘</string>
+    <string name="settings_km_ime_key_title">软键盘切换键</string>
+    <string name="settings_km_ime_key_summary">设置在游戏内打开或关闭软键盘的按键。</string>
+    <string name="settings_km_capture_tools_category">录屏与截图</string>
+    <string name="settings_km_recorder_hud_title">录屏与截图浮窗</string>
+    <string name="settings_km_recorder_hud_summary">在游戏内显示浮动工具栏，方便随时录屏或截图。</string>
+    <string name="settings_km_capture_sound_title">截图快门声</string>
+    <string name="settings_km_capture_sound_summary">截图时播放快门声。</string>
+    <string name="settings_km_save_gallery_title">保存至系统相册</string>
+    <string name="settings_km_save_gallery_summary">将截图和录屏自动保存至 Android 的 Pictures 和 Movies 目录。</string>
+    <string name="settings_km_timer_title">显示录制计时</string>
+    <string name="settings_km_timer_summary">录屏时实时显示已录制的时长。</string>
 </resources>

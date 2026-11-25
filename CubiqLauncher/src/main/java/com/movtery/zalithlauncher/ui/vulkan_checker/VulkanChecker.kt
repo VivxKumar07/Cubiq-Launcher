@@ -121,7 +121,7 @@ fun VulkanChecker(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Text(
-                                text = "VULKAN COMPATIBILITY CHECK",
+                                text = stringResource(R.string.cubiq_game_vulkan_compatibility_title),
                                 fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
@@ -180,13 +180,16 @@ fun VulkanChecker(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
-                                            text = "Vulkan: ${data.versionString}",
+                                            text = stringResource(R.string.game_vulkan_check_version, data.versionString),
                                             fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
                                             fontSize = 11.sp,
                                             color = Color(0xFFAAAAAA)
                                         )
                                         Text(
-                                            text = "Turnip: ${operation.useTurnip}",
+                                            text = stringResource(
+                                                R.string.game_vulkan_check_turnip,
+                                                stringResource(if (operation.useTurnip) R.string.generic_enabled else R.string.generic_disabled)
+                                            ),
                                             fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
                                             fontSize = 11.sp,
                                             color = Color(0xFFAAAAAA)
@@ -203,7 +206,7 @@ fun VulkanChecker(
                                             .padding(8.dp)
                                     ) {
                                         Text(
-                                            text = "Note: Standard Minecraft versions (1.7.10 – 1.21.x) run via OpenGL ES 3 (Krypton Wrapper) and do not need Vulkan support.",
+                                            text = stringResource(R.string.cubiq_game_vulkan_compatibility_note),
                                             fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
                                             fontSize = 11.sp,
                                             color = Color(0xFFAADD99),
@@ -244,7 +247,7 @@ fun VulkanChecker(
                                         onChange(VCOperation.None)
                                     },
                                     style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.GREEN,
-                                    text = "CONTINUE",
+                                    text = stringResource(R.string.cubiq_game_continue),
                                     fontSize = 12.sp
                                 )
                             }

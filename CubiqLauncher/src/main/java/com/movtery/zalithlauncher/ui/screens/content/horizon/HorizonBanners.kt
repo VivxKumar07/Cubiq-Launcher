@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -111,7 +112,7 @@ fun HorizonHomeBanner(
                 // Horizon Sunset Logo
                 Image(
                     painter = painterResource(R.drawable.ic_horizon_logo),
-                    contentDescription = "Horizon Logo",
+                    contentDescription = stringResource(R.string.cubiq_horizon_logo),
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
@@ -126,7 +127,7 @@ fun HorizonHomeBanner(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "Getting low FPS? Try Minecraft Rust Edition",
+                            text = stringResource(R.string.cubiq_horizon_banner_title),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
@@ -147,7 +148,7 @@ fun HorizonHomeBanner(
                                 .padding(horizontal = 4.dp, vertical = 1.dp)
                         ) {
                             Text(
-                                text = "NEW",
+                                text = stringResource(R.string.cubiq_horizon_new),
                                 color = Color(0xFF55FF55),
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
@@ -255,7 +256,7 @@ fun HorizonInstallationsBanner(
                 // Circular Horizon Logo
                 Image(
                     painter = painterResource(R.drawable.ic_horizon_logo),
-                    contentDescription = "Horizon Logo",
+                    contentDescription = stringResource(R.string.cubiq_horizon_logo),
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
@@ -270,7 +271,7 @@ fun HorizonInstallationsBanner(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "Horizon",
+                            text = stringResource(R.string.cubiq_horizon_horizon),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
@@ -288,7 +289,7 @@ fun HorizonInstallationsBanner(
                                 .padding(horizontal = 4.dp, vertical = 1.dp)
                         ) {
                             Text(
-                                text = "NEW",
+                                text = stringResource(R.string.cubiq_horizon_new),
                                 color = Color(0xFF55FF55),
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
@@ -298,7 +299,7 @@ fun HorizonInstallationsBanner(
                     }
 
                     Text(
-                        text = "Minecraft 26.3, rewritten from scratch in Rust.",
+                        text = stringResource(R.string.cubiq_horizon_banner_description),
                         color = Color(0xFFCCCCCC),
                         fontFamily = MinecraftFontFamily,
                         fontSize = if (isLandscape) 11.5.sp else 11.sp,
@@ -316,7 +317,7 @@ fun HorizonInstallationsBanner(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "Powered by Rust",
+                            text = stringResource(R.string.cubiq_horizon_powered_by_rust),
                             color = Color(0xFFE89A58),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 9.sp,
@@ -339,7 +340,7 @@ fun HorizonInstallationsBanner(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (isLandscape) "Try Minecraft Rust now →" else "Try now →",
+                    text = if (isLandscape) stringResource(R.string.cubiq_horizon_try_rust) else stringResource(R.string.cubiq_horizon_try_now),
                     color = Color.White,
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,

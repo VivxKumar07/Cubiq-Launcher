@@ -10,6 +10,8 @@
 
 package com.movtery.zalithlauncher.ui.screens.content.minecraft
 
+import androidx.compose.ui.res.stringResource
+
 import com.movtery.zalithlauncher.game.horizon.HorizonManager
 import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonInstallationsBanner
 import com.movtery.zalithlauncher.ui.screens.content.horizon.HorizonSetupDialog
@@ -343,7 +345,7 @@ fun MinecraftInstallationsScreen(
 
                         Text(
 
-                            text = "New...",
+                            text = stringResource(R.string.cubiq_home_new_short),
 
                             color = Color(0xFFE2E2E2),
 
@@ -417,7 +419,7 @@ fun MinecraftInstallationsScreen(
 
                         Text(
 
-                            text = "Modpack",
+                            text = stringResource(R.string.cubiq_home_modpack),
 
                             color = Color(0xFFE2E2E2),
 
@@ -507,7 +509,7 @@ fun MinecraftInstallationsScreen(
 
                                     Text(
 
-                                        text = "Search installations...",
+                                        text = stringResource(R.string.cubiq_home_search_installations),
 
                                         color = Color(0xFF777777),
 
@@ -561,7 +563,7 @@ fun MinecraftInstallationsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "VERSIONS:",
+                        text = stringResource(R.string.cubiq_home_versions_label),
                         color = Color(0xFF888888),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 11.sp,
@@ -570,7 +572,7 @@ fun MinecraftInstallationsScreen(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     InstallationFilterCheckbox(
-                        label = "Releases",
+                        label = stringResource(R.string.cubiq_home_releases),
                         checked = filterReleases,
                         onCheckedChange = { filterReleases = it }
                     )
@@ -578,7 +580,7 @@ fun MinecraftInstallationsScreen(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     InstallationFilterCheckbox(
-                        label = "Snapshots",
+                        label = stringResource(R.string.cubiq_home_snapshots),
                         checked = filterSnapshots,
                         onCheckedChange = { filterSnapshots = it }
                     )
@@ -586,7 +588,7 @@ fun MinecraftInstallationsScreen(
                     Spacer(modifier = Modifier.width(8.dp))
 
                     InstallationFilterCheckbox(
-                        label = "Modded",
+                        label = stringResource(R.string.cubiq_home_modded),
                         checked = filterModded,
                         onCheckedChange = { filterModded = it }
                     )
@@ -636,7 +638,7 @@ fun MinecraftInstallationsScreen(
 
                                 Text(
 
-                                    text = "NO INSTALLATIONS FOUND",
+                                    text = stringResource(R.string.cubiq_home_no_installations),
 
                                     color = Color.White,
 
@@ -652,7 +654,7 @@ fun MinecraftInstallationsScreen(
 
                                 Text(
 
-                                    text = "Click '+ New...' above to download and install any version of Minecraft!",
+                                    text = stringResource(R.string.cubiq_home_no_installations_hint),
 
                                     color = Color(0xFFAAAAAA),
 
@@ -694,7 +696,7 @@ fun MinecraftInstallationsScreen(
 
                     val mcVer = ver.getVersionInfo()?.minecraftVersion
 
-                    val loaderName = ver.getVersionInfo()?.loaderInfo?.loader?.displayName ?: "Vanilla"
+                    val loaderName = ver.getVersionInfo()?.loaderInfo?.loader?.displayName ?: stringResource(R.string.cubiq_home_vanilla)
 
                     val hasRealMc = mcVer != null && (mcVer != ver.getVersionName() || mcVer.contains("."))
 
@@ -734,7 +736,7 @@ fun MinecraftInstallationsScreen(
 
                             VersionsManager.saveVersion(ver)
 
-                            Toast.makeText(context, "Active installation: ${ver.getVersionName()}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.cubiq_home_active_installation, ver.getVersionName()), Toast.LENGTH_SHORT).show()
 
                         },
 
@@ -773,7 +775,7 @@ fun MinecraftInstallationsScreen(
 
                                 VersionsManager.refresh("UserDelete")
 
-                                Toast.makeText(context, "Deleted ${ver.getVersionName()}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_home_deleted_installation, ver.getVersionName()), Toast.LENGTH_SHORT).show()
 
                             }
 
@@ -864,7 +866,7 @@ fun MinecraftInstallationsScreen(
 
                     Text(
 
-                        text = "INSTALLATION READY",
+                        text = stringResource(R.string.cubiq_home_installation_ready),
 
                         color = Color(0xFF55FF55),
 
@@ -882,7 +884,7 @@ fun MinecraftInstallationsScreen(
 
                     Text(
 
-                        text = "Installation '$installedName' is configured and ready to play or download!",
+                        text = stringResource(R.string.cubiq_home_installation_ready_message, installedName),
 
                         color = Color.White,
 
@@ -902,7 +904,7 @@ fun MinecraftInstallationsScreen(
 
                         style = MinecraftButtonStyle.GREEN,
 
-                        text = "OK",
+                        text = stringResource(R.string.cubiq_home_ok),
 
                         fontSize = 12.sp,
 
@@ -1180,7 +1182,7 @@ private fun InstallationCardItem(
 
                         Text(
 
-                            text = "ACTIVE",
+                            text = stringResource(R.string.cubiq_home_active),
 
                             color = Color(0xFF55FF55),
 
@@ -1230,7 +1232,7 @@ private fun InstallationCardItem(
 
             style = MinecraftButtonStyle.GREEN,
 
-            text = "Play",
+            text = stringResource(R.string.cubiq_home_play_title),
 
             fontSize = 12.sp,
 
@@ -1304,7 +1306,7 @@ private fun InstallationCardItem(
 
                         Text(
 
-                            text = "Play Installation",
+                            text = stringResource(R.string.cubiq_home_play_installation),
 
                             color = Color.White,
 
@@ -1330,7 +1332,7 @@ private fun InstallationCardItem(
 
                         Text(
 
-                            text = "Select as Active",
+                            text = stringResource(R.string.cubiq_home_select_active),
 
                             color = Color(0xFF55FF55),
 
@@ -1353,7 +1355,7 @@ private fun InstallationCardItem(
                 DropdownMenuItem(
                     text = {
                         Text(
-                            text = "Add Shortcut to Home Screen",
+                            text = stringResource(R.string.cubiq_home_add_shortcut),
                             color = Color(0xFF77DDFF),
                             fontFamily = MinecraftFontFamily
                         )
@@ -1370,7 +1372,7 @@ private fun InstallationCardItem(
 
                         Text(
 
-                            text = "Manage Installation",
+                            text = stringResource(R.string.cubiq_home_manage_installation),
 
                             color = Color.White,
 
@@ -1396,7 +1398,7 @@ private fun InstallationCardItem(
 
                         Text(
 
-                            text = "Change Icon",
+                            text = stringResource(R.string.cubiq_home_change_icon),
 
                             color = Color.White,
 
@@ -1422,7 +1424,7 @@ private fun InstallationCardItem(
 
                         Text(
 
-                            text = "Toggle / Manage Mods",
+                            text = stringResource(R.string.cubiq_home_toggle_manage_mods),
 
                             color = Color.White,
 
@@ -1448,7 +1450,7 @@ private fun InstallationCardItem(
 
                         Text(
 
-                            text = "Delete Installation",
+                            text = stringResource(R.string.cubiq_home_delete_installation),
 
                             color = Color(0xFFFF5555),
 
@@ -1568,7 +1570,7 @@ fun InstallationModsDialog(
 
                     Text(
 
-                        text = "MANAGE MODS",
+                        text = stringResource(R.string.cubiq_home_manage_mods),
 
                         color = Color(0xFF55FF55),
 
@@ -1606,7 +1608,7 @@ fun InstallationModsDialog(
 
                 Text(
 
-                    text = "$activeCount/${modFiles.size} ACTIVE",
+                    text = stringResource(R.string.cubiq_home_active_count, activeCount, modFiles.size),
 
                     color = Color.White,
 
@@ -1692,7 +1694,7 @@ fun InstallationModsDialog(
 
                                     Text(
 
-                                        text = "Search mods...",
+                                        text = stringResource(R.string.cubiq_home_search_mods),
 
                                         color = Color(0xFF777777),
 
@@ -1728,13 +1730,13 @@ fun InstallationModsDialog(
 
                                 refreshTrigger++
 
-                                Toast.makeText(context, "Enabled all mods", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_home_enabled_all_mods), Toast.LENGTH_SHORT).show()
 
                             },
 
                             style = MinecraftButtonStyle.GREEN,
 
-                            text = "ALL ON",
+                            text = stringResource(R.string.cubiq_home_all_on),
 
                             fontSize = 10.sp,
 
@@ -1764,13 +1766,13 @@ fun InstallationModsDialog(
 
                                 refreshTrigger++
 
-                                Toast.makeText(context, "Disabled all mods", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.cubiq_home_disabled_all_mods), Toast.LENGTH_SHORT).show()
 
                             },
 
                             style = MinecraftButtonStyle.STONE,
 
-                            text = "ALL OFF",
+                            text = stringResource(R.string.cubiq_home_all_off),
 
                             fontSize = 10.sp,
 
@@ -1804,7 +1806,7 @@ fun InstallationModsDialog(
 
                         Text(
 
-                            text = if (modFiles.isEmpty()) "No mods found in 'mods/' folder." else "No matching mods.",
+                            text = stringResource(if (modFiles.isEmpty()) R.string.cubiq_home_no_mods_folder else R.string.cubiq_home_no_matching_mods),
 
                             color = Color(0xFF888888),
 
@@ -1914,7 +1916,7 @@ fun InstallationModsDialog(
 
                                     Text(
 
-                                        text = if (isEnabled) ".jar (ACTIVE)" else ".jar.disabled (INACTIVE)",
+                                        text = stringResource(if (isEnabled) R.string.cubiq_home_active_jar else R.string.cubiq_home_inactive_jar),
 
                                         color = if (isEnabled) Color(0xFF55FF55) else Color(0xFFFF5555),
 
@@ -1982,7 +1984,7 @@ fun InstallationModsDialog(
 
                 style = MinecraftButtonStyle.GREEN,
 
-                text = "DONE",
+                text = stringResource(R.string.cubiq_home_done),
 
                 fontSize = 12.sp,
 
@@ -2202,7 +2204,7 @@ private fun NewInstallationDialog(
 
             Text(
 
-                text = "CREATE NEW INSTALLATION",
+                text = stringResource(R.string.cubiq_home_create_new_installation),
 
                 color = Color.White,
 
@@ -2234,7 +2236,7 @@ private fun NewInstallationDialog(
 
                 Text(
 
-                    text = "INSTALLATION ICON",
+                    text = stringResource(R.string.cubiq_home_installation_icon),
 
                     color = Color(0xFFAAAAAA),
 
@@ -2312,7 +2314,7 @@ private fun NewInstallationDialog(
 
                 Text(
 
-                    text = "INSTALLATION NAME",
+                    text = stringResource(R.string.cubiq_home_installation_name),
 
                     color = Color(0xFFAAAAAA),
 
@@ -2370,7 +2372,7 @@ private fun NewInstallationDialog(
 
                                 Text(
 
-                                    text = "$selectedVersion $selectedLoader",
+                                    text = if (selectedLoader == "Vanilla") "$selectedVersion ${stringResource(R.string.cubiq_home_vanilla)}" else "$selectedVersion $selectedLoader",
 
                                     color = Color(0xFF666666),
 
@@ -2396,7 +2398,7 @@ private fun NewInstallationDialog(
 
                 Text(
 
-                    text = "MINECRAFT VERSION",
+                    text = stringResource(R.string.cubiq_home_minecraft_version),
 
                     color = Color(0xFFAAAAAA),
 
@@ -2530,7 +2532,7 @@ private fun NewInstallationDialog(
 
                                         Text(
 
-                                            text = "Search version (1.20, 1.16, 1.10...)",
+                                            text = stringResource(R.string.cubiq_home_search_version),
 
                                             color = Color(0xFF777777),
 
@@ -2584,7 +2586,7 @@ private fun NewInstallationDialog(
 
                             ) {
 
-                                Text("Releases", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                                Text(stringResource(R.string.cubiq_home_releases), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
                             }
 
@@ -2606,7 +2608,7 @@ private fun NewInstallationDialog(
 
                             ) {
 
-                                Text("All (Snapshots)", color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 10.sp)
+                                Text(stringResource(R.string.cubiq_home_all_snapshots), color = Color.White, fontFamily = MinecraftFontFamily, fontSize = 10.sp)
 
                             }
 
@@ -2712,7 +2714,7 @@ private fun NewInstallationDialog(
 
                 Text(
 
-                    text = "MOD LOADER",
+                    text = stringResource(R.string.cubiq_home_mod_loader),
 
                     color = Color(0xFFAAAAAA),
 
@@ -2820,7 +2822,7 @@ private fun NewInstallationDialog(
 
                                     Text(
 
-                                        text = loader,
+                                        text = if (loader == "Vanilla") stringResource(R.string.cubiq_home_vanilla) else loader,
 
                                         color = when {
 
@@ -2898,7 +2900,7 @@ private fun NewInstallationDialog(
 
                             Text(
 
-                                text = "WANT A MODPACK PROFILE?",
+                                text = stringResource(R.string.cubiq_home_want_modpack),
 
                                 color = Color(0xFF60A5FA),
 
@@ -2912,7 +2914,7 @@ private fun NewInstallationDialog(
 
                             Text(
 
-                                text = "Browse CurseForge & Modrinth modpacks directly",
+                                text = stringResource(R.string.cubiq_home_browse_modpacks),
 
                                 color = Color(0xFFA1A1AA),
 
@@ -2926,7 +2928,7 @@ private fun NewInstallationDialog(
 
                         Text(
 
-                            text = "BROWSE →",
+                            text = stringResource(R.string.cubiq_home_browse),
 
                             color = Color(0xFF93C5FD),
 
@@ -2960,7 +2962,7 @@ private fun NewInstallationDialog(
 
                 style = MinecraftButtonStyle.GREEN,
 
-                text = "CREATE",
+                text = stringResource(R.string.cubiq_home_create),
 
                 fontSize = 13.sp,
 
@@ -2982,7 +2984,7 @@ private fun NewInstallationDialog(
 
                 style = MinecraftButtonStyle.STONE,
 
-                text = "CANCEL",
+                text = stringResource(R.string.cubiq_home_cancel),
 
                 fontSize = 13.sp,
 
@@ -3025,17 +3027,17 @@ private fun saveVersionIcon(
     versionName: String
 ) {
     val iconFolder = iconFile.parentFile
-        ?: throw java.io.IOException("Could not resolve icon folder for $versionName")
+        ?: throw java.io.IOException(context.getString(R.string.cubiq_home_icon_folder_resolve_error, versionName))
     if (!iconFolder.exists() && !iconFolder.mkdirs()) {
-        throw java.io.IOException("Could not create icon folder: ${iconFolder.absolutePath}")
+        throw java.io.IOException(context.getString(R.string.cubiq_home_icon_folder_create_error, iconFolder.absolutePath))
     }
 
     val bitmap = android.graphics.BitmapFactory.decodeResource(context.resources, iconRes)
-        ?: throw java.io.IOException("Could not decode selected installation icon")
+        ?: throw java.io.IOException(context.getString(R.string.cubiq_home_icon_decode_error))
     try {
         java.io.FileOutputStream(iconFile).use { output ->
             if (!bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, output)) {
-                throw java.io.IOException("Could not write installation icon")
+                throw java.io.IOException(context.getString(R.string.cubiq_home_icon_write_error))
             }
         }
     } finally {

@@ -7,6 +7,7 @@
 package com.movtery.zalithlauncher.game.multirt
 
 import android.content.Context
+import com.movtery.zalithlauncher.R
 import android.net.Uri
 import com.movtery.zalithlauncher.ZLApplication
 import com.movtery.zalithlauncher.components.jre.Jre
@@ -89,7 +90,7 @@ object JreDownloadManager {
             val localBin = File(bDir, "bin-$arch.tar.xz")
             if (localUniversal.exists() && localBin.exists() && localUniversal.length() > 1000L && localBin.length() > 1000L) {
                 Logger.info(TAG, "Found local JRE backup in ${bDir.absolutePath}, extracting...")
-                onProgress(50, "Extracting local Java Runtime...", 0L)
+                onProgress(50, context.getString(R.string.cubiq_progress_runtime_extract_local), 0L)
                 try {
                     localUniversal.inputStream().use { uStream ->
                         localBin.inputStream().use { bStream ->
@@ -100,7 +101,7 @@ object JreDownloadManager {
                                 binPackVersion = "1.0.0",
                                 updateProgress = { _, args ->
                                     val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
-                                    val msg = if (entry.isNotEmpty()) "Unpacking $entry..." else "Unpacking runtime files..."
+                                    val msg = if (entry.isNotEmpty()) context.getString(R.string.cubiq_progress_runtime_unpack_entry, entry) else context.getString(R.string.cubiq_progress_runtime_unpack_files)
                                     onProgress(75, msg, 0L)
                                 }
                             )
@@ -113,7 +114,7 @@ object JreDownloadManager {
                         return@withContext false
                     }
                     RuntimesManager.forceReload(runtimeName)
-                    onProgress(100, "Java Runtime ready!", 0L)
+                    onProgress(100, context.getString(R.string.cubiq_progress_runtime_ready), 0L)
                     return@withContext true
                 } catch (e: Exception) {
                     Logger.warning(TAG, "Failed to unpack local backup JRE", e)
@@ -132,10 +133,10 @@ object JreDownloadManager {
 
             for (url in candidateUrls) {
                 Logger.info(TAG, "Attempting to download JRE 8 from $url")
-                onProgress(10, "Connecting to Java 8 mirror...", 0L)
-                if (downloadFile(url, tempZip) { p, m, spd ->
+                onProgress(10, context.getString(R.string.cubiq_progress_java8_connect), 0L)
+                if (downloadFile(context, url, tempZip) { p, m, spd ->
                     val overallP = (p * 0.85).toInt().coerceIn(0, 85)
-                    onProgress(overallP, "Downloading Java 8: $m", spd)
+                    onProgress(overallP, context.getString(R.string.cubiq_progress_java8_download, m), spd)
                 }) {
                     downloadSuccess = true
                     break
@@ -148,7 +149,7 @@ object JreDownloadManager {
                 return@withContext false
             }
 
-            onProgress(85, "Installing Java 8 Runtime...", 0L)
+            onProgress(85, context.getString(R.string.cubiq_progress_java8_install), 0L)
             try {
                 var extracted = false
                 // Check if tempZip is a zip containing binpack archives (like jre8-pojav.zip containing universal.tar.xz and bin-$arch.tar.xz)
@@ -171,7 +172,7 @@ object JreDownloadManager {
                                         binPackVersion = "1.0.0",
                                         updateProgress = { _, args ->
                                             val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
-                                            val msg = if (entry.isNotEmpty()) "Unpacking $entry..." else "Unpacking runtime files..."
+                                            val msg = if (entry.isNotEmpty()) context.getString(R.string.cubiq_progress_runtime_unpack_entry, entry) else context.getString(R.string.cubiq_progress_runtime_unpack_files)
                                             onProgress(92, msg, 0L)
                                         }
                                     )
@@ -191,7 +192,7 @@ object JreDownloadManager {
                             name = runtimeName,
                             updateProgress = { _, args ->
                                 val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
-                                val msg = if (entry.isNotEmpty()) "Unpacking $entry..." else "Unpacking runtime files..."
+                                val msg = if (entry.isNotEmpty()) context.getString(R.string.cubiq_progress_runtime_unpack_entry, entry) else context.getString(R.string.cubiq_progress_runtime_unpack_files)
                                 onProgress(92, msg, 0L)
                             }
                         )
@@ -204,7 +205,7 @@ object JreDownloadManager {
                     return@withContext false
                 }
                 RuntimesManager.forceReload(runtimeName)
-                onProgress(100, "Java 8 ready!", 0L)
+                onProgress(100, context.getString(R.string.cubiq_progress_java8_ready), 0L)
                 return@withContext true
             } catch (e: Exception) {
                 Logger.error(TAG, "Failed to extract JRE 8", e)
@@ -232,10 +233,10 @@ object JreDownloadManager {
         var universalSuccess = false
         for (uUrl in universalUrls) {
             Logger.info(TAG, "Attempting to download Universal JRE from $uUrl")
-            onProgress(5, "Connecting to Java Core mirror...", 0L)
-            if (downloadFile(uUrl, tempUniversal) { p, m, spd ->
+            onProgress(5, context.getString(R.string.cubiq_progress_java_core_connect), 0L)
+            if (downloadFile(context, uUrl, tempUniversal) { p, m, spd ->
                 val overallP = (p * 0.6).toInt().coerceIn(0, 60)
-                onProgress(overallP, "Downloading Java Core: $m", spd)
+                onProgress(overallP, context.getString(R.string.cubiq_progress_java_core_download, m), spd)
             }) {
                 universalSuccess = true
                 break
@@ -253,10 +254,10 @@ object JreDownloadManager {
         if (!needsRollingFallback) {
             for (bUrl in binUrls) {
                 Logger.info(TAG, "Attempting to download Binpack JRE from $bUrl")
-                onProgress(60, "Connecting to Java Platform ($arch) mirror...", 0L)
-                if (downloadFile(bUrl, tempBin) { p, m, spd ->
+                onProgress(60, context.getString(R.string.cubiq_progress_java_platform_connect, arch), 0L)
+                if (downloadFile(context, bUrl, tempBin) { p, m, spd ->
                     val overallP = (60 + p * 0.25).toInt().coerceIn(60, 85)
-                    onProgress(overallP, "Downloading Platform Binaries ($arch): $m", spd)
+                    onProgress(overallP, context.getString(R.string.cubiq_progress_java_platform_download, arch, m), spd)
                 }) {
                     binSuccess = true
                     break
@@ -282,10 +283,10 @@ object JreDownloadManager {
             var zipSuccess = false
             for (zUrl in rollingUrls) {
                 Logger.info(TAG, "Attempting rolling multi-arch zip fallback from $zUrl")
-                onProgress(40, "Connecting to rolling Java mirror...", 0L)
-                if (downloadFile(zUrl, tempZip) { p, m, spd ->
+                onProgress(40, context.getString(R.string.cubiq_progress_java_rolling_connect), 0L)
+                if (downloadFile(context, zUrl, tempZip) { p, m, spd ->
                     val overallP = (40 + p * 0.45).toInt().coerceIn(40, 85)
-                    onProgress(overallP, "Downloading Java archive: $m", spd)
+                    onProgress(overallP, context.getString(R.string.cubiq_progress_java_archive_download, m), spd)
                 }) {
                     zipSuccess = true
                     break
@@ -293,7 +294,7 @@ object JreDownloadManager {
             }
 
             if (zipSuccess && tempZip.exists() && tempZip.length() > 100000L) {
-                onProgress(88, "Extracting and assembling Java Runtime...", 0L)
+                onProgress(88, context.getString(R.string.cubiq_progress_runtime_extract_assemble), 0L)
                 try {
                     var extracted = false
                     java.util.zip.ZipFile(tempZip).use { zf ->
@@ -313,7 +314,7 @@ object JreDownloadManager {
                                         binPackVersion = "1.0.0",
                                         updateProgress = { _, args ->
                                             val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
-                                            val msg = if (entry.isNotEmpty()) "Assembling: $entry" else "Assembling runtime files..."
+                                            val msg = if (entry.isNotEmpty()) context.getString(R.string.cubiq_progress_runtime_assemble_entry, entry) else context.getString(R.string.cubiq_progress_runtime_assemble_files)
                                             onProgress(95, msg, 0L)
                                         }
                                     )
@@ -327,7 +328,7 @@ object JreDownloadManager {
                         postInstallFixup(dest, majorVersion, arch)
                         if (RuntimesManager.isRuntimeValid(dest)) {
                             RuntimesManager.forceReload(runtimeName)
-                            onProgress(100, "Java Runtime ready!", 0L)
+                            onProgress(100, context.getString(R.string.cubiq_progress_runtime_ready), 0L)
                             return@withContext true
                         }
                     }
@@ -343,7 +344,7 @@ object JreDownloadManager {
         }
 
         // Step C: Extract and combine using RuntimesManager.installRuntimeBinPack
-        onProgress(88, "Extracting and assembling Java Runtime...", 0L)
+        onProgress(88, context.getString(R.string.cubiq_progress_runtime_extract_assemble), 0L)
         try {
             tempUniversal.inputStream().use { uStream ->
                 tempBin.inputStream().use { bStream ->
@@ -354,7 +355,7 @@ object JreDownloadManager {
                         binPackVersion = "1.0.0",
                         updateProgress = { _, args ->
                             val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
-                            val msg = if (entry.isNotEmpty()) "Assembling: $entry" else "Assembling runtime files..."
+                            val msg = if (entry.isNotEmpty()) context.getString(R.string.cubiq_progress_runtime_assemble_entry, entry) else context.getString(R.string.cubiq_progress_runtime_assemble_files)
                             onProgress(95, msg, 0L)
                         }
                     )
@@ -368,7 +369,7 @@ object JreDownloadManager {
                 return@withContext false
             }
             RuntimesManager.forceReload(runtimeName)
-            onProgress(100, "Java Runtime ready!", 0L)
+            onProgress(100, context.getString(R.string.cubiq_progress_runtime_ready), 0L)
             Logger.info(TAG, "Successfully installed Mojo-style JRE $runtimeName on-demand")
             return@withContext true
         } catch (e: Exception) {
@@ -423,7 +424,7 @@ object JreDownloadManager {
     ): Boolean = withContext(Dispatchers.IO) {
         val tempFile = File(context.cacheDir, "custom_jre_import_${System.currentTimeMillis()}.tmp")
         try {
-            onProgress(10, "Reading custom JRE file...")
+            onProgress(10, context.getString(R.string.cubiq_progress_custom_jre_read))
             val stream = context.contentResolver.openInputStream(uri)
                 ?: throw IllegalStateException("Could not open input stream from uri")
 
@@ -438,7 +439,7 @@ object JreDownloadManager {
                 return@withContext false
             }
 
-            onProgress(30, "Unpacking runtime archive...")
+            onProgress(30, context.getString(R.string.cubiq_progress_runtime_unpack_archive))
             val nativeLibDir = context.applicationInfo.nativeLibraryDir
             tempFile.inputStream().use { inputStream ->
                 RuntimesManager.installRuntime(
@@ -447,7 +448,11 @@ object JreDownloadManager {
                     name = name,
                     updateProgress = { _, args ->
                         val entry = args.firstOrNull()?.toString()?.substringAfterLast('/') ?: ""
-                        val msg = if (entry.isNotEmpty()) "Installing: $entry" else "Installing custom runtime..."
+                        val msg = if (entry.isNotEmpty()) {
+                            context.getString(R.string.cubiq_progress_runtime_install_entry, entry)
+                        } else {
+                            context.getString(R.string.cubiq_progress_custom_jre_install)
+                        }
                         onProgress(60, msg)
                     }
                 )
@@ -464,7 +469,7 @@ object JreDownloadManager {
             }
 
             RuntimesManager.forceReload(name)
-            onProgress(100, "Custom JRE installed successfully!")
+            onProgress(100, context.getString(R.string.cubiq_progress_custom_jre_ready))
             true
         } catch (e: Exception) {
             Logger.error(TAG, "Failed to import custom JRE", e)
@@ -529,6 +534,7 @@ object JreDownloadManager {
     }
 
     private suspend fun downloadFile(
+        context: Context,
         urlString: String,
         destination: File,
         onProgress: (progress: Int, message: String, speed: Long) -> Unit
@@ -601,7 +607,7 @@ object JreDownloadManager {
                             onProgress(percent, "$dlMb MB / $totMb MB", currentSpeed)
                         } else {
                             val dlMb = "%.1f".format(java.util.Locale.US, downloadedBytes / (1024f * 1024f))
-                            onProgress(-1, "$dlMb MB downloaded", currentSpeed)
+                            onProgress(-1, context.getString(R.string.cubiq_progress_downloaded_mb, dlMb), currentSpeed)
                         }
                     }
                 }

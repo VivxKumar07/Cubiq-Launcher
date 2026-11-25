@@ -968,7 +968,7 @@ fun CommonVersionInfoLayout(
                         }
                         if (latestRelease != null && versionInfo.minecraftVersion.isLowerVer(latestRelease)) {
                             LittleTextLabel(
-                                text = "New: $latestRelease",
+                                text = stringResource(R.string.cubiq_home_new_version, latestRelease),
                                 color = androidx.compose.ui.graphics.Color(0xFF1B5E20),
                                 contentColor = androidx.compose.ui.graphics.Color.White,
                                 textStyle = MaterialTheme.typography.labelSmall

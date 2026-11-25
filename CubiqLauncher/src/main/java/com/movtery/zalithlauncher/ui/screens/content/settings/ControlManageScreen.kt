@@ -471,7 +471,7 @@ fun ControlManageScreen(
         changeOperation = { viewModel.operation = it },
 
         onCreate = { name, author, versionName, templateType ->
-            if (templateType == "Zalith Launcher 1 Controls") {
+            if (templateType == ControlLayoutTemplate.ZALITH_1) {
                 val safeName = name.trim().replace(Regex("[^a-zA-Z0-9_ -]"), "_")
                 val targetFile = java.io.File(com.movtery.zalithlauncher.path.PathManager.DIR_CONTROL_LAYOUTS, "$safeName.json")
                 runCatching {
@@ -482,7 +482,7 @@ fun ControlManageScreen(
                 startEditorActivity(context, targetFile)
                 return@ControlOperation
             }
-            val assetName = if (templateType == "Pocket Edition Controls") "pocket_edition_layout.json" else "zalith_2_layout.json"
+            val assetName = if (templateType == ControlLayoutTemplate.POCKET) "pocket_edition_layout.json" else "zalith_2_layout.json"
 
             val layout = runCatching {
 
@@ -726,7 +726,7 @@ private fun ControlOperation(
 
     changeOperation: (ControlOperation) -> Unit,
 
-    onCreate: (name: String, author: String, versionName: String, templateType: String) -> Unit,
+    onCreate: (name: String, author: String, versionName: String, templateType: ControlLayoutTemplate) -> Unit,
 
     onDelete: (ControlData) -> Unit,
 
@@ -1788,13 +1788,19 @@ private fun ControlInfoItem(
 
  */
 
+private enum class ControlLayoutTemplate(val nameRes: Int, val descriptionRes: Int) {
+    ZALITH_1(R.string.cubiq_secondary_template_zalith_1, R.string.cubiq_secondary_template_zalith_1_description),
+    ZALITH_2(R.string.cubiq_secondary_template_zalith_2, R.string.cubiq_secondary_template_zalith_2_description),
+    POCKET(R.string.cubiq_secondary_template_pocket, R.string.cubiq_secondary_template_pocket_description),
+}
+
 @Composable
 
 private fun CreateNewLayoutDialog(
 
     onDismissRequest: () -> Unit,
 
-    onCreate: (name: String, author: String, versionName: String, templateType: String) -> Unit
+    onCreate: (name: String, author: String, versionName: String, templateType: ControlLayoutTemplate) -> Unit
 
 ) {
 
@@ -1804,7 +1810,7 @@ private fun CreateNewLayoutDialog(
 
     var versionName by remember { mutableStateOf("1.0") }
 
-    var selectedTemplate by remember { mutableStateOf("Pocket Edition Controls") }
+    var selectedTemplate by remember { mutableStateOf(ControlLayoutTemplate.POCKET) }
 
 
 
@@ -2164,7 +2170,7 @@ private fun CreateNewLayoutDialog(
 
                         Text(
 
-                            text = "Base Layout Template",
+                            text = stringResource(R.string.cubiq_secondary_template_base),
 
                             style = MaterialTheme.typography.labelLarge,
 
@@ -2178,7 +2184,7 @@ private fun CreateNewLayoutDialog(
 
 
 
-                        listOf("Zalith Launcher 1 Controls", "Zalith Launcher 2 Controls", "Pocket Edition Controls").forEach { template ->
+                        ControlLayoutTemplate.entries.forEach { template ->
 
                             val isSel = selectedTemplate == template
 
@@ -2212,7 +2218,7 @@ private fun CreateNewLayoutDialog(
 
                                     Text(
 
-                                        text = template,
+                                        text = stringResource(template.nameRes),
 
                                         style = MaterialTheme.typography.bodyMedium
 
@@ -2220,15 +2226,7 @@ private fun CreateNewLayoutDialog(
 
                                     Text(
 
-                                        text = when (template) {
-
-                                            "Zalith Launcher 1 Controls" -> "Classic Zalith Launcher 1 authentic controls layout"
-                                            "Zalith Launcher 2 Controls" -> "Standard Zalith Launcher 2 layered controls"
-                                            "Pocket Edition Controls" -> "Bedrock mobile controls layout (~65% opacity)"
-
-                                            else -> "Standard PC keyboard on-screen buttons"
-
-                                        },
+                                        text = stringResource(template.descriptionRes),
 
                                         style = MaterialTheme.typography.bodySmall,
 

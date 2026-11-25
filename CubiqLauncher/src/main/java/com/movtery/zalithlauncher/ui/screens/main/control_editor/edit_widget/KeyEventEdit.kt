@@ -100,13 +100,13 @@ fun KeyEventEdit(
         item {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp)) {
                 Text(
-                    text = "Key Mappings (4 Slots)",
+                    text = stringResource(R.string.cubiq_game_key_mappings),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = contentColor
                 )
                 Text(
-                    text = "Tap a slot to assign or swap keycodes. Supports attribute swaps.",
+                    text = stringResource(R.string.cubiq_game_key_mappings_help),
                     style = MaterialTheme.typography.bodySmall,
                     color = contentColor.copy(alpha = 0.7f)
                 )
@@ -121,7 +121,7 @@ fun KeyEventEdit(
             ) {
                 KeySlotCard(
                     modifier = Modifier.weight(1f),
-                    slotLabel = "Mapping 1",
+                    slotLabel = stringResource(R.string.cubiq_game_key_mapping_slot, 1),
                     keyEvent = keyEvents.getOrNull(0),
                     containerColor = containerColor,
                     contentColor = contentColor,
@@ -135,7 +135,7 @@ fun KeyEventEdit(
                 )
                 KeySlotCard(
                     modifier = Modifier.weight(1f),
-                    slotLabel = "Mapping 2",
+                    slotLabel = stringResource(R.string.cubiq_game_key_mapping_slot, 2),
                     keyEvent = keyEvents.getOrNull(1),
                     containerColor = containerColor,
                     contentColor = contentColor,
@@ -158,7 +158,7 @@ fun KeyEventEdit(
             ) {
                 KeySlotCard(
                     modifier = Modifier.weight(1f),
-                    slotLabel = "Mapping 3",
+                    slotLabel = stringResource(R.string.cubiq_game_key_mapping_slot, 3),
                     keyEvent = keyEvents.getOrNull(2),
                     containerColor = containerColor,
                     contentColor = contentColor,
@@ -172,7 +172,7 @@ fun KeyEventEdit(
                 )
                 KeySlotCard(
                     modifier = Modifier.weight(1f),
-                    slotLabel = "Mapping 4",
+                    slotLabel = stringResource(R.string.cubiq_game_key_mapping_slot, 4),
                     keyEvent = keyEvents.getOrNull(3),
                     containerColor = containerColor,
                     contentColor = contentColor,
@@ -192,7 +192,7 @@ fun KeyEventEdit(
             item {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Additional Key Triggers",
+                    text = stringResource(R.string.cubiq_game_key_additional_triggers),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = contentColor,
@@ -262,9 +262,7 @@ private fun KeySlotCard(
     modifier: Modifier = Modifier
 ) {
     val isAssigned = keyEvent != null
-    val keyName = remember(keyEvent?.key) {
-        keyEvent?.key?.let { ControlEventKeyName.getNameByKey(it) ?: it }
-    }
+    val keyName = if (keyEvent != null) localizedKeyName(keyEvent.key) else null
 
     Surface(
         modifier = modifier
@@ -317,13 +315,38 @@ private fun KeySlotCard(
                 )
             } else {
                 Text(
-                    text = "+ Map Key",
+                    text = stringResource(R.string.cubiq_game_key_map),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun localizedKeyName(key: String): String {
+    val name = ControlEventKeyName.getNameByKey(key) ?: return key
+    return when (key) {
+        "GLFW_KEY_SPACE" -> stringResource(R.string.cubiq_game_key_space)
+        "GLFW_KEY_ENTER" -> stringResource(R.string.cubiq_game_key_enter)
+        "GLFW_KEY_BACKSPACE" -> stringResource(R.string.cubiq_game_key_backspace)
+        "GLFW_KEY_CAPS_LOCK" -> stringResource(R.string.cubiq_game_key_caps_lock)
+        "GLFW_KEY_NUM_LOCK" -> stringResource(R.string.cubiq_game_key_num_lock)
+        "GLFW_KEY_PAGE_UP" -> stringResource(R.string.cubiq_game_key_page_up)
+        "GLFW_KEY_PAGE_DOWN" -> stringResource(R.string.cubiq_game_key_page_down)
+        "GLFW_KEY_PRINT_SCREEN" -> stringResource(R.string.cubiq_game_key_print_screen)
+        "GLFW_KEY_SCROLL_LOCK" -> stringResource(R.string.cubiq_game_key_scroll_lock)
+        "GLFW_KEY_DELETE" -> stringResource(R.string.generic_delete)
+        "GLFW_KEY_LEFT_SHIFT", "GLFW_KEY_LEFT_CONTROL", "GLFW_KEY_LEFT_ALT" ->
+            stringResource(R.string.cubiq_game_key_left_modifier, name.removePrefix("Left "))
+        "GLFW_KEY_RIGHT_SHIFT", "GLFW_KEY_RIGHT_CONTROL", "GLFW_KEY_RIGHT_ALT" ->
+            stringResource(R.string.cubiq_game_key_right_modifier, name.removePrefix("Right "))
+        "GLFW_KEY_KP_ENTER" -> stringResource(R.string.cubiq_game_key_numpad, stringResource(R.string.cubiq_game_key_enter))
+        else -> if (key.startsWith("GLFW_KEY_KP_")) {
+            stringResource(R.string.cubiq_game_key_numpad, name.removePrefix("Num "))
+        } else name
     }
 }
 
@@ -335,7 +358,7 @@ private fun EditKeyItem(
     color: Color = itemColor(false),
     contentColor: Color = onItemColor(),
 ) {
-    val name = remember(keyEvent.key) { ControlEventKeyName.getNameByKey(keyEvent.key) }
+    val name = localizedKeyName(keyEvent.key)
 
     InfoLayoutItem(
         modifier = modifier,
@@ -350,7 +373,7 @@ private fun EditKeyItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             MarqueeText(
-                text = stringResource(R.string.control_editor_edit_event_key_value, name ?: keyEvent.key),
+                text = stringResource(R.string.control_editor_edit_event_key_value, name),
                 style = MaterialTheme.typography.bodyMedium
             )
         }

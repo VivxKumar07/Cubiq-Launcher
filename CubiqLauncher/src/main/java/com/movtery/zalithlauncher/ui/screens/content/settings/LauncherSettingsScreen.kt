@@ -203,17 +203,8 @@ fun LauncherSettingsScreen(
                         getItemText = { stringResource(it.textRes) }
                     )
 
-                    ListSettingsCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        position = CardPosition.Middle,
-                        unit = AllSettings.launcherLanguage,
-                        items = AppLanguage.entries,
-                        title = stringResource(R.string.settings_launcher_language),
-                        getItemText = { stringResource(it.textRes) },
-                        onValueChange = {
-                            applyLanguage(it)
-                        }
-                    )
+                    LauncherLanguageCard(CardPosition.Middle)
+                    LauncherChinesePixelFontCard(CardPosition.Middle)
 
                     SwitchSettingsCard(
                         modifier = Modifier.fillMaxWidth(),
@@ -442,6 +433,30 @@ fun LauncherSettingsScreen(
             }
         }
     }
+}
+
+@Composable
+internal fun LauncherLanguageCard(position: CardPosition) {
+    ListSettingsCard(
+        modifier = Modifier.fillMaxWidth(),
+        position = position,
+        unit = AllSettings.launcherLanguage,
+        items = AppLanguage.entries,
+        title = stringResource(R.string.settings_launcher_language),
+        getItemText = { stringResource(it.textRes) },
+        onValueChange = ::applyLanguage
+    )
+}
+
+@Composable
+internal fun LauncherChinesePixelFontCard(position: CardPosition) {
+    SwitchSettingsCard(
+        modifier = Modifier.fillMaxWidth(),
+        position = position,
+        unit = AllSettings.launcherChinesePixelFont,
+        title = stringResource(R.string.settings_launcher_chinese_pixel_font),
+        summary = stringResource(R.string.settings_launcher_chinese_pixel_font_summary)
+    )
 }
 
 @Composable

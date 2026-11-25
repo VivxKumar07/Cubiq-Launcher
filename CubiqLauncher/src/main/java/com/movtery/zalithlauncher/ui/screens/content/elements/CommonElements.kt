@@ -249,7 +249,7 @@ fun rememberMultipleUriImportTaskBuilder(
                         task.updateMessage(null)
                         uris.forEach { uri ->
                             try {
-                                val fileName = context.getFileName(uri) ?: throw IOException("Failed to get file name")
+                                val fileName = context.getFileName(uri) ?: throw IOException(context.getString(R.string.cubiq_progress_file_name_failed))
                                 task.updateProgress(-1f)
                                 task.updateMessage(androidText(fileName))
                                 val outputFile = File(targetDir, fileName)
@@ -512,7 +512,7 @@ private fun TaskFlowListColumn(
                         .height(36.dp),
                     onClick = onBackground,
                     style = MinecraftButtonStyle.GREEN,
-                    text = "IN BACKGROUND",
+                    text = stringResource(R.string.cubiq_progress_in_background),
                     fontSize = 11.sp
                 )
             }
@@ -614,7 +614,7 @@ private fun InstallingTaskItem(
                 ) {
                     if (rateBytesPerSec != null && rateBytesPerSec!! > 0L) {
                         Text(
-                            text = "Speed: ${formatFileSize(rateBytesPerSec!!)}/s",
+                            text = stringResource(R.string.cubiq_progress_speed, formatFileSize(rateBytesPerSec!!)),
                             color = Color(0xFF55FF55),
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,

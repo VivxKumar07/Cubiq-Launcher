@@ -14,7 +14,7 @@ object ShortcutHelper {
     fun createGameShortcut(context: Context, versionName: String, isRust: Boolean = false) {
         try {
             if (!ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
-                Toast.makeText(context, "Launcher shortcuts not supported on current Android launcher", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.cubiq_progress_shortcut_unsupported, Toast.LENGTH_SHORT).show()
                 return
             }
 
@@ -40,15 +40,15 @@ object ShortcutHelper {
 
             val shortcut = ShortcutInfoCompat.Builder(context, shortcutId)
                 .setShortLabel(label)
-                .setLongLabel("Play $label")
+                .setLongLabel(context.getString(R.string.cubiq_progress_shortcut_play, label))
                 .setIcon(icon)
                 .setIntent(launchIntent)
                 .build()
 
             ShortcutManagerCompat.requestPinShortcut(context, shortcut, null)
-            Toast.makeText(context, "Shortcut for $label requested on Home Screen!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.cubiq_progress_shortcut_requested, label), Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
-            Toast.makeText(context, "Failed to create shortcut: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.cubiq_progress_shortcut_failed, e.message), Toast.LENGTH_SHORT).show()
         }
     }
 }

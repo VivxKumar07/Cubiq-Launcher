@@ -198,7 +198,7 @@ fun DownloadScreen(
                         }
                     },
                     style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.STONE,
-                    text = "< BACK",
+                    text = stringResource(R.string.cubiq_home_download_back),
                     fontSize = 12.sp,
                     modifier = Modifier
                         .width(76.dp)
@@ -206,7 +206,7 @@ fun DownloadScreen(
                 )
 
                 Text(
-                    text = "DOWNLOAD HUB",
+                    text = stringResource(R.string.cubiq_home_download_hub),
                     color = androidx.compose.ui.graphics.Color.White,
                     fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,

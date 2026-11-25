@@ -147,7 +147,7 @@ private fun InviteCodeInputDialog(
         onValueChange = { value ->
             code = value
         },
-        label = (@Composable { Text(text = "CQ-XXXXXX or U/XXXX-XXXX...") }).takeIf { code.isEmpty() },
+        label = (@Composable { Text(text = stringResource(R.string.cubiq_game_multiplayer_code_hint)) }).takeIf { code.isEmpty() },
         supportingText = supportingText?.let { text ->
             {
                 AndroidStringText(text = text)
@@ -162,7 +162,7 @@ private fun InviteCodeInputDialog(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Saved Friends & Recent Codes:",
+                        text = stringResource(R.string.cubiq_game_multiplayer_friends),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -170,9 +170,18 @@ private fun InviteCodeInputDialog(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         items(savedFriends.value) { (friendName, friendCode) ->
+                            val friendNumber = friendName.takeIf { it.startsWith("Friend ") }
+                                ?.removePrefix("Friend ")?.toIntOrNull()
+                            val friendLabel = when {
+                                friendNumber != null -> stringResource(R.string.cubiq_game_multiplayer_friend_number, friendNumber)
+                                friendName == "Friend" -> stringResource(R.string.cubiq_game_multiplayer_friend)
+                                else -> friendName
+                            }
                             SuggestionChip(
                                 onClick = { code = friendCode },
-                                label = { Text(text = "$friendName (${friendCode.take(8)}...)") }
+                                label = {
+                                    Text(text = stringResource(R.string.cubiq_game_multiplayer_friend_code, friendLabel, friendCode.take(8)))
+                                }
                             )
                         }
                     }

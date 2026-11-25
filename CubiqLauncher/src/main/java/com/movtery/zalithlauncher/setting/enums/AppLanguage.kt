@@ -18,10 +18,15 @@
 
 package com.movtery.zalithlauncher.setting.enums
 
+import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
+import android.os.LocaleList
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.movtery.zalithlauncher.R
+import com.movtery.zalithlauncher.setting.AllSettings
 
 enum class AppLanguage(
     val tag: String,
@@ -55,4 +60,14 @@ fun applyLanguage(language: AppLanguage) {
         LocaleListCompat.getEmptyLocaleList()
     }
     AppCompatDelegate.setApplicationLocales(appLocale)
+}
+
+/** Non-AppCompat contexts need the stored preference on pre-Android 13 devices. */
+internal fun Context.withLauncherLanguage(): Context {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return this
+    val tag = AllSettings.launcherLanguage.getValue().tag
+    if (tag.isEmpty()) return this
+    return createConfigurationContext(Configuration().apply {
+        setLocales(LocaleList.forLanguageTags(tag))
+    })
 }

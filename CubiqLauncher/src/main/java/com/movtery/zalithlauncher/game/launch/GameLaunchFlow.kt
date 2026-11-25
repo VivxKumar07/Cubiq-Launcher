@@ -126,7 +126,7 @@ class GameLaunchFlow(scope: CoroutineScope) {
                     else -> {
                         submitError(
                             ErrorViewModel.ThrowableMessage(
-                                title = androidText("Launch Failed"),
+                                title = androidText(R.string.cubiq_progress_launch_failed),
                                 message = androidText(th.localizedMessage ?: th.message ?: th.toString())
                             )
                         )
@@ -236,7 +236,7 @@ class GameLaunchFlow(scope: CoroutineScope) {
             if (!com.movtery.zalithlauncher.game.multirt.RuntimesManager.isRuntimeReady(targetRuntimeName)) {
                 addTask(
                     icon = R.drawable.ic_assignment_filled,
-                    title = androidText("Downloading Java Runtime ($targetRuntimeName)"),
+                    title = androidText(R.string.cubiq_progress_launch_runtime_download, targetRuntimeName),
                     dispatcher = Dispatchers.IO
                 ) { task ->
                     val success = com.movtery.zalithlauncher.game.multirt.JreDownloadManager.downloadAndInstallJre(context, targetRuntimeName) { progress, message ->
@@ -244,7 +244,7 @@ class GameLaunchFlow(scope: CoroutineScope) {
                         task.updateMessage(androidText(message))
                     }
                     if (!success) {
-                        throw IllegalStateException("Failed to download Java Runtime ($targetRuntimeName). Please check your internet connection.")
+                        throw IllegalStateException(context.getString(R.string.cubiq_progress_launch_runtime_failed, targetRuntimeName))
                     }
                 }
             }

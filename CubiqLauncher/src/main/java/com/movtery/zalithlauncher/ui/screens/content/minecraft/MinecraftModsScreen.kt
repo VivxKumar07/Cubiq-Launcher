@@ -5,6 +5,7 @@
 
 package com.movtery.zalithlauncher.ui.screens.content.minecraft
 
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -60,8 +61,8 @@ fun MinecraftModsScreen(
 ) {
     val categories = listOf(
         ContentCategory(
-            title = "Modpacks",
-            subtitle = "Browse & install CurseForge and Modrinth modpacks",
+            title = stringResource(R.string.cubiq_secondary_mods_modpacks),
+            subtitle = stringResource(R.string.cubiq_secondary_mods_modpacks_subtitle),
             iconRes = R.drawable.ic_package_2_outlined,
             badge = "Modrinth / CF",
             onClick = {
@@ -69,46 +70,46 @@ fun MinecraftModsScreen(
             }
         ),
         ContentCategory(
-            title = "Mods",
-            subtitle = "Search, download and auto-install Fabric & Forge mods",
+            title = stringResource(R.string.cubiq_secondary_mods_mods),
+            subtitle = stringResource(R.string.cubiq_secondary_mods_mods_subtitle),
             iconRes = R.drawable.ic_extension_outlined,
-            badge = "Mods Hub",
+            badge = stringResource(R.string.cubiq_secondary_mods_mods_badge),
             onClick = {
                 backStackViewModel.navigateToDownload(backStackViewModel.downloadModScreen)
             }
         ),
         ContentCategory(
-            title = "Shader Packs",
-            subtitle = "Enhance visuals with Iris, BSL, Complementary & more",
+            title = stringResource(R.string.cubiq_secondary_mods_shaders),
+            subtitle = stringResource(R.string.cubiq_secondary_mods_shaders_subtitle),
             iconRes = R.drawable.ic_lightbulb,
-            badge = "Shaders",
+            badge = stringResource(R.string.cubiq_secondary_mods_shaders_badge),
             onClick = {
                 backStackViewModel.navigateToDownload(backStackViewModel.downloadShadersScreen)
             }
         ),
         ContentCategory(
-            title = "Resource Packs",
-            subtitle = "Transform block textures, models, fonts and UI sounds",
+            title = stringResource(R.string.cubiq_secondary_mods_resources),
+            subtitle = stringResource(R.string.cubiq_secondary_mods_resources_subtitle),
             iconRes = R.drawable.ic_format_paint_outlined,
-            badge = "Textures",
+            badge = stringResource(R.string.cubiq_secondary_mods_textures),
             onClick = {
                 backStackViewModel.navigateToDownload(backStackViewModel.downloadResourcePackScreen)
             }
         ),
         ContentCategory(
-            title = "Game Versions",
-            subtitle = "Install official releases, snapshots, Fabric, Forge & Quilt",
+            title = stringResource(R.string.cubiq_secondary_mods_versions),
+            subtitle = stringResource(R.string.cubiq_secondary_mods_versions_subtitle),
             iconRes = R.drawable.ic_sports_esports_outlined,
-            badge = "Installer",
+            badge = stringResource(R.string.cubiq_secondary_mods_installer),
             onClick = {
                 backStackViewModel.navigateToDownload(backStackViewModel.downloadGameScreen)
             }
         ),
         ContentCategory(
-            title = "Worlds & Saves",
-            subtitle = "Download adventure maps, survival worlds and creations",
+            title = stringResource(R.string.cubiq_secondary_mods_worlds),
+            subtitle = stringResource(R.string.cubiq_secondary_mods_worlds_subtitle),
             iconRes = R.drawable.ic_public,
-            badge = "Maps",
+            badge = stringResource(R.string.cubiq_secondary_mods_maps),
             onClick = {
                 backStackViewModel.navigateToDownload(backStackViewModel.downloadSavesScreen)
             }
@@ -143,7 +144,7 @@ fun MinecraftModsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "CONTENT & MODS HUB",
+                            text = stringResource(R.string.cubiq_secondary_mods_hub),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
@@ -151,7 +152,7 @@ fun MinecraftModsScreen(
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
-                            text = "Download modpacks, shaders, mods & resource packs directly from official repositories",
+                            text = stringResource(R.string.cubiq_secondary_mods_hub_subtitle),
                             color = Color(0xFFAAAAAA),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 11.sp
@@ -165,7 +166,7 @@ fun MinecraftModsScreen(
                             backStackViewModel.navigateToDownload(backStackViewModel.downloadModScreen)
                         },
                         style = MinecraftButtonStyle.GREEN,
-                        text = "FULL BROWSER",
+                        text = stringResource(R.string.cubiq_secondary_mods_browser),
                         fontSize = 10.sp,
                         modifier = Modifier
                             .width(110.dp)
@@ -193,7 +194,7 @@ fun MinecraftModsScreen(
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "ACTIVE: ${currentVersion.getVersionName()}",
+                                text = stringResource(R.string.cubiq_secondary_mods_active, currentVersion.getVersionName()),
                                 color = Color(0xFF55FF55),
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
@@ -201,7 +202,7 @@ fun MinecraftModsScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Manage installed mods, shaders, and configs for this version",
+                                text = stringResource(R.string.cubiq_secondary_mods_manage_subtitle),
                                 color = Color(0xFFCCCCCC),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 10.5.sp
@@ -215,7 +216,7 @@ fun MinecraftModsScreen(
                                 navigateToVersions(currentVersion)
                             },
                             style = MinecraftButtonStyle.GREEN,
-                            text = "MANAGE",
+                            text = stringResource(R.string.cubiq_secondary_mods_manage),
                             fontSize = 10.5.sp,
                             modifier = Modifier
                                 .width(84.dp)
@@ -229,7 +230,7 @@ fun MinecraftModsScreen(
 
             // Categories Section Title
             Text(
-                text = "DOWNLOAD CATEGORIES",
+                text = stringResource(R.string.cubiq_secondary_mods_categories),
                 color = Color(0xFFAAAAAA),
                 fontFamily = MinecraftFontFamily,
                 fontWeight = FontWeight.Bold,

@@ -200,7 +200,7 @@ fun FmEntryItem(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_more_vert),
-                        contentDescription = "Options",
+                        contentDescription = stringResource(R.string.generic_more),
                         tint = fmSecondaryTextColor()
                     )
                 }

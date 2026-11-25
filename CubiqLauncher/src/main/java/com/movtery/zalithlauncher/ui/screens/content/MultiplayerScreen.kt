@@ -116,7 +116,7 @@ fun MultiplayerScreen(
                         backScreenViewModel.mainScreen.clearWith(NormalNavKey.LauncherMain)
                     },
                     style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.STONE,
-                    text = "< BACK",
+                    text = stringResource(R.string.cubiq_secondary_multiplayer_back),
                     fontSize = 12.sp,
                     modifier = Modifier
                         .width(76.dp)
@@ -124,7 +124,7 @@ fun MultiplayerScreen(
                 )
 
                 Text(
-                    text = "MULTIPLAYER (TERRACOTTA LAN)",
+                    text = stringResource(R.string.cubiq_secondary_multiplayer_title),
                     color = androidx.compose.ui.graphics.Color.White,
                     fontFamily = com.movtery.zalithlauncher.ui.theme.MinecraftFontFamily,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
@@ -142,7 +142,7 @@ fun MultiplayerScreen(
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                val tabs = listOf("TERRACOTTA SETTINGS", "HOW TO PLAY (TUTORIAL)")
+                val tabs = listOf(stringResource(R.string.cubiq_secondary_multiplayer_settings), stringResource(R.string.cubiq_secondary_multiplayer_tutorial))
                 tabs.forEachIndexed { index, title ->
                     val isSelected = activeSubTab == index
                     com.movtery.zalithlauncher.ui.components.MinecraftButton(

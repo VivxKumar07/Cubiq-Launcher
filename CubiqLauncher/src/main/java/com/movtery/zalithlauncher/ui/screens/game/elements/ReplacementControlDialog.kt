@@ -89,9 +89,9 @@ private fun ReplacementControlDialog(
                 val rawName = item.controlLayout.info.name.translate(locale).trim()
                 val layoutName = when {
                     rawName == "control.default.title.text" || rawName.startsWith("control.") ||
-                            item.file.name.contains("zalith_1", ignoreCase = true) -> "Zalith Launcher 1 Controls"
-                    item.file.name.contains("zalith_2", ignoreCase = true) -> "Zalith Launcher 2 Controls"
-                    item.file.name.contains("pocket", ignoreCase = true) -> "Pocket Edition Controls"
+                            item.file.name.contains("zalith_1", ignoreCase = true) -> stringResource(R.string.cubiq_game_layout_zalith_1)
+                    item.file.name.contains("zalith_2", ignoreCase = true) -> stringResource(R.string.cubiq_game_layout_zalith_2)
+                    item.file.name.contains("pocket", ignoreCase = true) -> stringResource(R.string.cubiq_game_layout_pocket)
                     rawName.isNotBlank() -> rawName
                     else -> item.file.nameWithoutExtension.replace("_", " ")
                 }

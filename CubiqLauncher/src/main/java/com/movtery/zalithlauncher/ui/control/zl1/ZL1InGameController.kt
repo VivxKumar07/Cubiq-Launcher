@@ -514,7 +514,11 @@ class ZL1InGameController(
                         rootBinding.mainControlLayout.loadLayout(file.absolutePath)
                         gameMenuWrapper.setVisibility(!rootBinding.mainControlLayout.hasMenuButton())
                     } else {
-                        Toast.makeText(activity, "Switched default layout to ${file.nameWithoutExtension}. It will take effect on next launch.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            activity,
+                            activity.getString(R.string.cubiq_secondary_layout_next_launch, file.nameWithoutExtension),
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 } catch (e: IOException) {
                     Tools.showError(activity, e)

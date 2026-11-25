@@ -1650,7 +1650,7 @@ fun GameScreen(
 
                                 painter = painterResource(R.drawable.ic_close),
 
-                                contentDescription = "Close",
+                                contentDescription = stringResource(R.string.generic_close),
 
                                 tint = Color.LightGray,
 
@@ -1682,7 +1682,7 @@ fun GameScreen(
 
                     Text(
 
-                        text = "Minecraft is loading. Please wait",
+                        text = stringResource(R.string.cubiq_game_loading),
 
                         fontFamily = MinecraftFontFamily,
 
@@ -1710,7 +1710,7 @@ fun GameScreen(
 
                         MinecraftButton(
 
-                            text = "CLOSE",
+                            text = stringResource(R.string.generic_close),
 
                             style = MinecraftButtonStyle.STONE,
 
@@ -1728,7 +1728,7 @@ fun GameScreen(
 
                         MinecraftButton(
 
-                            text = "DON'T SHOW AGAIN",
+                            text = stringResource(R.string.cubiq_game_loading_dismiss),
 
                             style = MinecraftButtonStyle.GREEN,
 

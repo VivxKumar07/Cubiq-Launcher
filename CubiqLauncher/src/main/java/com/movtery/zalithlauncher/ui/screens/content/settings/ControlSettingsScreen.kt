@@ -532,39 +532,39 @@ fun ControlSettingsScreen(
                         .offset { IntOffset(x = 0, y = yOffset.roundToPx()) }
                 ) {
                     LittleTextLabel(
-                        text = "Screen Capture & Recording"
+                        text = stringResource(R.string.cubiq_secondary_controls_capture_section)
                     )
 
                     SwitchSettingsCard(
                         modifier = Modifier.fillMaxWidth(),
                         position = CardPosition.Top,
                         unit = AllSettings.hudScreenCaptureTools,
-                        title = "Screen Recorder & Screenshot HUD",
-                        summary = "Display floating on-screen capture buttons (Screenshot & Record) during gameplay"
+                        title = stringResource(R.string.cubiq_secondary_controls_capture_hud),
+                        summary = stringResource(R.string.cubiq_secondary_controls_capture_hud_summary)
                     )
 
                     SwitchSettingsCard(
                         modifier = Modifier.fillMaxWidth(),
                         position = CardPosition.Middle,
                         unit = AllSettings.hudCaptureSound,
-                        title = "Screenshot Shutter Sound",
-                        summary = "Play authentic camera shutter click when a screenshot is captured"
+                        title = stringResource(R.string.cubiq_secondary_controls_shutter),
+                        summary = stringResource(R.string.cubiq_secondary_controls_shutter_summary)
                     )
 
                     SwitchSettingsCard(
                         modifier = Modifier.fillMaxWidth(),
                         position = CardPosition.Middle,
                         unit = AllSettings.hudSaveToGallery,
-                        title = "Auto-Export to Gallery",
-                        summary = "Automatically mirror captured screenshots to Android system Pictures/Screenshots gallery"
+                        title = stringResource(R.string.cubiq_secondary_controls_export),
+                        summary = stringResource(R.string.cubiq_secondary_controls_export_summary)
                     )
 
                     SwitchSettingsCard(
                         modifier = Modifier.fillMaxWidth(),
                         position = CardPosition.Bottom,
                         unit = AllSettings.hudShowRecordTimer,
-                        title = "Show Recording Timer",
-                        summary = "Display real-time elapsed timer indicator while screen recording is active"
+                        title = stringResource(R.string.cubiq_secondary_controls_timer),
+                        summary = stringResource(R.string.cubiq_secondary_controls_timer_summary)
                     )
                 }
             }
@@ -721,7 +721,7 @@ private fun MousePointerCard(
                     dispatcher = Dispatchers.IO,
                     task = {
                         context.copyLocalFile(result[0], mousePointerFile)
-                        if (!mousePointerFile.isImageFile()) error("The selected file is not an image!")
+                        if (!mousePointerFile.isImageFile()) error(context.getString(R.string.cubiq_secondary_controls_not_image))
                         triggerState++
                         changeOperation(MousePointerOperation.None)
                     },

@@ -455,7 +455,7 @@ fun DownloadAssetsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "VERSIONS",
+                            text = stringResource(R.string.cubiq_secondary_versions),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
@@ -472,7 +472,7 @@ fun DownloadAssetsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "PROJECT DETAILS",
+                            text = stringResource(R.string.cubiq_secondary_assets_details),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
@@ -612,7 +612,7 @@ private fun Versions(
                             decorationBox = { inner ->
                                 if (viewModel.searchMCVersion.isEmpty()) {
                                     Text(
-                                        text = "Search MC...",
+                                        text = stringResource(R.string.cubiq_secondary_assets_search_mc),
                                         style = TextStyle(color = Color(0xFF777777), fontFamily = MinecraftFontFamily, fontSize = 10.sp)
                                     )
                                 }
@@ -649,7 +649,7 @@ private fun Versions(
                                 )
                             }
                             Text(
-                                text = "RELEASE",
+                                text = stringResource(R.string.cubiq_secondary_assets_release),
                                 color = if (viewModel.showOnlyMCRelease) Color(0xFF55FF55) else Color(0xFFCCCCCC),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 9.sp

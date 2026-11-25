@@ -281,7 +281,7 @@ fun VersionSettingsScreen(
                         backToMainScreen()
                     },
                     style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.STONE,
-                    text = "< BACK",
+                    text = stringResource(R.string.cubiq_home_download_back),
                     fontSize = 12.sp,
                     modifier = Modifier
                         .width(76.dp)
@@ -289,7 +289,7 @@ fun VersionSettingsScreen(
                 )
 
                 Text(
-                    text = "MANAGE: ${key.version.getVersionName()}",
+                    text = stringResource(R.string.cubiq_home_manage_version, key.version.getVersionName()),
                     color = Color.White,
                     fontFamily = MinecraftFontFamily,
                     fontWeight = FontWeight.Bold,
@@ -304,7 +304,7 @@ fun VersionSettingsScreen(
                         onExportModpack()
                     },
                     style = com.movtery.zalithlauncher.ui.components.MinecraftButtonStyle.GREEN,
-                    text = "EXPORT",
+                    text = stringResource(R.string.cubiq_home_export),
                     fontSize = 11.sp,
                     modifier = Modifier
                         .width(76.dp)
@@ -767,7 +767,7 @@ private fun UpdateLoaderOperation(
                 is DownloadFailedException -> stringResource(R.string.download_install_error_download_failed)
                 else -> when {
                     th.isProcessStartRefused() -> stringResource(R.string.download_install_error_process_start)
-                    else -> th.localizedMessage ?: th.message ?: th::class.qualifiedName ?: "Unknown error"
+                    else -> th.localizedMessage ?: th.message ?: th::class.qualifiedName ?: stringResource(R.string.cubiq_home_unknown_error)
                 }
             }
             val dismiss = {

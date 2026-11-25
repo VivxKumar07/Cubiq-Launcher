@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -81,7 +82,7 @@ fun HorizonSetupDialog(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.ic_check),
-                            contentDescription = "Complete",
+                            contentDescription = stringResource(R.string.cubiq_horizon_setup_complete),
                             tint = Color(0xFF22C55E),
                             modifier = Modifier.size(32.dp)
                         )
@@ -92,14 +93,14 @@ fun HorizonSetupDialog(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "Setup Complete",
+                            text = stringResource(R.string.cubiq_horizon_setup_complete),
                             color = Color.White,
                             fontFamily = MinecraftFontFamily,
                             fontWeight = FontWeight.Bold,
                             fontSize = 17.sp
                         )
                         Text(
-                            text = "Minecraft Rust (26.3) is ready to play.",
+                            text = stringResource(R.string.cubiq_horizon_ready_message),
                             color = Color(0xFF9CA3AF),
                             fontFamily = MinecraftFontFamily,
                             fontSize = 12.sp
@@ -117,7 +118,7 @@ fun HorizonSetupDialog(
                                 onDismiss()
                                 HorizonManager.launchHorizon(context)
                             },
-                            text = "Play Now",
+                            text = stringResource(R.string.cubiq_horizon_play_now),
                             style = MinecraftButtonStyle.GREEN,
                             modifier = Modifier
                                 .weight(1f)
@@ -130,7 +131,7 @@ fun HorizonSetupDialog(
                                 onSetupComplete()
                                 onDismiss()
                             },
-                            text = "Done",
+                            text = stringResource(R.string.cubiq_horizon_done),
                             style = MinecraftButtonStyle.STONE,
                             modifier = Modifier
                                 .weight(1f)
@@ -139,7 +140,7 @@ fun HorizonSetupDialog(
                     }
 
                     Text(
-                        text = "Re-check files",
+                        text = stringResource(R.string.cubiq_horizon_recheck_files),
                         color = Color(0xFF71717A),
                         fontFamily = MinecraftFontFamily,
                         fontSize = 11.sp,
@@ -171,19 +172,19 @@ fun HorizonSetupDialog(
                                 ) {
                                     Image(
                                         painter = painterResource(R.drawable.ic_horizon_logo),
-                                        contentDescription = "Horizon",
+                                        contentDescription = stringResource(R.string.cubiq_horizon_horizon),
                                         modifier = Modifier.size(32.dp).clip(CircleShape)
                                     )
                                     Column {
                                         Text(
-                                            text = "Horizon",
+                                            text = stringResource(R.string.cubiq_horizon_horizon),
                                             color = Color.White,
                                             fontFamily = MinecraftFontFamily,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 15.sp
                                         )
                                         Text(
-                                            text = "Set up Minecraft Rust Edition",
+                                            text = stringResource(R.string.cubiq_horizon_setup_title),
                                             color = Color(0xFF9CA3AF),
                                             fontFamily = MinecraftFontFamily,
                                             fontSize = 11.sp
@@ -201,7 +202,7 @@ fun HorizonSetupDialog(
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_close),
-                                        contentDescription = "Close",
+                                        contentDescription = stringResource(R.string.cubiq_horizon_close),
                                         tint = Color(0xFF9CA3AF),
                                         modifier = Modifier.size(16.dp)
                                     )
@@ -224,7 +225,7 @@ fun HorizonSetupDialog(
                             }
 
                             Text(
-                                text = "Cubiq will set up Minecraft Rust (Horizon) on your device. This will download the required official files (~500 MB).",
+                                text = stringResource(R.string.cubiq_horizon_setup_description),
                                 color = Color(0xFFD1D5DB),
                                 fontFamily = MinecraftFontFamily,
                                 fontSize = 12.sp,
@@ -238,7 +239,7 @@ fun HorizonSetupDialog(
                             ) {
                                 MinecraftButton(
                                     onClick = onDismiss,
-                                    text = "Cancel",
+                                    text = stringResource(R.string.cubiq_horizon_cancel),
                                     style = MinecraftButtonStyle.STONE,
                                     modifier = Modifier
                                         .weight(1f)
@@ -249,7 +250,7 @@ fun HorizonSetupDialog(
                                     onClick = {
                                         HorizonManager.setupHorizon(context)
                                     },
-                                    text = "Set Up",
+                                    text = stringResource(R.string.cubiq_horizon_set_up),
                                     style = MinecraftButtonStyle.GREEN,
                                     modifier = Modifier
                                         .weight(1f)
@@ -280,19 +281,19 @@ fun HorizonSetupDialog(
                                 ) {
                                     Image(
                                         painter = painterResource(R.drawable.ic_horizon_logo),
-                                        contentDescription = "Horizon",
+                                        contentDescription = stringResource(R.string.cubiq_horizon_horizon),
                                         modifier = Modifier.size(32.dp).clip(CircleShape)
                                     )
                                     Column {
                                         Text(
-                                            text = "Horizon",
+                                            text = stringResource(R.string.cubiq_horizon_horizon),
                                             color = Color.White,
                                             fontFamily = MinecraftFontFamily,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 15.sp
                                         )
                                         Text(
-                                            text = "Setting up Minecraft Rust...",
+                                            text = stringResource(R.string.cubiq_horizon_setting_up),
                                             color = Color(0xFF9CA3AF),
                                             fontFamily = MinecraftFontFamily,
                                             fontSize = 11.sp
@@ -310,7 +311,7 @@ fun HorizonSetupDialog(
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_close),
-                                        contentDescription = "Close",
+                                        contentDescription = stringResource(R.string.cubiq_horizon_close),
                                         tint = Color(0xFF9CA3AF),
                                         modifier = Modifier.size(16.dp)
                                     )
@@ -324,21 +325,21 @@ fun HorizonSetupDialog(
                             ) {
                                 val step1Done = state !is HorizonManager.InstallState.Preparing
                                 ProgressStepRow(
-                                    label = "Preparing environment",
+                                    label = stringResource(R.string.cubiq_horizon_preparing_environment),
                                     isDone = step1Done,
                                     isActive = state is HorizonManager.InstallState.Preparing
                                 )
 
                                 val step2Active = state is HorizonManager.InstallState.Downloading
                                 val step2Done = state is HorizonManager.InstallState.Configuring || state is HorizonManager.InstallState.Finalizing
-                                val dlBytes = (state as? HorizonManager.InstallState.Downloading)?.let {
+                                val downloadLabel = (state as? HorizonManager.InstallState.Downloading)?.let {
                                     val mbCurrent = "%.1f".format(java.util.Locale.US, it.currentBytes / (1024f * 1024f))
                                     val mbTotal = "%.1f".format(java.util.Locale.US, it.totalBytes / (1024f * 1024f))
-                                    " ($mbCurrent MB / $mbTotal MB)"
-                                } ?: ""
+                                    stringResource(R.string.cubiq_horizon_downloading_files_bytes, mbCurrent, mbTotal)
+                                } ?: stringResource(R.string.cubiq_horizon_downloading_files)
 
                                 ProgressStepRow(
-                                    label = "Downloading files$dlBytes",
+                                    label = downloadLabel,
                                     isDone = step2Done,
                                     isActive = step2Active,
                                     percentText = (state as? HorizonManager.InstallState.Downloading)?.let {
@@ -366,7 +367,7 @@ fun HorizonSetupDialog(
                                 val configPct = (state as? HorizonManager.InstallState.Configuring)?.percent ?: 0f
 
                                 ProgressStepRow(
-                                    label = if (!configStep.isNullOrBlank()) "Configuring: $configStep" else "Configuring runtime",
+                                    label = if (!configStep.isNullOrBlank()) stringResource(R.string.cubiq_horizon_configuring_step, configStep) else stringResource(R.string.cubiq_horizon_configuring_runtime),
                                     isDone = step3Done,
                                     isActive = step3Active,
                                     percentText = if (step3Active) "${(configPct * 100).toInt()}%" else null
@@ -387,7 +388,7 @@ fun HorizonSetupDialog(
 
                                 val step4Active = state is HorizonManager.InstallState.Finalizing
                                 ProgressStepRow(
-                                    label = "Finalizing setup",
+                                    label = stringResource(R.string.cubiq_horizon_finalizing_setup),
                                     isDone = false,
                                     isActive = step4Active
                                 )
@@ -405,7 +406,7 @@ fun HorizonSetupDialog(
                                         HorizonManager.cancelSetup()
                                         onDismiss()
                                     },
-                                    text = "Cancel",
+                                    text = stringResource(R.string.cubiq_horizon_cancel),
                                     style = MinecraftButtonStyle.STONE,
                                     modifier = Modifier
                                         .weight(1f)
@@ -414,7 +415,7 @@ fun HorizonSetupDialog(
 
                                 MinecraftButton(
                                     onClick = onDismiss,
-                                    text = "Run in Background",
+                                    text = stringResource(R.string.cubiq_horizon_run_in_background),
                                     style = MinecraftButtonStyle.GREEN,
                                     modifier = Modifier
                                         .weight(1.3f)
@@ -431,7 +432,7 @@ fun HorizonSetupDialog(
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Text(
-                                text = "Setup Failed",
+                                text = stringResource(R.string.cubiq_horizon_setup_failed),
                                 color = Color(0xFFEF4444),
                                 fontFamily = MinecraftFontFamily,
                                 fontWeight = FontWeight.Bold,
@@ -451,7 +452,7 @@ fun HorizonSetupDialog(
                             ) {
                                 MinecraftButton(
                                     onClick = onDismiss,
-                                    text = "Close",
+                                    text = stringResource(R.string.cubiq_horizon_close),
                                     style = MinecraftButtonStyle.STONE,
                                     modifier = Modifier
                                         .weight(1f)
@@ -462,7 +463,7 @@ fun HorizonSetupDialog(
                                     onClick = {
                                         HorizonManager.setupHorizon(context)
                                     },
-                                    text = "Retry",
+                                    text = stringResource(R.string.cubiq_horizon_retry),
                                     style = MinecraftButtonStyle.RED,
                                     modifier = Modifier
                                         .weight(1f)

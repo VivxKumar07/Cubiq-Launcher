@@ -92,7 +92,7 @@
         </activity-alias>
 
         <activity-alias
-            android:label="Import Mod (.jar)"
+            android:label="@string/cubiq_secondary_import_mod_jar"
             android:name="com.movtery.activity.ImportModActivity"
             android:exported="true"
             android:targetActivity=".ui.activities.SplashActivity">
@@ -263,7 +263,7 @@
         <!-- Horizon (Minecraft Rust Edition) Native Game Engine Activity -->
         <activity
             android:name="dev.horizon.android.HorizonActivity"
-            android:label="Minecraft Rust Edition"
+            android:label="@string/cubiq_horizon_title"
             android:process=":horizon"
             android:exported="true"
             android:screenOrientation="sensorLandscape"

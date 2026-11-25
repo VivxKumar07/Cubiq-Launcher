@@ -45,11 +45,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.movtery.inputmap.keycodes.LwjglGlfwKeycode
+import com.movtery.zalithlauncher.R
 import com.movtery.zalithlauncher.setting.AllSettings
 import com.movtery.zalithlauncher.ui.sound.MinecraftSoundHelper
 import com.movtery.zalithlauncher.utils.capture.CubiqScreenRecorder
@@ -109,12 +111,12 @@ fun InGameCaptureHud(
                 )
                 if (started) {
                     isRecording = true
-                    Toast.makeText(context, "🎥 Screen recording started!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.cubiq_game_record_started, Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(context, "Failed to start screen recorder", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, R.string.cubiq_game_record_failed, Toast.LENGTH_SHORT).show()
                 }
             } else {
-                Toast.makeText(context, "Screen recording permission cancelled", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, R.string.cubiq_game_record_permission_cancelled, Toast.LENGTH_SHORT).show()
             }
         }
     } else null
@@ -207,13 +209,13 @@ fun InGameCaptureHud(
                                         if (file != null) {
                                             Toast.makeText(
                                                 context,
-                                                "📸 Screenshot saved to Pictures/Cubiq!",
+                                                context.getString(R.string.cubiq_game_screenshot_saved, "Pictures/Cubiq"),
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         } else {
                                             Toast.makeText(
                                                 context,
-                                                "📸 Screenshot captured!",
+                                                R.string.cubiq_game_screenshot_captured,
                                                 Toast.LENGTH_SHORT
                                             ).show()
                                         }
@@ -221,7 +223,7 @@ fun InGameCaptureHud(
                                 } else {
                                     Toast.makeText(
                                         context,
-                                        "📸 Screenshot captured!",
+                                        R.string.cubiq_game_screenshot_captured,
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 }
@@ -232,7 +234,7 @@ fun InGameCaptureHud(
                         Text(text = "📸", fontSize = 12.sp)
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Screenshot",
+                            text = stringResource(R.string.cubiq_game_screenshot),
                             color = Color.White,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
@@ -255,13 +257,13 @@ fun InGameCaptureHud(
                                     if (savedFile != null) {
                                         Toast.makeText(
                                             context,
-                                            "🎥 Recording saved to Movies/Cubiq (${savedFile.name})!",
+                                            context.getString(R.string.cubiq_game_record_saved, "Movies/Cubiq", savedFile.name),
                                             Toast.LENGTH_LONG
                                         ).show()
                                     } else {
                                         Toast.makeText(
                                             context,
-                                            "🎥 Recording stopped",
+                                            R.string.cubiq_game_record_stopped,
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
@@ -270,7 +272,7 @@ fun InGameCaptureHud(
                                     if (projectionLauncher != null && projectionManager != null) {
                                         projectionLauncher.launch(projectionManager.createScreenCaptureIntent())
                                     } else {
-                                        Toast.makeText(context, "Screen recording not supported in this environment", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, R.string.cubiq_game_record_unsupported, Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             }
@@ -289,7 +291,7 @@ fun InGameCaptureHud(
                             val m = recordSeconds / 60
                             val s = recordSeconds % 60
                             Text(
-                                text = if (AllSettings.hudShowRecordTimer.state) String.format("REC %02d:%02d", m, s) else "REC",
+                                text = if (AllSettings.hudShowRecordTimer.state) stringResource(R.string.cubiq_game_record_timer, m, s) else stringResource(R.string.cubiq_game_record_active),
                                 color = Color.Red,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
@@ -298,7 +300,7 @@ fun InGameCaptureHud(
                             Text(text = "🎥", fontSize = 12.sp)
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "Record",
+                                text = stringResource(R.string.cubiq_game_record),
                                 color = Color.White,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
